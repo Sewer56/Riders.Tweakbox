@@ -15,6 +15,7 @@ namespace Riders.Tweakbox.Misc
         public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
         public string TweakboxConfigFolder => Path.Combine(ConfigFolder, "TweakboxConfigurations");
         public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
+        public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
 
         /// <summary>
         /// Folder mod is stored in.
@@ -26,10 +27,12 @@ namespace Riders.Tweakbox.Misc
             ModFolder = modFolder;
             Directory.CreateDirectory(TweakboxConfigFolder);
             Directory.CreateDirectory(GearConfigFolder);
+            Directory.CreateDirectory(PhysicsConfigFolder);
         }
 
         public string[] GetTweakboxConfigFiles() => Directory.GetFiles(TweakboxConfigFolder, ConfigSearchPattern);
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
+        public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
 
         /// <summary>
         /// Compresses a chunk of data using the LZ4 compression algorithm.

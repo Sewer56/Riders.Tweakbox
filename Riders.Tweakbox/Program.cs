@@ -27,7 +27,6 @@ namespace Riders.Tweakbox
         /// </summary>
         public async void Start(IModLoaderV1 loader)
         {
-            Debugger.Launch();
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
@@ -35,7 +34,8 @@ namespace Riders.Tweakbox
             string modFolder = _modLoader.GetDirectoryForModId("Riders.Tweakbox");
 
             /* Your mod code starts here. */
-            SDK.Init(hooks);
+            Sewer56.SonicRiders.SDK.Init(hooks);
+            Reloaded.Imgui.Hook.SDK.Init(hooks);
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);
         }
 

@@ -23,6 +23,11 @@ namespace Riders.Tweakbox.Components
                 conf.Apply();
         }
 
+        public IConfiguration GetDefault()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <inheritdoc />
         public byte[] ToBytes()
         {

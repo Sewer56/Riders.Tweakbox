@@ -42,17 +42,8 @@ namespace Riders.Tweakbox.Components.GearEditor
         private string[] GetConfigFiles() => _io.GetGearConfigFiles();
         private byte[] GetCurrentConfigBytes() => IO.CompressLZ4(GearEditorConfig.FromGame().ToBytes());
 
-        /// <inheritdoc />
         public void Disable() => CurrentConfig.GetDefault().Apply();
-
-        /// <inheritdoc />
-        public void Enable()
-        {
-            if (CurrentConfig != null)
-                CurrentConfig.Apply();
-            else
-                Disable();
-        }
+        public void Enable() => CurrentConfig?.Apply();
 
         /// <param name="compEnabled"></param>
         /// <inheritdoc />

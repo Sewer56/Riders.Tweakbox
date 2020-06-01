@@ -1,4 +1,6 @@
-﻿namespace Riders.Tweakbox.Definitions.Interfaces
+﻿using System.Drawing;
+
+namespace Riders.Tweakbox.Definitions.Interfaces
 {
     public interface IConfiguration : ISerializable
     {
@@ -6,5 +8,10 @@
         /// Apply the current configuration to the game.
         /// </summary>
         void Apply();
+
+        /// <summary>
+        /// Returns the default configuration (unmodified data).
+        /// </summary>
+        IConfiguration GetDefault();
     }
 }
