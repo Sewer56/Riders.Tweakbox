@@ -53,8 +53,9 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             {
                 _profileSelector.Render();
                 EditRunningPhysics();
-                ImGui.End();
             }
+
+            ImGui.End();
         }
 
         private void EditRunningPhysics()

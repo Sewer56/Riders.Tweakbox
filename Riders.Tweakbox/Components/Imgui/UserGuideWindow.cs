@@ -15,10 +15,9 @@ namespace Riders.Tweakbox.Components.Imgui
                 return;
             
             if (ImGui.Begin(Name, ref compEnabled, 0))
-            {
                 ImGui.ShowUserGuide();
-                ImGui.End();
-            }
+
+            ImGui.End();
         }
     }
 }

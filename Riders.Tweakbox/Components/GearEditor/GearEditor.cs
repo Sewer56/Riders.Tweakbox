@@ -56,8 +56,9 @@ namespace Riders.Tweakbox.Components.GearEditor
             {
                 _profileSelector.Render();
                 EditGears();
-                ImGui.End();
             }
+
+            ImGui.End();
         }
 
         /* Gear Editor */

@@ -87,11 +87,7 @@ namespace Riders.Tweakbox
             if (!_isEnabled) 
                 return;
 
-            if (!ImGui.BeginMainMenuBar())
-            {
-                ImGui.EndMainMenuBar();
-                return;
-            }
+            ImGui.BeginMainMenuBar();
 
             // Get size of main menu.
             var menuSize = Utilities.RunVectorFunction(ImGui.GetWindowSize);
