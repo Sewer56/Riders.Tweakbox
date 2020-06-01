@@ -1,0 +1,42 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+<# 
+    string[] types = { "Byte", "SByte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Single", "Double" };
+    string[] imguiTypes = { "ImGuiDataType.ImGuiDataTypeU8", "ImGuiDataType.ImGuiDataTypeS8", "ImGuiDataType.ImGuiDataTypeS16", "ImGuiDataType.ImGuiDataTypeU16", "ImGuiDataType.ImGuiDataTypeS32", "ImGuiDataType.ImGuiDataTypeU32", "ImGuiDataType.ImGuiDataTypeS64", "ImGuiDataType.ImGuiDataTypeU64", "ImGuiDataType.ImGuiDataTypeFloat", "ImGuiDataType.ImGuiDataTypeDouble" };
+#>
+
+using System;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
+using DearImguiSharp;
+
+namespace Sewer56.Imgui.Utilities
+{
+    public unsafe partial class Reflection
+    {
+        #region Make Controls
+<#
+for (int x = 0; x < types.Length; x++) 
+{
+#>
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        public static void MakeControl(<#=types[x]#>* value, string name)
+        {
+            ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) value, 1.0F, IntPtr.Zero, IntPtr.Zero, null, 1);
+        }
+
+<#
+}
+#>                
+        #endregion
+    }
+}

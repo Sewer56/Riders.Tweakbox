@@ -1,0 +1,6 @@
+[submodule "Submodules/Sewer56.SonicRiders"]
+	path = Submodules/Sewer56.SonicRiders
+	url = https://github.com/Sewer56/Sewer56.SonicRiders
+[submodule "Submodules/NumberUtilities"]
+	path = Submodules/NumberUtilities
+	url = https://github.com/Sewer56/NumberUtilities.git

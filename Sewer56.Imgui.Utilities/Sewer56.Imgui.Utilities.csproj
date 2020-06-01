@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DearImguiSharp" Version="1.75.4" />
+    <PackageReference Include="Enums.NET" Version="3.0.3" />
+    <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.4" />
+    <PackageReference Include="Reloaded.Memory" Version="3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Submodules\NumberUtilities\Sewer56.NumberUtilities\Sewer56.NumberUtilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ReflectionAutogen.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ReflectionAutogen.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ReflectionAutogen.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ReflectionAutogen.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>
