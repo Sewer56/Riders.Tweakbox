@@ -58,10 +58,11 @@ namespace Riders.Tweakbox
                 }
             };
 
-            var hook = await ImguiHook.Create(tweakBox.Render);
-            tweakBox._hook = hook;
-            tweakBox.SetupTheme(modFolder);
             tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
+
+            var imguiHook = await ImguiHook.Create(tweakBox.Render);
+            tweakBox._hook = imguiHook;
+            tweakBox.SetupTheme(modFolder);
             return tweakBox;
         }
 
