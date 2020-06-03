@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using BitStreams;
-using Riders.Netplay.Messages.Reliable.Structs.Shared;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 
-namespace Riders.Netplay.Messages.Reliable.Structs
+namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     /// <summary>
     /// Message from the host that triggers boost, tornado & attack for clients.

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Riders.Netplay.Messages.Reliable.Structs
+namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     public struct Heartbeat
     {

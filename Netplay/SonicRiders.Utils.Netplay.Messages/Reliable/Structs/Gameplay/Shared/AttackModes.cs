@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Riders.Netplay.Messages.Reliable.Structs.Shared
+namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared
 {
     [Flags]
     public enum AttackModes : byte

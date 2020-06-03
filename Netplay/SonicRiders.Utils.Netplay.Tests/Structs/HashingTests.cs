@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Xunit;
 
 namespace Riders.Netplay.Messages.Tests.Structs

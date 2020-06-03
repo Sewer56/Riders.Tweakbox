@@ -1,13 +1,12 @@
 ﻿using System;
 using System.IO;
 using K4os.Compression.LZ4;
-using K4os.Compression.LZ4.Streams;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
 using Sewer56.SonicRiders.Fields;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
-namespace Riders.Netplay.Messages.Reliable.Structs
+namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     public struct GameData
     {

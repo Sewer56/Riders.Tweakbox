@@ -2,7 +2,7 @@
 using K4os.Hash.xxHash;
 using Reloaded.Memory.Streams;
 
-namespace Riders.Netplay.Messages.Reliable.Structs
+namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     public struct DataHash : IEquatable<DataHash>
     {
