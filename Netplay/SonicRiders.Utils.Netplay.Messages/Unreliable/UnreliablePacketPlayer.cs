@@ -3,8 +3,8 @@ using System.Numerics;
 using Reloaded.Memory.Streams;
 using Sewer56.NumberUtilities;
 using Sewer56.NumberUtilities.Primitives;
-using Sewer56.SonicRiders.Mathematics;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Netplay.Messages.Unreliable
 {

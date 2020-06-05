@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using Reloaded.Hooks.Definitions;
-using Reloaded.Imgui.Hook;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Sewer56.SonicRiders.API;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox

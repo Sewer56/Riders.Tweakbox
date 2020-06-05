@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using DearImguiSharp;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
-using Riders.Tweakbox.Components;
 using Riders.Tweakbox.Components.GearEditor;
 using Riders.Tweakbox.Components.Imgui;
 using Riders.Tweakbox.Components.PhysicsEditor;
@@ -27,7 +26,7 @@ namespace Riders.Tweakbox
         private IReloadedHooksUtilities _hooksUtilities;
         private IList<Menu> _menus;
         private bool _isEnabled = true;
-        private IHook<Functions.HandleInputs> _blockInputsHook;
+        private IHook<Functions.GetInputsFn> _blockInputsHook;
 
         /* Creation & Disposal */
         private Tweakbox(){}

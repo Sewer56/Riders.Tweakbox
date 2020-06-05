@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using DearImguiSharp;
-using Reloaded.Memory.Kernel32;
-using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Utilities;
-using Sewer56.SonicRiders.Fields;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Tweakbox.Components.PhysicsEditor
 {
@@ -26,9 +22,6 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             _io = io;
             _profileSelector = new ProfileSelector(_io.PhysicsConfigFolder, CurrentConfig.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
-
-            // Unprotect Modified Memory.
-            Memory.CurrentProcess.ChangePermission((IntPtr) Physics.RunningPhysics1, sizeof(RunningPhysics), Kernel32.MEM_PROTECTION.PAGE_EXECUTE_READWRITE);
         }
 
         private byte[] GetCurrentConfigBytes() => PhysicsEditorConfig.FromGame().ToBytes();
@@ -63,10 +56,10 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             if (ImGui.TreeNodeStr("Speed"))
             {
                 ImGui.Spacing();
-                Reflection.MakeControl(&Physics.RunningPhysics1->MinimumSpeed, nameof(RunningPhysics.MinimumSpeed));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearOneMaxSpeed, nameof(RunningPhysics2.GearOneMaxSpeed));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearTwoMaxSpeed, nameof(RunningPhysics2.GearTwoMaxSpeed));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearThreeMaxSpeed, nameof(RunningPhysics2.GearThreeMaxSpeed));
+                Reflection.MakeControl(&Player.RunPhysics->MinimumSpeed, nameof(RunningPhysics.MinimumSpeed));
+                Reflection.MakeControl(&Player.RunPhysics2->GearOneMaxSpeed, nameof(RunningPhysics2.GearOneMaxSpeed));
+                Reflection.MakeControl(&Player.RunPhysics2->GearTwoMaxSpeed, nameof(RunningPhysics2.GearTwoMaxSpeed));
+                Reflection.MakeControl(&Player.RunPhysics2->GearThreeMaxSpeed, nameof(RunningPhysics2.GearThreeMaxSpeed));
 
                 ImGui.TreePop();
             }
@@ -74,11 +67,11 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             if (ImGui.TreeNodeStr("Acceleration"))
             {
                 ImGui.Spacing();
-                Reflection.MakeControl(&Physics.RunningPhysics1->BackwardsWalkAccel, nameof(RunningPhysics.BackwardsWalkAccel));
-                Reflection.MakeControl(&Physics.RunningPhysics1->SlidingBreakAccel, nameof(RunningPhysics.SlidingBreakAccel));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearOneAcceleration, nameof(RunningPhysics2.GearOneAcceleration));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearTwoAcceleration, nameof(RunningPhysics2.GearTwoAcceleration));
-                Reflection.MakeControl(&Physics.RunningPhysics2->GearThreeAcceleration, nameof(RunningPhysics2.GearThreeAcceleration));
+                Reflection.MakeControl(&Player.RunPhysics->BackwardsWalkAccel, nameof(RunningPhysics.BackwardsWalkAccel));
+                Reflection.MakeControl(&Player.RunPhysics->SlidingBreakAccel, nameof(RunningPhysics.SlidingBreakAccel));
+                Reflection.MakeControl(&Player.RunPhysics2->GearOneAcceleration, nameof(RunningPhysics2.GearOneAcceleration));
+                Reflection.MakeControl(&Player.RunPhysics2->GearTwoAcceleration, nameof(RunningPhysics2.GearTwoAcceleration));
+                Reflection.MakeControl(&Player.RunPhysics2->GearThreeAcceleration, nameof(RunningPhysics2.GearThreeAcceleration));
 
                 ImGui.TreePop();
             }
@@ -87,7 +80,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             if (ImGui.TreeNodeStr("Miscellaneous"))
             {
                 ImGui.Spacing();
-                Reflection.MakeControl(&Physics.RunningPhysics1->Inertia, nameof(RunningPhysics.Inertia));
+                Reflection.MakeControl(&Player.RunPhysics->Inertia, nameof(RunningPhysics.Inertia));
 
                 ImGui.TreePop();
             }
@@ -98,10 +91,10 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
                 ImGui.Spacing();
                 if (ImGui.TreeNodeStr("Struct A"))
                 {
-                    Reflection.MakeControl(&Physics.RunningPhysics1->Field_00, nameof(RunningPhysics.Field_00));
-                    Reflection.MakeControl(&Physics.RunningPhysics1->Field_10, nameof(RunningPhysics.Field_10));
-                    Reflection.MakeControl(&Physics.RunningPhysics1->Field_18, nameof(RunningPhysics.Field_18));
-                    Reflection.MakeControl(&Physics.RunningPhysics1->Field_1C, nameof(RunningPhysics.Field_1C));
+                    Reflection.MakeControl(&Player.RunPhysics->Field_00, nameof(RunningPhysics.Field_00));
+                    Reflection.MakeControl(&Player.RunPhysics->Field_10, nameof(RunningPhysics.Field_10));
+                    Reflection.MakeControl(&Player.RunPhysics->Field_18, nameof(RunningPhysics.Field_18));
+                    Reflection.MakeControl(&Player.RunPhysics->Field_1C, nameof(RunningPhysics.Field_1C));
 
                     ImGui.TreePop();
                 }
@@ -109,7 +102,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
                 ImGui.Spacing();
                 if (ImGui.TreeNodeStr("Struct B"))
                 {
-                    Reflection.MakeControl(&Physics.RunningPhysics2->Field_18, nameof(RunningPhysics2.Field_18));
+                    Reflection.MakeControl(&Player.RunPhysics2->Field_18, nameof(RunningPhysics2.Field_18));
                     ImGui.TreePop();
                 }
 

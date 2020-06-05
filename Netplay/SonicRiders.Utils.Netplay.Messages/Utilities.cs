@@ -3,6 +3,7 @@ using System.IO;
 using EnumsNET;
 using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Streams;
+using MessagePack;
 using Reloaded.Memory.Streams;
 
 namespace Riders.Netplay.Messages
@@ -105,5 +106,20 @@ namespace Riders.Netplay.Messages
 
             return buffer;
         }
+
+        /// <summary>
+        /// Deserialized a MessagePack packed message from a given stream.
+        /// </summary>
+        public static T DesrializeMessagePack<T>(BufferedStreamReader reader)
+        {
+            var baseStream = reader.BaseStream();
+            baseStream.Position = reader.Position();
+
+            var value = MessagePackSerializer.Deserialize<T>(baseStream);
+            reader.Seek(baseStream.Position, SeekOrigin.Begin);
+
+            return value;
+        }
+
     }
 }

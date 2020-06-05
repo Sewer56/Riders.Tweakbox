@@ -20,14 +20,14 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             3 bits | Has Boost, Tornado, Attack
             3 bits | Index 0-7, the player attacked.
         
-            Total size: 48 bits (8 players) / 6 bytes.
+            Total size: 42 bits (7 players) / 6 bytes.
         */
         private fixed byte _playerIds[SizeOfAllEntriesBytes];
 
         /// <summary>
         /// Gets the data for an individual player.
         /// </summary>
-        /// <param name="index">Index of player 0-7.</param>
+        /// <param name="index">Index of player 0-6.</param>
         public BoostTornadoAttack GetPlayerData(int index)
         {
             var initialOffset = GetPlayerOffset(index);
@@ -48,7 +48,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// Sets the data for an individual player.
         /// </summary>
         /// <param name="data">The data to set.</param>
-        /// <param name="index">Index of player 0-7.</param>
+        /// <param name="index">Index of player 0-6.</param>
         public void SetPlayerData(BoostTornadoAttack data, int index)
         {
             var initialOffset = GetPlayerOffset(index);

@@ -1,16 +1,18 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using K4os.Compression.LZ4;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
-using Sewer56.SonicRiders.Fields;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     public struct GameData
     {
-        public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(ExtremeGears.NumberOfGears) +
+        public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears) +
                                                 Struct.GetSize<RunningPhysics>() + Struct.GetSize<RunningPhysics2>();
 
         /// <summary>
@@ -32,11 +34,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         {
             var data = new GameData
             {
-                RunningPhysics1 = *Physics.RunningPhysics1, 
-                RunningPhysics2 = *Physics.RunningPhysics2
+                RunningPhysics1 = *Player.RunPhysics, 
+                RunningPhysics2 = *Player.RunPhysics2
             };
 
-            StructArray.FromPtr((IntPtr)ExtremeGears.ExtremeGear, out data.Gears, ExtremeGears.NumberOfGears);
+            data.Gears = Player.Gears.ToArray();
             return data;
         }
 
@@ -47,7 +49,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             using (var gameDataStream = new BufferedStreamReader(memoryStream, memoryStream.Capacity))
             {
                 var gameData = new GameData();
-                gameData.Gears = new ExtremeGear[ExtremeGears.NumberOfGears];
+                gameData.Gears = new ExtremeGear[Player.NumberOfGears];
                 for (int x = 0; x < gameData.Gears.Length; x++)
                     gameData.Gears[x] = gameDataStream.Read<ExtremeGear>();
 

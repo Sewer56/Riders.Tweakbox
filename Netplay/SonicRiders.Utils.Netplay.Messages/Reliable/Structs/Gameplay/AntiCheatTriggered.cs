@@ -1,5 +1,4 @@
-﻿using System;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {

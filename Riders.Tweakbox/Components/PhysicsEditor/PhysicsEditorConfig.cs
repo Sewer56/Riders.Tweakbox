@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
-using Riders.Tweakbox.Components.GearEditor;
 using Riders.Tweakbox.Definitions.Interfaces;
-using Sewer56.SonicRiders.Fields;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Tweakbox.Components.PhysicsEditor
 {
@@ -42,8 +37,8 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             {
                 _data =
                 {
-                    RunningPhysics1 = *Physics.RunningPhysics1,
-                    RunningPhysics2 = *Physics.RunningPhysics2
+                    RunningPhysics1 = *Player.RunPhysics,
+                    RunningPhysics2 = *Player.RunPhysics2
                 }
             };
         }
@@ -63,8 +58,8 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
 
         public void Apply()
         {
-            *Physics.RunningPhysics1 = _data.RunningPhysics1;
-            *Physics.RunningPhysics2 = _data.RunningPhysics2;
+            *Player.RunPhysics  = _data.RunningPhysics1;
+            *Player.RunPhysics2 = _data.RunningPhysics2;
         }
 
         public IConfiguration GetDefault() => _default;

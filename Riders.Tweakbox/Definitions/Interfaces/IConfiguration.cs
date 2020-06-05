@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Riders.Tweakbox.Definitions.Interfaces
+﻿namespace Riders.Tweakbox.Definitions.Interfaces
 {
     public interface IConfiguration : ISerializable
     {

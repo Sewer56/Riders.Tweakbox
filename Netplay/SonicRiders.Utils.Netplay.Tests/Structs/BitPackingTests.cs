@@ -28,9 +28,9 @@ namespace Riders.Netplay.Messages.Tests.Structs
         {
             var packed = new BoostTornadoAttackPacked();
             var expected = new BoostTornadoAttack(AttackModes.Attack | AttackModes.Boost, 3);
-            packed.SetPlayerData(expected, 7);
+            packed.SetPlayerData(expected, 6);
 
-            var playerData = packed.GetPlayerData(7);
+            var playerData = packed.GetPlayerData(6);
             Assert.Equal(expected.Modes, playerData.Modes);
             Assert.Equal(expected.TargetPlayer, playerData.TargetPlayer);
         }
