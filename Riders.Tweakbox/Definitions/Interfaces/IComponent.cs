@@ -8,6 +8,16 @@
         string Name { get; set; }
 
         /// <summary>
+        /// True if the component is enabled (can be selected), else false.
+        /// </summary>
+        ref bool IsEnabled();
+
+        /// <summary>
+        /// True if the component is available (can be selected), else false.
+        /// </summary>
+        bool IsAvailable() { return true; }
+
+        /// <summary>
         /// Disables the component and restores its original state.
         /// </summary>
         void Disable();
@@ -20,7 +30,6 @@
         /// <summary>
         /// Renders the component to the screen using Dear Imgui.
         /// </summary>
-        /// <param name="compEnabled"></param>
-        void Render(ref bool compEnabled);
+        void Render();
     }
 }

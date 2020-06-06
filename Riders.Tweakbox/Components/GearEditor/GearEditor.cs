@@ -1,6 +1,7 @@
 ﻿using System;
 using DearImguiSharp;
 using EnumsNET;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -20,6 +21,7 @@ namespace Riders.Tweakbox.Components.GearEditor
         public string Name { get; set; } = "Gear Editor";
         public GearEditorConfig CurrentConfig { get; private set; } = GearEditorConfig.FromGame();
 
+        private bool _isEnabled;
         private IO _io;
         private ProfileSelector _profileSelector;
 
@@ -40,19 +42,18 @@ namespace Riders.Tweakbox.Components.GearEditor
         }
 
         private string[] GetConfigFiles() => _io.GetGearConfigFiles();
-        private byte[] GetCurrentConfigBytes() => IO.CompressLZ4(GearEditorConfig.FromGame().ToBytes());
+        private byte[] GetCurrentConfigBytes() => IO.CompressLZ4(CurrentConfig.GetCurrent().ToBytes());
+
+        public ref bool IsEnabled() => ref _isEnabled;
+        public bool IsAvailable() => !SharedController.NetplayEnabled;
 
         public void Disable() => CurrentConfig.GetDefault().Apply();
         public void Enable() => CurrentConfig?.Apply();
-
-        /// <param name="compEnabled"></param>
+        
         /// <inheritdoc />
-        public void Render(ref bool compEnabled)
+        public void Render()
         {
-            if (!compEnabled)
-                return;
-
-            if (ImGui.Begin(Name, ref compEnabled, 0))
+            if (ImGui.Begin(Name, ref _isEnabled, 0))
             {
                 _profileSelector.Render();
                 EditGears();

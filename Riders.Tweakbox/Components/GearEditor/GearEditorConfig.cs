@@ -34,6 +34,7 @@ namespace Riders.Tweakbox.Components.GearEditor
             return bytes.Slice(StructArray.GetSize<ExtremeGear>(Player.NumberOfGears));
         }
 
+        public IConfiguration GetCurrent() => FromGame();
         public IConfiguration GetDefault() => _default;
     }
 }

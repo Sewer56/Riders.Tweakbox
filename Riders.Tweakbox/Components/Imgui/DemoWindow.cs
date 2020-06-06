@@ -6,13 +6,16 @@ namespace Riders.Tweakbox.Components.Imgui
     public class DemoWindow : IComponent
     {
         public string Name { get; set; } = "Demo Window";
+        private bool _isEnabled;
 
+        public ref bool IsEnabled() => ref _isEnabled;
         public void Disable() { }
         public void Enable()  { }
-        public void Render(ref bool compEnabled)
+        
+        public void Render()
         {
-            if (compEnabled)
-                ImGui.ShowDemoWindow(ref compEnabled);
+            if (_isEnabled)
+                ImGui.ShowDemoWindow(ref _isEnabled);
         }
     }
 }

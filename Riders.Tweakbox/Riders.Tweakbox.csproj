@@ -35,17 +35,23 @@
   <ItemGroup>
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="K4os.Compression.LZ4" Version="1.2.2-beta" />
+    <PackageReference Include="LiteNetLib" Version="0.9.2.2" />
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.4" />
     <PackageReference Include="Reloaded.Memory" Version="3.0.1" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.6.0" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.4.0" />
+    <PackageReference Include="Reloaded.WPF.Animations" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
     <ProjectReference Include="..\Sewer56.Imgui.Utilities\Sewer56.Imgui.Utilities.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Netplay\" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 ﻿using System;
 using DearImguiSharp;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -14,6 +15,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
         public string Name { get; set; } = "Physics Editor";
         public PhysicsEditorConfig CurrentConfig { get; private set; } = PhysicsEditorConfig.FromGame();
 
+        private bool _isEnabled;
         private IO _io;
         private ProfileSelector _profileSelector;
 
@@ -24,7 +26,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             _profileSelector.Save();
         }
 
-        private byte[] GetCurrentConfigBytes() => PhysicsEditorConfig.FromGame().ToBytes();
+        private byte[] GetCurrentConfigBytes() => CurrentConfig.GetCurrent().ToBytes();
         private string[] GetConfigFiles() => _io.GetPhysicsConfigFiles();
 
         private void LoadConfig(byte[] data)
@@ -34,15 +36,14 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             CurrentConfig.Apply();
         }
 
+        public ref bool IsEnabled() => ref _isEnabled;
+        public bool IsAvailable() => !SharedController.NetplayEnabled;
         public void Disable() => CurrentConfig.GetDefault().Apply();
         public void Enable() => CurrentConfig?.Apply();
 
-        public void Render(ref bool compEnabled)
+        public void Render()
         {
-            if (!compEnabled)
-                return;
-
-            if (ImGui.Begin(Name, ref compEnabled, 0))
+            if (ImGui.Begin(Name, ref _isEnabled, 0))
             {
                 _profileSelector.Render();
                 EditRunningPhysics();

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using DearImguiSharp;
 using Riders.Tweakbox.Definitions.Interfaces;
-using Riders.Tweakbox.Definitions.Structures;
 
 namespace Riders.Tweakbox.Definitions
 {
@@ -11,26 +10,25 @@ namespace Riders.Tweakbox.Definitions
     public class Menu : IComponent
     {
         public string Name { get; set; }
-        public bool IsEnabled = true;
-        public List<EnabledTuple<IComponent>> Components { get; } = new List<EnabledTuple<IComponent>>();
+        public List<IComponent> Components { get; } = new List<IComponent>();
+        private bool _isEnabled = true;
 
         public Menu(string name, IList<IComponent> components)
         {
             Name = name;
-            foreach (var comp in components)
-                Components.Add(new EnabledTuple<IComponent>(false, comp));
+            Components.AddRange(components);
         }
 
         public void Disable()
         {
             foreach (var component in Components)
-                component.Value.Disable();
+                component.Disable();
         }
 
         public void Enable()
         {
             foreach (var component in Components)
-                component.Value.Enable();
+                component.Enable();
         }
 
         public void Render(ref bool compEnabled)
@@ -41,13 +39,18 @@ namespace Riders.Tweakbox.Definitions
             if (ImGui.BeginMenu(Name, true))
             {
                 foreach (var comp in Components)
-                    ImGui.MenuItemBoolPtr(comp.Value.Name, "", ref comp.Enabled, true);
+                    ImGui.MenuItemBoolPtr(comp.Name, "", ref comp.IsEnabled(), comp.IsAvailable());
 
                 ImGui.EndMenu();
             }
 
             foreach (var comp in Components)
-                comp.Value.Render(ref comp.Enabled);
+                if (comp.IsEnabled() && comp.IsAvailable())
+                    comp.Render();
         }
+
+        public ref bool IsEnabled() => ref _isEnabled;
+        public bool IsAvailable() => true;
+        public void Render() { }
     }
 }

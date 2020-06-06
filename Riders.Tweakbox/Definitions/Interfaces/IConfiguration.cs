@@ -8,6 +8,11 @@
         void Apply();
 
         /// <summary>
+        /// Returns the current configuration.
+        /// </summary>
+        IConfiguration GetCurrent();
+
+        /// <summary>
         /// Returns the default configuration (unmodified data).
         /// </summary>
         IConfiguration GetDefault();

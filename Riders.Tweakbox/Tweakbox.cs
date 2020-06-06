@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using DearImguiSharp;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
+using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Components.GearEditor;
 using Riders.Tweakbox.Components.Imgui;
 using Riders.Tweakbox.Components.PhysicsEditor;
@@ -44,15 +45,23 @@ namespace Riders.Tweakbox
                 _hooksUtilities = hooksUtilities,
                 _menus = new List<Menu>()
                 {
+                    new Menu("Netplay", new List<IComponent>()
+                    {
+                        
+                    }),
+                    new Menu("Fixes", new List<IComponent>()
+                    {
+                        IoC.GetConstant<FixesEditor>()
+                    }),
                     new Menu("Editors", new List<IComponent>()
                     {
-                        IoC.Get<GearEditor>(),
-                        IoC.Get<PhysicsEditor>()
+                        IoC.GetConstant<GearEditor>(),
+                        IoC.GetConstant<PhysicsEditor>()
                     }),
-                    new Menu("Tools", new List<IComponent>()
+                    new Menu("Misc", new List<IComponent>()
                     {
-                        IoC.Get<DemoWindow>(),
-                        IoC.Get<UserGuideWindow>()
+                        IoC.GetConstant<DemoWindow>(),
+                        IoC.GetConstant<UserGuideWindow>()
                     })
                 }
             };
@@ -94,7 +103,7 @@ namespace Riders.Tweakbox
 
             // Render all menus.
             foreach (var menu in _menus)
-                menu.Render(ref menu.IsEnabled);
+                menu.Render(ref menu.IsEnabled());
 
             // Render help text.
             ImGui.SetNextItemWidth(helpLength);

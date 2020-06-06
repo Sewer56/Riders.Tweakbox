@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Components.GearEditor;
+using Riders.Tweakbox.Components.PhysicsEditor;
 using Riders.Tweakbox.Definitions.Interfaces;
+using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox.Components
 {
@@ -10,29 +13,26 @@ namespace Riders.Tweakbox.Components
     /// </summary>
     public class TweakboxConfig : IConfiguration
     {
-        public List<IConfiguration> Configurations = new List<IConfiguration>()
+        public List<IConfiguration> GetConfigurations => new List<IConfiguration>()
         {
             // DO NOT REARRANGE, THIS IS ORDER OF SERIALIZATION.
-            new GearEditorConfig(),
+            GearEditorConfig.FromGame(),
+            PhysicsEditorConfig.FromGame(),
+            IoC.GetConstant<FixesConfig>()
         };
 
         /// <inheritdoc />
         public void Apply()
         {
-            foreach (var conf in Configurations)
+            foreach (var conf in GetConfigurations)
                 conf.Apply();
-        }
-
-        public IConfiguration GetDefault()
-        {
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
         public byte[] ToBytes()
         {
             var bytes = new List<byte>();
-            foreach (var conf in Configurations) 
+            foreach (var conf in GetConfigurations) 
                 bytes.AddRange(conf.ToBytes());
 
             return bytes.ToArray();
@@ -41,7 +41,7 @@ namespace Riders.Tweakbox.Components
         /// <inheritdoc />
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            foreach (var conf in Configurations)
+            foreach (var conf in GetConfigurations)
             {
                 // If there are no bytes left, user imported
                 // config from a newer version of Tweakbox
@@ -50,9 +50,13 @@ namespace Riders.Tweakbox.Components
                     break;
 
                 bytes = conf.FromBytes(bytes);
+                conf.Apply();
             }
 
             return bytes;
         }
+
+        public IConfiguration GetCurrent() => throw new NotImplementedException();
+        public IConfiguration GetDefault() => throw new NotImplementedException();
     }
 }

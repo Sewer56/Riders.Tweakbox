@@ -62,6 +62,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
             *Player.RunPhysics2 = _data.RunningPhysics2;
         }
 
+        public IConfiguration GetCurrent() => FromGame();
         public IConfiguration GetDefault() => _default;
     }
 }
