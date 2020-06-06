@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
@@ -12,6 +10,12 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
         public ServerMessageType MessageKind;
         public IServerMessage Message;
 
+        public ServerMessage(IServerMessage message)
+        {
+            MessageKind = message.GetMessageType();
+            Message = message;
+        }
+
         public ServerMessage(IServerMessage message, ServerMessageType messageKind)
         {
             MessageKind = messageKind;
@@ -21,12 +25,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
         /// <summary>
         /// Converts the synchronization command to a set of bytes.
         /// </summary>
-        /// <param name="command">The command.</param>
-        public static byte[] ToBytes<T>(T command) where T : IServerMessage
+        public byte[] ToBytes()
         {
             using var extendedMemoryStream = new ExtendedMemoryStream();
-            extendedMemoryStream.Write(command.GetMessageType());
-            extendedMemoryStream.Write(command.ToBytes());
+            extendedMemoryStream.Write(MessageKind);
+            extendedMemoryStream.Write(Message.ToBytes());
             return extendedMemoryStream.ToArray();
         }
 

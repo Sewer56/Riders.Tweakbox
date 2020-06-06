@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Riders.Netplay.Messages.Reliable.Structs;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Xunit;
 

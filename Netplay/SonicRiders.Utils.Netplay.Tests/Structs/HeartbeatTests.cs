@@ -1,5 +1,4 @@
 ﻿using System;
-using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Xunit;
 

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using Reloaded.Memory.Streams;
-using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Xunit;
 

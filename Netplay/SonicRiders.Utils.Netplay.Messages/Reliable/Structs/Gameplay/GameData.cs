@@ -4,7 +4,6 @@ using System.Linq;
 using K4os.Compression.LZ4;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
-using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 
@@ -29,6 +28,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// Contains the running physics (struct 2) for this instance.
         /// </summary>
         public RunningPhysics2 RunningPhysics2;
+
+        /// <summary>
+        /// Writes the contents of this packet to the game memory.
+        /// </summary>
+        public unsafe void ToGame()
+        {
+            *Player.RunPhysics  = RunningPhysics1;
+            *Player.RunPhysics2 = RunningPhysics2;
+            Player.Gears.CopyFrom(Gears, Gears.Length);
+        }
 
         public static unsafe GameData FromGame()
         {

@@ -21,6 +21,16 @@ namespace Riders.Netplay.Messages
         }
 
         /// <summary>
+        /// Writes a <see cref="Nullable"/> value to a <see cref="ExtendedMemoryStream"/>.
+        /// If a value exists, it is written, else nothing is done.
+        /// </summary>
+        public static void WriteNullable<T>(this ExtendedMemoryStream stream, T? nullable, byte[] data) where T : struct
+        {
+            if (nullable.HasValue)
+                stream.Write(data);
+        }
+
+        /// <summary>
         /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
         /// </summary>
         public static void SetValueIfHasFlags<TType, TEnum>(this BufferedStreamReader reader, ref TType? value, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum

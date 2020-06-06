@@ -16,15 +16,20 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             Command = command;
         }
 
+        public MenuSynchronizationCommand(IMenuSynchronizationCommand command) : this()
+        {
+            Command = command;
+            CommandKind = command.GetCommandKind();
+        }
+
         /// <summary>
         /// Converts the synchronization command to a set of bytes.
         /// </summary>
-        /// <param name="command">The command.</param>
-        public static byte[] ToBytes<T>(T command) where T : IMenuSynchronizationCommand
+        public byte[] ToBytes()
         {
             using var extendedMemoryStream = new ExtendedMemoryStream();
-            extendedMemoryStream.Write(command.GetCommandKind());
-            extendedMemoryStream.Write(command.ToBytes());
+            extendedMemoryStream.Write(CommandKind);
+            extendedMemoryStream.Write(Command.ToBytes());
             return extendedMemoryStream.ToArray();
         }
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
@@ -22,7 +19,8 @@ namespace Riders.Netplay.Messages.Tests.Structs
                 "Pixel"
             });
 
-            var bytes = ServerMessage.ToBytes(message);
+            var serverMsg = new ServerMessage(message);
+            var bytes = serverMsg.ToBytes();
 
             using var memoryStream = new MemoryStream(bytes);
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);
@@ -40,7 +38,8 @@ namespace Riders.Netplay.Messages.Tests.Structs
         public void SerializeStandardMessage()
         {
             var message = new SetAntiCheat() { Cheats = CheatKind.RngManipulation };
-            var bytes = ServerMessage.ToBytes(message);
+            var serverMsg = new ServerMessage(message);
+            var bytes = serverMsg.ToBytes();
 
             using var memoryStream = new MemoryStream(bytes);
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);

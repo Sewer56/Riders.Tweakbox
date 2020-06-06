@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using MessagePack;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
