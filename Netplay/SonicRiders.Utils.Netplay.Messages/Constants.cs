@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Riders.Netplay.Messages
+﻿namespace Riders.Netplay.Messages
 {
     public static class Constants
     {

@@ -12,7 +12,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// The current socket instance, either a <see cref="Client"/> or <see cref="Host"/>.
         /// </summary>
-        public ISocket Socket { get; set; }
+        public Socket Socket { get; set; }
 
         /// <summary>
         /// Events assigned to this controller.
@@ -20,7 +20,6 @@ namespace Riders.Tweakbox.Controllers
         public NetplayControllerEvents Events { get; private set; } = new NetplayControllerEvents();
 
         public NetplayController() => Event.AfterSleep += Update;
-
         public void Disable() => Event.AfterSleep -= Update;
         public void Enable() => Event.AfterSleep += Update;
 
@@ -32,6 +31,10 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Updates on every frame of the game.
         /// </summary>
-        private void Update() => Socket?.Update();
+        private void Update()
+        {
+            Socket?.Poll();
+            Socket?.Update();
+        }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System.IO;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
-using Sewer56.SonicRiders.Structures.Menus.Enums;
+using Sewer56.SonicRiders.Structures.Tasks.Enums;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.Structs;
 using Xunit;
 using MenuSynchronizationCommand = Riders.Netplay.Messages.Reliable.Structs.Menu.MenuSynchronizationCommand;
 

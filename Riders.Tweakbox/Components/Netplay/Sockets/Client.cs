@@ -1,30 +1,53 @@
 ﻿using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Tweakbox.Components.Netplay.Sockets.Components;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
+using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
-    public class Client : ISocket
+    /// <inheritdoc />
+    public class Client : Socket
     {
-        private NetManager _client;
-        public Client(string ipAddress)
+        public Client(string ipAddress, int port, string password)
         {
-            _client = new NetManager(new EventListener(this, true));
+            // TODO: Implement Connection
+            Manager.Start();
+            Manager.Connect(ipAddress, port, password);
         }
 
-        public void Dispose() => _client.Stop(true);
-        public bool IsConnected() => _client.IsRunning;
-        public bool IsHost() => false;
-        public void Update() => _client.PollEvents();
+        
+        public override bool IsHost() => false;
+        public override void Update()
+        {
 
-        public void HandleReliablePacket(ReliablePacket packet)
+        }
+
+        public override void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
         {
             
         }
 
-        public void HandleUnreliablePacket(UnreliablePacket packet)
+        public override void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet)
         {
 
         }
+
+        public override void OnPeerConnected(NetPeer peer)
+        {
+            // Inform host of player data.
+            var playerData = IoC.GetConstant<NetplayImguiConfig>();
+            var setPlayerData = new ClientSetPlayerData() { Data = playerData.FromImguiData() };
+            var message = new ServerMessage(setPlayerData);
+            var packet = new ReliablePacket { ServerMessage = message };
+            peer.Send(packet.Serialize(), DeliveryMethod.ReliableUnordered);
+            peer.Flush();
+        }
+
+        public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Dispose();
+
+        // Ignored
+        public override void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
+        public override void OnConnectionRequest(ConnectionRequest request) { }
     }
 }

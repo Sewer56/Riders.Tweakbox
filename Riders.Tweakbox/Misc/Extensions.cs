@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
+using Riders.Tweakbox.Components.Netplay;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -23,5 +25,18 @@ namespace Riders.Tweakbox.Misc
 
             return -1;
         }
+
+        /// <summary>
+        /// Turns a player config into user data to send over the web.
+        /// </summary>
+        public static HostPlayerData FromImguiData(this NetplayImguiConfig config)
+        {
+            return new HostPlayerData()
+            {
+                Name = config.PlayerName.Text
+            };
+        }
+
+        public static unsafe bool IsNotNull<T>(T* ptr) where T : unmanaged => ptr != (void*) 0x0;
     }
 }

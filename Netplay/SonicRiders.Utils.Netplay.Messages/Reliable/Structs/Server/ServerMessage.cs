@@ -41,11 +41,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
 
             switch (message.MessageKind)
             {
-                case ServerMessageType.ClientSetPlayerName:
-                    message.Message = SetPlayerName.FromBytes(reader);
+                case ServerMessageType.ClientSetPlayerData:
+                    message.Message = ClientSetPlayerData.FromBytes(reader);
                     break;
-                case ServerMessageType.HostSetPlayerNames:
-                    message.Message = SetPlayerNames.FromBytes(reader);
+                case ServerMessageType.HostSetPlayerData:
+                    message.Message = HostSetPlayerData.FromBytes(reader);
                     break;
                 case ServerMessageType.HasSetAntiCheatTypes:
                     message.Message = reader.Read<SetAntiCheat>();

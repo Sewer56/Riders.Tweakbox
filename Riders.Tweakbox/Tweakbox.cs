@@ -9,6 +9,7 @@ using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Components.GearEditor;
 using Riders.Tweakbox.Components.Imgui;
+using Riders.Tweakbox.Components.Misc;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.PhysicsEditor;
 using Riders.Tweakbox.Definitions;
@@ -28,6 +29,7 @@ namespace Riders.Tweakbox
         private IReloadedHooks _hooks;
         private IReloadedHooksUtilities _hooksUtilities;
         private IList<Menu> _menus;
+        private bool _inputsEnabled = true;
         private bool _isEnabled = true;
         private bool _isReady = false;
         private IHook<Functions.GetInputsFn> _blockInputsHook;
@@ -66,7 +68,8 @@ namespace Riders.Tweakbox
                 {
                     IoC.GetConstant<DemoWindow>(),
                     IoC.GetConstant<UserGuideWindow>(),
-                    IoC.GetConstant<ShellTestWindow>()
+                    IoC.GetConstant<ShellTestWindow>(),
+                    IoC.GetConstant<TaskTrackerWindow>()
                 })
             };
 
@@ -78,7 +81,7 @@ namespace Riders.Tweakbox
         private int BlockGameInputsIfEnabled()
         {
             // Skips game controller input obtain function is menu is open.
-            if (!_isEnabled)
+            if (_inputsEnabled)
                 return _blockInputsHook.OriginalFunction();
 
             return 0;
@@ -88,6 +91,7 @@ namespace Riders.Tweakbox
         private void Render()
         {
             const int helpLength = 100;
+            const int inputsHelpLength = 200;
 
             if (!_isReady)
                 return;
@@ -96,10 +100,21 @@ namespace Riders.Tweakbox
             // the Windows key code order.
             if (ImGui.IsKeyPressed((int) Keys.F11, false))
                 _isEnabled = !_isEnabled;
-            
+
+            if (ImGui.IsKeyPressed((int)Keys.F10, false))
+                _inputsEnabled = !_inputsEnabled;
+
             if (!_isEnabled) 
                 return;
 
+            RenderMainMenuBar(helpLength, inputsHelpLength);
+
+            // Render Shell
+            Shell.Render();
+        }
+
+        private void RenderMainMenuBar(int helpLength, int inputsHelpLength)
+        {
             ImGui.BeginMainMenuBar();
 
             // Get size of main menu.
@@ -111,12 +126,13 @@ namespace Riders.Tweakbox
 
             // Render help text.
             ImGui.SetNextItemWidth(helpLength);
-            ImGui.SameLine(menuSize.X - Constants.Spacing - helpLength, 0);
+            ImGui.SameLine(menuSize.X - Constants.Spacing - (helpLength), 0);
             ImGui.Text("F11: Show/Hide");
-            ImGui.EndMainMenuBar();
 
-            // Render Shell
-            Shell.Render();
+            ImGui.SetNextItemWidth(inputsHelpLength);
+            ImGui.SameLine(menuSize.X - Constants.Spacing - (helpLength + inputsHelpLength), 0);
+            ImGui.Text("F10: Enable/Disable Game Input");
+            ImGui.EndMainMenuBar();
         }
 
         public void Suspend()

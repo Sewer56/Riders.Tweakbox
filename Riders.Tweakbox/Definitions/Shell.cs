@@ -4,6 +4,7 @@ using DearImguiSharp;
 
 namespace Riders.Tweakbox.Definitions
 {
+    // TODO: Add notification system (messages show bottom right of screen).
     public static class Shell
     {
         /// <summary>

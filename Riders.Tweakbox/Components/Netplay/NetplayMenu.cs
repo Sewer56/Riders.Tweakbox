@@ -50,7 +50,7 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Player Settings"))
             {
-                Config.PlayerName.Render(nameof(NetplayConfig.PlayerName));
+                Config.PlayerName.Render(nameof(NetplayConfigFile.PlayerName));
                 Reflection.MakeControl(ref Config.ShowPlayers, "Show Player Overlay");
 
                 ImGui.TreePop();

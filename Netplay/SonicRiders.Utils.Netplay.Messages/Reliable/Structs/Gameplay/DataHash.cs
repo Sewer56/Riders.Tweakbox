@@ -1,10 +1,10 @@
-﻿using System;
-using K4os.Hash.xxHash;
+﻿using K4os.Hash.xxHash;
 using Reloaded.Memory.Streams;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
-    public struct DataHash : IEquatable<DataHash>
+    [Equals(DoNotAddEqualityOperators = true)]
+    public struct DataHash
     {
         public ulong Hash;
         public DataHash(ulong hash) => Hash = hash;
@@ -34,8 +34,5 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// True if external hash matches our game, else false.
         /// </summary>
         public static bool Verify(DataHash external) => external.Equals(FromGame());
-
-        public override int GetHashCode() => base.GetHashCode();
-        public bool Equals(DataHash other) => Hash == other.Hash;
     }
 }

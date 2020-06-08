@@ -1,52 +1,54 @@
 ﻿using System;
-using System.Net;
-using System.Net.Sockets;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
 {
-    public class EventListener : INetEventListener
+    public class EventListener : EventBasedNetListener
     {
-        public bool IsClient;
-        public ISocket Socket;
-        
-        public EventListener(ISocket socket, bool isClient)
+        public Socket Socket;
+        public event HandleReliablePacket   OnHandleReliablePacket;
+        public event HandleUnreliablePacket OnHandleUnreliablePacket;
+        public event HandlePacket           OnHandlePacket;
+
+        public EventListener(Socket socket)
         {
-            Socket   = socket;
-            IsClient = isClient;
+            Socket = socket;
+            base.PeerConnectedEvent += PeerConnected;
+            base.PeerDisconnectedEvent += PeerDisconnected;
+            base.NetworkReceiveEvent += NetworkReceive;
+            base.NetworkLatencyUpdateEvent += NetworkLatencyUpdate;
+            base.ConnectionRequestEvent += ConnectionRequest;
+            OnHandleReliablePacket += Socket.HandleReliablePacket;
+            OnHandleUnreliablePacket += Socket.HandleUnreliablePacket;
         }
 
-        public void OnPeerConnected(NetPeer peer)
-        {
-
-        }
-
-        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
-        {
-
-        }
-
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+        public void PeerConnected(NetPeer peer) => Socket.OnPeerConnected(peer);
+        public void PeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Socket.OnPeerDisconnected(peer, disconnectInfo);
+        public void NetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
             var rawBytes = reader.GetRemainingBytes().AsSpan();
             if (deliveryMethod == DeliveryMethod.Sequenced || deliveryMethod == DeliveryMethod.Unreliable)
-                Socket.HandleUnreliablePacket(UnreliablePacket.Deserialize(rawBytes));
+            {
+                var packet = UnreliablePacket.Deserialize(rawBytes);
+                OnHandleUnreliablePacket?.Invoke(peer, packet);
+                OnHandlePacket?.Invoke(peer, new Packet(null, packet));
+            }
             else
-                Socket.HandleReliablePacket(ReliablePacket.Deserialize(rawBytes));
+            {
+                var packet = ReliablePacket.Deserialize(rawBytes);
+                OnHandleReliablePacket?.Invoke(peer, packet);
+                OnHandlePacket?.Invoke(peer, new Packet(packet, null));
+            }
         }
 
-        public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
-        {
-            
-        }
+        public void NetworkLatencyUpdate(NetPeer peer, int latency) => Socket.OnNetworkLatencyUpdate(peer, latency);
+        public void ConnectionRequest(ConnectionRequest request) => Socket.OnConnectionRequest(request);
 
-        public void OnConnectionRequest(ConnectionRequest request)
-        {
-
-        }
-
-        public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) { }
-        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) { }
+        #region Delegates
+        public delegate void HandlePacket(NetPeer peer, Packet packet);
+        public delegate void HandleReliablePacket(NetPeer peer, ReliablePacket packet);
+        public delegate void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet);
+        #endregion
     }
 }

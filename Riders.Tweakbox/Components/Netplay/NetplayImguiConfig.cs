@@ -15,19 +15,19 @@ namespace Riders.Tweakbox.Components.Netplay
         public int ClientPort;
         public bool ShowPlayers;
 
-        public NetplayImguiConfig(NetplayConfig netplayConfig)
+        public NetplayImguiConfig(NetplayConfigFile netplayConfigFile)
         {
-            PlayerName = new TextInputData(netplayConfig.PlayerName, TextLength);
-            Password = new TextInputData(netplayConfig.Password, TextLength);
-            ClientIP = new TextInputData(netplayConfig.ClientIP, IPLength, sizeof(byte));
-            ShowPlayers = netplayConfig.ShowPlayers;
-            HostPort = netplayConfig.HostPort;
-            ClientPort = netplayConfig.ClientPort;
+            PlayerName = new TextInputData(netplayConfigFile.PlayerName, TextLength);
+            Password = new TextInputData(netplayConfigFile.Password, TextLength);
+            ClientIP = new TextInputData(netplayConfigFile.ClientIP, IPLength, sizeof(byte));
+            ShowPlayers = netplayConfigFile.ShowPlayers;
+            HostPort = netplayConfigFile.HostPort;
+            ClientPort = netplayConfigFile.ClientPort;
         }
 
-        public void Save()
+        public NetplayConfigFile GetConfig()
         {
-            var config = new NetplayConfig
+            return new NetplayConfigFile
             {
                 Password = Password.GetText(),
                 PlayerName = PlayerName.GetText(),
@@ -36,8 +36,8 @@ namespace Riders.Tweakbox.Components.Netplay
                 HostPort = HostPort,
                 ShowPlayers = ShowPlayers
             };
-
-            IoC.Get<IO>().SaveNetplayConfig(config);
         }
+
+        public void Save() => IoC.Get<IO>().SaveNetplayConfig(GetConfig());
     }
 }

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Utility;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox
@@ -26,12 +28,6 @@ namespace Riders.Tweakbox
         /// </summary>
         public async void Start(IModLoaderV1 loader)
         {
-            // TODO: For Multi-Player Support
-            // Host -> Client: Send Member Count
-            // Client: Accept <Member> structs.
-            // If client disconnects, replace with (Kizuna) AI.
-
-            Debugger.Launch();
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
@@ -52,7 +48,7 @@ namespace Riders.Tweakbox
         /*  If CanSuspend == false, suspend and resume button are disabled in Launcher and Suspend()/Resume() will never be called.
             If CanUnload == false, unload button is disabled in Launcher and Unload() will never be called.
         */
-        public bool CanUnload()  => true;
+        public bool CanUnload()  => false;
         public bool CanSuspend() => true;
 
         /* Automatically called by the mod loader when the mod is about to be unloaded. */

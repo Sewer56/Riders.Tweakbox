@@ -18,7 +18,7 @@ namespace Riders.Tweakbox.Misc
         {
             var io = new IO(modFolder);
             Kernel.Bind<IO>().ToConstant(io);
-            Kernel.Bind<NetplayConfig>().ToConstant(io.GetNetplayConfig());
+            Kernel.Bind<NetplayConfigFile>().ToConstant(io.GetNetplayConfig());
             GetConstant<NetplayImguiConfig>();
         }
 

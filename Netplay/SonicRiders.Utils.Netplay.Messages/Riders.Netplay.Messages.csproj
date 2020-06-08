@@ -7,11 +7,14 @@
 
   <ItemGroup>
     <PackageReference Include="Enums.NET" Version="3.0.3" />
+    <PackageReference Include="Equals.Fody" Version="4.0.1" />
     <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.1.11" />
     <PackageReference Include="MessagePack" Version="2.1.115" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.1.115" />
     <PackageReference Include="Reloaded.Memory" Version="3.0.1" />
     <PackageReference Include="rubendal.BitStream" Version="1.2.0" />
+    <PackageReference Include="ToString.Fody" Version="1.11.0" />
+    <PackageReference Include="Visualize.Fody" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>

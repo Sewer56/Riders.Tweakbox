@@ -1,6 +1,8 @@
 ﻿using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
-using Sewer56.SonicRiders.Structures.Menus.Enums;
+using Sewer56.SonicRiders.Structures.Tasks.Enums;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.Structs;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 {
@@ -30,8 +32,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public byte SubmenuSelection;
 
         /// <summary>
-        /// Current Task State.
+        /// Current Select Task State.
         /// </summary>
-        public CourseSelectTaskState TaskState;
+        public CourseSelectTaskState State;
     }
 }

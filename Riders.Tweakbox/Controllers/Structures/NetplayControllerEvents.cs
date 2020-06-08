@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Riders.Tweakbox.Controllers.Structures
+﻿namespace Riders.Tweakbox.Controllers.Structures
 {
     public class NetplayControllerEvents
     {
@@ -20,7 +16,6 @@ namespace Riders.Tweakbox.Controllers.Structures
         /// Called when a player changes their name.
         /// </summary>
         public ClientNameChanged NameChanged { get; set; }
-
 
         #region Delegates
         public delegate void ClientConnectionChanged(string clientName);

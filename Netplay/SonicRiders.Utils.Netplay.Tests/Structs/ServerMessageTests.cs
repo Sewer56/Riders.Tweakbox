@@ -3,6 +3,7 @@ using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Xunit;
 
 namespace Riders.Netplay.Messages.Tests.Structs
@@ -12,11 +13,11 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeArrayMessage()
         {
-            var message = new SetPlayerNames(new string[]
+            var message = new HostSetPlayerData(new []
             {
-                "Yacker",
-                "Xi Kykping",
-                "Pixel"
+                new HostPlayerData() { Name = "Yacker", PlayerIndex = 0 },
+                new HostPlayerData() { Name = "Xi Kykping", PlayerIndex = 1 },
+                new HostPlayerData() { Name = "Pixel", PlayerIndex = 2 }
             });
 
             var serverMsg = new ServerMessage(message);
@@ -28,9 +29,9 @@ namespace Riders.Netplay.Messages.Tests.Structs
 
             Assert.Equal(message.GetMessageType(), command.MessageKind);
             Assert.IsType<ServerMessage>(command);
-            Assert.IsType<SetPlayerNames>(command.Message);
+            Assert.IsType<HostSetPlayerData>(command.Message);
 
-            var messageCopy = (SetPlayerNames) command.Message;
+            var messageCopy = (HostSetPlayerData) command.Message;
             Assert.Equal(message, messageCopy);
         }
 

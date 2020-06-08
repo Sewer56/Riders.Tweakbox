@@ -2,7 +2,7 @@
 
 namespace Riders.Tweakbox.Components.Netplay
 {
-    public class NetplayConfig
+    public class NetplayConfigFile
     {
         public string PlayerName    { get; set; } = "Pixel";
         public string Password      { get; set; } = String.Empty;
