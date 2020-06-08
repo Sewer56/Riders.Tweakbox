@@ -34,6 +34,16 @@ for (int x = 0; x < types.Length; x++)
             ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) value, 1.0F, IntPtr.Zero, IntPtr.Zero, null, 1);
         }
 
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        public static void MakeControl(ref <#=types[x]#> value, string name)
+        {
+            ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) Unsafe.AsPointer(ref value), 1.0F, IntPtr.Zero, IntPtr.Zero, null, 1);
+        }
+
 <#
 }
 #>                

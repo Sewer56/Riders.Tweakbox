@@ -26,6 +26,12 @@ namespace Riders.Tweakbox
         /// </summary>
         public async void Start(IModLoaderV1 loader)
         {
+            // TODO: For Multi-Player Support
+            // Host -> Client: Send Member Count
+            // Client: Accept <Member> structs.
+            // If client disconnects, replace with (Kizuna) AI.
+
+            Debugger.Launch();
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);

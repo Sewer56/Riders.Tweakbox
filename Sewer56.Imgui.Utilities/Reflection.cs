@@ -23,6 +23,25 @@ namespace Sewer56.Imgui.Utilities
             ImGui.Custom.DragFloat3(name, value, 1.0f);
         }
 
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        public static void MakeControl(ref bool value, string name)
+        {
+            ImGui.Checkbox(name, ref value);
+        }
+
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        public static void MakeControl(bool* value, string name)
+        {
+            ImGui.Checkbox(name, ref Unsafe.AsRef<bool>(value));
+        }
 
         /// <summary>
         /// Creates a ComboBox given a set of values, names, and the name of the current item.

@@ -157,7 +157,7 @@ namespace Riders.Tweakbox.Definitions
             ImGui.Text("Name Your Creation!\n");
             ImGui.Spacing();
 
-            ImGui.InputText("", _inputData.Pointer, (IntPtr) _inputData.SizeOfData, (int) ImGuiInputTextFlagsCallbackCharFilter, TextInputData.FilterValidPathCharacters, IntPtr.Zero);
+            ImGui.InputText("", _inputData.Pointer, (IntPtr) _inputData.SizeOfData, (int) ImGuiInputTextFlagsCallbackCharFilter, _inputData.FilterValidPathCharacters, IntPtr.Zero);
             ImGui.Spacing();
 
             if (ImGui.Button("Create", Constants.ButtonSizeThin))

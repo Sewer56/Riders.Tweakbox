@@ -3,7 +3,6 @@ using Reloaded.Memory;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.NumberUtilities.Primitives;
 
 namespace Riders.Tweakbox.Components.FixesEditor
 {

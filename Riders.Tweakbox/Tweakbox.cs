@@ -9,7 +9,9 @@ using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Components.GearEditor;
 using Riders.Tweakbox.Components.Imgui;
+using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.PhysicsEditor;
+using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Utilities;
@@ -27,6 +29,7 @@ namespace Riders.Tweakbox
         private IReloadedHooksUtilities _hooksUtilities;
         private IList<Menu> _menus;
         private bool _isEnabled = true;
+        private bool _isReady = false;
         private IHook<Functions.GetInputsFn> _blockInputsHook;
 
         /* Creation & Disposal */
@@ -37,40 +40,38 @@ namespace Riders.Tweakbox
         /// </summary>
         public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, string modFolder)
         {
-            IoC.Kernel.Bind<IO>().ToConstant(new IO(modFolder));
-
-            var tweakBox = new Tweakbox
+            var tweakBox  = new Tweakbox();
+            var imguiHook = await ImguiHook.Create(tweakBox.Render);
+            IoC.Initialize(modFolder);
+            tweakBox.SetupTheme(modFolder);
+            tweakBox._hook  = imguiHook;
+            tweakBox._hooks = hooks;
+            tweakBox._hooksUtilities = hooksUtilities;
+            tweakBox._menus = new List<Menu>()
             {
-                _hooks = hooks,
-                _hooksUtilities = hooksUtilities,
-                _menus = new List<Menu>()
+                new Menu("Netplay", new List<IComponent>()
                 {
-                    new Menu("Netplay", new List<IComponent>()
-                    {
-                        
-                    }),
-                    new Menu("Fixes", new List<IComponent>()
-                    {
-                        IoC.GetConstant<FixesEditor>()
-                    }),
-                    new Menu("Editors", new List<IComponent>()
-                    {
-                        IoC.GetConstant<GearEditor>(),
-                        IoC.GetConstant<PhysicsEditor>()
-                    }),
-                    new Menu("Misc", new List<IComponent>()
-                    {
-                        IoC.GetConstant<DemoWindow>(),
-                        IoC.GetConstant<UserGuideWindow>()
-                    })
-                }
+                    IoC.GetConstant<NetplayMenu>()
+                }),
+                new Menu("Fixes", new List<IComponent>()
+                {
+                    IoC.GetConstant<FixesEditor>()
+                }),
+                new Menu("Editors", new List<IComponent>()
+                {
+                    IoC.GetConstant<GearEditor>(),
+                    IoC.GetConstant<PhysicsEditor>()
+                }),
+                new Menu("Misc", new List<IComponent>()
+                {
+                    IoC.GetConstant<DemoWindow>(),
+                    IoC.GetConstant<UserGuideWindow>(),
+                    IoC.GetConstant<ShellTestWindow>()
+                })
             };
 
             tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
-
-            var imguiHook = await ImguiHook.Create(tweakBox.Render);
-            tweakBox._hook = imguiHook;
-            tweakBox.SetupTheme(modFolder);
+            tweakBox._isReady = true;
             return tweakBox;
         }
 
@@ -87,7 +88,10 @@ namespace Riders.Tweakbox
         private void Render()
         {
             const int helpLength = 100;
-            
+
+            if (!_isReady)
+                return;
+
             // This works because the keys sent to imgui in WndProc follow
             // the Windows key code order.
             if (ImGui.IsKeyPressed((int) Keys.F11, false))
@@ -110,6 +114,9 @@ namespace Riders.Tweakbox
             ImGui.SameLine(menuSize.X - Constants.Spacing - helpLength, 0);
             ImGui.Text("F11: Show/Hide");
             ImGui.EndMainMenuBar();
+
+            // Render Shell
+            Shell.Render();
         }
 
         public void Suspend()

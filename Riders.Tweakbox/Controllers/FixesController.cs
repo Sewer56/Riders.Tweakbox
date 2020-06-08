@@ -28,6 +28,9 @@ namespace Riders.Tweakbox.Controllers
             };
         }
 
+        public void Disable() { _endFrameHook.Disable(); }
+        public void Enable() { _endFrameHook.Enable(); }
+
         /// <summary>
         /// Custom frame pacing implementation,
         /// </summary>

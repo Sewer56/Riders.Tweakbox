@@ -50,8 +50,4 @@
     <ProjectReference Include="..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Netplay\" />
-  </ItemGroup>
-
 </Project>

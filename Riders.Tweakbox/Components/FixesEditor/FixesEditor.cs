@@ -38,9 +38,9 @@ namespace Riders.Tweakbox.Components.FixesEditor
         private byte[] GetCurrentConfigBytes() => _config.GetCurrent().ToBytes();
 
         public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() => _config.GetDefault().Apply();
-        public void Enable()  => _config.Apply();
-        
+        public void Disable() => _config.GetImplementation().Disable();
+        public void Enable() => _config.GetImplementation().Enable();
+
         // UI
         public void Render()
         {

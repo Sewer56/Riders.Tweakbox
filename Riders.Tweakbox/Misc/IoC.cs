@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Ninject;
+using Riders.Tweakbox.Components.Netplay;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -11,11 +12,14 @@ namespace Riders.Tweakbox.Misc
         public static IKernel Kernel { get; } = new StandardKernel();
 
         /// <summary>
-        /// Sets up the IoC container with any relevant bindings on first access of the class.
+        /// Initializes global bindings.
         /// </summary>
-        static IoC()
+        public static void Initialize(string modFolder)
         {
-            /* No code here yet. */
+            var io = new IO(modFolder);
+            Kernel.Bind<IO>().ToConstant(io);
+            Kernel.Bind<NetplayConfig>().ToConstant(io.GetNetplayConfig());
+            GetConstant<NetplayImguiConfig>();
         }
 
         /// <summary>

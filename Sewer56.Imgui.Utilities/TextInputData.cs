@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Unicode;
 using DearImguiSharp;
 using Reloaded.Memory.Interop;
+using Reloaded.Memory.Pointers;
 
 namespace Sewer56.Imgui.Utilities
 {
@@ -19,10 +20,24 @@ namespace Sewer56.Imgui.Utilities
 
         private Pinnable<sbyte> _textInput;
 
-        public TextInputData(int numberOfCharacters)
+        public TextInputData(int maxCharacters, int characterwidth = sizeof(int))
         {
-            SizeOfData = (ulong) (numberOfCharacters * sizeof(int));
+            _textInput = new Pinnable<sbyte>(new sbyte[maxCharacters * characterwidth + 1]);
+        }
+
+        public TextInputData(string text, int maxCharacters, int characterwidth = sizeof(int))
+        {
+            SizeOfData = (ulong)(maxCharacters * characterwidth + 1);
             _textInput = new Pinnable<sbyte>(new sbyte[SizeOfData]);
+
+            if (!string.IsNullOrEmpty(text))
+            {
+                if (text.Length > maxCharacters)
+                    throw new ArgumentException("Text length cannot exceed number of characters.");
+
+                var bytes = Encoding.UTF8.GetBytes(text);
+                new FixedArrayPtr<byte>((ulong)_textInput.Pointer, (int)SizeOfData).CopyFrom(bytes, bytes.Length);
+            }
         }
 
         public string GetText()
@@ -35,34 +50,55 @@ namespace Sewer56.Imgui.Utilities
             return text;
         }
 
+        public void Render(string label = "", ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = null, IntPtr userData = default)
+        {
+            ImGui.InputText(label, Pointer, (IntPtr)SizeOfData, (int) flags, callback, userData);
+        }
+
         /// <summary>
         /// Custom filter for functions such as <see cref="ImGui.InputText"/>
         /// </summary>
-        public static int FilterValidPathCharacters(IntPtr ptr)
+        public int FilterValidPathCharacters(IntPtr ptr)
         {
-            const int numberOfChars = 2;
-            var data  = new ImGuiInputTextCallbackData((void*) ptr);
-
-            // Source
-            var characterShort = data.EventChar;
-            var byteSpan = new ReadOnlySpan<byte>(&characterShort, sizeof(short));
-
-            // Destination (4 bytes on stack, API needs null terminator so 2 is not enough!)
-            var chars = stackalloc char[numberOfChars];
-            var charsSpan = new Span<char>(chars, numberOfChars);
-            
-            Encoding.UTF8.GetChars(byteSpan, charsSpan);
-            return PathSanitizer.IsCharacterValid(charsSpan[0]) ? 0 : 1;
+            var data = new ImGuiInputTextCallbackData();
+            return CharacterFilter.IsPathCharacterValid(GetEventCharacter(data)) ? 0 : 1;
         }
 
-        public static class PathSanitizer
+        /// <summary>
+        /// Custom filter for functions such as <see cref="ImGui.InputText"/>
+        /// </summary>
+        public int FilterIPAddress(IntPtr ptr)
         {
-            public static readonly char[] InvalidCharacters = Path.GetInvalidPathChars().Union(Path.GetInvalidFileNameChars()).ToArray();
+            const char dot = '.';
+            const int charsBetweenDot = 3;
+            var data = new ImGuiInputTextCallbackData((void*)ptr);
 
-            /// <summary>
-            /// True if character is a valid file path character, else false.
-            /// </summary>
-            public static bool IsCharacterValid(char character) => !InvalidCharacters.Contains(character);
+            var text     = this.GetText();
+            var dotIndex = text.LastIndexOf(dot);
+            int charsAfterDelim = text.Length;
+
+            if (dotIndex > 0)
+                charsAfterDelim = (text.Length - 1) - dotIndex;
+
+            // Dot as 4th Character
+            if (charsAfterDelim == charsBetweenDot && GetEventCharacter(data) == dot)
+                return 0;
+
+            // Characters after 3rd
+            if (charsAfterDelim >= charsBetweenDot)
+                return 1;
+
+            return CharacterFilter.IsIPCharacterValid(GetEventCharacter(data)) ? 0 : 1;
+        }
+
+        private static char GetEventCharacter(ImGuiInputTextCallbackData data) => Encoding.UTF8.ToCharacter(data.EventChar);
+        public static class CharacterFilter
+        {
+            public static readonly char[] PathInvalidCharacters   = Path.GetInvalidPathChars().Union(Path.GetInvalidFileNameChars()).ToArray();
+            public static readonly char[] IPAddressCharacters = "0123456789.".ToCharArray();
+
+            public static bool IsPathCharacterValid(char character) => !PathInvalidCharacters.Contains(character);
+            public static bool IsIPCharacterValid(char character)   => IPAddressCharacters.Contains(character);
         }
     }
 }
