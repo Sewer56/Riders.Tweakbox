@@ -37,14 +37,14 @@ namespace Riders.Netplay.Messages.Unreliable
                 throw new Exception("Number of players must be in the range 1-8.");
 
             NumberOfPlayers = (byte) players.Length;
-            Fields          = GetDataFlagsFromPlayer(players[0]);
+            Fields          = GetDataFlags(players[0]);
         }
 
         /// <summary>
         /// Retrieves the flags declaring what data is included from a player to be sent.
         /// </summary>
         /// <param name="player">The player to get flags from.</param>
-        public static HasData GetDataFlagsFromPlayer(UnreliablePacketPlayer player)
+        public static HasData GetDataFlags(UnreliablePacketPlayer player)
         {
             var data = HasData.Null;
 
@@ -104,20 +104,20 @@ namespace Riders.Netplay.Messages.Unreliable
         [Flags]
         public enum HasData : ushort
         {
-            Null            = 0,
-            HasPosition     = 1, 
-            HasRotation     = 1 << 1, 
-            HasVelocity     = 1 << 2, 
-            HasRings        = 1 << 3, 
-            HasState        = 1 << 4, 
-            HasUnused0      = 1 << 5, 
-            HasUnused1      = 1 << 6, 
-            HasUnused2      = 1 << 7, 
-            HasUnused3      = 1 << 8, 
-            HasUnused4      = 1 << 9, 
-            HasUnused5      = 1 << 10, 
-            HasUnused6      = 1 << 11, 
-            HasUnused7      = 1 << 12,
+            Null               = 0,
+            HasPosition        = 1, 
+            HasRotation        = 1 << 1, 
+            HasVelocity        = 1 << 2, 
+            HasRings           = 1 << 3, 
+            HasState           = 1 << 4, 
+            HasUnused0         = 1 << 5, 
+            HasUnused1         = 1 << 6, 
+            HasUnused2         = 1 << 7, 
+            HasUnused3         = 1 << 8, 
+            HasUnused4         = 1 << 9, 
+            HasUnused5         = 1 << 10, 
+            HasUnused6         = 1 << 11,
+            HasUnused7         = 1 << 12,
             // Last 3 bytes occupied by player count.
         }
 

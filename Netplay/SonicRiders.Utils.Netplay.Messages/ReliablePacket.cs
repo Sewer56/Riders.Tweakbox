@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using EnumsNET;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
@@ -98,9 +99,11 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Serializes an instance of the packet.
         /// </summary>
-        public static unsafe ReliablePacket Deserialize(BufferedStreamReader reader)
+        public static unsafe ReliablePacket Deserialize(Span<byte> data)
         {
-            var packet = new ReliablePacket();
+            using var memStream = new MemoryStream(data.ToArray());
+            using var reader    = new BufferedStreamReader(memStream, (int) memStream.Length);
+            var packet   = new ReliablePacket();
             packet.Flags = reader.Read<HasData>();
             if (packet.Flags.HasAllFlags(HasData.HasSyncStartReady)) packet.HasSyncStartReady = true;
             if (packet.Flags.HasAllFlags(HasData.HasIncrementLapCounter)) packet.HasIncrementLapCounter = true;
@@ -154,9 +157,8 @@ namespace Riders.Netplay.Messages
         public enum HasData : ushort
         {
             Null = 0,
-
             // Randomization
-            HasRand = 1,                    // Host -> Client: RNG Seed
+            HasRand = 1,               // Host -> Client: RNG Seed
 
             // Integrity Synchronization
             HasGameData = 1 << 1,           // Host -> Client: Running, Gear Stats, Character Stats (Compressed)
