@@ -16,7 +16,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// <summary>
         /// Change in Y selection.
         /// </summary>
-        public byte DeltaSelectionV;
+        public byte DeltaSelectionY;
 
         /// <summary>
         /// Change in list scroll offset.
@@ -37,5 +37,27 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// Closes the Submenu.
         /// </summary>
         public byte CloseSubmenu;
+
+        /// <summary>
+        /// Opens the Race Rules menu.
+        /// </summary>
+        public byte OpenRaceRules;
+
+        /// <summary>
+        /// Adds the contents of two loops together.
+        /// </summary>
+        public CourseSelectLoop Add(CourseSelectLoop loop)
+        {
+            return new CourseSelectLoop()
+            {
+                CloseSubmenu = (byte) (CloseSubmenu + loop.CloseSubmenu),
+                DeltaListScroll = (byte) (DeltaListScroll + loop.DeltaListScroll),
+                DeltaSelectionY = (byte) (DeltaSelectionY + loop.DeltaSelectionY),
+                DeltaSelectionX = (byte) (DeltaSelectionX + loop.DeltaSelectionX),
+                OpenSubmenu = (byte) (OpenSubmenu + loop.OpenSubmenu),
+                SubmenuDeltaSelection = (byte) (SubmenuDeltaSelection + loop.SubmenuDeltaSelection),
+                OpenRaceRules = (byte)(OpenRaceRules + loop.OpenRaceRules)
+            };
+        }
     }
 }

@@ -7,13 +7,13 @@ namespace Riders.Tweakbox.Definitions
     /// <summary>
     /// Represents a single menu of Dear ImGui's main menu bar.
     /// </summary>
-    public class Menu : IComponent
+    public class MenuBarItem : IComponent
     {
         public string Name { get; set; }
         public List<IComponent> Components { get; } = new List<IComponent>();
         private bool _isEnabled = true;
 
-        public Menu(string name, IList<IComponent> components)
+        public MenuBarItem(string name, IList<IComponent> components)
         {
             Name = name;
             Components.AddRange(components);

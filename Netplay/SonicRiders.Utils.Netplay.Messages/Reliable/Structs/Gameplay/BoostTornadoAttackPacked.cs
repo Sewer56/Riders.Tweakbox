@@ -10,7 +10,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     public unsafe struct BoostTornadoAttackPacked
     {
         private const int SizeOfEntryBits       = 6;
-        private const int SizeOfAllEntriesBytes = SizeOfEntryBits * Constants.NumberOfPeerPlayers;
+        private const int SizeOfAllEntriesBytes = SizeOfEntryBits * Constants.MaxNumberOfPeers;
 
         private const int SizeOfModesBits       = 3;
         private const int SizeOfAttackIndexBits = 3;
@@ -20,7 +20,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             3 bits | Has Boost, Tornado, Attack
             3 bits | Index 0-7, the player attacked.
         
-            Total size: 42 bits (7 players) / 6 bytes.
+            Total size: 42 bits (8 players) / 6 bytes.
         */
         private fixed byte _playerIds[SizeOfAllEntriesBytes];
 

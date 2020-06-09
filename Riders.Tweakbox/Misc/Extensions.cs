@@ -29,11 +29,12 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Turns a player config into user data to send over the web.
         /// </summary>
-        public static HostPlayerData FromImguiData(this NetplayImguiConfig config)
+        public static HostPlayerData ToHostPlayerData(this NetplayImguiConfig config)
         {
             return new HostPlayerData()
             {
-                Name = config.PlayerName.Text
+                Name = config.PlayerName.Text,
+                PlayerIndex = 0
             };
         }
 

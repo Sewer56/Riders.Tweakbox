@@ -19,9 +19,9 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public NetplayControllerEvents Events { get; private set; } = new NetplayControllerEvents();
 
-        public NetplayController() => Event.AfterSleep += Update;
-        public void Disable() => Event.AfterSleep -= Update;
-        public void Enable() => Event.AfterSleep += Update;
+        public NetplayController() => Event.AfterSleep += OnSleep;
+        public void Disable() => Event.AfterSleep -= OnSleep;
+        public void Enable() => Event.OnSleep += OnSleep;
 
         /// <summary>
         /// True is currently connected, else false.
@@ -31,7 +31,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Updates on every frame of the game.
         /// </summary>
-        private void Update()
+        private void OnSleep()
         {
             Socket?.Poll();
             Socket?.Update();

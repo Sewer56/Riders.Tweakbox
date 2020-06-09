@@ -44,6 +44,9 @@ namespace Riders.Tweakbox.Components.Misc
 
             if (Extensions.IsNotNull(Tracker.TitleSequence))
                 ImGui.Text($"{nameof(Tracker.TitleSequence)}: {Tracker.TitleSequence->TaskStatus}");
+
+            if (Extensions.IsNotNull(Tracker.MessageBox))
+                ImGui.Text($"{nameof(Tracker.MessageBox)}: {Tracker.MessageBox->TaskStatus}");
         }
     }
 }

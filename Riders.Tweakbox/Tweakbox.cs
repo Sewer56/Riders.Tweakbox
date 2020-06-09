@@ -18,7 +18,6 @@ using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Functions;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
-using Menu = Riders.Tweakbox.Definitions.Menu;
 
 namespace Riders.Tweakbox
 {
@@ -28,10 +27,11 @@ namespace Riders.Tweakbox
         private ImguiHook _hook;
         private IReloadedHooks _hooks;
         private IReloadedHooksUtilities _hooksUtilities;
-        private IList<Menu> _menus;
+        
         private bool _inputsEnabled = true;
         private bool _isEnabled = true;
         private bool _isReady = false;
+        private MenuBar _menuBar;
         private IHook<Functions.GetInputsFn> _blockInputsHook;
 
         /* Creation & Disposal */
@@ -40,37 +40,46 @@ namespace Riders.Tweakbox
         /// <summary>
         /// Creates a new instance of Riders Tweakbox.
         /// </summary>
-        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, string modFolder)
+        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities,
+            string modFolder)
         {
-            var tweakBox  = new Tweakbox();
+            var tweakBox = new Tweakbox();
             var imguiHook = await ImguiHook.Create(tweakBox.Render);
             IoC.Initialize(modFolder);
             tweakBox.SetupTheme(modFolder);
-            tweakBox._hook  = imguiHook;
+            tweakBox._hook = imguiHook;
             tweakBox._hooks = hooks;
             tweakBox._hooksUtilities = hooksUtilities;
-            tweakBox._menus = new List<Menu>()
+            tweakBox._menuBar = new MenuBar()
             {
-                new Menu("Netplay", new List<IComponent>()
+                Menus = new List<MenuBarItem>()
                 {
-                    IoC.GetConstant<NetplayMenu>()
-                }),
-                new Menu("Fixes", new List<IComponent>()
+                    new MenuBarItem("Netplay", new List<IComponent>()
+                    {
+                        IoC.GetConstant<NetplayMenu>()
+                    }),
+                    new MenuBarItem("Fixes", new List<IComponent>()
+                    {
+                        IoC.GetConstant<FixesEditor>()
+                    }),
+                    new MenuBarItem("Editors", new List<IComponent>()
+                    {
+                        IoC.GetConstant<GearEditor>(),
+                        IoC.GetConstant<PhysicsEditor>()
+                    }),
+                    new MenuBarItem("Misc", new List<IComponent>()
+                    {
+                        IoC.GetConstant<DemoWindow>(),
+                        IoC.GetConstant<UserGuideWindow>(),
+                        IoC.GetConstant<ShellTestWindow>(),
+                        IoC.GetConstant<TaskTrackerWindow>()
+                    })
+                },
+                Text = new List<string>()
                 {
-                    IoC.GetConstant<FixesEditor>()
-                }),
-                new Menu("Editors", new List<IComponent>()
-                {
-                    IoC.GetConstant<GearEditor>(),
-                    IoC.GetConstant<PhysicsEditor>()
-                }),
-                new Menu("Misc", new List<IComponent>()
-                {
-                    IoC.GetConstant<DemoWindow>(),
-                    IoC.GetConstant<UserGuideWindow>(),
-                    IoC.GetConstant<ShellTestWindow>(),
-                    IoC.GetConstant<TaskTrackerWindow>()
-                })
+                    "F11: Show/Hide",
+                    "F10: Enable/Disable Game Input"
+                }
             };
 
             tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
@@ -89,10 +98,7 @@ namespace Riders.Tweakbox
 
         /* Implementation */
         private void Render()
-        {
-            const int helpLength = 100;
-            const int inputsHelpLength = 200;
-
+        { 
             if (!_isReady)
                 return;
 
@@ -107,47 +113,29 @@ namespace Riders.Tweakbox
             if (!_isEnabled) 
                 return;
 
-            RenderMainMenuBar(helpLength, inputsHelpLength);
+            // Update Menu Bar Text
+            if (_inputsEnabled)
+                _menuBar.Text[1] = "F10: Disable Game Input";
+            else
+                _menuBar.Text[1] = "F10: Enable Game Input";
+
+            // Render MenuBar and Menus
+            _menuBar.Render();
 
             // Render Shell
             Shell.Render();
         }
 
-        private void RenderMainMenuBar(int helpLength, int inputsHelpLength)
-        {
-            ImGui.BeginMainMenuBar();
-
-            // Get size of main menu.
-            var menuSize = Utilities.RunVectorFunction(ImGui.GetWindowSize);
-
-            // Render all menus.
-            foreach (var menu in _menus)
-                menu.Render(ref menu.IsEnabled());
-
-            // Render help text.
-            ImGui.SetNextItemWidth(helpLength);
-            ImGui.SameLine(menuSize.X - Constants.Spacing - (helpLength), 0);
-            ImGui.Text("F11: Show/Hide");
-
-            ImGui.SetNextItemWidth(inputsHelpLength);
-            ImGui.SameLine(menuSize.X - Constants.Spacing - (helpLength + inputsHelpLength), 0);
-            ImGui.Text("F10: Enable/Disable Game Input");
-            ImGui.EndMainMenuBar();
-        }
-
         public void Suspend()
         {
             _hook.Disable();
-            foreach (var menu in _menus)
-                menu.Disable();
+            _menuBar.Suspend();
         }
 
         public void Resume()
         {
             _hook.Enable();
-
-            foreach (var menu in _menus)
-                menu.Enable();
+            _menuBar.Resume();
         }
 
         // Setup

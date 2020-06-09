@@ -66,10 +66,10 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Menu synchronization command.
         /// </summary>
-        public MenuSynchronizationCommand? SynchronizationCommand;
+        public MenuSynchronizationCommand? MenuSynchronizationCommand;
 
         /// <summary>
-        /// Menu synchronization command.
+        /// Server message.
         /// </summary>
         public ServerMessage? ServerMessage;
 
@@ -91,7 +91,7 @@ namespace Riders.Netplay.Messages
             writer.WriteNullable(AntiCheatGameData);
             writer.WriteNullable(AntiCheatHeartbeat);
 
-            if (SynchronizationCommand.HasValue) writer.Write(SynchronizationCommand.Value.ToBytes());
+            if (MenuSynchronizationCommand.HasValue) writer.Write(MenuSynchronizationCommand.Value.ToBytes());
             if (ServerMessage.HasValue) writer.Write(ServerMessage.Value.ToBytes());
             return writer.ToArray();
         }
@@ -117,7 +117,7 @@ namespace Riders.Netplay.Messages
             reader.SetValueIfHasFlags(ref packet.AntiCheatTriggered, packet.Flags, HasData.HasAntiCheatTriggered);
             reader.SetValueIfHasFlags(ref packet.AntiCheatGameData, packet.Flags, HasData.HasAntiCheatGameData);
             reader.SetValueIfHasFlags(ref packet.AntiCheatHeartbeat, packet.Flags, HasData.HasAntiCheatHeartbeat);
-            if (packet.Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) packet.SynchronizationCommand = MenuSynchronizationCommand.FromBytes(reader);
+            if (packet.Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) packet.MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
             if (packet.Flags.HasAllFlags(HasData.HasServerMessage)) packet.ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
             
             return packet;
@@ -144,7 +144,7 @@ namespace Riders.Netplay.Messages
             if (AntiCheatTriggered.HasValue) flags |= HasData.HasAntiCheatTriggered;
             if (AntiCheatGameData.HasValue) flags |= HasData.HasAntiCheatGameData;
             if (AntiCheatHeartbeat.HasValue) flags |= HasData.HasAntiCheatHeartbeat;
-            if (SynchronizationCommand.HasValue) flags |= HasData.HasMenuSynchronizationCommand;
+            if (MenuSynchronizationCommand.HasValue) flags |= HasData.HasMenuSynchronizationCommand;
             if (ServerMessage.HasValue) flags |= HasData.HasServerMessage;
 
             return flags;

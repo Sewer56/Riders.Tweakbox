@@ -16,5 +16,13 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
         /// </summary>
         [Key(1)]
         public int PlayerIndex { get; set; }
+
+        /// <summary>
+        /// Copies data submitted by the client.
+        /// </summary>
+        public void UpdateFromClient(HostPlayerData data)
+        {
+            Name = data.Name;
+        }
     }
 }
