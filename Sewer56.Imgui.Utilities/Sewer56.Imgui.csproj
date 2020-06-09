@@ -6,6 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Fonts\Ruda-Bold.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Fonts\Ruda-Bold.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DearImguiSharp" Version="1.75.4" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.4" />
@@ -17,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ReflectionAutogen.tt">
+    <None Update="Controls\ReflectionAutogen.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ReflectionAutogen.cs</LastGenOutput>
     </None>
@@ -28,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="ReflectionAutogen.cs">
+    <Compile Update="Controls\ReflectionAutogen.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ReflectionAutogen.tt</DependentUpon>

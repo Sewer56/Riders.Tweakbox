@@ -17,16 +17,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Fonts\Ruda-Bold.ttf" />
     <None Remove="ModConfig.json" />
     <None Remove="Preview.png" />
     <None Remove="Publish.ps1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\Fonts\Ruda-Bold.ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="ModConfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -46,7 +42,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
-    <ProjectReference Include="..\Sewer56.Imgui.Utilities\Sewer56.Imgui.Utilities.csproj" />
+    <ProjectReference Include="..\Sewer56.Imgui.Utilities\Sewer56.Imgui.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />
   </ItemGroup>
 

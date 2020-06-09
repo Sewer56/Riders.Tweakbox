@@ -1,7 +1,10 @@
 ﻿using DearImguiSharp;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
-using Sewer56.Imgui.Utilities;
+using Sewer56.Imgui;
+using Sewer56.Imgui.Misc;
+using Sewer56.Imgui.Shell;
+using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Imgui
 {

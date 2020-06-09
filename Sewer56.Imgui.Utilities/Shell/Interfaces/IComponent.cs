@@ -1,4 +1,4 @@
-﻿namespace Riders.Tweakbox.Definitions.Interfaces
+﻿namespace Sewer56.Imgui.Shell.Interfaces
 {
     public interface IComponent
     {

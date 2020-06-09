@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Runtime.CompilerServices;
 using DearImguiSharp;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Misc
 {
     public static unsafe class Constants
     {

@@ -2,12 +2,12 @@
 using System.IO;
 using System.Linq;
 using DearImguiSharp;
-using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Utilities;
 using static DearImguiSharp.ImGuiInputTextFlags;
-using static Riders.Tweakbox.Misc.FileSystemWatcherFactory.FileSystemWatcherEvents;
+using static Sewer56.Imgui.Utilities.FileSystemWatcherFactory.FileSystemWatcherEvents;
 
-namespace Riders.Tweakbox.Definitions
+namespace Sewer56.Imgui.Controls
 {
     /// <summary>
     /// Represents a profile selector widget, which actively monitors all available config files and allows the user to select one.
@@ -28,6 +28,7 @@ namespace Riders.Tweakbox.Definitions
         private string _currentConfiguration;
         private string[] _configurations;
         private FileSystemWatcher _configWatcher;
+        private string _configExtension;
 
         /// <summary>
         /// Represents a profile selector widget.
@@ -35,18 +36,20 @@ namespace Riders.Tweakbox.Definitions
         /// <param name="directory">The directory for which to load/save profiles.</param>
         /// <param name="getConfigFiles">A function that obtains all config file names.</param>
         /// <param name="loadConfig">Executed when a new configuration is to be read. Parameter is config data.</param>
+        /// <param name="extension">Name of the configuration extension.</param>
         /// <param name="newConfigBytes">The bytes used for a new configuration, typically the default configuration.</param>
         /// <param name="getCurrentConfigBytes">Gets the bytes for the current configuration.</param>
-        public ProfileSelector(string directory, byte[] newConfigBytes, Func<string[]> getConfigFiles, Action<byte[]> loadConfig, Func<byte[]> getCurrentConfigBytes)
+        public ProfileSelector(string directory, string extension, byte[] newConfigBytes, Func<string[]> getConfigFiles, Action<byte[]> loadConfig, Func<byte[]> getCurrentConfigBytes)
         {
             Directory = directory;
             _getConfigFiles = getConfigFiles;
             _loadConfig = loadConfig;
             _newConfigBytes = newConfigBytes;
             _getCurrentConfigBytes = getCurrentConfigBytes;
+            _configExtension = extension;
 
-            _currentConfiguration = $"{Directory}/Default{IO.ConfigExtension}";
-            _configWatcher = IO.CreateConfigWatcher(Directory, OnConfigsUpdated, Changed | Created | Deleted | Renamed);
+            _currentConfiguration = $"{Directory}/Default{extension}";
+            _configWatcher = FileSystemWatcherFactory.CreateGeneric(Directory, OnConfigsUpdated, Changed | Created | Deleted | Renamed, true, $"*{_configExtension}");
         }
 
         private void OnConfigsUpdated()
@@ -66,7 +69,7 @@ namespace Riders.Tweakbox.Definitions
         /// </summary>
         public void New(string name, byte[] data)
         {
-            var path = $"{Directory}/{name}{IO.ConfigExtension}";
+            var path = $"{Directory}/{name}{_configExtension}";
             File.WriteAllBytes(path, data);
             _loadConfig(data);
             _currentConfiguration = path;

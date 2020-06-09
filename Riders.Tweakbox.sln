@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.SonicRiders", "Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj", "{2D57BA54-815A-47E0-A1C2-93C069B9A812}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.Imgui.Utilities", "Sewer56.Imgui.Utilities\Sewer56.Imgui.Utilities.csproj", "{4B5AE225-E6B1-4E49-9904-B37F6BF9A062}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.Imgui", "Sewer56.Imgui.Utilities\Sewer56.Imgui.csproj", "{4B5AE225-E6B1-4E49-9904-B37F6BF9A062}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.NumberUtilities", "Submodules\NumberUtilities\Sewer56.NumberUtilities\Sewer56.NumberUtilities.csproj", "{2302057B-695B-4B89-9D48-34BD474E4345}"
 EndProject

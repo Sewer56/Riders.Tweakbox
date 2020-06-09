@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security;
-using System.Text;
 using DearImguiSharp;
 using EnumsNET;
-using Sewer56.NumberUtilities.Primitives.Interfaces;
+using Sewer56.Imgui.Layout;
+using Sewer56.Imgui.Misc;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Controls
 {
     public unsafe partial class Reflection
     {

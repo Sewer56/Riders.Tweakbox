@@ -4,6 +4,9 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui;
+using Sewer56.Imgui.Controls;
+using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
@@ -22,7 +25,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
         public PhysicsEditor(IO io)
         {
             _io = io;
-            _profileSelector = new ProfileSelector(_io.PhysicsConfigFolder, CurrentConfig.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            _profileSelector = new ProfileSelector(_io.PhysicsConfigFolder, IO.ConfigExtension, CurrentConfig.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
         }
 

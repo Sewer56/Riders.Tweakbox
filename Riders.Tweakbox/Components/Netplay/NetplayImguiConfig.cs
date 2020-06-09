@@ -1,5 +1,7 @@
-﻿using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Utilities;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
+using Riders.Tweakbox.Misc;
+using Sewer56.Imgui;
+using Sewer56.Imgui.Controls;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -35,6 +37,18 @@ namespace Riders.Tweakbox.Components.Netplay
                 ClientPort = ClientPort,
                 HostPort = HostPort,
                 ShowPlayers = ShowPlayers
+            };
+        }
+
+        /// <summary>
+        /// Turns a player config into user data to send over the web.
+        /// </summary>
+        public HostPlayerData ToHostPlayerData()
+        {
+            return new HostPlayerData()
+            {
+                Name = PlayerName.Text,
+                PlayerIndex = 0
             };
         }
 

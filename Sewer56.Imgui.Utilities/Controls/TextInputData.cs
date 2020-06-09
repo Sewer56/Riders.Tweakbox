@@ -2,12 +2,12 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Unicode;
 using DearImguiSharp;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
+using Sewer56.Imgui.Misc;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Controls
 {
     /// <summary>
     /// Encapsulates the creation of native memory to store text input data.

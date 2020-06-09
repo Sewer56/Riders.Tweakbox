@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using DearImguiSharp;
-using Riders.Tweakbox.Definitions.Interfaces;
+using Sewer56.Imgui.Shell.Interfaces;
 
-namespace Riders.Tweakbox.Definitions
+namespace Sewer56.Imgui.Shell
 {
     /// <summary>
     /// Represents a single menu of Dear ImGui's main menu bar.

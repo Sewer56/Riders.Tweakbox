@@ -2,6 +2,7 @@
 using DearImguiSharp;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Misc

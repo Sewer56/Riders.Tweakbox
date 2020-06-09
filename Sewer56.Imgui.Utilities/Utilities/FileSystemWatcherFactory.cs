@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Riders.Tweakbox.Misc
+namespace Sewer56.Imgui.Utilities
 {
     /// <summary>
     /// Factory class which provides convenience methods to create instances of <see cref="FileSystemWatcher"/>.
@@ -17,7 +17,7 @@ namespace Riders.Tweakbox.Misc
         /// <param name="events">The events which trigger the action.</param>
         /// <param name="enableSubdirectories">Decides whether subdirectories in a given path should be monitored.</param>
         /// <param name="filter">The filter used to determine which files are being watched for.</param>
-        public static FileSystemWatcher CreateGeneric(string configDirectory, Action action, FileSystemWatcherEvents events, bool enableSubdirectories = true, string filter = "*.tweakbox")
+        public static FileSystemWatcher CreateGeneric(string configDirectory, Action action, FileSystemWatcherEvents events, bool enableSubdirectories = true, string filter = "*.conf")
         {
             var watcher = new FileSystemWatcher(configDirectory);
             watcher.EnableRaisingEvents = true;
@@ -48,7 +48,7 @@ namespace Riders.Tweakbox.Misc
         /// <param name="events">The events which trigger the launching of given action.</param>
         /// <param name="enableSubdirectories">Decides whether subdirectories in a given path should be monitored.</param>
         /// <param name="filter">The filter used to determine which files are being watched for.</param>
-        public static FileSystemWatcher CreateChangeCreateDelete(string configDirectory, FileSystemEventHandler action, FileSystemWatcherEvents events, bool enableSubdirectories = true, string filter = "*.tweakbox")
+        public static FileSystemWatcher CreateChangeCreateDelete(string configDirectory, FileSystemEventHandler action, FileSystemWatcherEvents events, bool enableSubdirectories = true, string filter = "*.conf")
         {
             var watcher = new FileSystemWatcher(configDirectory);
             watcher.EnableRaisingEvents = true;
@@ -78,7 +78,7 @@ namespace Riders.Tweakbox.Misc
         /// <param name="action">The function to run when a configuration is altered or changed.</param>
         /// <param name="enableSubdirectories">Decides whether subdirectories in a given path should be monitored.</param>
         /// <param name="filter">The filter used to determine which files are being watched for.</param>
-        public static FileSystemWatcher CreateRename(string configDirectory, RenamedEventHandler action, bool enableSubdirectories = true, string filter = "*.tweakbox")
+        public static FileSystemWatcher CreateRename(string configDirectory, RenamedEventHandler action, bool enableSubdirectories = true, string filter = "*.conf")
         {
             var watcher = new FileSystemWatcher(configDirectory);
             watcher.EnableRaisingEvents = true;

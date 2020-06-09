@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using DearImguiSharp;
-using Sewer56.Imgui.Utilities;
+using Sewer56.Imgui.Misc;
 
-namespace Riders.Tweakbox.Definitions
+namespace Sewer56.Imgui.Shell
 {
     /// <summary>
     /// Renders an individual menu bar.
@@ -29,7 +27,7 @@ namespace Riders.Tweakbox.Definitions
             ImGui.BeginMainMenuBar();
 
             // Get size of main menu.
-            var menuSize = Utilities.RunVectorFunction(ImGui.GetWindowSize);
+            var menuSize = Utilities.Utilities.RunVectorFunction(ImGui.GetWindowSize);
 
             // Render all menus.
             foreach (var menu in Menus)

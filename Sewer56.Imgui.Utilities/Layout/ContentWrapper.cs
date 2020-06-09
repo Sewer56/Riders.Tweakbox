@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using DearImguiSharp;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Layout
 {
     /// <summary>
     /// A utility class that helps you wrap collections of items as a grid by manually performing some simple math.
@@ -22,7 +19,7 @@ namespace Sewer56.Imgui.Utilities
         /// </summary>
         public ContentWrapper(int itemWidth)
         {
-            BottomRight = Utilities.RunVectorFunction(ImGui.GetContentRegionAvail);
+            BottomRight = Utilities.Utilities.RunVectorFunction(ImGui.GetContentRegionAvail);
             ItemWidth = itemWidth;
         }
 
@@ -49,8 +46,8 @@ namespace Sewer56.Imgui.Utilities
         {
             if (!InitialX.HasValue)
             {
-                var windowPos = Utilities.RunVectorFunction(ImGui.GetWindowPos);
-                var rectMin = Utilities.RunVectorFunction(ImGui.GetItemRectMin);
+                var windowPos = Utilities.Utilities.RunVectorFunction(ImGui.GetWindowPos);
+                var rectMin = Utilities.Utilities.RunVectorFunction(ImGui.GetItemRectMin);
                 InitialX = (int)(rectMin.X - windowPos.X);
                 CurrentX = InitialX.Value;
             }

@@ -5,6 +5,9 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui;
+using Sewer56.Imgui.Controls;
+using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.Imgui.Utilities;
 
 namespace Riders.Tweakbox.Components.FixesEditor
@@ -21,7 +24,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
         public FixesEditor(IO io)
         {
             _io = io;
-            _profileSelector = new ProfileSelector(_io.GearConfigFolder, _config.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            _profileSelector = new ProfileSelector(_io.GearConfigFolder, IO.ConfigExtension, _config.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
         }
 

@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Misc
 {
     public static class EncodingExtensions
     {

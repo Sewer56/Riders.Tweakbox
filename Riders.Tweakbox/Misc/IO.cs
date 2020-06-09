@@ -3,7 +3,8 @@ using System.IO;
 using System.Text.Json;
 using K4os.Compression.LZ4;
 using Riders.Tweakbox.Components.Netplay;
-using static Riders.Tweakbox.Misc.FileSystemWatcherFactory;
+using Sewer56.Imgui.Utilities;
+using static Sewer56.Imgui.Utilities.FileSystemWatcherFactory;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -65,13 +66,5 @@ namespace Riders.Tweakbox.Misc
             var decodedLength = LZ4Codec.Decode(source, 0, source.Length, target, 0, target.Length);
             return new Span<byte>(target).Slice(0, decodedLength).ToArray();
         }
-
-        /// <summary>
-        /// Creates a <see cref="FileSystemWatcher"/> which calls <param name="action"> when any of the events occur to the file.
-        /// </summary>
-        /// <param name="configDirectory">The path to monitor.</param>
-        /// <param name="action">The function to run.</param>
-        /// <param name="events">The events which trigger the action.</param>
-        public static FileSystemWatcher CreateConfigWatcher(string configDirectory, Action action, FileSystemWatcherEvents events) => FileSystemWatcherFactory.CreateGeneric(configDirectory, action, events);
     }
 }

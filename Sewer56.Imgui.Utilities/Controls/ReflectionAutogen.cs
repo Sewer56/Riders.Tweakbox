@@ -1,11 +1,8 @@
-﻿
-
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
-using System.Diagnostics.CodeAnalysis;
 using DearImguiSharp;
 
-namespace Sewer56.Imgui.Utilities
+namespace Sewer56.Imgui.Controls
 {
     public unsafe partial class Reflection
     {

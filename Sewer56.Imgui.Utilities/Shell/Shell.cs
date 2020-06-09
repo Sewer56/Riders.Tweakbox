@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using DearImguiSharp;
 
-namespace Riders.Tweakbox.Definitions
+namespace Sewer56.Imgui.Shell
 {
     // TODO: Add notification system (messages show bottom right of screen).
-    public static class Shell
+    public static partial class Shell
     {
         /// <summary>
         /// All dialogs available for the shell.
@@ -43,7 +43,7 @@ namespace Riders.Tweakbox.Definitions
         /// <summary>
         /// Renders the current dialogs to the screen.
         /// </summary>
-        internal static void Render()
+        public static void Render()
         {
             lock (_widgets)
             {
