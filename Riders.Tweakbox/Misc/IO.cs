@@ -3,8 +3,6 @@ using System.IO;
 using System.Text.Json;
 using K4os.Compression.LZ4;
 using Riders.Tweakbox.Components.Netplay;
-using Sewer56.Imgui.Utilities;
-using static Sewer56.Imgui.Utilities.FileSystemWatcherFactory;
 
 namespace Riders.Tweakbox.Misc
 {

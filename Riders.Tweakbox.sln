@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Netplay.Messages", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Netplay.Messages.Tests", "Netplay\SonicRiders.Utils.Netplay.Tests\Riders.Netplay.Messages.Tests.csproj", "{C5577FB0-4C96-4EBA-974F-349C7636F532}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteNetLib", "Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj", "{23BD2F43-8612-40DB-A936-EA4717880A1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{C5577FB0-4C96-4EBA-974F-349C7636F532}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5577FB0-4C96-4EBA-974F-349C7636F532}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5577FB0-4C96-4EBA-974F-349C7636F532}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23BD2F43-8612-40DB-A936-EA4717880A1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23BD2F43-8612-40DB-A936-EA4717880A1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23BD2F43-8612-40DB-A936-EA4717880A1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23BD2F43-8612-40DB-A936-EA4717880A1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 		{2302057B-695B-4B89-9D48-34BD474E4345} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{A2B02136-FF91-4DEA-98EB-BF31A2CD22D4} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
 		{C5577FB0-4C96-4EBA-974F-349C7636F532} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
+		{23BD2F43-8612-40DB-A936-EA4717880A1B} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}

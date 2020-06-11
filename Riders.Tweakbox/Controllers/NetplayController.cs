@@ -1,5 +1,4 @@
 ﻿using Riders.Tweakbox.Components.Netplay.Sockets;
-using Riders.Tweakbox.Controllers.Structures;
 using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Controllers
@@ -14,14 +13,9 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public Socket Socket { get; set; }
 
-        /// <summary>
-        /// Events assigned to this controller.
-        /// </summary>
-        public NetplayControllerEvents Events { get; private set; } = new NetplayControllerEvents();
-
-        public NetplayController() => Event.AfterSleep += OnSleep;
-        public void Disable() => Event.AfterSleep -= OnSleep;
-        public void Enable() => Event.OnSleep += OnSleep;
+        public NetplayController() => Event.AfterEndScene += OnEndScene;
+        public void Disable() => Event.AfterEndScene -= OnEndScene;
+        public void Enable() => Event.AfterEndScene += OnEndScene;
 
         /// <summary>
         /// True is currently connected, else false.
@@ -31,7 +25,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Updates on every frame of the game.
         /// </summary>
-        private void OnSleep()
+        private void OnEndScene()
         {
             Socket?.Poll();
             Socket?.Update();

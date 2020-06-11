@@ -26,6 +26,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public GameData? GameData;
         public bool HasSyncStartReady;
+        public bool HasSyncStartSkip;
 
         /// <summary>
         /// Time to resume gameplay at after stage load.
@@ -106,6 +107,7 @@ namespace Riders.Netplay.Messages
             var packet   = new ReliablePacket();
             packet.Flags = reader.Read<HasData>();
             if (packet.Flags.HasAllFlags(HasData.HasSyncStartReady)) packet.HasSyncStartReady = true;
+            if (packet.Flags.HasAllFlags(HasData.HasSyncStartSkip)) packet.HasSyncStartSkip = true;
             if (packet.Flags.HasAllFlags(HasData.HasIncrementLapCounter)) packet.HasIncrementLapCounter = true;
 
             reader.SetValueIfHasFlags(ref packet.Random, packet.Flags, HasData.HasRand);
@@ -135,9 +137,11 @@ namespace Riders.Netplay.Messages
 
             if (HasSyncStartReady) flags |= HasData.HasSyncStartReady;
             if (SyncStartGo.HasValue) flags |= HasData.HasSyncStartGo;
-            if (HasIncrementLapCounter) flags |= HasData.HasIncrementLapCounter;
+            if (HasSyncStartSkip) flags |= HasData.HasSyncStartSkip;
 
+            if (HasIncrementLapCounter) flags |= HasData.HasIncrementLapCounter;
             if (SetLapCounters.HasValue) flags |= HasData.HasLapCounters;
+
             if (SetBoostTornadoAttack.HasValue) flags |= HasData.HasSetBoostTornadoAttack;
             if (BoostTornadoAttack.HasValue) flags |= HasData.HasBoostTornadoAttack;
 
@@ -165,28 +169,28 @@ namespace Riders.Netplay.Messages
 
             HasSyncStartReady   = 1 << 2,   // Client -> Host: Ready signal to tell host ready after intro cutscene.
             HasSyncStartGo      = 1 << 3,   // Host -> Client: Ready signal to tell clients to start race at a given time.
+            HasSyncStartSkip    = 1 << 4,   // Informs Host/Client to skip the stage intro cutscene.
 
-            HasIncrementLapCounter = 1 << 4,    // Client -> Host: Increment lap counter for the player.
-            HasLapCounters         = 1 << 5,    // Host -> Client: Set Lap counters for each player.
+            HasIncrementLapCounter = 1 << 5,    // Client -> Host: Increment lap counter for the player.
+            HasLapCounters         = 1 << 6,    // Host -> Client: Set Lap counters for each player.
 
             // Race Integrity Synchronization
-            HasSetBoostTornadoAttack    = 1 << 6,  // Client -> Host: Inform host of boost, tornado, attack.
-            HasBoostTornadoAttack       = 1 << 7,  // Host -> Client: Triggers boost, tornado & attack for clients.
+            HasSetBoostTornadoAttack    = 1 << 7,  // Client -> Host: Inform host of boost, tornado, attack.
+            HasBoostTornadoAttack       = 1 << 8,  // Host -> Client: Triggers boost, tornado & attack for clients.
 
             // Anti-Cheat
-            HasAntiCheatTriggered   = 1 << 8,      // Host -> Client: Anti-cheat has been triggered, let all clients know.
-            HasAntiCheatGameData    = 1 << 9,      // Client -> Host: Hash of game data
-            HasAntiCheatHeartbeat   = 1 << 10,     // Client -> Host: Timestamp & frames elapsed
+            HasAntiCheatTriggered   = 1 << 9,      // Host -> Client: Anti-cheat has been triggered, let all clients know.
+            HasAntiCheatGameData    = 1 << 10,      // Client -> Host: Hash of game data
+            HasAntiCheatHeartbeat   = 1 << 11,     // Client -> Host: Timestamp & frames elapsed
 
             // Menu & Server Synchronization
             // These messages are fairly infrequent and/or work outside the actual gameplay loop.
             // We can save a byte during regular gameplay here.
-            HasMenuSynchronizationCommand   = 1 << 11, // [Struct] Menu State Synchronization Command.
-            HasServerMessage                = 1 << 12, // [Struct] General Server Message (Set Name, Try Connect etc.)
+            HasMenuSynchronizationCommand   = 1 << 12, // [Struct] Menu State Synchronization Command.
+            HasServerMessage                = 1 << 13, // [Struct] General Server Message (Set Name, Try Connect etc.)
 
-            Unused0 = 1 << 13,
-            Unused1 = 1 << 14,
-            Unused2 = 1 << 15
+            Unused0 = 1 << 14,
+            Unused1 = 1 << 15,
         }
     }
 }

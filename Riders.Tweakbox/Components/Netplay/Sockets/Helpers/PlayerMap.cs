@@ -6,7 +6,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Tweakbox.Misc;
 using Constants = Riders.Netplay.Messages.Constants;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
+namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
     /// <summary>
     /// Maps individual connected peers to individual players.

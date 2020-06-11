@@ -4,7 +4,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.Utility;
+using Sewer56.Imgui.Utilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox
@@ -22,7 +22,7 @@ namespace Riders.Tweakbox
         private IModLoader _modLoader;
 
         private Tweakbox _tweakbox;
-
+        
         /// <summary>
         /// Entry point for your mod.
         /// </summary>
@@ -35,6 +35,9 @@ namespace Riders.Tweakbox
             string modFolder = _modLoader.GetDirectoryForModId("Riders.Tweakbox");
 
             /* Your mod code starts here. */
+            Trace.AutoFlush = true;
+            Trace.Listeners.Add(new ConsoleOutlListener());
+            Trace.Listeners.Add(new ShellTraceListener());
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using MessagePack;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
@@ -47,19 +48,12 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         [Key(3)]
         public bool IsExitingMenu;
 
-        /// <summary>
-        /// Set to true if the player is starting race.
-        /// </summary>
-        [Key(4)]
-        public bool IsStartingRace;
-
-        public CharaSelectLoop(byte character, byte board, PlayerStatus status, bool isExiting, bool isStarting)
+        public CharaSelectLoop(byte character, byte board, PlayerStatus status, bool isExiting)
         {
             Character = character;
             Board = board;
             Status = status;
             IsExitingMenu = isExiting;
-            IsStartingRace = isStarting;
         }
 
         /// <summary>
@@ -69,6 +63,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// <param name="index">The character index.</param>
         public unsafe void ToGame(Task<CharacterSelect, CharacterSelectTaskState>* task, int index)
         {
+            if (task == null)
+                return;
+
             ref var player = ref Player.Players[index];
             player.Character   = (Characters)Character;
             player.ExtremeGear = (ExtremeGear)Board;
@@ -95,6 +92,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                         task->TaskData->PlayerStatuses[index] = 6;
                         break;
                 }
+
                 task->TaskData->PlayerMenuSelections[index] = CharacterToSelection(Character);
             }
 
@@ -104,12 +102,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 task->TaskStatus = CharacterSelectTaskState.Exiting;
                 task->TaskData->MenuState = MenuState.Exit;
             }
-
-            if (IsStartingRace)
-            {
-                task->TaskStatus = CharacterSelectTaskState.LoadingStage;
-                task->TaskData->SelectionIsPerformed = 1;
-            }
         }
 
         /// <summary>
@@ -118,17 +110,18 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// <param name="task">The individual menu task.</param>
         public static unsafe CharaSelectLoop FromGame(Task<CharacterSelect, CharacterSelectTaskState>* task)
         {
+            if (task == null)
+                return new CharaSelectLoop();
+
             var data = task->TaskData;
             bool isExiting = task->TaskStatus == CharacterSelectTaskState.Exiting && data->MenuState == MenuState.Exit;
-            bool isStartingRace = task->TaskStatus == CharacterSelectTaskState.LoadingStage && data->SelectionIsPerformed == 1;
-
+            
             return new CharaSelectLoop()
             {
                 Character = (byte)Player.Players[0].Character,
                 Board = (byte)Player.Players[0].ExtremeGear,
                 Status = (PlayerStatus)data->PlayerStatuses[0],
                 IsExitingMenu = isExiting,
-                IsStartingRace = isStartingRace
             };
         }
 

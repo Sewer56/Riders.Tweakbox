@@ -1,9 +1,14 @@
-﻿using Reloaded.Memory;
+﻿using System;
+using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
+using Sewer56.SonicRiders.Structures.Tasks;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.Shared;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 {
-    public struct CourseSelectLoop : IMenuSynchronizationCommand
+    public struct CourseSelectLoop : IMenuSynchronizationCommand, IEquatable<CourseSelectLoop>
     {
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CourseSelectLoop;
         public byte[] ToBytes() => Struct.GetBytes(this);
@@ -11,22 +16,27 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// <summary>
         /// Change in X selection.
         /// </summary>
-        public byte DeltaSelectionX;
+        public sbyte DeltaSelectionX;
 
         /// <summary>
         /// Change in Y selection.
         /// </summary>
-        public byte DeltaSelectionY;
+        public sbyte DeltaSelectionY;
+
+        /// <summary>
+        /// Change in highlighted item.
+        /// </summary>
+        public sbyte DeltaHighlighted;
 
         /// <summary>
         /// Change in list scroll offset.
         /// </summary>
-        public byte DeltaListScroll;
+        public sbyte DeltaListScroll;
 
         /// <summary>
         /// Change in submenu selection.
         /// </summary>
-        public byte SubmenuDeltaSelection;
+        public sbyte SubmenuDeltaSelection;
 
         /// <summary>
         /// Opens the Submenu.
@@ -44,6 +54,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public byte OpenRaceRules;
 
         /// <summary>
+        /// Opens character select if 1.
+        /// </summary>
+        public byte OpenCharacterSelect;
+
+        public bool IsDefault()
+        {
+            return this.Equals(new CourseSelectLoop());
+        }
+
+        /// <summary>
         /// Adds the contents of two loops together.
         /// </summary>
         public CourseSelectLoop Add(CourseSelectLoop loop)
@@ -51,13 +71,81 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             return new CourseSelectLoop()
             {
                 CloseSubmenu = (byte) (CloseSubmenu + loop.CloseSubmenu),
-                DeltaListScroll = (byte) (DeltaListScroll + loop.DeltaListScroll),
-                DeltaSelectionY = (byte) (DeltaSelectionY + loop.DeltaSelectionY),
-                DeltaSelectionX = (byte) (DeltaSelectionX + loop.DeltaSelectionX),
+                DeltaHighlighted = (sbyte) (DeltaHighlighted + loop.DeltaHighlighted),
+                DeltaListScroll = (sbyte) (DeltaListScroll + loop.DeltaListScroll),
+                DeltaSelectionY = (sbyte) (DeltaSelectionY + loop.DeltaSelectionY),
+                DeltaSelectionX = (sbyte) (DeltaSelectionX + loop.DeltaSelectionX),
                 OpenSubmenu = (byte) (OpenSubmenu + loop.OpenSubmenu),
-                SubmenuDeltaSelection = (byte) (SubmenuDeltaSelection + loop.SubmenuDeltaSelection),
-                OpenRaceRules = (byte)(OpenRaceRules + loop.OpenRaceRules)
+                SubmenuDeltaSelection = (sbyte) (SubmenuDeltaSelection + loop.SubmenuDeltaSelection),
+                OpenRaceRules = (byte)(OpenRaceRules + loop.OpenRaceRules),
+                OpenCharacterSelect = (byte)(OpenCharacterSelect + loop.OpenCharacterSelect)
             };
         }
+
+        /// <summary>
+        /// Undoes the cursor movement delta change made by this loop.
+        /// </summary>
+        public unsafe void Undo(Task<CourseSelect, CourseSelectTaskState>* task)
+        {
+            if (task == null)
+                return;
+
+            var data = task->TaskData;
+            data->SelectionHorizontal = (byte) (data->SelectionHorizontal - DeltaSelectionX);
+            data->SelectionVertical = (byte) (data->SelectionVertical - DeltaSelectionY);
+            data->ListScrollOffset = (byte)(data->ListScrollOffset - DeltaListScroll);
+            data->SubmenuSelection = (byte)(data->SubmenuSelection - SubmenuDeltaSelection);
+            data->HighlightedHorizontalItem = (byte) (data->HighlightedHorizontalItem - DeltaHighlighted);
+
+            if (OpenSubmenu > 0)
+            {
+                task->TaskStatus   = CourseSelectTaskState.Normal;
+                data->SubmenuState = MenuState.Exit;
+            }
+            else if (CloseSubmenu > 0)
+            {
+                task->TaskStatus   = CourseSelectTaskState.HeroBabylonPicker;
+                data->SubmenuState = MenuState.Enter;
+            }
+            else if (OpenRaceRules > 0)
+            {
+                task->TaskStatus = CourseSelectTaskState.Normal;
+                data->MenuState = MenuState.Enter;
+            }
+            else if (OpenCharacterSelect > 0)
+            {
+                task->TaskStatus = CourseSelectTaskState.Normal;
+                task->TaskData->EnterCharacterSelectFlag = 0;
+            }
+        }
+
+        #region Autogenerated
+        public bool Equals(CourseSelectLoop other)
+        {
+            return DeltaSelectionX == other.DeltaSelectionX && DeltaSelectionY == other.DeltaSelectionY && DeltaHighlighted == other.DeltaHighlighted && DeltaListScroll == other.DeltaListScroll && SubmenuDeltaSelection == other.SubmenuDeltaSelection && OpenSubmenu == other.OpenSubmenu && CloseSubmenu == other.CloseSubmenu && OpenRaceRules == other.OpenRaceRules && OpenCharacterSelect == other.OpenCharacterSelect;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is CourseSelectLoop other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = DeltaSelectionX.GetHashCode();
+                hashCode = (hashCode * 397) ^ DeltaSelectionY.GetHashCode();
+                hashCode = (hashCode * 397) ^ DeltaHighlighted.GetHashCode();
+                hashCode = (hashCode * 397) ^ DeltaListScroll.GetHashCode();
+                hashCode = (hashCode * 397) ^ SubmenuDeltaSelection.GetHashCode();
+                hashCode = (hashCode * 397) ^ OpenSubmenu.GetHashCode();
+                hashCode = (hashCode * 397) ^ CloseSubmenu.GetHashCode();
+                hashCode = (hashCode * 397) ^ OpenRaceRules.GetHashCode();
+                hashCode = (hashCode * 397) ^ OpenCharacterSelect.GetHashCode();
+                return hashCode;
+            }
+        }
+        #endregion
     }
 }

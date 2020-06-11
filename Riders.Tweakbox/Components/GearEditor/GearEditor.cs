@@ -2,13 +2,9 @@
 using DearImguiSharp;
 using EnumsNET;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Definitions;
-using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using ExtremeGearEnum = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;

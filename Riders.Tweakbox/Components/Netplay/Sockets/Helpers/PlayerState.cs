@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Diagnostics;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
+namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
     public class PlayerState
     {
@@ -12,21 +10,17 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
         public CourseSelectLoop CourseSelectLoop = new CourseSelectLoop();
         public CharaSelectLoop CharaSelectLoop = new CharaSelectLoop();
         public RuleSettingsLoop RuleSettingsLoop = new RuleSettingsLoop();
+        public bool ReadyToStartRace = false;
 
         /// <summary>
         /// Gets and erases the current <see cref="RuleSettingsLoop"/>.
         /// </summary>
-        public RuleSettingsLoop GetRuleSettingsLoop() => Get(ref RuleSettingsLoop);
-
-        /// <summary>
-        /// Gets and erases the current <see cref="CharaSelectLoop"/>.
-        /// </summary>
-        public CharaSelectLoop GetCharaLoop() => Get(ref CharaSelectLoop);
+        public RuleSettingsLoop GetEraseRuleSettingsLoop() => Get(ref RuleSettingsLoop);
 
         /// <summary>
         /// Gets and erases the current <see cref="CourseSelectLoop"/>.
         /// </summary>
-        public CourseSelectLoop GetCourseLoop() => Get(ref CourseSelectLoop);
+        public CourseSelectLoop GetEraseCourseLoop() => Get(ref CourseSelectLoop);
 
         /// <summary>
         /// Gets a field and erases its current content.
@@ -51,12 +45,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
         /// <summary>
         /// Adds a synchronization command to the current player.
         /// </summary>
-        public void SetSyncCommand(IMenuSynchronizationCommand syncCommand)
+        public void SetLoopCommand(IMenuSynchronizationCommand syncCommand, bool raceStartRequested)
         {
             switch (syncCommand)
             {
                 case CharaSelectLoop charaSelectLoop:
-                    CharaSelectLoop = charaSelectLoop;
+                    if (!raceStartRequested) 
+                        CharaSelectLoop = charaSelectLoop;
+                    else
+                        Debug.WriteLine("[Host] Dropping Character Select Packet: Starting Race");
                     break;
                 case CourseSelectLoop courseSelectLoop:
                     CourseSelectLoop = courseSelectLoop;

@@ -13,5 +13,6 @@
         // Player Entry
         CharaSelectLoop, // Client -> Host
         CharaSelectSync, // Host   -> Client
+        CharaselectStart, // Client -> Host & Host -> Client.
     }
 }

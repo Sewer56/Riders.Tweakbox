@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Numerics;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
@@ -12,14 +10,9 @@ using Riders.Tweakbox.Components.Imgui;
 using Riders.Tweakbox.Components.Misc;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.PhysicsEditor;
-using Riders.Tweakbox.Definitions;
-using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui;
-using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Functions;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
@@ -48,12 +41,11 @@ namespace Riders.Tweakbox
             string modFolder)
         {
             var tweakBox = new Tweakbox();
-            var imguiHook = await ImguiHook.Create(tweakBox.Render);
             IoC.Initialize(modFolder);
-            Shell.SetupTheme(modFolder);
-            tweakBox._hook = imguiHook;
             tweakBox._hooks = hooks;
             tweakBox._hooksUtilities = hooksUtilities;
+            tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
+
             tweakBox._menuBar = new MenuBar()
             {
                 Menus = new List<MenuBarItem>()
@@ -86,7 +78,9 @@ namespace Riders.Tweakbox
                 }
             };
 
-            tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
+            var imguiHook = await ImguiHook.Create(tweakBox.Render);
+            Shell.SetupTheme(modFolder);
+            tweakBox._hook = imguiHook;
             tweakBox._isReady = true;
             return tweakBox;
         }

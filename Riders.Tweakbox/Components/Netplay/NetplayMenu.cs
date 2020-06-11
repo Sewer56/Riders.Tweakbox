@@ -1,12 +1,12 @@
-﻿using DearImguiSharp;
+﻿using System;
+using DearImguiSharp;
+using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Misc;
+using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.Imgui.Utilities;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -23,7 +23,7 @@ namespace Riders.Tweakbox.Components.Netplay
 
         public void Render()
         {
-            if (ImGui.Begin("Netplay Window", ref _isEnabled, 0))
+            if (ImGui.Begin("Netplay Window", ref _isEnabled, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
                 RenderNetplayWindow();
             }
@@ -33,9 +33,58 @@ namespace Riders.Tweakbox.Components.Netplay
 
         public unsafe void RenderNetplayWindow()
         {
+            if (Controller.Socket != null)
+            {
+                if (Controller.Socket.IsHost())
+                {
+                    RenderHostWindow();
+                }
+                else
+                {
+                    RenderClientWindow();
+                }
+            }
+            else
+            {
+                RenderHostJoinWindow();
+            }
+        }
+
+        private void RenderClientWindow()
+        {
+            var client = (Client)Controller.Socket;
+            foreach (var player in client.State.PlayerInfo)
+            {
+                ImGui.Text($"{player.Name} | {player.PlayerIndex}");
+            }
+
+            if (ImGui.Button("Disconnect", Constants.ButtonSize))
+                Disconnect();
+        }
+
+        private void RenderHostWindow()
+        {
+            var host = (Host)Controller.Socket;
+            foreach (var player in host.PlayerMap.GetPlayerData())
+            {
+                ImGui.Text($"{player.Name} | {player.PlayerIndex}");
+            }
+
+            if (ImGui.Button("Disconnect", Constants.ButtonSize))
+                Disconnect();
+        }
+
+        private void Disconnect()
+        {
+            Controller.Socket?.Dispose();
+        }
+
+        private void RenderHostJoinWindow()
+        {
             if (ImGui.TreeNodeStr("Join a Server"))
             {
                 Config.ClientIP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, Config.ClientIP.FilterIPAddress);
+                Config.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
                 Reflection.MakeControl(ref Config.ClientPort, "Port");
 
                 if (ImGui.Button("Connect", Constants.DefaultVector2))
@@ -48,6 +97,9 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 Config.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
                 Reflection.MakeControl(ref Config.HostPort, "Port");
+
+                if (ImGui.Button("Host", Constants.DefaultVector2))
+                    HostServer();
 
                 ImGui.TreePop();
             }
@@ -64,13 +116,32 @@ namespace Riders.Tweakbox.Components.Netplay
             if (ImGui.Button("Save Settings", Constants.DefaultVector2))
                 Config.Save();
 
-            if (Config.ShowPlayers) 
+            if (Config.ShowPlayers)
                 RenderPlayerMenu();
+        }
+
+        private void HostServer()
+        {
+            try
+            {
+                Controller.Socket = new Host(Config.HostPort, Config.Password.Text, Controller);
+            }
+            catch (Exception e)
+            {
+                Shell.AddDialog("Host Server Failed", $"{e.Message}\n{e.StackTrace}");
+            }
         }
 
         private void Connect()
         {
-
+            try
+            {
+                Controller.Socket = new Client(Config.ClientIP.Text, Config.ClientPort, Config.Password.Text, Controller);
+            }
+            catch (Exception e)
+            {
+                Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
+            }
         }
 
         public void RenderPlayerMenu()

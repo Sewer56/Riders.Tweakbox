@@ -3,13 +3,15 @@
     /// <summary>
     /// A wrapper for all packet types.
     /// </summary>
-    public class Packet
+    public class Packet<T>
     {
+        public T Source;
         public ReliablePacket?   Reliable;
         public UnreliablePacket? Unreliable;
 
-        public Packet(ReliablePacket? reliable, UnreliablePacket? unreliable)
+        public Packet(T source, ReliablePacket? reliable, UnreliablePacket? unreliable)
         {
+            Source = source;
             Reliable = reliable;
             Unreliable = unreliable;
         }

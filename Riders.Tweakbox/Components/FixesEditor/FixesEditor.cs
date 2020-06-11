@@ -2,13 +2,9 @@
 using System.Runtime.CompilerServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Definitions;
-using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.Imgui.Utilities;
 
 namespace Riders.Tweakbox.Components.FixesEditor
 {
@@ -41,8 +37,8 @@ namespace Riders.Tweakbox.Components.FixesEditor
         private byte[] GetCurrentConfigBytes() => _config.GetCurrent().ToBytes();
 
         public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() => _config.GetImplementation().Disable();
-        public void Enable() => _config.GetImplementation().Enable();
+        public void Disable() => _config.Controller.Disable();
+        public void Enable() => _config.Controller.Enable();
 
         // UI
         public void Render()
@@ -60,8 +56,8 @@ namespace Riders.Tweakbox.Components.FixesEditor
         {
             if (ImGui.TreeNodeStr("Frame Pacing"))
             {
-                ImGui.Checkbox("Frame Pacing Fix", ref Unsafe.AsRef<bool>(_config.GetImplementation().FramePacing.Pointer));
-                Reflection.MakeControl((byte*)_config.GetImplementation().SpinTime.Pointer, nameof(FixesController.SpinTime));
+                ImGui.Checkbox("Frame Pacing Fix", ref Unsafe.AsRef<bool>(_config.Controller.FramePacing.Pointer));
+                Reflection.MakeControl((byte*)_config.Controller.SpinTime.Pointer, nameof(FixesController.SpinTime));
             }
         }
     }

@@ -13,7 +13,7 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeStandardMessage()
         {
-            var message = new CharaSelectLoop(0, 5, PlayerStatus.GearSelect, false, false);
+            var message = new CharaSelectLoop(0, 5, PlayerStatus.GearSelect, false);
             var menuMsg = new MenuSynchronizationCommand(message);
             var bytes   = menuMsg.ToBytes();
 
@@ -34,10 +34,10 @@ namespace Riders.Netplay.Messages.Tests.Structs
         {
             var message = new CharaSelectSync(new CharaSelectLoop[4]
             {
-                new CharaSelectLoop(0, 1, PlayerStatus.Active, false, false),
-                new CharaSelectLoop(1, 2, PlayerStatus.GearSelect, false, false),
-                new CharaSelectLoop(2, 3, PlayerStatus.Inactive, false, false),
-                new CharaSelectLoop(3, 4, PlayerStatus.SetReady, false, false)
+                new CharaSelectLoop(0, 1, PlayerStatus.Active, false),
+                new CharaSelectLoop(1, 2, PlayerStatus.GearSelect, false),
+                new CharaSelectLoop(2, 3, PlayerStatus.Inactive, false),
+                new CharaSelectLoop(3, 4, PlayerStatus.SetReady, false)
             });
 
             var menuMsg = new MenuSynchronizationCommand(message);

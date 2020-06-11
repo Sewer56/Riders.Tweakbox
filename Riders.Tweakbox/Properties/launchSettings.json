@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Riders.Tweakbox": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
-  }
-}

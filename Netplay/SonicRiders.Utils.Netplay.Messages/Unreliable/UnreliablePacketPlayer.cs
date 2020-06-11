@@ -158,6 +158,14 @@ namespace Riders.Netplay.Messages.Unreliable
         }
 
         /// <summary>
+        /// Gets the player status from game memory.
+        /// </summary>
+        public static UnreliablePacketPlayer FromGame()
+        {
+            return new UnreliablePacketPlayer();
+        }
+
+        /// <summary>
         /// Determines if on a given frame, a piece of data should be sent.
         /// </summary>
         /// <param name="frameCounter">The current frame counter.</param>

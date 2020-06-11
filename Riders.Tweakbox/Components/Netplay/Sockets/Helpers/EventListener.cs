@@ -2,14 +2,14 @@
 using LiteNetLib;
 using Riders.Netplay.Messages;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
+namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
     public class EventListener : EventBasedNetListener
     {
         public Socket Socket;
         public event HandleReliablePacket   OnHandleReliablePacket;
         public event HandleUnreliablePacket OnHandleUnreliablePacket;
-        public event HandlePacket           OnHandlePacket;
+        public event HandlePacket<NetPeer>  OnHandlePacket;
 
         public EventListener(Socket socket)
         {
@@ -32,13 +32,13 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
             {
                 var packet = UnreliablePacket.Deserialize(rawBytes);
                 OnHandleUnreliablePacket?.Invoke(peer, packet);
-                OnHandlePacket?.Invoke(peer, new Packet(null, packet));
+                OnHandlePacket?.Invoke(new Packet<NetPeer>(peer, null, packet));
             }
             else
             {
                 var packet = ReliablePacket.Deserialize(rawBytes);
                 OnHandleReliablePacket?.Invoke(peer, packet);
-                OnHandlePacket?.Invoke(peer, new Packet(packet, null));
+                OnHandlePacket?.Invoke(new Packet<NetPeer>(peer, packet, null));
             }
         }
 
@@ -46,7 +46,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Components
         public void ConnectionRequest(ConnectionRequest request) => Socket.OnConnectionRequest(request);
 
         #region Delegates
-        public delegate void HandlePacket(NetPeer peer, Packet packet);
+        public delegate void HandlePacket<T>(Packet<T> packet);
         public delegate void HandleReliablePacket(NetPeer peer, ReliablePacket packet);
         public delegate void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet);
         #endregion

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
-using System.Text;
 using DearImguiSharp;
 using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Utilities;

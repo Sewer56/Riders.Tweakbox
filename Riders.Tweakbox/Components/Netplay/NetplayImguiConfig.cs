@@ -1,6 +1,5 @@
 ﻿using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui;
 using Sewer56.Imgui.Controls;
 
 namespace Riders.Tweakbox.Components.Netplay

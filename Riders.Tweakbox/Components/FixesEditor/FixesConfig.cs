@@ -8,7 +8,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
 {
     public class FixesConfig : IConfiguration
     {
-        public FixesController GetImplementation() => IoC.GetConstant<FixesController>();
+        public FixesController Controller = IoC.GetConstant<FixesController>();
         private Internal _internal = Internal.GetDefault();
 
         public byte FramePacing
@@ -34,11 +34,11 @@ namespace Riders.Tweakbox.Components.FixesEditor
         // Apply
         public void Apply()
         {
-            GetImplementation().FramePacing.Value = FramePacing;
-            GetImplementation().SpinTime.Value = SpinTime;
+            Controller.FramePacing.Value = FramePacing;
+            Controller.SpinTime.Value = SpinTime;
         }
 
-        public IConfiguration GetCurrent() => new FixesConfig() { FramePacing = GetImplementation().FramePacing.Value };
+        public IConfiguration GetCurrent() => new FixesConfig() { FramePacing = Controller.FramePacing.Value };
         public IConfiguration GetDefault() => new FixesConfig();
 
         #region Internal

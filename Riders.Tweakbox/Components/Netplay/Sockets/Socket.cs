@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Tweakbox.Components.Netplay.Sockets.Components;
+using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Utilities;
 
@@ -22,18 +24,28 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public EventListener Listener;
 
         /// <summary>
+        /// Controller owning this socket.
+        /// </summary>
+        public NetplayController Controller;
+
+        /// <summary>
         /// Constructs the current socket.
         /// </summary>
-        public Socket()
+        public Socket(NetplayController controller)
         {
             Listener = new EventListener(this);
             Manager = new NetManager(Listener);
+            Controller = controller;
         }
 
         /// <summary>
         /// Disposes of the current class instance.
         /// </summary>
-        public virtual void Dispose() => Manager.Stop(true);
+        public virtual void Dispose()
+        {
+            Controller.Socket = null;
+            Manager.Stop(true);
+        }
 
         /// <summary>
         /// True if the host is connected to at least 1 user, else false.
@@ -43,7 +55,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Updates the current socket state.
         /// </summary>
-        public void Poll() => Manager.PollEvents();
+        public void Poll()
+        {
+            Manager.Flush();
+            Manager.PollEvents();
+        }
 
         /// <summary>
         /// Updates the current socket state.
@@ -86,6 +102,24 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public abstract void OnConnectionRequest(ConnectionRequest request);
 
         /// <summary>
+        /// Sends data to all peers except a certain peer.
+        /// </summary>
+        /// <param name="exception">The peer to not send data to.</param>
+        /// <param name="data">The data to send.</param>
+        /// <param name="method">The channel to send the data in.</param>
+        public void SendToAllExcept(NetPeer exception, byte[] data, DeliveryMethod method)
+        {
+            foreach (var peer in Manager.ConnectedPeerList)
+            {
+                if (peer.Id == exception.Id)
+                    continue;
+
+                peer.Send(data, method);
+                peer.Flush();
+            }
+        }
+
+        /// <summary>
         /// Waits for a message with a specified predicate
         /// </summary>
         /// <param name="peer">The peer to test.</param>
@@ -94,20 +128,29 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="sleepTime">Minimum between checks of condition.</param>
         /// <param name="token">Allows for task cancellation if necessary.</param>
         /// <returns>True if the message has been received, otherwise false.</returns>
-        public bool TryWaitForMessage(NetPeer peer, Func<Packet, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
+        public bool TryWaitForMessage(NetPeer peer, Func<Packet<NetPeer>, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
         {
             bool received = false;
             Listener.OnHandlePacket += TestPacket;
-            ActionWrappers.TryWaitUntil(HasReceived, timeout, 1, token);
+            var result = ActionWrappers.TryWaitUntil(HasReceived, timeout, 1, token);
             Listener.OnHandlePacket -= TestPacket;
-            return HasReceived();
+            return result;
 
             // Message Test
-            bool HasReceived() => received == true;
-            void TestPacket(NetPeer eventPeer, Packet packet)
+            bool HasReceived()
             {
-                if (eventPeer.Id == peer.Id)
-                    received = predicate(packet);
+                peer.NetManager.PollEvents();
+                peer.NetManager.Flush();
+                return received == true;
+            }
+
+            void TestPacket(Packet<NetPeer> packet)
+            {
+                if (packet.Source.Id != peer.Id)
+                    return;
+
+                if (predicate(packet))
+                    received = true;
             }
         }
 
@@ -120,24 +163,50 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="sleepTime">Minimum between checks of condition.</param>
         /// <param name="token">Allows for task cancellation if necessary.</param>
         /// <returns>True if the message has been received, otherwise false.</returns>
-        public bool TryWaitForMessages(NetPeer[] peers, Func<Packet, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
+        public bool TryWaitForMessages(NetPeer[] peers, Func<Packet<NetPeer>, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
         {
             bool[] received = new bool[peers.Length];
             Listener.OnHandlePacket += TestPacket;
-            ActionWrappers.TryWaitUntil(HasReceivedAll, timeout, 1, token);
+            var result = ActionWrappers.TryWaitUntil(HasReceivedAll, timeout, 1, token);
             Listener.OnHandlePacket -= TestPacket;
-            return HasReceivedAll();
+            return result;
 
             // Message Test
-            bool HasReceivedAll() => received.All(x => x == true);
-            void TestPacket(NetPeer eventPeer, Packet packet)
+            bool HasReceivedAll()
             {
-                var index = peers.IndexOf(x => x.Id == eventPeer.Id);
+                var peer = peers.FirstOrDefault();
+                peer?.NetManager.PollEvents();
+                peer?.NetManager.Flush();
+                return received.All(x => x == true);
+            }
+
+            void TestPacket(Packet<NetPeer> packet)
+            {
+                var index = peers.IndexOf(x => x.Id == packet.Source.Id);
                 if (index == -1)
                     return;
 
-                received[index] = predicate(packet);
+                if (predicate(packet))
+                    received[index] = true;
             }
+        }
+
+        /// <summary>
+        /// Waits until a given condition is met.
+        /// </summary>
+        /// <param name="function">Waits until this condition returns true or the timeout expires.</param>
+        /// <param name="timeout">The timeout in milliseconds.</param>
+        /// <param name="sleepTime">Amount of sleep per iteration/attempt.</param>
+        /// <param name="token">Token that allows for cancellation of the task.</param>
+        /// <returns>True if the condition is triggered, else false.</returns>
+        public bool PollUntil(Func<bool> function, int timeout, int sleepTime = 1, CancellationToken token = default)
+        {
+            return ActionWrappers.TryWaitUntil(() =>
+            {
+                Manager.PollEvents();
+                Manager.Flush();
+                return function();
+            }, timeout, sleepTime, token);
         }
     }
 }
