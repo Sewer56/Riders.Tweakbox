@@ -45,15 +45,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Adds a synchronization command to the current player.
         /// </summary>
-        public void SetLoopCommand(IMenuSynchronizationCommand syncCommand, bool raceStartRequested)
+        public void SetLoopCommand(IMenuSynchronizationCommand syncCommand)
         {
             switch (syncCommand)
             {
                 case CharaSelectLoop charaSelectLoop:
-                    if (!raceStartRequested) 
-                        CharaSelectLoop = charaSelectLoop;
-                    else
-                        Debug.WriteLine("[Host] Dropping Character Select Packet: Starting Race");
+                    CharaSelectLoop = charaSelectLoop;
                     break;
                 case CourseSelectLoop courseSelectLoop:
                     CourseSelectLoop = courseSelectLoop;

@@ -66,10 +66,13 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             if (task == null)
                 return;
 
+            if (task->TaskStatus == CharacterSelectTaskState.LoadingStage)
+                return;
+
             ref var player = ref Player.Players[index];
             player.Character   = (Characters)Character;
             player.ExtremeGear = (ExtremeGear)Board;
-
+            
             // Menu supports only 4 characters
             if (index <= 3)
             {

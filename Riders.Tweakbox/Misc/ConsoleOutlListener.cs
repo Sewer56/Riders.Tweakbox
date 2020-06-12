@@ -14,7 +14,7 @@ namespace Riders.Tweakbox.Misc
 
         public override void WriteLine(string message)
         {
-            Console.WriteLine($"[{DateTime.UtcNow.Millisecond}] {message}");
+            Console.WriteLine($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}");
         }
     }
 }

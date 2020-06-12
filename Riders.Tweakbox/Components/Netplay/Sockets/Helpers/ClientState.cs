@@ -13,6 +13,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public int FrameCounter;
         public CheatKind AntiCheatMode;
         public HostPlayerData[] PlayerInfo = new HostPlayerData[0];
+        public int PlayerIndex;
 
         /// <summary>
         /// A start of the race has been requested.

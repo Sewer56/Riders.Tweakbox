@@ -1,6 +1,7 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -19,7 +20,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public event RuleSettingsUpdated OnRuleSettingsUpdated;
         public event CourseSelectUpdated OnCourseSelectUpdated;
 
-        private TaskTracker _tracker = IoC.GetConstant<TaskTracker>();
         private IHook<Functions.DefaultTaskFnWithReturn> _onCourseSelectHook;
         private IHook<Functions.DefaultTaskFnWithReturn> _onRaceSettingsHook;
 
@@ -29,40 +29,30 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             _onRaceSettingsHook = Functions.RaceSettingTask.Hook(OnRaceSettingsTask).Activate();
         }
 
-        private unsafe int OnRaceSettingsTask()
+        private unsafe byte OnRaceSettingsTask()
         {
-            if (_tracker.RaceRules != null)
-            {
-                var lastRule   = RuleSettingsSync.FromGame(_tracker.RaceRules);
-                var result     = _onRaceSettingsHook.OriginalFunction();
-                var rule       = RuleSettingsSync.FromGame(_tracker.RaceRules);
-                Rule = lastRule.Delta(rule);
+            var lastRule    = RuleSettingsSync.FromGame((Task<RaceRules, RaceRulesTaskState>*)(*State.CurrentTask));
+            var result      = _onRaceSettingsHook.OriginalFunction();
+            var rule        = RuleSettingsSync.FromGame((Task<RaceRules, RaceRulesTaskState>*)(*State.CurrentTask));
+            Rule            = lastRule.Delta(rule);
 
-                if (!Rule.IsDefault())
-                    OnRuleSettingsUpdated?.Invoke(Rule, _tracker.RaceRules);
+            if (!Rule.IsDefault())
+                OnRuleSettingsUpdated?.Invoke(Rule, (Task<RaceRules, RaceRulesTaskState>*)(*State.CurrentTask));
 
-                return result;
-            }
-
-            return _onRaceSettingsHook.OriginalFunction();
+            return result;
         }
 
-        private unsafe int OnCourseSelectTask()
+        private unsafe byte OnCourseSelectTask()
         {
-            if (_tracker.CourseSelect != null)
-            {
-                var lastCourse = CourseSelectSync.FromGame(_tracker.CourseSelect);
-                var result     = _onCourseSelectHook.OriginalFunction();
-                var course     = CourseSelectSync.FromGame(_tracker.CourseSelect);
-                Course         = lastCourse.GetDelta(course);
+            var lastCourse = CourseSelectSync.FromGame((Task<CourseSelect, CourseSelectTaskState>*) (*State.CurrentTask));
+            var result     = _onCourseSelectHook.OriginalFunction();
+            var course     = CourseSelectSync.FromGame((Task<CourseSelect, CourseSelectTaskState>*)(*State.CurrentTask));
+            Course         = lastCourse.GetDelta(course);
 
-                if (!Course.IsDefault())
-                    OnCourseSelectUpdated?.Invoke(Course, _tracker.CourseSelect);
+            if (!Course.IsDefault())
+                OnCourseSelectUpdated?.Invoke(Course, (Task<CourseSelect, CourseSelectTaskState>*)(*State.CurrentTask));
 
-                return result;
-            }
-
-            return _onCourseSelectHook.OriginalFunction();
+            return result;
         }
 
         public unsafe delegate void CourseSelectUpdated(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task);

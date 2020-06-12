@@ -18,7 +18,7 @@ namespace Riders.Netplay.Messages.Tests.Structs
                 new HostPlayerData() { Name = "Yacker", PlayerIndex = 0 },
                 new HostPlayerData() { Name = "Xi Kykping", PlayerIndex = 1 },
                 new HostPlayerData() { Name = "Pixel", PlayerIndex = 2 }
-            });
+            }, 3);
 
             var serverMsg = new ServerMessage(message);
             var bytes = serverMsg.ToBytes();

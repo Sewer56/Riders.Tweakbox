@@ -11,6 +11,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -54,6 +55,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCharaSelect += OnCharaSelect;
             Event.OnStartRace += OnStartRace;
             Event.OnCheckIfStartRace += CheckIfStartRace;
+            Event.OnSetupRace += OnSetupRace;
         }
 
         public override void Dispose()
@@ -67,6 +69,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCharaSelect -= OnCharaSelect;
             Event.OnStartRace -= OnStartRace;
             Event.OnCheckIfStartRace -= CheckIfStartRace;
+            Event.OnSetupRace -= OnSetupRace;
         }
 
         public override bool IsHost() => false;
@@ -135,6 +138,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private unsafe void UpdateCharSelect()
         {
+            if (Tracker.CharacterSelect->TaskStatus == CharacterSelectTaskState.LoadingStage)
+                return;
+
             var charSelectLoop = CharaSelectLoop.FromGame(Tracker.CharacterSelect);
             var reliableMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(charSelectLoop) };
 
@@ -173,10 +179,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             switch (cmd)
             {
                 case CharaSelectSync charaSelectSync:
-                    if (!State.StartRequested)
-                        State.CharaSelectSync.Enqueue(charaSelectSync);
-                    else
-                        Debug.WriteLine("[Client] Dropping Character Select Packet: Starting Race");
+                    State.CharaSelectSync.Enqueue(charaSelectSync);
                     break;
 
                 case CourseSelectSync courseSelectSync:
@@ -202,6 +205,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 case HostSetPlayerData hostSetPlayerData:
                     Debug.WriteLine($"[Client] Received Player Info");
                     State.PlayerInfo = hostSetPlayerData.Data;
+                    State.PlayerIndex = hostSetPlayerData.Index;
                     break;
 
                 case SetAntiCheat setAntiCheat:
@@ -232,12 +236,23 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             while (State.CharaSelectSync.TryDequeue(out var result))
             {
-                result.ToGame(task);   
+                if (State.StartRequested)
+                    continue;
+
+                result.ToGame(task);
             }
         }
 
-        private bool CheckIfStartRace() => State.StartRequested;
+        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
+        {
+            if (task->TaskData->RaceMode != RaceMode.TagMode)
+                *Sewer56.SonicRiders.API.State.NumberOfRacers = (byte) (Math.Max(State.PlayerInfo.Max(x => x.PlayerIndex) + 1, State.PlayerIndex + 1) );
 
+            // Reset start request flag.
+            State.StartRequested = false;
+        }
+
+        private bool CheckIfStartRace() => State.StartRequested;
         private void OnStartRace()
         {
             if (!State.StartRequested)
@@ -247,11 +262,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(new CharaSelectStart()) };
                 Manager.FirstPeer.Send(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
                 Manager.FirstPeer.Flush();
-            }
-            else
-            {
-                // Start triggered by request from host.
-                State.StartRequested = false;
             }
         }
 
@@ -272,7 +282,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Manager.FirstPeer.Flush();
 
             // Otherwise wait for a message from the host.
-            if (!PollUntil(IsGo, _syncTimeout * 2))
+            if (!PollUntil(IsGo, _syncTimeout))
             {
                 Debug.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
                 Dispose();
@@ -314,6 +324,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         private bool SkipIntroIfRequestedByHost() => State.SkipRequested;
+
         #endregion
 
         #region Overrides

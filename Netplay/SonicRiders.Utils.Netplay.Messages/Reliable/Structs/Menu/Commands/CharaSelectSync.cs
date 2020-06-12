@@ -46,6 +46,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             if (IsStartingRace(task))
                 return;
 
+            Debug.WriteLine("CharaSelectSync Apply");
             ResetMenu(task);
             for (var index = 0; index < Sync.Length; index++)
             {
@@ -66,7 +67,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// </summary>
         public unsafe bool IsStartingRace(Task<CharacterSelect, CharacterSelectTaskState>* task)
         {
-            return (task->TaskStatus == 0 || task->TaskStatus == CharacterSelectTaskState.LoadingStage) && task->TaskData->SelectionIsPerformed == 1;
+            return task->TaskStatus == CharacterSelectTaskState.LoadingStage;
         }
 
         /// <summary>

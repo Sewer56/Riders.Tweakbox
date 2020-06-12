@@ -105,7 +105,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             var values       = new List<HostPlayerData>();
             values.Add(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             values.AddRange(_dictionary.Values.ToArray());
-            return new HostSetPlayerData(values.Where(x => x.PlayerIndex != excludeIndex).ToArray());
+            return new HostSetPlayerData(values.Where(x => x.PlayerIndex != excludeIndex).ToArray(), excludeIndex);
         }
 
         /// <summary>

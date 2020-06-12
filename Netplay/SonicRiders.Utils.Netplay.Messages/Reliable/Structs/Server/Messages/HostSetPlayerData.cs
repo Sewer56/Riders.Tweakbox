@@ -14,7 +14,17 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages
         [Key(0)]
         public HostPlayerData[] Data { get; set; }
 
-        public HostSetPlayerData(HostPlayerData[] data) => Data = data;
+        /// <summary>
+        /// Index of the receiving player.
+        /// </summary>
+        [Key(1)]
+        public int Index { get; set; }
+
+        public HostSetPlayerData(HostPlayerData[] data, int index)
+        {
+            Data = data;
+            Index = index;
+        }
 
         public byte[] ToBytes() => MessagePackSerializer.Serialize(this);
         public static HostSetPlayerData FromBytes(BufferedStreamReader reader) => Utilities.DesrializeMessagePack<HostSetPlayerData>(reader);

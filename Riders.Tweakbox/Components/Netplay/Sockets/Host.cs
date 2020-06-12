@@ -13,8 +13,12 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Tasks;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
+using PlayerState = Riders.Tweakbox.Components.Netplay.Sockets.Helpers.PlayerState;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -48,6 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCheckIfSkipIntro += SkipIntroIfRequested;
             Event.OnStartRace += OnStartRace;
             Event.OnCheckIfStartRace += CheckIfStartRace;
+            Event.OnSetupRace += OnSetupRace;
         }
 
         public override unsafe void Dispose()
@@ -59,6 +64,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnSkipIntro -= WaitForClientReadySignalsAndGo;
             Event.OnStartRace -= OnStartRace;
             Event.OnCheckIfStartRace -= CheckIfStartRace;
+            Event.OnSetupRace -= OnSetupRace;
         }
 
         public override bool IsHost() => true;
@@ -84,12 +90,17 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         private void UpdateRace()
         {
 
+
+
         }
 
         private void UpdateCharacterSelect()
         {
             var task = Tracker.CharacterSelect;
             var data = PlayerMap.GetData();
+
+            if (task->TaskStatus == CharacterSelectTaskState.LoadingStage)
+                return;
 
             // Get All Chara Loops in Player Order
             var allCharaLoops = new CharaSelectLoop[Constants.MaxNumberOfPlayers];
@@ -177,7 +188,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         private void HandleMenuSyncMessage(NetPeer peer, MenuSynchronizationCommand syncCommand)
         {
             var data = PlayerMap.GetCustomData(peer);
-            data.SetLoopCommand(syncCommand.Command, State.StartRequested);
+            data.SetLoopCommand(syncCommand.Command);
 
             if (syncCommand.Command is CharaSelectStart startCommand)
             {
@@ -259,7 +270,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             State.SkipRequested = false;
             Debug.WriteLine("[Host] Waiting for ready messages.");
             // Note to self: Don't use wait for all clients, because the messages may have already been sent by the clients.
-            if (!ActionWrappers.TryWaitUntil(TestAllReady, _syncTimeout * 2))
+            if (!ActionWrappers.TryWaitUntil(TestAllReady, _syncTimeout))
             {
                 Debug.WriteLine("[Host] It's no use, let's get outta here!.");
                 Manager.DisconnectAll();
@@ -313,13 +324,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             else
             {
                 // Start triggered by request from client.
-                State.StartRequested = false;
                 Debug.WriteLine("[Host] Start triggered by request from client");
             }
         }
 
         private bool CheckIfStartRace() => State.StartRequested;
         private bool SkipIntroIfRequested() => State.SkipRequested;
+
+        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
+        {
+            if (task->TaskData->RaceMode != RaceMode.TagMode)
+                *Sewer56.SonicRiders.API.State.NumberOfRacers = (byte) (PlayerMap.GetPlayerData().Max(x => x.PlayerIndex) + 1);
+
+            State.StartRequested = false;
+        }
         #endregion
 
         #region Overrides
