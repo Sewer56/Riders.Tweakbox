@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using BitStreams;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay

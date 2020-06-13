@@ -42,18 +42,24 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         [Key(2)]
         public PlayerStatus Status;
 
-        /// <summary>
-        /// Set to true if the player is currently exiting the menu.
-        /// </summary>
-        [Key(3)]
-        public bool IsExitingMenu;
-
-        public CharaSelectLoop(byte character, byte board, PlayerStatus status, bool isExiting)
+        public CharaSelectLoop(byte character, byte board, PlayerStatus status)
         {
             Character = character;
             Board = board;
             Status = status;
-            IsExitingMenu = isExiting;
+        }
+
+        /// <summary>
+        /// Applies the current struct to the game, but only the non-menu data.
+        /// </summary>
+        public unsafe void ToGameOnlyCharacter(int index)
+        {
+            ref var player = ref Player.Players[index];
+            player.Character = (Characters)Character;
+            player.ExtremeGear = (ExtremeGear)Board;
+
+            player.IsAiLogic = PlayerType.CPU;
+            player.IsAiVisual = PlayerType.CPU;
         }
 
         /// <summary>
@@ -66,12 +72,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             if (task == null)
                 return;
 
-            if (task->TaskStatus == CharacterSelectTaskState.LoadingStage)
-                return;
-
-            ref var player = ref Player.Players[index];
-            player.Character   = (Characters)Character;
-            player.ExtremeGear = (ExtremeGear)Board;
+            ToGameOnlyCharacter(index);
             
             // Menu supports only 4 characters
             if (index <= 3)
@@ -98,13 +99,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 
                 task->TaskData->PlayerMenuSelections[index] = CharacterToSelection(Character);
             }
-
-            // Handle menu exiting and race start.
-            if (IsExitingMenu)
-            {
-                task->TaskStatus = CharacterSelectTaskState.Exiting;
-                task->TaskData->MenuState = MenuState.Exit;
-            }
         }
 
         /// <summary>
@@ -117,14 +111,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 return new CharaSelectLoop();
 
             var data = task->TaskData;
-            bool isExiting = task->TaskStatus == CharacterSelectTaskState.Exiting && data->MenuState == MenuState.Exit;
-            
             return new CharaSelectLoop()
             {
                 Character = (byte)Player.Players[0].Character,
                 Board = (byte)Player.Players[0].ExtremeGear,
-                Status = (PlayerStatus)data->PlayerStatuses[0],
-                IsExitingMenu = isExiting,
+                Status = (PlayerStatus)data->PlayerStatuses[0]
             };
         }
 

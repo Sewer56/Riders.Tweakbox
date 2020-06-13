@@ -2,15 +2,20 @@
 using System.IO;
 using EnumsNET;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Netplay.Messages.Reliable.Structs.Menu;
+using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
 using Riders.Netplay.Messages.Unreliable;
+using MenuSynchronizationCommand = Riders.Netplay.Messages.Reliable.Structs.Menu.MenuSynchronizationCommand;
 
 namespace Riders.Netplay.Messages
 {
-    public unsafe struct ReliablePacket
+    public unsafe class ReliablePacket : IPacket<ReliablePacket>, IPacket
     {
+        public PacketKind GetPacketType() => PacketKind.Reliable;
+
         /// <summary>
         /// Flags attacked to the original packet.
         /// </summary>
@@ -74,6 +79,10 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public ServerMessage? ServerMessage;
 
+        public ReliablePacket() { }
+        public ReliablePacket(IMenuSynchronizationCommand command) => MenuSynchronizationCommand = new MenuSynchronizationCommand(command);
+        public ReliablePacket(IServerMessage message) => ServerMessage = new ServerMessage(message);
+
         /// <summary>
         /// Converts this message to an set of bytes.
         /// </summary>
@@ -98,31 +107,28 @@ namespace Riders.Netplay.Messages
         }
 
         /// <summary>
-        /// Serializes an instance of the packet.
+        /// Deserializes an instance of the packet.
         /// </summary>
-        public static unsafe ReliablePacket Deserialize(Span<byte> data)
+        public unsafe void Deserialize(Span<byte> data)
         {
             using var memStream = new MemoryStream(data.ToArray());
-            using var reader    = new BufferedStreamReader(memStream, (int) memStream.Length);
-            var packet   = new ReliablePacket();
-            packet.Flags = reader.Read<HasData>();
-            if (packet.Flags.HasAllFlags(HasData.HasSyncStartReady)) packet.HasSyncStartReady = true;
-            if (packet.Flags.HasAllFlags(HasData.HasSyncStartSkip)) packet.HasSyncStartSkip = true;
-            if (packet.Flags.HasAllFlags(HasData.HasIncrementLapCounter)) packet.HasIncrementLapCounter = true;
+            using var reader = new BufferedStreamReader(memStream, (int)memStream.Length);
+            Flags = reader.Read<HasData>();
+            if (Flags.HasAllFlags(HasData.HasSyncStartReady)) HasSyncStartReady = true;
+            if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
+            if (Flags.HasAllFlags(HasData.HasIncrementLapCounter)) HasIncrementLapCounter = true;
 
-            reader.SetValueIfHasFlags(ref packet.Random, packet.Flags, HasData.HasRand);
-            if (packet.Flags.HasAllFlags(HasData.HasGameData)) Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
-            reader.SetValueIfHasFlags(ref packet.SyncStartGo, packet.Flags, HasData.HasSyncStartGo);
-            reader.SetValueIfHasFlags(ref packet.SetLapCounters, packet.Flags, HasData.HasLapCounters);
-            reader.SetValueIfHasFlags(ref packet.SetBoostTornadoAttack, packet.Flags, HasData.HasSetBoostTornadoAttack);
-            reader.SetValueIfHasFlags(ref packet.BoostTornadoAttack, packet.Flags, HasData.HasBoostTornadoAttack);
-            reader.SetValueIfHasFlags(ref packet.AntiCheatTriggered, packet.Flags, HasData.HasAntiCheatTriggered);
-            reader.SetValueIfHasFlags(ref packet.AntiCheatGameData, packet.Flags, HasData.HasAntiCheatGameData);
-            reader.SetValueIfHasFlags(ref packet.AntiCheatHeartbeat, packet.Flags, HasData.HasAntiCheatHeartbeat);
-            if (packet.Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) packet.MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
-            if (packet.Flags.HasAllFlags(HasData.HasServerMessage)) packet.ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
-            
-            return packet;
+            reader.SetValueIfHasFlags(ref Random, Flags, HasData.HasRand);
+            if (Flags.HasAllFlags(HasData.HasGameData)) Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
+            reader.SetValueIfHasFlags(ref SyncStartGo, Flags, HasData.HasSyncStartGo);
+            reader.SetValueIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
+            reader.SetValueIfHasFlags(ref SetBoostTornadoAttack, Flags, HasData.HasSetBoostTornadoAttack);
+            reader.SetValueIfHasFlags(ref BoostTornadoAttack, Flags, HasData.HasBoostTornadoAttack);
+            reader.SetValueIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
+            reader.SetValueIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
+            reader.SetValueIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
+            if (Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
+            if (Flags.HasAllFlags(HasData.HasServerMessage)) ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
         }
 
         /// <summary>

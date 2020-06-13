@@ -11,7 +11,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// The current socket instance, either a <see cref="Client"/> or <see cref="Host"/>.
         /// </summary>
-        public Socket Socket { get; set; }
+        public Socket Socket;
 
         public NetplayController() => Event.AfterEndScene += OnEndScene;
         public void Disable() => Event.AfterEndScene -= OnEndScene;

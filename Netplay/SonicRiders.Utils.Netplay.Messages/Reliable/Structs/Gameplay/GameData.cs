@@ -4,6 +4,7 @@ using System.Linq;
 using K4os.Compression.LZ4;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 

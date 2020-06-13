@@ -184,7 +184,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         /// Gets the difference between the current course select state and the last state.
         /// </summary>
         /// <param name="after">The later state.</param>
-        public unsafe CourseSelectLoop GetDelta(CourseSelectSync after)
+        public unsafe CourseSelectLoop Delta(CourseSelectSync after)
         {
             bool openSubmenu  = after.State == CourseSelectTaskState.HeroBabylonPicker && State == CourseSelectTaskState.Normal;
             bool closeSubmenu = after.State == CourseSelectTaskState.Normal && State == CourseSelectTaskState.HeroBabylonPicker;

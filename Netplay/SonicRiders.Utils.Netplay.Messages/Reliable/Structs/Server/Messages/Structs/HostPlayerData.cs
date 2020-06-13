@@ -7,7 +7,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
     public class HostPlayerData
     {
         [Key(0)]
-        public string Name { get; set; }
+        public string Name;
 
         /// <summary>
         /// Index of the individual player.
@@ -15,7 +15,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
         /// Ignore if received from client.
         /// </summary>
         [Key(1)]
-        public int PlayerIndex { get; set; }
+        public int PlayerIndex;
 
         /// <summary>
         /// Copies data submitted by the client.

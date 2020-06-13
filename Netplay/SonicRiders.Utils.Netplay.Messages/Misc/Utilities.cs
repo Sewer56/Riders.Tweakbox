@@ -6,7 +6,7 @@ using K4os.Compression.LZ4.Streams;
 using MessagePack;
 using Reloaded.Memory.Streams;
 
-namespace Riders.Netplay.Messages
+namespace Riders.Netplay.Messages.Misc
 {
     public static class Utilities
     {

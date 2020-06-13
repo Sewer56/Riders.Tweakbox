@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
@@ -12,8 +14,6 @@ using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.API;
-using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -24,35 +24,40 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
     public unsafe class Host : Socket
     {
-        public string Password { get; private set; }
-        public TaskTracker Tracker { get; private set; } = IoC.GetConstant<TaskTracker>();
-        public PlayerMap<PlayerState> PlayerMap { get; private set; } = new PlayerMap<PlayerState>();
-        public MenuDeltaTracker Delta { get; private set; } = IoC.GetConstant<MenuDeltaTracker>();
-        public EventHook Event { get; private set; } = IoC.GetConstant<EventHook>();
-        public ClientState State { get; private set; } = new ClientState();
-        private int _syncTimeout = 2000;
+        /// <summary>
+        /// Contains that is used by the server.
+        /// </summary>
+        public new HostState State => (HostState) base.State;
 
+        public string Password { get; private set; }
+        public PlayerMap<PlayerState> PlayerMap { get; private set; } = new PlayerMap<PlayerState>();
+        
         public Host(int port, string password, NetplayController controller) : base(controller)
         {
             Debug.WriteLine($"[Host] Hosting Server on {port} with password {password}");
 
-#if DEBUG
-            _syncTimeout = 5000;
-            Manager.DisconnectTimeout = int.MaxValue;
-            Manager.SimulateLatency = false;
-            Manager.SimulationMinLatency = 1000;
-            Manager.SimulationMaxLatency = 1000;
-#endif
-
-            Manager.UpdateTime = 1;
+            base.State = new HostState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Password = password;
             Manager.Start(port);
 
-            Event.OnSkipIntro += WaitForClientReadySignalsAndGo;
-            Event.OnCheckIfSkipIntro += SkipIntroIfRequested;
-            Event.OnStartRace += OnStartRace;
-            Event.OnCheckIfStartRace += CheckIfStartRace;
+            Event.OnCharacterSelect += OnCharaSelect;
+            Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
+            Event.OnExitCharaSelect += MenuOnExitCharaSelect;
+
+            Event.OnCheckIfStartRace += MenuCheckIfStartRace;
+            Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
+
+            Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
+            Event.OnRaceSkipIntro += OnSkipRaceIntro;
+
+            Event.OnRaceSettings += OnRuleSettings;
+            Event.AfterRaceSettings += OnAfterRuleSettings;
+            State.Delta.OnRuleSettingsUpdated += OnRuleSettingsChanged;
+
+            Event.OnCourseSelect += OnCourseSelect;
+            Event.AfterCourseSelect += OnAfterCourseSelect;
+            State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
         }
 
         public override unsafe void Dispose()
@@ -60,153 +65,61 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Manager.DisconnectAll();
             base.Dispose();
 
-            Event.OnCheckIfSkipIntro -= SkipIntroIfRequested;
-            Event.OnSkipIntro -= WaitForClientReadySignalsAndGo;
-            Event.OnStartRace -= OnStartRace;
-            Event.OnCheckIfStartRace -= CheckIfStartRace;
+            Event.OnCharacterSelect -= OnCharaSelect;
+            Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
+            Event.OnExitCharaSelect -= MenuOnExitCharaSelect;
+
+            Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
+            Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
+
+            Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
+            Event.OnRaceSkipIntro -= OnSkipRaceIntro;
+
+            Event.OnRaceSettings -= OnRuleSettings;
+            Event.AfterRaceSettings -= OnAfterRuleSettings;
+            State.Delta.OnRuleSettingsUpdated -= OnRuleSettingsChanged;
+
+            Event.OnCourseSelect -= OnCourseSelect;
+            Event.AfterCourseSelect -= OnAfterCourseSelect;
+            State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
         }
 
         public override bool IsHost() => true;
+
         public override void Update()
         {
-            switch (Tracker.LastTask)
-            {
-                case Tasks.CharacterSelect:
-                    UpdateCharacterSelect();
-                    break;
-                case Tasks.CourseSelect:
-                    UpdateCourseSelect();
-                    break;
-                case Tasks.RaceRules:
-                    UpdateRaceRules();
-                    break;
-                case Tasks.Race:
-                    UpdateRace();
-                    break;
-            }
+            base.Update();
+            State.FrameCounter += 1;
         }
 
-        private void UpdateRace()
+        public override void HandlePacket(Packet<NetPeer> packet)
         {
+            if (packet.As<IPacket>().GetPacketType() == PacketKind.Reliable)
+                HandleReliable(packet.Source, packet.As<ReliablePacket>());
 
+            else if (packet.As<IPacket>().GetPacketType() == PacketKind.Unreliable)
+                HandleUnreliable(packet.Source, packet.As<UnreliablePacket>());
+        }
 
+        private void HandleUnreliable(NetPeer peer, UnreliablePacket result)
+        {
 
         }
 
-        private void UpdateCharacterSelect()
+        private void HandleReliable(NetPeer peer, ReliablePacket packet)
         {
-            var task = Tracker.CharacterSelect;
-            var data = PlayerMap.GetData();
+            if (packet.MenuSynchronizationCommand.HasValue)
+                HandleMenuMessage(peer, packet.MenuSynchronizationCommand.Value);
 
-            if (task->TaskStatus == CharacterSelectTaskState.LoadingStage)
-                return;
+            if (packet.ServerMessage.HasValue)
+                HandleServerMessage(peer, packet.ServerMessage.Value);
 
-            // Get All Chara Loops in Player Order
-            var allCharaLoops = new CharaSelectLoop[Constants.MaxNumberOfPlayers];
-            allCharaLoops[0]  = CharaSelectLoop.FromGame(task);
-
-            foreach (var dat in data) 
-                allCharaLoops[dat.Host.PlayerIndex] = dat.Custom.CharaSelectLoop;
-
-            // Apply Sync Message to Self
-            var charaLoopSpan = allCharaLoops.AsSpan();
-            new CharaSelectSync(charaLoopSpan.Slice(1).ToArray()).ToGame(task);
-
-            // Send personalized message to each peer with everyone except them.
-            foreach (var peer in Manager.ConnectedPeerList)
-            {
-                var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
-                var selectSync  = new CharaSelectSync(allCharaLoops.Where((loop, x) => x != excludeIndex).ToArray());
-                var syncMessage = new MenuSynchronizationCommand(selectSync);
-                var message     = new ReliablePacket() { MenuSynchronizationCommand = syncMessage };
-
-                if (selectSync.ContainsExit())
-                    peer.Send(message.Serialize(), DeliveryMethod.ReliableOrdered);
-                else
-                    peer.Send(message.Serialize(), DeliveryMethod.ReliableSequenced);
-
-                peer.Flush();
-            }
-        }
-
-        private void UpdateRaceRules()
-        {
-            var task = Tracker.RaceRules;
-
-            // Calculate Sync Data based off of Client Info
-            var allData = PlayerMap.GetCustomData();
-            var loop = new RuleSettingsLoop();
-            foreach (var data in allData)
-                loop = loop.Add(data.GetEraseRuleSettingsLoop());
-
-            if (!loop.IsDefault() || !Delta.Rule.IsDefault())
-            {
-                var sync = RuleSettingsSync.FromGame(task);
-                sync.Merge(loop);
-                sync.ToGame(task);
-
-                // Send to all peers.
-                var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(sync) };
-                Manager.SendToAll(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.Flush();
-            }
-        }
-
-        private unsafe void UpdateCourseSelect()
-        {
-            var task = Tracker.CourseSelect;
-           
-            // Exit if character disconnected.
-            if (task->TaskStatus == CourseSelectTaskState.Closing)
-            {
-                Dispose();
-                return;
-            }
-
-            // Calculate Sync Data based off of Client Info
-            var allData = PlayerMap.GetCustomData();
-            var loop    = new CourseSelectLoop();
-            foreach (var data in allData)
-                loop = loop.Add(data.GetEraseCourseLoop());
-
-            if (!loop.IsDefault() || !Delta.Course.IsDefault())
-            {
-                var sync = CourseSelectSync.FromGame(task);
-                sync.Merge(loop);
-                sync.ToGame(task);
-
-                var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(sync) };
-                Manager.SendToAll(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.Flush();
-            }
-            
-            // Cleanup for next frame.
-            // Nothing to do here.
-        }
-
-        private void HandleMenuSyncMessage(NetPeer peer, MenuSynchronizationCommand syncCommand)
-        {
-            var data = PlayerMap.GetCustomData(peer);
-            data.SetLoopCommand(syncCommand.Command);
-
-            if (syncCommand.Command is CharaSelectStart startCommand)
-            {
-                Debug.WriteLine("[Host] Got Start Request Flag from Client");
-                State.StartRequested = true;
-                var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(new CharaSelectStart()) };
-                SendToAllExcept(peer, serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-            }
-        }
-
-        private void HandleReliableRace(NetPeer peer, ReliablePacket packet)
-        {
+            // All remaining messages.
             if (packet.HasSyncStartSkip)
             {
                 State.SkipRequested = true;
-                Debug.WriteLine("[Host] Received Skip from Client, Rebroadcasting.");
-                var serverMessage = new ReliablePacket() { HasSyncStartSkip = true };
-                SendToAllExcept(peer, serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
+                SendToAllExcept(peer, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, "[Host] Received Skip from Client, Rebroadcasting.");
             }
 
             if (packet.HasSyncStartReady)
@@ -229,149 +142,165 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
         }
 
-        /// <summary>
-        /// Sends a personalized player map (excluding the player). 
-        /// </summary>
-        public void UpdatePlayerMap()
+        private void HandleMenuMessage(NetPeer peer, MenuSynchronizationCommand syncCommand)
         {
-            foreach (var peer in Manager.ConnectedPeerList)
+            switch (syncCommand.Command)
             {
-                var message = PlayerMap.ToMessage(peer);
-                var serverMessage = new ServerMessage(message);
-                var reliableMessage = new ReliablePacket() { ServerMessage = serverMessage };
-                peer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableUnordered);
-                peer.Flush();
+                case CharaSelectLoop charaSelectLoop:
+                    State.CharaSelectLoop[PlayerMap.GetPlayerData(peer).PlayerIndex] = charaSelectLoop;
+                    break;
+                case CourseSelectLoop courseSelectLoop:
+                    State.CourseSelectLoop.Enqueue(courseSelectLoop);
+                    break;
+                case RuleSettingsLoop ruleSettingsLoop:
+                    State.RuleSettingsLoop.Enqueue(ruleSettingsLoop);
+                    break;
+                case CharaSelectExit startCommand:
+                    State.CharaSelectExit = startCommand.Type;
+                    SendToAllExcept(peer, new ReliablePacket(new CharaSelectExit(startCommand.Type)), DeliveryMethod.ReliableOrdered, "[State] Got Start / Exit Request Flag, Rebroadcasting");
+                    break;
             }
         }
 
-        /// <summary>
-        /// Sends game data to a peer one time.
-        /// </summary>
-        private void SendGameData(NetPeer peer)
+        #region Events: On/After Events
+        private void OnCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
         {
-            var gameData = GameData.FromGame();
-            var serverMessage = new ReliablePacket() { GameData = gameData };
-            peer.Send(serverMessage.Serialize(), DeliveryMethod.ReliableUnordered);
-            peer.Flush();
+            // Note: For host, do opposite, set, sync, then resend if changed.
+            State.Delta.Set(task);
+            var sync = CourseSelectSync.FromGame(task);
+            var loop = State.GetCourseSelect();
+            sync.Merge(loop);
+
+            State.CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(sync);
+            State.SyncCourseSelect(task);
         }
 
-        #region Events
-        private void WaitForClientReadySignalsAndGo()
+        private void OnAfterCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task) => State.Delta.Update(task);
+        private unsafe void OnCourseSelectChanged(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task)
         {
+            if (Manager.ConnectedPeersCount <= 0)
+                return;
+
+            SendToAllAndFlush(new ReliablePacket(CourseSelectSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
+        }
+
+        private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
+        {
+            State.Delta.Set(task);
+            var sync = RuleSettingsSync.FromGame(task);
+            var loop = State.GetRuleSettings();
+            sync.Merge(loop);
+
+            State.RuleSettingsSync = new Volatile<Timestamped<RuleSettingsSync>>(sync);
+            State.SyncRuleSettings(task);
+        }
+
+        private void OnAfterRuleSettings(Task<RaceRules, RaceRulesTaskState>* task) => State.Delta.Update(task);
+        private unsafe void OnRuleSettingsChanged(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
+        {
+            if (Manager.ConnectedPeersCount <= 0)
+                return;
+
+            SendToAllAndFlush(new ReliablePacket(RuleSettingsSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
+        }
+
+        private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
+        {
+            // Calculate sync data from client info.
+            var sync = State.GetCharacterSelect();
+            sync[0]  = CharaSelectLoop.FromGame(task);
+            State.CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(new CharaSelectSync(sync.Where((loop, x) => x != 0).ToArray()));
+            State.SyncCharaSelect(task);
+
+            // If not starting, transmit updated sync.
+            if (State.CharaSelectExit == ExitKind.Null)
+            {
+                for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
+                {
+                    var peer = Manager.ConnectedPeerList[x];
+                    var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
+                    SendAndFlush(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
+                }
+            }
+        }
+
+        private bool MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
+        private void MenuOnExitCharaSelect()
+        {
+            // We started ourselves, tell host to rebroadcast.
+            if (State.CharaSelectExit != ExitKind.Exit)
+                SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(ExitKind.Exit)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Exit flag to Clients");
+
+            State.CharaSelectExit = ExitKind.Null;
+        }
+
+        private bool MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
+        private void MenuOnMenuStartRace()
+        {
+            // We skipped the intro ourselves, pass the news along to the clients. 
+            if (State.CharaSelectExit != ExitKind.Start)
+                SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(ExitKind.Start)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Start Flag to Clients");
+
+            State.CharaSelectExit = ExitKind.Null;
+            State.OnCharacterSelectStartRace();
+        }
+
+        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
+        private bool OnCheckIfRaceSkipIntro() => State.SkipRequested;
+        private void OnSkipRaceIntro()
+        {
+            bool TestAllReady() => PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
+
             // Send skip signal to clients.
-            if (!State.SkipRequested)
-            {
-                Debug.WriteLine("[Host] Broadcasting Skip Signal.");
-                var serverMessage = new ReliablePacket() { HasSyncStartSkip = true };
-                Manager.SendToAll(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.Flush();
-            }
+            if (!State.SkipRequested) 
+                SendToAllAndFlush(new ReliablePacket() { HasSyncStartSkip = true } , DeliveryMethod.ReliableOrdered, "[Host] Broadcasting Skip Signal.");
 
             State.SkipRequested = false;
             Debug.WriteLine("[Host] Waiting for ready messages.");
+
             // Note to self: Don't use wait for all clients, because the messages may have already been sent by the clients.
-            if (!ActionWrappers.TryWaitUntil(TestAllReady, _syncTimeout))
+            if (!PollUntil(TestAllReady, HandshakeTimeout))
             {
                 Debug.WriteLine("[Host] It's no use, let's get outta here!.");
                 Manager.DisconnectAll();
                 return;
             }
 
-            // Send go signal to players and wait.
-            Debug.WriteLine("[Host] Sending GO signal.");
-            var secondFromNow = DateTime.UtcNow.AddSeconds(1);
-            var reliableMessage = new ReliablePacket() { SyncStartGo = new SyncStartGo(secondFromNow) };
-            Manager.SendToAll(reliableMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-            Manager.Flush();
-
+            var startTime = new SyncStartGo(State.MaxLatency);
+            SendToAllAndFlush(new ReliablePacket() { SyncStartGo = startTime }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
+            
             // Disable skip flags for everyone.
             var data = PlayerMap.GetCustomData();
             foreach (var dt in data)
                 dt.ReadyToStartRace = false;
 
-            Wait(secondFromNow);
-            Debug.WriteLine("[Host] Race Started.");
-
-            // Helper Functions.
-            void Wait(DateTime startTime)
-            {
-                Debug.WriteLine("[Host] Waiting for race start.");
-                Debug.WriteLine($"[Host] Time: {DateTime.UtcNow}");
-                Debug.WriteLine($"[Host] Start Time: {startTime}");
-
-                ActionWrappers.TryWaitUntil(() => DateTime.UtcNow > startTime, int.MaxValue);
-            }
-
-            bool TestAllReady()
-            {
-                Manager.PollEvents();
-                Manager.Flush();
-                return PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
-            }
-        }
-
-        
-        private void OnStartRace()
-        {
-            // We skipped the intro ourselves, pass the news along to the clients. 
-            if (! State.StartRequested)
-            {
-                Debug.WriteLine("[Host] Sending Race Start Flag to Clients");
-                var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(new CharaSelectStart()) };
-                Manager.SendToAll(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.Flush();
-            }
-            else
-            {
-                // Start triggered by request from client.
-                Debug.WriteLine("[Host] Start triggered by request from client");
-            }
-        }
-
-        private bool CheckIfStartRace() => State.StartRequested;
-        private bool SkipIntroIfRequested() => State.SkipRequested;
-
-        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
-        {
-            if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *Sewer56.SonicRiders.API.State.NumberOfRacers = (byte) (PlayerMap.GetPlayerData().Max(x => x.PlayerIndex) + 1);
-
-            State.StartRequested = false;
+            Wait(startTime.StartTime, "[Host] Race Started.");
         }
         #endregion
 
-        #region Overrides
-        public override void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
-        {
-            if (packet.MenuSynchronizationCommand != null) 
-                HandleMenuSyncMessage(peer, packet.MenuSynchronizationCommand.Value);
-
-            if (packet.ServerMessage != null)
-                HandleServerMessage(peer, packet.ServerMessage.Value);
-
-            HandleReliableRace(peer, packet);
-        }
-
-        public override void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet)
-        {
-            // TODO: [Host] Race / Handle Unreliable Packets
-        }
-
+        #region Socket Events
         public override void OnPeerConnected(NetPeer peer)
         {
-            // Wait for user data acknowledgement.
+            bool CheckIfUserData(Packet<NetPeer> packet)
+            {
+                if (packet.As<IPacket>().GetPacketType() != PacketKind.Reliable)
+                    return false;
+
+                return packet.As<ReliablePacket>().ServerMessage?.MessageKind == ServerMessageType.ClientSetPlayerData;
+            }
+
+            // Handle player handshake here!
             Debug.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.");
-            if (!TryWaitForMessage(peer, CheckIfUserData, _syncTimeout))
+            if (!TryWaitForMessage(peer, CheckIfUserData, HandshakeTimeout))
             {
                 Debug.WriteLine($"[Host] Disconnecting client, did not receive user data.");
                 peer.Disconnect();
                 return;
             }
-
-            // Player map updated in handler.
-            Debug.WriteLine($"[Host] Received user data, uploading game data.");
-            SendGameData(peer);
-            bool CheckIfUserData(Packet<NetPeer> packet) => packet.Reliable?.ServerMessage?.MessageKind == ServerMessageType.ClientSetPlayerData;
+            
+            SendAndFlush(peer, new ReliablePacket() { GameData = GameData.FromGame() }, DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.");
+            SendAndFlush(peer, new ReliablePacket(CourseSelectSync.FromGame(Event.CourseSelect)), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.");
         }
 
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -388,27 +317,40 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 data.Latency = latency;
         }
 
-        public override void OnConnectionRequest(ConnectionRequest request)
+        public override bool OnConnectionRequest(ConnectionRequest request)
         {
-            // Reject if not in course select menu.
-            Debug.WriteLine($"[Host] Received Connection Request | Last Task {Tracker.LastTask}");
-            if (Tracker.LastTask != Tasks.CourseSelect)
+            bool Reject(string message)
             {
+                Debug.WriteLine(message);
                 request.Reject();
-                Debug.WriteLine($"[Host] Rejected Connection | Not on Course Select");
-                return;
+                return false;
             }
+
+            Debug.WriteLine($"[Host] Received Connection Request");
+            if (Event.LastTask != Tasks.CourseSelect)
+                return Reject("[Host] Rejected Connection | Not on Course Select");
 
             if (!PlayerMap.HasEmptySlots())
+                return Reject($"[Host] Rejected Connection | No Empty Slots");
+
+            Debug.WriteLine($"[Host] Accepting if Password Matches");
+            return request.AcceptIfKey(Password) != null;
+        }
+        #endregion
+
+        #region Utility Functions
+        /// <summary>
+        /// Sends a personalized player map (excluding the player). 
+        /// </summary>
+        public void UpdatePlayerMap()
+        {
+            foreach (var peer in Manager.ConnectedPeerList)
             {
-                request.Reject();
-                Debug.WriteLine($"[Host] Rejected Connection | No Empty Slots");
-                return;
+                var message = PlayerMap.ToMessage(peer, State.SelfInfo);
+                SendAndFlush(peer, new ReliablePacket(message), DeliveryMethod.ReliableUnordered);
             }
 
-            // Accept on password.
-            Debug.WriteLine($"[Host] Accepting if Password Matches");
-            request.AcceptIfKey(Password);
+            State.PlayerInfo = PlayerMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
         }
         #endregion
     }

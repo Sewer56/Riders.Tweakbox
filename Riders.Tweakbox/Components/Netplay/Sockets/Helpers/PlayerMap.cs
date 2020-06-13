@@ -3,8 +3,7 @@ using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
-using Riders.Tweakbox.Misc;
-using Constants = Riders.Netplay.Messages.Constants;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
@@ -16,6 +15,26 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     {
         private Dictionary<int, HostPlayerData> _dictionary = new Dictionary<int, HostPlayerData>();
         private Dictionary<int, T> _dictionaryUserData = new Dictionary<int, T>();
+
+        /// <summary>
+        /// True if there are empty slots available, else false.
+        /// </summary>
+        public bool HasEmptySlots() => GetEmptySlot() != -1;
+
+        /// <summary>
+        /// Gets the player data for a peer.
+        /// </summary>
+        public HostPlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
+
+        /// <summary>
+        /// Gets the custom data of a peer.
+        /// </summary>
+        public T GetCustomData(NetPeer peer) => _dictionaryUserData.ContainsKey(peer.Id) ? _dictionaryUserData[peer.Id] : null;
+
+        /// <summary>
+        /// Gets the custom data for all peers.
+        /// </summary>
+        public T[] GetCustomData() => _dictionaryUserData.Values.ToArray();
 
         /// <summary>
         /// Adds a peer ID to the dictionary.
@@ -32,11 +51,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
             return emptySlot;
         }
-
-        /// <summary>
-        /// Gets the player data for a peer.
-        /// </summary>
-        public HostPlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
 
         /// <summary>
         /// Sets the player data for a peer.
@@ -69,16 +83,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Gets the custom data of a peer.
-        /// </summary>
-        public T GetCustomData(NetPeer peer) => _dictionaryUserData.ContainsKey(peer.Id) ? _dictionaryUserData[peer.Id] : null;
-
-        /// <summary>
-        /// Gets the custom data for all peers.
-        /// </summary>
-        public T[] GetCustomData() => _dictionaryUserData.Values.ToArray();
-
-        /// <summary>
         /// Removes a given peer from the player map.
         /// </summary>
         /// <param name="peer"></param>
@@ -92,18 +96,21 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// True if there are empty slots available, else false.
+        /// Converts the current dictionary to a message to send to the players.
         /// </summary>
-        public bool HasEmptySlots() => GetEmptySlot() != -1;
+        public HostSetPlayerData ToMessage(NetPeer excludePeer, HostPlayerData hostInfo)
+        {
+            var excludeIndex = GetPlayerData(excludePeer).PlayerIndex;
+            return ToMessage(excludeIndex, hostInfo);
+        }
 
         /// <summary>
         /// Converts the current dictionary to a message to send to the players.
         /// </summary>
-        public HostSetPlayerData ToMessage(NetPeer excludePeer)
+        public HostSetPlayerData ToMessage(int excludeIndex, HostPlayerData hostInfo)
         {
-            var excludeIndex = GetPlayerData(excludePeer).PlayerIndex;
-            var values       = new List<HostPlayerData>();
-            values.Add(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
+            var values = new List<HostPlayerData>();
+            values.Add(hostInfo);
             values.AddRange(_dictionary.Values.ToArray());
             return new HostSetPlayerData(values.Where(x => x.PlayerIndex != excludeIndex).ToArray(), excludeIndex);
         }

@@ -3,6 +3,7 @@ using System.Linq;
 using MessagePack;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -30,9 +31,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public static CharaSelectSync FromBytes(BufferedStreamReader reader) => Utilities.DesrializeMessagePack<CharaSelectSync>(reader);
 
         /// <summary>
-        /// Contains a start or exit flag.
+        /// Applies the current struct to game data, but only the character data.
         /// </summary>
-        public bool ContainsExit() => Sync.Any(x => x.IsExitingMenu);
+        public unsafe void ToGameOnlyCharacter()
+        {
+            for (var index = 0; index < Sync.Length; index++)
+            {
+                var sync = Sync[index];
+                sync.ToGameOnlyCharacter(index + 1);
+            }
+        }
 
         /// <summary>
         /// Applies the current task to the game.
@@ -43,10 +51,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             if (task == null) 
                 return;
 
-            if (IsStartingRace(task))
-                return;
-
-            Debug.WriteLine("CharaSelectSync Apply");
             ResetMenu(task);
             for (var index = 0; index < Sync.Length; index++)
             {
@@ -60,14 +64,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 task->TaskData->AreYouReadyEnabled = true;
             else
                 task->TaskData->AreYouReadyEnabled = false;
-        }
-
-        /// <summary>
-        /// True if the race is currently being started, else false.
-        /// </summary>
-        public unsafe bool IsStartingRace(Task<CharacterSelect, CharacterSelectTaskState>* task)
-        {
-            return task->TaskStatus == CharacterSelectTaskState.LoadingStage;
         }
 
         /// <summary>

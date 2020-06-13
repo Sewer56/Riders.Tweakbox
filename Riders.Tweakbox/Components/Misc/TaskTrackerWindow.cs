@@ -8,7 +8,7 @@ namespace Riders.Tweakbox.Components.Misc
     public class TaskTrackerWindow : IComponent
     {
         public string Name { get; set; } = "Task Tracker";
-        public TaskTracker Tracker = IoC.GetConstant<TaskTracker>(); 
+        public TaskEvents Events = IoC.GetConstant<TaskEvents>(); 
         private bool _isEnabled;
 
         public ref bool IsEnabled() => ref _isEnabled;
@@ -28,24 +28,24 @@ namespace Riders.Tweakbox.Components.Misc
 
         private unsafe void RenderStateTracker()
         {
-            ImGui.Text($"Last Task: {Tracker.LastTask}");
-            if (Extensions.IsNotNull(Tracker.CharacterSelect))
-                ImGui.Text($"{nameof(Tracker.CharacterSelect)}: {Tracker.CharacterSelect->TaskStatus}");
+            ImGui.Text($"Last Task: {Events.LastTask}");
+            if (Extensions.IsNotNull(Events.CharacterSelect))
+                ImGui.Text($"{nameof(Events.CharacterSelect)}: {Events.CharacterSelect->TaskStatus}");
 
-            if (Extensions.IsNotNull(Tracker.CourseSelect))
-                ImGui.Text($"{nameof(Tracker.CourseSelect)}: {Tracker.CourseSelect->TaskStatus}");
+            if (Extensions.IsNotNull(Events.CourseSelect))
+                ImGui.Text($"{nameof(Events.CourseSelect)}: {Events.CourseSelect->TaskStatus}");
 
-            if (Extensions.IsNotNull(Tracker.Race))
-                ImGui.Text($"{nameof(Tracker.Race)}: {Tracker.Race->TaskStatus}");
+            if (Extensions.IsNotNull(Events.Race))
+                ImGui.Text($"{nameof(Events.Race)}: {Events.Race->TaskStatus}");
 
-            if (Extensions.IsNotNull(Tracker.RaceRules))
-                ImGui.Text($"{nameof(Tracker.RaceRules)}: {Tracker.RaceRules->TaskStatus}");
+            if (Extensions.IsNotNull(Events.RaceRules))
+                ImGui.Text($"{nameof(Events.RaceRules)}: {Events.RaceRules->TaskStatus}");
 
-            if (Extensions.IsNotNull(Tracker.TitleSequence))
-                ImGui.Text($"{nameof(Tracker.TitleSequence)}: {Tracker.TitleSequence->TaskStatus}");
+            if (Extensions.IsNotNull(Events.TitleSequence))
+                ImGui.Text($"{nameof(Events.TitleSequence)}: {Events.TitleSequence->TaskStatus}");
 
-            if (Extensions.IsNotNull(Tracker.MessageBox))
-                ImGui.Text($"{nameof(Tracker.MessageBox)}: {Tracker.MessageBox->TaskStatus}");
+            if (Extensions.IsNotNull(Events.MessageBox))
+                ImGui.Text($"{nameof(Events.MessageBox)}: {Events.MessageBox->TaskStatus}");
         }
     }
 }

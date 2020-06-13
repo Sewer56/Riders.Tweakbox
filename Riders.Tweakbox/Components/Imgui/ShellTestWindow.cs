@@ -26,6 +26,9 @@ namespace Riders.Tweakbox.Components.Imgui
                 if (ImGui.Button("Shell Dialog Auto", Constants.DefaultVector2))
                     Shell.AddDialog(TestDialogId, TestDialog);
 
+                if (ImGui.Button("Shell Dialog Text", Constants.DefaultVector2))
+                    Shell.AddDialog(TestDialogId, "Arg is cute");
+
                 if (ImGui.Button("Shell Window Auto", Constants.DefaultVector2))
                     Shell.AddWindow(TestWindowId, TestDialog);
             }

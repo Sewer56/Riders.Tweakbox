@@ -59,7 +59,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
                     command.Command = CharaSelectSync.FromBytes(reader);
                     break;
                 case Shared.MenuSynchronizationCommand.CharaselectStart:
-                    command.Command = reader.Read<CharaSelectStart>();
+                    command.Command = reader.Read<CharaSelectExit>();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(command.CommandKind), command.CommandKind, null);

@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Ninject;
 using Riders.Tweakbox.Components.Netplay;
+using Riders.Tweakbox.Controllers;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -20,6 +21,7 @@ namespace Riders.Tweakbox.Misc
             Kernel.Bind<IO>().ToConstant(io);
             Kernel.Bind<NetplayConfigFile>().ToConstant(io.GetNetplayConfig());
             GetConstant<NetplayImguiConfig>();
+            GetConstant<EventController>();
         }
 
         /// <summary>

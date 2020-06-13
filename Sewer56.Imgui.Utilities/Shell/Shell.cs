@@ -55,7 +55,7 @@ namespace Sewer56.Imgui.Shell
         /// </summary>
         public static void AddDialog(string name, string dialogText)
         {
-            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.RenderTextWrapped(Constants.DefaultVector2, dialogText, null, -1.0f)));
+            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText)));
         }
 
         /// <summary>

@@ -22,7 +22,7 @@ namespace Riders.Netplay.Messages.Tests
             var unreliablePacket  = new Messages.UnreliablePacket(new[] { player });
 
             var bytes        = unreliablePacket.Serialize();
-            var deserialized = Messages.UnreliablePacket.Deserialize(bytes);
+            var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
 
             Assert.Equal(unreliablePacket.Header, deserialized.Header);
             Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
@@ -40,7 +40,7 @@ namespace Riders.Netplay.Messages.Tests
             var unreliablePacket = new Messages.UnreliablePacket(new[] { player });
 
             var bytes = unreliablePacket.Serialize();
-            var deserialized = Messages.UnreliablePacket.Deserialize(bytes);
+            var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
 
             Assert.Equal(unreliablePacket.Header, deserialized.Header);
             Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);

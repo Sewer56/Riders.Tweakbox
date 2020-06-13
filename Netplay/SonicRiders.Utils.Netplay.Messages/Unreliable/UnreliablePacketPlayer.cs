@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc;
 using Sewer56.NumberUtilities;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.SonicRiders.Structures.Enums;

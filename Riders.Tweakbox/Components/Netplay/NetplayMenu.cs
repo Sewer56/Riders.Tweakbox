@@ -18,8 +18,8 @@ namespace Riders.Tweakbox.Components.Netplay
         private bool _isEnabled;
         
         public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() => IoC.GetConstant<NetplayController>().Disable();
-        public void Enable() => IoC.GetConstant<NetplayController>().Enable();
+        public void Disable() => Controller.Disable();
+        public void Enable() => Controller.Enable();
 
         public void Render()
         {

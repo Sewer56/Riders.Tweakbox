@@ -1,4 +1,4 @@
-﻿namespace Riders.Netplay.Messages
+﻿namespace Riders.Netplay.Messages.Misc
 {
     public static class Constants
     {

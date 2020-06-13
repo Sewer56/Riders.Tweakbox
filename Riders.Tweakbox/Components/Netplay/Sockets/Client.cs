@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Queue;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
@@ -10,8 +12,6 @@ using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.API;
-using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -23,181 +23,126 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     /// <inheritdoc />
     public unsafe class Client : Socket
     {
-        public TaskTracker Tracker { get; private set; } = IoC.GetConstant<TaskTracker>();
-        public ConcurrentQueue<Packet<NetPeer>> PacketQueue { get; private set; } = new ConcurrentQueue<Packet<NetPeer>>();
-        public ClientState State { get; private set; } = new ClientState();
-        public MenuDeltaTracker Delta { get; private set; } = IoC.GetConstant<MenuDeltaTracker>();
-        public EventHook Event { get; private set; } = IoC.GetConstant<EventHook>();
-        private int _syncTimeout = 2000;
-        
         public Client(string ipAddress, int port, string password, NetplayController controller) : base(controller)
         {
             Debug.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}");
+            if (Event.LastTask != Tasks.CourseSelect)
+                throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
-
-#if DEBUG
-            Manager.DisconnectTimeout = int.MaxValue;
-            _syncTimeout = 5000;
-            Manager.SimulateLatency = false;
-            Manager.SimulationMinLatency = 1000;
-            Manager.SimulationMaxLatency = 1000;
-#endif
-
-            Manager.UpdateTime = 1;
+            State = new ClientState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Manager.Start();
             Manager.Connect(ipAddress, port, password);
 
             // Add undo menu movement when connected.
-            Delta.OnCourseSelectUpdated += DeltaOnCourseSelectUpdated;
-            Delta.OnRuleSettingsUpdated += DeltaOnRuleSettingsUpdated;
-            Event.OnSkipIntro += SendReadyOnSkipIntro;
-            Event.OnCheckIfSkipIntro += SkipIntroIfRequestedByHost;
-            Event.OnCharaSelect += OnCharaSelect;
-            Event.OnStartRace += OnStartRace;
-            Event.OnCheckIfStartRace += CheckIfStartRace;
+            Event.OnCharacterSelect += OnCharaSelect;
+            Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
+            Event.OnExitCharaSelect += MenuOnExitCharaSelect;
+
+            Event.OnCheckIfStartRace += MenuCheckIfStartRace;
+            Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
+            
+            Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
+            Event.OnRaceSkipIntro += OnSkipRaceIntro;
+
+            Event.OnRaceSettings += OnRuleSettings;
+            Event.AfterRaceSettings += OnAfterRuleSettings;
+            State.Delta.OnRuleSettingsUpdated += OnRuleSettingsChanged;
+
+            Event.OnCourseSelect += OnCourseSelect;
+            Event.AfterCourseSelect += OnAfterCourseSelect;
+            State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
         }
 
         public override void Dispose()
         {
             Debug.WriteLine($"[Client] Disposing of Socket, Disconnected");
             base.Dispose();
-            Delta.OnCourseSelectUpdated -= DeltaOnCourseSelectUpdated;
-            Delta.OnRuleSettingsUpdated -= DeltaOnRuleSettingsUpdated;
-            Event.OnSkipIntro -= SendReadyOnSkipIntro;
-            Event.OnCheckIfSkipIntro -= SkipIntroIfRequestedByHost;
-            Event.OnCharaSelect -= OnCharaSelect;
-            Event.OnStartRace -= OnStartRace;
-            Event.OnCheckIfStartRace -= CheckIfStartRace;
+            Event.OnCharacterSelect -= OnCharaSelect;
+            Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
+            Event.OnExitCharaSelect -= MenuOnExitCharaSelect;
+
+            Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
+            Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
+            
+            Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
+            Event.OnRaceSkipIntro -= OnSkipRaceIntro;
+
+            Event.OnRaceSettings -= OnRuleSettings;
+            Event.AfterRaceSettings -= OnAfterRuleSettings;
+            State.Delta.OnRuleSettingsUpdated -= OnRuleSettingsChanged;
+
+            Event.OnCourseSelect -= OnCourseSelect;
+            Event.AfterCourseSelect -= OnAfterCourseSelect;
+            State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
         }
 
         public override bool IsHost() => false;
         public override void Update()
         {
+            base.Update();
             State.FrameCounter += 1;
-            if (Manager.ConnectedPeersCount <= 0)
-                return;
-
-            // Process received packets.
-            while (PacketQueue.TryDequeue(out var result))
-            {
-                if (result.Reliable.HasValue)
-                    HandleReliable(result.Reliable.Value);
-
-                if (result.Unreliable.HasValue)
-                    HandleUnreliable(result.Unreliable.Value);
-            }
-
-            // Send update packets.
-            switch (Tracker.LastTask)
-            {
-                case Tasks.CharacterSelect:
-                    UpdateCharSelect();
-                    break;
-                case Tasks.CourseSelect:
-                    UpdateCourseSelect();
-                    break;
-                case Tasks.RaceRules:
-                    UpdateRaceRules();
-                    break;
-                case Tasks.Race:
-                    UpdateRace();
-                    break;
-            }
         }
 
-        private void UpdateRace()
+        public override void HandlePacket(Packet<NetPeer> packet)
+        {
+            if (packet.As<IPacket>().GetPacketType() == PacketKind.Reliable)
+                HandleReliable(packet.As<ReliablePacket>());
+
+            else if (packet.As<IPacket>().GetPacketType() == PacketKind.Unreliable)
+                HandleUnreliable(packet.As<UnreliablePacket>());
+        }
+
+        private void HandleUnreliable(UnreliablePacket result)
         {
 
         }
 
-        private void UpdateRaceRules()
+        private void HandleReliable(ReliablePacket packet)
         {
-            var raceRules = Delta.Rule;
-            if (!raceRules.IsDefault())
-            {
-                Debug.WriteLine($"[Client] Sending Race Rules Delta");
-                var reliableMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(raceRules) };
-                Manager.FirstPeer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.FirstPeer.Flush();
-            }
-        }
+            if (packet.MenuSynchronizationCommand.HasValue)
+                HandleMenuMessage(packet.MenuSynchronizationCommand.Value);
 
-        private unsafe void UpdateCourseSelect()
-        {
-            var courseSelectLoop  = Delta.Course;
-            if (!courseSelectLoop.IsDefault())
-            {
-                Debug.WriteLine($"[Client] Sending Course Select Delta");
-                var reliableMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(courseSelectLoop) };
-                Manager.FirstPeer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.FirstPeer.Flush();
-            }
-        }
+            if (packet.ServerMessage.HasValue)
+                HandleServerMessage(packet.ServerMessage.Value);
 
-        private unsafe void UpdateCharSelect()
-        {
-            if (Tracker.CharacterSelect->TaskStatus == CharacterSelectTaskState.LoadingStage)
-                return;
-
-            var charSelectLoop = CharaSelectLoop.FromGame(Tracker.CharacterSelect);
-            var reliableMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(charSelectLoop) };
-
-            if (charSelectLoop.IsExitingMenu)
-                Manager.FirstPeer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-            else
-                Manager.FirstPeer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableSequenced);
-
-            Manager.FirstPeer.Flush();
-        }
-
-        #region Server Message Handling
-        private void HandleUnreliable(UnreliablePacket resultUnreliable)
-        {
-
-        }
-
-        private void HandleReliable(ReliablePacket resultReliable)
-        {
-            if (resultReliable.MenuSynchronizationCommand.HasValue)
-                HandleMenu(resultReliable.MenuSynchronizationCommand.Value);
-
-            HandleReliableRace(resultReliable);
-        }
-
-        private void HandleReliableRace(ReliablePacket resultReliable)
-        {
-            // See Events for Go event.
-            if (resultReliable.HasSyncStartSkip)
+            // All remaining messages.
+            if (packet.HasSyncStartSkip)
                 State.SkipRequested = true;
+
+            if (packet.SyncStartGo.HasValue)
+            {
+                Debug.WriteLine($"[Client] Set SyncStartGo | {State.StartSyncGo}");
+                State.StartSyncGo = packet.SyncStartGo.Value;
+            }
         }
 
-        private unsafe void HandleMenu(MenuSynchronizationCommand syncCommand)
+        private unsafe void HandleMenuMessage(MenuSynchronizationCommand syncCommand)
         {
             var cmd = syncCommand.Command;
             switch (cmd)
             {
                 case CharaSelectSync charaSelectSync:
-                    State.CharaSelectSync.Enqueue(charaSelectSync);
+                    State.CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(charaSelectSync);
                     break;
 
                 case CourseSelectSync courseSelectSync:
-                    courseSelectSync.ToGame(Tracker.CourseSelect);
+                    State.CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(courseSelectSync);
                     break;
 
                 case RuleSettingsSync ruleSettingsSync:
-                    ruleSettingsSync.ToGame(Tracker.RaceRules);
+                    State.RuleSettingsSync = new Volatile<Timestamped<RuleSettingsSync>>(ruleSettingsSync);
                     break;
 
-                case CharaSelectStart charaSelectStart:
-                    Debug.WriteLine("[Client] Got Start Request Flag from Host");
-                    State.StartRequested = true;
+                case CharaSelectExit charaSelectExit:
+                    Debug.WriteLine("[State] Got Start/Exit Request Flag");
+                    State.CharaSelectExit = charaSelectExit.Type;
                     break;
             }
         }
 
-        private void HandleServerMessage(NetPeer peer, ServerMessage serverMessage)
+        private void HandleServerMessage(ServerMessage serverMessage)
         {
             var msg = serverMessage.Message;
             switch (msg)
@@ -205,7 +150,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 case HostSetPlayerData hostSetPlayerData:
                     Debug.WriteLine($"[Client] Received Player Info");
                     State.PlayerInfo = hostSetPlayerData.Data;
-                    State.PlayerIndex = hostSetPlayerData.Index;
+                    State.SelfInfo.PlayerIndex = hostSetPlayerData.Index;
                     break;
 
                 case SetAntiCheat setAntiCheat:
@@ -214,162 +159,105 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     break;
             }
         }
-        #endregion
 
-        #region Events
-        // This pair of methods undoes any movement done by the user in the menus.
-        // We will instead receive the movements from the host and only send the menu inputs/differences over.
-        // This incurs input lag but at least looks consistent.
-        private unsafe void DeltaOnRuleSettingsUpdated(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
+        #region Events: On/After Events
+        private void OnCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
         {
-            if (Manager.ConnectedPeersCount > 0)
-                loop.Undo(task);
+            // Note: For host, do opposite, set, sync, then resend if changed.
+            State.SyncCourseSelect(task);
+            State.Delta.Set(task);
         }
 
-        private unsafe void DeltaOnCourseSelectUpdated(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task)
+        private void OnAfterCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task) => State.Delta.Update(task);
+        private unsafe void OnCourseSelectChanged(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task)
         {
-            if (Manager.ConnectedPeersCount > 0)
-                loop.Undo(task);
+            if (Manager.ConnectedPeersCount <= 0)
+                return;
+
+            loop.Undo(task);
+            SendAndFlush(Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
+        }
+
+        private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
+        {
+            State.SyncRuleSettings(task);
+            State.Delta.Set(task);
+        }
+
+        private void OnAfterRuleSettings(Task<RaceRules, RaceRulesTaskState>* task) => State.Delta.Update(task);
+        private unsafe void OnRuleSettingsChanged(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
+        {
+            if (Manager.ConnectedPeersCount <= 0)
+                return;
+
+            loop.Undo(task);
+            SendAndFlush(Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
         }
 
         private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
         {
-            while (State.CharaSelectSync.TryDequeue(out var result))
-            {
-                if (State.StartRequested)
-                    continue;
-
-                result.ToGame(task);
-            }
+            State.SyncCharaSelect(task);
+            if (State.CharaSelectExit == ExitKind.Null)
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced);
         }
 
-        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
+        private bool MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
+        private void MenuOnExitCharaSelect()
         {
-            if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *Sewer56.SonicRiders.API.State.NumberOfRacers = (byte) (Math.Max(State.PlayerInfo.Max(x => x.PlayerIndex) + 1, State.PlayerIndex + 1) );
+            // We started ourselves, tell host to rebroadcast.
+            if (State.CharaSelectExit != ExitKind.Exit)
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(ExitKind.Exit)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Exit flag to Host");
 
-            // Reset start request flag.
-            State.StartRequested = false;
+            State.CharaSelectExit = ExitKind.Null;
         }
 
-        private bool CheckIfStartRace() => State.StartRequested;
-        private void OnStartRace()
+        private bool MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
+        private void MenuOnMenuStartRace()
         {
-            if (!State.StartRequested)
-            {
-                // We started ourselves, tell host to rebroadcast.
-                Debug.WriteLine("[Client] Sending Start flag to Host");
-                var serverMessage = new ReliablePacket() { MenuSynchronizationCommand = new MenuSynchronizationCommand(new CharaSelectStart()) };
-                Manager.FirstPeer.Send(serverMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.FirstPeer.Flush();
-            }
+            // We started ourselves, tell host to rebroadcast.
+            if (State.CharaSelectExit != ExitKind.Start)
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(ExitKind.Start)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Start flag to Host");
+
+            State.CharaSelectExit = ExitKind.Null;
+            State.OnCharacterSelectStartRace();
         }
 
-        private void SendReadyOnSkipIntro()
+        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
+        private bool OnCheckIfRaceSkipIntro() => State.SkipRequested;
+        private void OnSkipRaceIntro()
         {
-            if (! State.SkipRequested)
+            SyncStartGo goMessage = default;
+            bool IsGoSignal()
             {
-                Debug.WriteLine("[Client] Skipped intro ourselves, sending skip notification to host.");
-                var msg = new ReliablePacket() { HasSyncStartSkip = true };
-                Manager.FirstPeer.Send(msg.Serialize(), DeliveryMethod.ReliableOrdered);
-                Manager.FirstPeer.Flush();
+                goMessage = (SyncStartGo)State.StartSyncGo;
+                return !goMessage.IsDefault();
             }
+
+            if (!State.SkipRequested)
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, "[Client] Skipped intro ourselves, sending skip notification to host.");
 
             State.SkipRequested = false;
-            Debug.WriteLine("[Client] Sending HasSyncStartReady.");
-            var reliableMessage = new ReliablePacket() { HasSyncStartReady = true };
-            Manager.FirstPeer.Send(reliableMessage.Serialize(), DeliveryMethod.ReliableOrdered);
-            Manager.FirstPeer.Flush();
+            SendAndFlush(Manager.FirstPeer, new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, "[Client] Sending HasSyncStartReady.");
 
-            // Otherwise wait for a message from the host.
-            if (!PollUntil(IsGo, _syncTimeout))
+            if (!PollUntil(IsGoSignal, HandshakeTimeout))
             {
                 Debug.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
                 Dispose();
                 return;
             }
 
-            Success();
-
-            // Wait for response.
-            void Success()
-            {
-                Debug.WriteLine("[Client] Race Started.");
-            }
-
-            void Wait(DateTime startTime)
-            {
-                Debug.WriteLine("[Client] Waiting for race start.");
-                Debug.WriteLine($"[Client] Time: {DateTime.UtcNow}");
-                Debug.WriteLine($"[Client] Start Time: {startTime}");
-
-                ActionWrappers.TryWaitUntil(() => DateTime.UtcNow > startTime, int.MaxValue);
-            }
-
-            bool IsGo()
-            {
-                // Might have already received "go" signal from host, in that case just wait.
-                var goMessage = State.StartSyncGo;
-                if (goMessage != null)
-                {
-                    Debug.WriteLine("[Client] SyncStartGo found.");
-                    State.StartSyncGo = null;
-                    Wait(goMessage.Value.StartTime);
-                    Debug.WriteLine($"[Client] Assert SyncStartGo == null | {State.StartSyncGo == null}");
-                    return true;
-                }
-                
-                return false;
-            }
+            Wait(goMessage.StartTime);
+            Debug.WriteLine("[Client] Race Started.");
         }
-
-        private bool SkipIntroIfRequestedByHost() => State.SkipRequested;
-
         #endregion
 
         #region Overrides
-        public override void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
-        {
-            // Do not queue: Server Sync Command
-            if (packet.ServerMessage != null)
-            {
-                HandleServerMessage(peer, packet.ServerMessage.Value);
-                return;
-            }
-
-            if (packet.SyncStartGo.HasValue)
-            {
-                State.StartSyncGo = packet.SyncStartGo.Value;
-                Debug.WriteLine($"[Client] Set SyncStartGo | {State.StartSyncGo}");
-            }
-
-            PacketQueue.Enqueue(new Packet<NetPeer>(peer, packet, null));
-        }
-
-        public override void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet)
-        {
-            // TODO: [Client] Race / Handle Unreliable Packets
-            PacketQueue.Enqueue(new Packet<NetPeer>(peer, null, packet));
-        }
-
-        public override void OnPeerConnected(NetPeer peer)
-        {
-            Debug.WriteLine($"[Client] Connected to Host, Sending Player Data");
-            
-            // Inform host of player data.
-            var playerData = IoC.GetConstant<NetplayImguiConfig>();
-            var setPlayerData = new ClientSetPlayerData() { Data = playerData.ToHostPlayerData() };
-            var message = new ServerMessage(setPlayerData);
-            var packet = new ReliablePacket { ServerMessage = message };
-            peer.Send(packet.Serialize(), DeliveryMethod.ReliableUnordered);
-            peer.Flush();
-        }
-
+        public override void OnPeerConnected(NetPeer peer) => SendAndFlush(peer, new ReliablePacket(new ClientSetPlayerData(State.SelfInfo)), DeliveryMethod.ReliableUnordered, "[Client] Connected to Host, Sending Player Data");
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Dispose();
 
         // Ignored
         public override void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
-        public override void OnConnectionRequest(ConnectionRequest request) { }
+        public override bool OnConnectionRequest(ConnectionRequest request) { return true; }
         #endregion
     }
 }

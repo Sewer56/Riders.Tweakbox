@@ -5,8 +5,10 @@ using Riders.Netplay.Messages.Unreliable;
 
 namespace Riders.Netplay.Messages
 {
-    public struct UnreliablePacket
+    public class UnreliablePacket : IPacket<UnreliablePacket>, IPacket 
     {
+        public PacketKind GetPacketType() => PacketKind.Unreliable;
+
         /*
             // Packet Format (Some Features Currently Unimplemented)
             // 30Hz indicates, send every 2nd frame. 
@@ -27,6 +29,8 @@ namespace Riders.Netplay.Messages
         /// Contains all of the player data present in this structure.
         /// </summary>
         public UnreliablePacketPlayer[] Players { get; private set; }
+
+        public UnreliablePacket() { }
 
         /// <summary>
         /// Constructs a packet to be sent over the unreliable channel.
@@ -58,7 +62,7 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Serializes an instance of the packet.
         /// </summary>
-        public static unsafe UnreliablePacket Deserialize(Span<byte> data)
+        public unsafe void Deserialize(Span<byte> data)
         {
             fixed (byte* dataPtr = data)
             {
@@ -71,11 +75,8 @@ namespace Riders.Netplay.Messages
                 for (int x = 0; x < header.NumberOfPlayers; x++)
                     players[x] = UnreliablePacketPlayer.Deserialize(bufferedStreamReader, header.Fields);
 
-                return new UnreliablePacket()
-                {
-                    Header = header,
-                    Players = players
-                };
+                Header = header;
+                Players = players;
             }
         }
     }
