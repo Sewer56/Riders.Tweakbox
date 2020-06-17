@@ -11,9 +11,11 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
+using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -57,7 +59,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnCourseSelect += OnCourseSelect;
             Event.AfterCourseSelect += OnAfterCourseSelect;
+            Event.OnCourseSelectSetStage += OnCourseSelectSetStage;
             State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
+
+            Event.OnRace += OnRace;
+            Event.AfterRace += AfterRace;
         }
 
         public override unsafe void Dispose()
@@ -82,7 +88,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnCourseSelect -= OnCourseSelect;
             Event.AfterCourseSelect -= OnAfterCourseSelect;
+            Event.OnCourseSelectSetStage -= OnCourseSelectSetStage;
             State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
+
+            Event.OnRace -= OnRace;
+            Event.AfterRace -= AfterRace;
         }
 
         public override bool IsHost() => true;
@@ -104,7 +114,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void HandleUnreliable(NetPeer peer, UnreliablePacket result)
         {
-
+            // TODO: Maybe support for multiple local players in the future.
+            var playerIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+            var player  = result.Players[0];
+            State.RaceSync[playerIndex] = player;
         }
 
         private void HandleReliable(NetPeer peer, ReliablePacket packet)
@@ -152,12 +165,17 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 case CourseSelectLoop courseSelectLoop:
                     State.CourseSelectLoop.Enqueue(courseSelectLoop);
                     break;
+                case CourseSelectSetStage courseSelectSetStage:
+                    *Sewer56.SonicRiders.API.State.Level = (Levels)courseSelectSetStage.StageId;
+                    State.ReceivedSetStageFlag = true;
+                    SendToAllExcept(peer, new ReliablePacket(courseSelectSetStage), DeliveryMethod.ReliableOrdered, "[Host] Received CharaSelect Stage Set Flag, Rebroadcasting");
+                    break;
                 case RuleSettingsLoop ruleSettingsLoop:
                     State.RuleSettingsLoop.Enqueue(ruleSettingsLoop);
                     break;
-                case CharaSelectExit startCommand:
-                    State.CharaSelectExit = startCommand.Type;
-                    SendToAllExcept(peer, new ReliablePacket(new CharaSelectExit(startCommand.Type)), DeliveryMethod.ReliableOrdered, "[State] Got Start / Exit Request Flag, Rebroadcasting");
+                case CharaSelectExit exitCommand:
+                    State.CharaSelectExit = exitCommand.Type;
+                    SendToAllExcept(peer, new ReliablePacket(new CharaSelectExit(exitCommand.Type)), DeliveryMethod.ReliableOrdered, "[Host] Got Start / Exit Request Flag, Rebroadcasting");
                     break;
             }
         }
@@ -184,6 +202,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SendToAllAndFlush(new ReliablePacket(CourseSelectSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
         }
 
+        private void OnCourseSelectSetStage()
+        {
+            if (!State.ReceivedSetStageFlag)
+                SendToAllAndFlush(new ReliablePacket(new CourseSelectSetStage((byte)*Sewer56.SonicRiders.API.State.Level)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Stage Set Flag");
+
+            State.ReceivedSetStageFlag = false;
+        }
+
         private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
         {
             State.Delta.Set(task);
@@ -206,6 +232,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
         {
+            State.ReceivedSetStageFlag = false;
+
             // Calculate sync data from client info.
             var sync = State.GetCharacterSelect();
             sync[0]  = CharaSelectLoop.FromGame(task);
@@ -215,9 +243,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // If not starting, transmit updated sync.
             if (State.CharaSelectExit == ExitKind.Null)
             {
-                for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
+                foreach (var peer in Manager.ConnectedPeerList)
                 {
-                    var peer = Manager.ConnectedPeerList[x];
                     var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
                     var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
                     SendAndFlush(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
@@ -276,6 +303,31 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 dt.ReadyToStartRace = false;
 
             Wait(startTime.StartTime, "[Host] Race Started.");
+            State.OnIntroCutsceneEnd();
+        }
+
+        private void OnRace(Task<byte, RaceTaskState>* task) => State.OnRace();
+        private void AfterRace(Task<byte, RaceTaskState>* task)
+        {
+            State.RaceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
+            
+            // Populate data for non-expired packets.
+            var players = new UnreliablePacketPlayer[State.RaceSync.Length];
+            Array.Fill(players, new UnreliablePacketPlayer());
+            for (int x = 0; x < State.RaceSync.Length; x++)
+            {
+                var sync = State.RaceSync[x];
+                if (!sync.IsDiscard(State.MaxLatency))
+                    players[x] = State.RaceSync[x];
+            }
+
+            // Broadcast data to all clients.
+            foreach (var peer in Manager.ConnectedPeerList)
+            {
+                var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+                var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
+                SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
+            }
         }
         #endregion
 

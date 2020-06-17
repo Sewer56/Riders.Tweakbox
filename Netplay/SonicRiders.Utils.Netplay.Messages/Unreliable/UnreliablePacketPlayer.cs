@@ -4,6 +4,7 @@ using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Sewer56.NumberUtilities;
 using Sewer56.NumberUtilities.Primitives;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Utility;
 using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
@@ -13,23 +14,22 @@ namespace Riders.Netplay.Messages.Unreliable
     /// <summary>
     /// Represents the header for an unreliable packet.
     /// </summary>
-    [Equals(DoNotAddEqualityOperators = true)]
-    public struct UnreliablePacketPlayer
+    public struct UnreliablePacketPlayer : IEquatable<UnreliablePacketPlayer>
     {
         private const double MaxRotation = Math.PI * 2;
+        private static readonly float CompressedMinVelocity = Formula.SpeedometerToFloat(-1080);
         private static readonly float CompressedMaxVelocity = Formula.SpeedometerToFloat(1080);
 
         /*
             // Player Data  (All Optional)
             Position          = 12 bytes
             Rotation          = 2 bytes (Compressed as BAMS)
-            Velocity          = 4 bytes (Compressed Floats)   (30Hz)
+            Velocity          = 8 bytes (Floats) (30Hz)
             Rings             = 1 byte  (5Hz)
             State             = 1 byte  (10Hz/OnDemand)
-            Latency           = 2 bytes (4Hz/OnDemand)
 
             // TODO: Animation
-            Animation                                         (10Hz)
+            Animation (10Hz)
             {
                 Animation Id    = 1 byte 
                 Animation Frame = 2 bytes
@@ -52,9 +52,9 @@ namespace Riders.Netplay.Messages.Unreliable
         public PlayerState? State;
 
         /// <summary>
-        /// Individual player delay/latency.
+        /// Velocity of the player in the X and Y direction.
         /// </summary>
-        public short? Latency;
+        public Vector2? Velocity;
 
         /// <summary>
         /// Yaw rotation of the player X.
@@ -62,31 +62,16 @@ namespace Riders.Netplay.Messages.Unreliable
         /// </summary>
         private CompressedNumber<float, Float, ushort, UShort>? _rotationX;
 
-        /// <summary>
-        /// Velocity of the player in X direction.
-        /// </summary>
-        private CompressedNumber<float, Float, ushort, UShort>? _velocityX;
-
-        /// <summary>
-        /// Velocity of the player in Y direction.
-        /// </summary>
-        private CompressedNumber<float, Float, ushort, UShort>? _velocityY;
-
-        public UnreliablePacketPlayer(Vector3? position, byte? rings,  PlayerState? state, float? rotationXRadians, float? velocityX, float? velocityY, short? latency) : this()
+        public UnreliablePacketPlayer(Vector3? position, byte? rings,  PlayerState? state, float? rotationXRadians, Vector2? velocity) : this()
         {
             Position = position;
             Rings = rings;
             State = state;
-            Latency = latency;
+            Velocity = velocity;
             _rotationX = null;
-            _velocityX = null;
-            _velocityY = null;
 
             if (rotationXRadians.HasValue)
                 SetRotationX(rotationXRadians.Value);
-
-            if (velocityX.HasValue && velocityY.HasValue)
-                SetVelocityXY(velocityX.Value, velocityY.Value);
         }
 
         /// <summary>
@@ -94,16 +79,6 @@ namespace Riders.Netplay.Messages.Unreliable
         /// </summary>
         /// <returns></returns>
         public float? GetRotationX() => _rotationX?.GetValue((Float)MaxRotation);
-
-        /// <summary>
-        /// Gets the Velocity of the player in the X direction.
-        /// </summary>
-        public float? GetVelocityX() => _velocityX?.GetValue(CompressedMaxVelocity);
-
-        /// <summary>
-        /// Gets the Velocity of the player in the Y direction.
-        /// </summary>
-        public float? GetVelocityY() => _velocityY?.GetValue(CompressedMaxVelocity);
 
         /// <summary>
         /// Sets the Rotation in the X (Yaw) direction as a floating point number in radians.
@@ -118,27 +93,16 @@ namespace Riders.Netplay.Messages.Unreliable
         }
 
         /// <summary>
-        /// Sets the Velocity of the player in the X and Y directions.
-        /// </summary>
-        public void SetVelocityXY(float velocityX, float velocityY)
-        {
-            _velocityX = new CompressedNumber<float, Float, ushort, UShort>(velocityX, CompressedMaxVelocity);
-            _velocityY = new CompressedNumber<float, Float, ushort, UShort>(velocityY, CompressedMaxVelocity);
-        }
-
-        /// <summary>
         /// Serializes the current packet.
         /// </summary>
         public unsafe byte[] Serialize()
         {
-            using var writer = new ExtendedMemoryStream(sizeof(UnreliablePacketHeader));
+            using var writer = new ExtendedMemoryStream(sizeof(UnreliablePacketPlayer));
             writer.WriteNullable(Position);
             writer.WriteNullable(_rotationX);
-            writer.WriteNullable(_velocityX);
-            writer.WriteNullable(_velocityY);
+            writer.WriteNullable(Velocity);
             writer.WriteNullable(Rings);
             writer.WriteNullable(State);
-            writer.WriteNullable(Latency);
             return writer.ToArray();
         }
 
@@ -150,20 +114,62 @@ namespace Riders.Netplay.Messages.Unreliable
             var player = new UnreliablePacketPlayer();
             reader.SetValueIfHasFlags(ref player.Position, fields, HasData.HasPosition);
             reader.SetValueIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
-            reader.SetValueIfHasFlags(ref player._velocityX, fields, HasData.HasVelocity);
-            reader.SetValueIfHasFlags(ref player._velocityY, fields, HasData.HasVelocity);
+            reader.SetValueIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
             reader.SetValueIfHasFlags(ref player.Rings, fields, HasData.HasRings);
             reader.SetValueIfHasFlags(ref player.State, fields, HasData.HasState);
-            reader.SetValueIfHasFlags(ref player.Latency, fields, HasData.HasLatency);
             return player;
         }
 
         /// <summary>
-        /// Gets the player status from game memory.
+        /// Gets a packet for an individual player given the index of the player.
         /// </summary>
-        public static UnreliablePacketPlayer FromGame()
+        /// <param name="index">The current player index (0-7).</param>
+        /// <param name="framecounter">The current frame counter used to include/exclude values.</param>
+        public static UnreliablePacketPlayer FromGame(int index, int framecounter = 0)
         {
-            return new UnreliablePacketPlayer();
+            ref var player = ref Player.Players[index];
+            var packet = new UnreliablePacketPlayer();
+
+            packet.Position = player.Position;
+            packet.SetRotationX(player.Rotation.Y);
+            packet.Velocity = new Vector2(player.Speed, player.VSpeed);
+            packet.Rings = (byte?)player.Rings;
+            packet.State = player.PlayerState;
+
+            /*
+            if (ShouldISend(framecounter, HasData.HasPosition)) packet.Position = player.Position;
+            if (ShouldISend(framecounter, HasData.HasRotation)) packet.SetRotationX(player.Rotation.Y);
+            if (ShouldISend(framecounter, HasData.HasVelocity)) packet.Velocity = new Vector2(player.Speed, player.VSpeed);
+            if (ShouldISend(framecounter, HasData.HasRings)) packet.Rings = (byte?)player.Rings;
+            if (ShouldISend(framecounter, HasData.HasState)) packet.State = player.PlayerState;
+            */
+
+            return packet;
+        }
+
+        /// <summary>
+        /// Applies the current packet data to a specified player index.
+        /// </summary>
+        /// <param name="index">Individual player index.</param>
+        public void ToGame(in int index)
+        {
+            ref var player = ref Player.Players[index];
+            if (Position.HasValue) player.Position = Position.Value;
+            if (GetRotationX().HasValue) player.Rotation.Y = GetRotationX().Value;
+            if (Velocity.HasValue)
+            {
+                player.Speed = Velocity.Value.X;
+                player.VSpeed = Velocity.Value.Y;
+            }
+
+            if (Rings.HasValue) player.Rings = (int) Rings;
+            if (State.HasValue)
+            {
+                //player.LastPlayerState = player.PlayerState;
+                //player.PlayerState = (PlayerState) State;
+            }
+
+            // TODO: Check if setting last state is the correct thing to do
         }
 
         /// <summary>
@@ -185,14 +191,31 @@ namespace Riders.Netplay.Messages.Unreliable
                     return ShouldISendFrequency(frameCounter, 5);
                 case HasData.HasState:
                     return ShouldISendFrequency(frameCounter, 10);
-                case HasData.HasLatency:
-                    return ShouldISendFrequency(frameCounter, 4);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }
 
+        public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
+
         private static bool ShouldISendFrequency(int framecounter, int frequency) =>
             framecounter % ((int) (60 / frequency)) == 0;
+
+        #region Autogenerated by R#
+        public bool Equals(UnreliablePacketPlayer other)
+        {
+            return Nullable.Equals(Position, other.Position) && Rings == other.Rings && State == other.State && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(Velocity, other.Velocity);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is UnreliablePacketPlayer other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Position, Rings, State, _rotationX, Velocity);
+        }
+        #endregion
     }
 }

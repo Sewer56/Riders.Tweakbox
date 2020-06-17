@@ -31,7 +31,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public GameData? GameData;
         public bool HasSyncStartReady;
-        public bool HasSyncStartSkip;
+        public bool HasSyncStartSkip = false;
 
         /// <summary>
         /// Time to resume gameplay at after stage load.

@@ -46,6 +46,18 @@ namespace Riders.Netplay.Messages
         }
 
         /// <summary>
+        /// Constructs a packet to be sent over the unreliable channel.
+        /// </summary>
+        /// <param name="player">
+        ///     The individual player data associated with this packet to be sent.
+        /// </param>
+        public UnreliablePacket(UnreliablePacketPlayer player)
+        {
+            Players = new[] {player};
+            Header = new UnreliablePacketHeader(Players);
+        }
+
+        /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
         public byte[] Serialize()

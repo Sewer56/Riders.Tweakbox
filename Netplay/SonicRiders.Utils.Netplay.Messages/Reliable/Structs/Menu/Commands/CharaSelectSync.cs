@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Linq;
+﻿using System.Linq;
 using MessagePack;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;

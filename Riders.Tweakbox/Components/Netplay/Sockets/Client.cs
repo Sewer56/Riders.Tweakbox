@@ -9,9 +9,11 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
+using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -51,7 +53,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnCourseSelect += OnCourseSelect;
             Event.AfterCourseSelect += OnAfterCourseSelect;
+            Event.OnCourseSelectSetStage += OnCourseSelectSetStage;
             State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
+
+            Event.OnRace += OnRace;
+            Event.AfterRace += AfterRace;
         }
 
         public override void Dispose()
@@ -75,7 +81,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnCourseSelect -= OnCourseSelect;
             Event.AfterCourseSelect -= OnAfterCourseSelect;
+            Event.OnCourseSelectSetStage -= OnCourseSelectSetStage;
             State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
+
+            Event.OnRace -= OnRace;
+            Event.AfterRace -= AfterRace;
         }
 
         public override bool IsHost() => false;
@@ -96,7 +106,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void HandleUnreliable(UnreliablePacket result)
         {
+            var players = result.Players;
 
+            // Fill in from player 2.
+            for (int x = 0; x < players.Length; x++)
+                State.RaceSync[x + 1] = players[x];
         }
 
         private void HandleReliable(ReliablePacket packet)
@@ -113,7 +127,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (packet.SyncStartGo.HasValue)
             {
-                Debug.WriteLine($"[Client] Set SyncStartGo | {State.StartSyncGo}");
+                Debug.WriteLine($"[Client] Set SyncStartGo");
                 State.StartSyncGo = packet.SyncStartGo.Value;
             }
         }
@@ -129,6 +143,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
                 case CourseSelectSync courseSelectSync:
                     State.CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(courseSelectSync);
+                    break;
+
+                case CourseSelectSetStage courseSelectSetStage:
+                    Debug.WriteLine("[Client] Received CharaSelect Stage Set Flag");
+                    *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
+                    State.ReceivedSetStageFlag = true;
                     break;
 
                 case RuleSettingsSync ruleSettingsSync:
@@ -178,6 +198,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SendAndFlush(Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
         }
 
+        private void OnCourseSelectSetStage()
+        {
+            if (!State.ReceivedSetStageFlag)
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CourseSelectSetStage((byte)*Sewer56.SonicRiders.API.State.Level)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Stage Set Flag");
+
+            State.ReceivedSetStageFlag = false;
+        }
+
         private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
         {
             State.SyncRuleSettings(task);
@@ -196,6 +224,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
         {
+            State.ReceivedSetStageFlag = false;
             State.SyncCharaSelect(task);
             if (State.CharaSelectExit == ExitKind.Null)
                 SendAndFlush(Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced);
@@ -229,7 +258,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SyncStartGo goMessage = default;
             bool IsGoSignal()
             {
-                goMessage = (SyncStartGo)State.StartSyncGo;
+                goMessage = State.StartSyncGo.Get();
                 return !goMessage.IsDefault();
             }
 
@@ -247,7 +276,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
 
             Wait(goMessage.StartTime);
+            State.OnIntroCutsceneEnd();
             Debug.WriteLine("[Client] Race Started.");
+        }
+
+        private void OnRace(Task<byte, RaceTaskState>* task) => State.OnRace();
+        private void AfterRace(Task<byte, RaceTaskState>* task)
+        {
+            var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
+            SendAndFlush(Manager.FirstPeer, packet, DeliveryMethod.Sequenced);
         }
         #endregion
 

@@ -55,7 +55,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.GetRotationX().HasValue)
                 data |= HasData.HasRotation;
 
-            if (player.GetVelocityX().HasValue || player.GetVelocityY().HasValue)
+            if (player.Velocity.HasValue)
                 data |= HasData.HasVelocity;
 
             if (player.Rings.HasValue)
@@ -110,8 +110,8 @@ namespace Riders.Netplay.Messages.Unreliable
             HasRotation        = 1 << 1, 
             HasVelocity        = 1 << 2, 
             HasRings           = 1 << 3, 
-            HasState           = 1 << 4, 
-            HasLatency         = 1 << 5, 
+            HasState           = 1 << 4,
+            HasUnused0         = 1 << 5, 
             HasUnused1         = 1 << 6, 
             HasUnused2         = 1 << 7, 
             HasUnused3         = 1 << 8, 

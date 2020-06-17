@@ -16,9 +16,8 @@ namespace Riders.Netplay.Messages.Tests
             var state     = PlayerState.Turbulence;
             var velocityX = 0.7286906838f;
             var velocityY = 0.123456789f;
-            var latency   = (short?) 32;
 
-            var player            = new UnreliablePacketPlayer(position, rings, state, rotation, velocityX, velocityY, latency);
+            var player            = new UnreliablePacketPlayer(position, rings, state, rotation, new Vector2(velocityX, velocityY));
             var unreliablePacket  = new Messages.UnreliablePacket(new[] { player });
 
             var bytes        = unreliablePacket.Serialize();
@@ -36,7 +35,7 @@ namespace Riders.Netplay.Messages.Tests
             var velocityX = 0.7286906838f;
             var velocityY = 0.123456789f;
 
-            var player = new UnreliablePacketPlayer(position, null, null, rotation, velocityX, velocityY, null);
+            var player = new UnreliablePacketPlayer(position, null, null, rotation, new Vector2(velocityX, velocityY));
             var unreliablePacket = new Messages.UnreliablePacket(new[] { player });
 
             var bytes = unreliablePacket.Serialize();

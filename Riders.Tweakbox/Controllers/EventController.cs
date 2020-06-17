@@ -15,6 +15,11 @@ namespace Riders.Tweakbox.Controllers
     public unsafe class EventController : TaskEvents
     {
         /// <summary>
+        /// Sets the stage when the player leaves the course select stage in battle mode picker.
+        /// </summary>
+        public event AsmAction OnCourseSelectSetStage;
+
+        /// <summary>
         /// Executed when the user exits the character select menu.
         /// </summary>
         public event AsmAction OnExitCharaSelect;
@@ -53,6 +58,7 @@ namespace Riders.Tweakbox.Controllers
         private RuleSettingsLoop _rule = new RuleSettingsLoop();
         private CourseSelectLoop _course = new CourseSelectLoop();
 
+        private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
         private IAsmHook _onCheckIfExitCharaSelectHook;
         private IAsmHook _onStartRaceHook;
@@ -64,6 +70,8 @@ namespace Riders.Tweakbox.Controllers
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
+
+            var onCourseSelectSetStageAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
 
             var onExitCharaSelectAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnExitCharaSelectHook, out _)}" };
             var ifExitCharaSelectAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00463741, Environment.Is64BitProcess) };
@@ -78,6 +86,7 @@ namespace Riders.Tweakbox.Controllers
             var onCheckIfSkipIntroAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
 
             var hooks = SDK.ReloadedHooks;
+            _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
             _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfExitCharaSelectHook = hooks.CreateAsmHook(onCheckIfExitCharaSelectAsm, 0x00463732, AsmHookBehaviour.ExecuteFirst).Activate();
             _skipIntroCameraHook = hooks.CreateAsmHook(onSkipIntroAsm, 0x00416001, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -98,6 +107,7 @@ namespace Riders.Tweakbox.Controllers
         public new void Disable()
         {
             base.Disable();
+            _onCourseSelectSetStageHook.Disable();
             _onExitCharaSelectHook.Disable();
             _onCheckIfExitCharaSelectHook.Disable();
             _onStartRaceHook.Disable();
@@ -113,6 +123,7 @@ namespace Riders.Tweakbox.Controllers
         public new void Enable()
         {
             base.Enable();
+            _onCourseSelectSetStageHook.Enable();
             _onExitCharaSelectHook.Enable();
             _onCheckIfExitCharaSelectHook.Enable();
             _onStartRaceHook.Enable();
@@ -121,6 +132,9 @@ namespace Riders.Tweakbox.Controllers
             _checkIfSkipIntroCamera.Enable();
             _onSetupRaceSettingsHook.Enable();
         }
+
+
+        private void OnCourseSelectSetStageHook() => OnCourseSelectSetStage?.Invoke();
 
         private void OnExitCharaSelectHook() => OnExitCharaSelect?.Invoke();
         private bool OnCheckIfExitCharaSelectHook() => OnCheckIfExitCharaSelect != null && OnCheckIfExitCharaSelect.Invoke();
@@ -132,7 +146,5 @@ namespace Riders.Tweakbox.Controllers
         private bool OnCheckIfSkipIntroHook() => OnCheckIfSkipIntro != null && OnCheckIfSkipIntro.Invoke();
 
         public delegate void SetupRace(Task<TitleSequence, TitleSequenceTaskState>* task);
-        public unsafe delegate void CourseSelectUpdated(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task);
-        public unsafe delegate void RuleSettingsUpdated(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task);
     }
 }

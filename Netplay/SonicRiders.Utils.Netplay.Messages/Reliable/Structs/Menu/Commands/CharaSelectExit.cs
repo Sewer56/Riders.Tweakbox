@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Reloaded.Memory;
+﻿using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
-using Sewer56.SonicRiders.Structures.Tasks;
-using Sewer56.SonicRiders.Structures.Tasks.Base;
-using Sewer56.SonicRiders.Structures.Tasks.Enums.Shared;
-using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 {
@@ -22,7 +15,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             Type = type;
         }
 
-        public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CharaselectStart;
+        public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CharaselectExit;
         public byte[] ToBytes() => Struct.GetBytes(this);
     }
 

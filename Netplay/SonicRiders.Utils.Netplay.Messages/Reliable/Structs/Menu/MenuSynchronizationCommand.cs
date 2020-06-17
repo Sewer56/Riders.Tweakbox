@@ -38,32 +38,18 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         {
             var command = new MenuSynchronizationCommand();
             reader.Read<Shared.MenuSynchronizationCommand>(out command.CommandKind);
-            switch (command.CommandKind)
+            command.Command = command.CommandKind switch
             {
-                case Shared.MenuSynchronizationCommand.CourseSelectLoop:
-                    command.Command = reader.Read<CourseSelectLoop>();
-                    break;
-                case Shared.MenuSynchronizationCommand.CourseSelectSync:
-                    command.Command = reader.Read<CourseSelectSync>();
-                    break;
-                case Shared.MenuSynchronizationCommand.RuleSettingsLoop:
-                    command.Command = reader.Read<RuleSettingsLoop>();
-                    break;
-                case Shared.MenuSynchronizationCommand.RuleSettingsSync:
-                    command.Command = reader.Read<RuleSettingsSync>();
-                    break;
-                case Shared.MenuSynchronizationCommand.CharaSelectLoop:
-                    command.Command = reader.Read<CharaSelectLoop>();
-                    break;
-                case Shared.MenuSynchronizationCommand.CharaSelectSync:
-                    command.Command = CharaSelectSync.FromBytes(reader);
-                    break;
-                case Shared.MenuSynchronizationCommand.CharaselectStart:
-                    command.Command = reader.Read<CharaSelectExit>();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(command.CommandKind), command.CommandKind, null);
-            }
+                Shared.MenuSynchronizationCommand.CourseSelectLoop => reader.Read<CourseSelectLoop>(),
+                Shared.MenuSynchronizationCommand.CourseSelectSync => reader.Read<CourseSelectSync>(),
+                Shared.MenuSynchronizationCommand.RuleSettingsLoop => reader.Read<RuleSettingsLoop>(),
+                Shared.MenuSynchronizationCommand.RuleSettingsSync => reader.Read<RuleSettingsSync>(),
+                Shared.MenuSynchronizationCommand.CharaSelectLoop => reader.Read<CharaSelectLoop>(),
+                Shared.MenuSynchronizationCommand.CharaSelectSync => CharaSelectSync.FromBytes(reader),
+                Shared.MenuSynchronizationCommand.CharaselectExit => reader.Read<CharaSelectExit>(),
+                Shared.MenuSynchronizationCommand.CourseSelectSetStage => reader.Read<CourseSelectSetStage>(),
+                _ => throw new ArgumentOutOfRangeException(nameof(command.CommandKind), command.CommandKind, null)
+            };
 
             return command;
         }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
@@ -7,6 +7,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
+using Riders.Netplay.Messages.Unreliable;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
@@ -20,6 +21,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public ClientState(HostPlayerData selfInfo)
         {
             SelfInfo = selfInfo;
+            Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
         }
 
         /// <summary>
@@ -66,6 +68,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public Volatile<Timestamped<CharaSelectSync>> CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(new Timestamped<CharaSelectSync>());
 
         /// <summary>
+        /// Sync data for races.
+        /// It is applied to the game at the start of the race event if not null.
+        /// </summary>
+        public Timestamped<UnreliablePacketPlayer>[] RaceSync = new Timestamped<UnreliablePacketPlayer>[Constants.MaxNumberOfPlayers];
+
+        /// <summary>
         /// Provides event notifications for when contents of menus etc. are changed.
         /// </summary>
         public MenuChangedEventHandler Delta = new MenuChangedEventHandler();
@@ -79,6 +87,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Stage intro cutscene skip requested by host.
         /// </summary>
         public bool SkipRequested = false;
+
+        /// <summary>
+        /// Set to true when client receives set stage flag for course select and is discarded
+        /// after the set stage function runs.
+        /// </summary>
+        public bool ReceivedSetStageFlag = false;
 
         /// <summary>
         /// Gets the go command from the host for syncing start time.
@@ -117,8 +131,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             var sync = CourseSelectSync.Get();
             if (!sync.IsDiscard(MaxLatency))
                 sync.Value.ToGame(task);
-
-            Console.WriteLine($"CourseSelectSync");
         }
 
         /// <summary>
@@ -132,8 +144,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             var sync = RuleSettingsSync.Get();
             if (!sync.IsDiscard(MaxLatency))
                 sync.Value.ToGame(task);
-
-            Console.WriteLine($"SyncRuleSettings");
         }
 
         /// <summary>
@@ -149,7 +159,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (result.IsDiscard(MaxLatency) || _dropCharSelectPackets) 
                 return;
 
-            Console.WriteLine($"CharaSelectSync");
             _lastCharaSelectSync = result.Value;
             result.Value.ToGame(task);
         }
@@ -163,21 +172,51 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
+        /// Sets all players to non-CPU when the intro cutscene ends.
+        /// We do this because CPUs can still trigger certain events such as boosting in-race.
+        /// </summary>
+        public unsafe void OnIntroCutsceneEnd()
+        {
+            for (int x = 0; x < Player.MaxNumberOfPlayers; x++)
+            {
+                Player.Players[x].IsAiLogic = PlayerType.Human;
+                Player.Players[x].IsAiVisual = PlayerType.Human;
+            }
+        }
+
+        /// <summary>
         /// Common implementation for handling the event of starting a race.
         /// </summary>
         public unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
         {
             if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *Sewer56.SonicRiders.API.State.NumberOfRacers = (byte)GetPlayerCount();
+                *State.NumberOfRacers = (byte)GetPlayerCount();
 
             _dropCharSelectPackets = false;
             _lastCharaSelectSync.ToGameOnlyCharacter();
+            Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
+        }
 
-            Console.WriteLine($"{Player.Players[0].IsAiVisual}");
-            Console.WriteLine($"{Player.Players[0].IsAiLogic}");
+        /// <summary>
+        /// Applies the current race state obtained from clients/host to the game.
+        /// </summary>
+        public void OnRace()
+        {
+            // Apply data of all players.
+            for (int x = 1; x < RaceSync.Length; x++)
+            {
+                var sync = RaceSync[x];
+                if (sync.IsDiscard(MaxLatency))
+                    continue;
 
-            Console.WriteLine($"{Player.Players[1].IsAiVisual}");
-            Console.WriteLine($"{Player.Players[1].IsAiLogic}");
+                if (sync.Value.IsDefault())
+                {
+                    Debug.WriteLine("Discarding Race Packet due to Default Comparison");
+                    continue;
+                }
+
+                sync.Value.ToGame(x);
+            }
         }
 
         protected MessageQueue _queue = new MessageQueue();
