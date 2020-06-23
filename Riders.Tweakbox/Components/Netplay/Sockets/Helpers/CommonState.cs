@@ -325,18 +325,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             return PlayerInfo[localPlayerIndex - 1].PlayerIndex;
         }
 
-        /// <summary>
-        /// Handles the internal game's SetPlayerState function.
-        /// </summary>
-        public unsafe byte SetPlayerStateHandler(Sewer56.SonicRiders.Structures.Gameplay.Player* player, Sewer56.SonicRiders.Structures.Enums.PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook)
-        {
-            var playerIndex = Player.GetPlayerIndex(player);
-            if (playerIndex == -1 || playerIndex == 0)
-                return hook.OriginalFunction(player, state);
-
-            return hook.OriginalFunction(player, state);
-        }
-
         protected MessageQueue _queue = new MessageQueue();
     }
 }

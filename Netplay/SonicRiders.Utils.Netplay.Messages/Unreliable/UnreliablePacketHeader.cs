@@ -70,6 +70,9 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.TurningAmount.HasValue || player.LeanAmount.HasValue)
                 data |= HasData.HasTurnAndLean;
 
+            if (player.ControlFlags.HasValue)
+                data |= HasData.HasControlFlags;
+
             return data;
         }
 
@@ -119,7 +122,7 @@ namespace Riders.Netplay.Messages.Unreliable
             HasState           = 1 << 4,
             HasAir             = 1 << 5,
             HasTurnAndLean     = 1 << 6, 
-            HasUnused2         = 1 << 7, 
+            HasControlFlags    = 1 << 7, 
             HasUnused3         = 1 << 8, 
             HasUnused4         = 1 << 9, 
             HasUnused5         = 1 << 10, 

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
+using System.Resources;
 using BitStreams;
 using EnumsNET;
 using Reloaded.Memory.Streams;
@@ -75,6 +76,11 @@ namespace Riders.Netplay.Messages.Unreliable
         /// The individual player state.
         /// </summary>
         public PlayerState? State;
+
+        /// <summary>
+        /// Flags that control various behaviours.
+        /// </summary>
+        public PlayerControlFlags? ControlFlags;
 
         /// <summary>
         /// Velocity of the player in the X and Y direction.
@@ -156,6 +162,7 @@ namespace Riders.Netplay.Messages.Unreliable
             result.Velocity = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
             result.TurningAmount = (float?) random.NextDouble();
             result.LeanAmount = (float?) random.NextDouble();
+            result.ControlFlags = (PlayerControlFlags?) random.Next();
 
             return result;
         }
@@ -183,6 +190,7 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.WriteNullable(Air, AirBits);
             bitStream.WriteNullable(_turnAmount);
             bitStream.WriteNullable(_leanAmount);
+            bitStream.WriteNullable(ControlFlags);
 
             // Copy back to original stream.
             memStream.Seek(0, SeekOrigin.Begin);
@@ -214,6 +222,7 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.ReadIfHasFlags(ref player.Air, fields, HasData.HasAir, AirBits);
             bitStream.ReadIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
             bitStream.ReadIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
+            bitStream.ReadIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags);
 
             // Seek the BSR
             reader.Seek(stream.Position, SeekOrigin.Begin);
@@ -245,6 +254,7 @@ namespace Riders.Netplay.Messages.Unreliable
                 packet.TurningAmount = player.TurningAmount;
                 packet.LeanAmount = player.DriftAngle;
             }
+            if (ShouldISend(framecounter, HasData.HasControlFlags)) packet.ControlFlags = player.PlayerControlFlags;
 
             return packet;
         }
@@ -269,16 +279,16 @@ namespace Riders.Netplay.Messages.Unreliable
             if (TurningAmount.HasValue) player.TurningAmount = TurningAmount.Value;
             if (LeanAmount.HasValue) player.DriftAngle = LeanAmount.Value;
             if (LeanAmount.HasValue) player.DriftAngle = LeanAmount.Value;
+            if (ControlFlags.HasValue) player.PlayerControlFlags = ControlFlags.Value;
             if (State.HasValue)
             {
                 player.LastPlayerState = LastState.Value;
-
+                
                 if (!IsCurrentStateBlacklisted(player.PlayerState) && IsWhitelisted(State.Value))
                     player.PlayerState = State.Value;
-            }
 
-            // Note: State is applied in hook elsewhere.
-            //       Check usages.
+                player.MaybeAttackLastState = PlayerState.None;
+            }
 
             // TODO: Check if setting last state is the correct thing to do
         }
@@ -292,6 +302,7 @@ namespace Riders.Netplay.Messages.Unreliable
         public static bool ShouldISend(int frameCounter, HasData type)
         {
             // Used to have settings here, removed for now.
+            // Will be implemented if we ever need to reduce bandwidth usage.
             return true;
         }
 
@@ -307,7 +318,6 @@ namespace Riders.Netplay.Messages.Unreliable
             {
                 case PlayerState.Running:
                 case PlayerState.NormalOnBoard:
-                case PlayerState.FreeFalling:
                 case PlayerState.Jump:
                 case PlayerState.ElectricShockLong:
                 case PlayerState.InstantStop:
@@ -315,6 +325,7 @@ namespace Riders.Netplay.Messages.Unreliable
                 case PlayerState.RunningAfterStart:
                 case PlayerState.ElectricShock:
                 case PlayerState.Turbulence:
+                case PlayerState.FreeFalling:
                 case PlayerState.TrickJumpTurbulence:
                 case PlayerState.TrickJumpFlatVertical:
                 case PlayerState.TrickJumpUnknown1:
@@ -341,10 +352,10 @@ namespace Riders.Netplay.Messages.Unreliable
             {
                 case PlayerState.Attacking:
                 case PlayerState.GettingAttacked:
-                case PlayerState.Turbulence:
                     return true;
 
                 default:
+                case PlayerState.Turbulence:
                 case PlayerState.FreeFalling:
                 case PlayerState.Running:
                 case PlayerState.NormalOnBoard:
