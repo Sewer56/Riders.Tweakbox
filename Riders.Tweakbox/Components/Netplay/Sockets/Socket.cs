@@ -32,7 +32,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Provides shared state for the client and host.
         /// </summary>
-        public ClientState State;
+        public CommonState State;
 
         /// <summary>
         /// Contains a queue of all packets received from the clients.

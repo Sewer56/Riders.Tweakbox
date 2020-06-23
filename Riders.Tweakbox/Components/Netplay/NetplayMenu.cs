@@ -65,7 +65,7 @@ namespace Riders.Tweakbox.Components.Netplay
         private void RenderHostWindow()
         {
             var host = (Host)Controller.Socket;
-            foreach (var player in host.PlayerMap.GetPlayerData())
+            foreach (var player in host.State.PlayerMap.GetPlayerData())
             {
                 ImGui.Text($"{player.Name} | {player.PlayerIndex}");
             }

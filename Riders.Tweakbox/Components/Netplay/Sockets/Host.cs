@@ -16,11 +16,11 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
-using PlayerState = Riders.Tweakbox.Components.Netplay.Sockets.Helpers.PlayerState;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -32,7 +32,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public new HostState State => (HostState) base.State;
 
         public string Password { get; private set; }
-        public PlayerMap<PlayerState> PlayerMap { get; private set; } = new PlayerMap<PlayerState>();
         
         public Host(int port, string password, NetplayController controller) : base(controller)
         {
@@ -64,6 +63,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
+            Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
+            Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
+            Event.OnStartAttackTask += OnStartAttackTask;
+            //Event.SetNewPlayerStateHandler += State.SetPlayerStateHandler;
         }
 
         public override unsafe void Dispose()
@@ -93,6 +96,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
+            Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
+            Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
+            Event.OnStartAttackTask -= OnStartAttackTask;
+            //Event.SetNewPlayerStateHandler -= State.SetPlayerStateHandler;
         }
 
         public override bool IsHost() => true;
@@ -115,7 +122,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         private void HandleUnreliable(NetPeer peer, UnreliablePacket result)
         {
             // TODO: Maybe support for multiple local players in the future.
-            var playerIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+            var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
             var player  = result.Players[0];
             State.RaceSync[playerIndex] = player;
         }
@@ -138,8 +145,21 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (packet.HasSyncStartReady)
             {
                 Debug.WriteLine("[Host] Received HasSyncStartReady from Client.");
-                var customData = PlayerMap.GetCustomData(peer);
+                var customData = State.PlayerMap.GetCustomData(peer);
                 customData.ReadyToStartRace = true;
+            }
+
+            if (packet.SetMovementFlags.HasValue)
+            {
+                var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                State.MovementFlagsSync[playerIndex] = new Timestamped<MovementFlagsMsg>(packet.SetMovementFlags.Value);
+            }
+
+            if (packet.SetAttack.HasValue)
+            {
+                var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                Debug.WriteLine($"[Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}");
+                State.AttackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
             }
         }
 
@@ -149,7 +169,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             switch (message)
             {
                 case ClientSetPlayerData clientSetPlayerData:
-                    PlayerMap.AddOrUpdatePlayerData(peer, clientSetPlayerData.Data);
+                    State.PlayerMap.AddOrUpdatePlayerData(peer, clientSetPlayerData.Data);
                     UpdatePlayerMap();
                     break;
             }
@@ -160,7 +180,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             switch (syncCommand.Command)
             {
                 case CharaSelectLoop charaSelectLoop:
-                    State.CharaSelectLoop[PlayerMap.GetPlayerData(peer).PlayerIndex] = charaSelectLoop;
+                    State.CharaSelectLoop[State.PlayerMap.GetPlayerData(peer).PlayerIndex] = charaSelectLoop;
                     break;
                 case CourseSelectLoop courseSelectLoop:
                     State.CourseSelectLoop.Enqueue(courseSelectLoop);
@@ -245,7 +265,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 foreach (var peer in Manager.ConnectedPeerList)
                 {
-                    var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
                     var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
                     SendAndFlush(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
                 }
@@ -277,7 +297,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         private bool OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
         {
-            bool TestAllReady() => PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
+            bool TestAllReady() => State.PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
 
             // Send skip signal to clients.
             if (!State.SkipRequested) 
@@ -298,7 +318,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SendToAllAndFlush(new ReliablePacket() { SyncStartGo = startTime }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
             
             // Disable skip flags for everyone.
-            var data = PlayerMap.GetCustomData();
+            var data = State.PlayerMap.GetCustomData();
             foreach (var dt in data)
                 dt.ReadyToStartRace = false;
 
@@ -306,15 +326,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             State.OnIntroCutsceneEnd();
         }
 
-        private void OnRace(Task<byte, RaceTaskState>* task) => State.OnRace();
+        private void OnRace(Task<byte, RaceTaskState>* task)
+        {
+            Poll();
+            State.ApplyRaceSync();
+        }
+
         private void AfterRace(Task<byte, RaceTaskState>* task)
         {
             State.RaceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
             
             // Populate data for non-expired packets.
-            var players = new UnreliablePacketPlayer[State.RaceSync.Length];
+            var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
             Array.Fill(players, new UnreliablePacketPlayer());
-            for (int x = 0; x < State.RaceSync.Length; x++)
+            for (int x = 0; x < players.Length; x++)
             {
                 var sync = State.RaceSync[x];
                 if (!sync.IsDiscard(State.MaxLatency))
@@ -324,10 +349,79 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Broadcast data to all clients.
             foreach (var peer in Manager.ConnectedPeerList)
             {
-                var excludeIndex = PlayerMap.GetPlayerData(peer).PlayerIndex;
+                var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
                 var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
                 SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
             }
+
+            // Broadcast Attack Data
+            if (State.HasAttacks())
+            {
+                Debug.WriteLine($"[Host] Sending Attack Matrix to Clients");
+                foreach (var peer in Manager.ConnectedPeerList)
+                {
+                    var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var attacks      = State.AttackSync.Select(x => x.Value).Where((attack, x) => x != excludeIndex).ToArray();
+                    if (!attacks.Any(x => x.IsValid))
+                        continue;
+
+                    for (var x = 0; x < attacks.Length; x++)
+                    {
+                        if (x < excludeIndex)
+                            attacks[x].Target -= 1;
+                    }
+
+                    for (var x = 0; x < attacks.Length; x++)
+                    {
+                        var attack = attacks[x];
+                        if (attack.IsValid)
+                            Debug.WriteLine($"[Host] Send Attack Source ({x}), Target {attack.Target}");
+                    }
+
+                    var packed       = new AttackPacked().AsInterface().SetData(attacks);
+                    SendAndFlush(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
+                }
+            }
+
+            State.ProcessAttackTasks();
+        }
+
+        private Player* OnAfterSetMovementFlagsOnInput(Player* player)
+        {
+            State.OnAfterSetMovementFlags(player);
+
+            var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (index == 0)
+            {
+                State.MovementFlagsSync[0] = new MovementFlagsMsg(player);
+                foreach (var peer in Manager.ConnectedPeerList)
+                {
+                    var excludeIndex  = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var movementFlags = State.MovementFlagsSync.Where((timestamped, x) => x != excludeIndex).ToArray();
+                    SendAndFlush(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) } , DeliveryMethod.ReliableOrdered);
+                }
+            }
+
+            return player;
+        }
+
+        private int OnShouldRejectAttackTask(Player* playerOne, Player* playerTwo, int a3) => State.ShouldRejectAttackTask(playerOne, playerTwo);
+        private int OnStartAttackTask(Player* playerOne, Player* playerTwo, int a3)
+        {
+            // Send attack notification to host if not 
+            if (!State.IsProcessingAttackPackets)
+            {
+                var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);
+                if (p1Index != 0)
+                    return 0;
+
+                // Append to list of attacks to send out at frame end.
+                var p2Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerTwo);
+                Debug.WriteLine($"[Host] Set Attack on {p2Index}");
+                State.AttackSync[0] = new Timestamped<SetAttack>(new SetAttack((byte) p2Index));
+            }
+
+            return 0;
         }
         #endregion
 
@@ -357,14 +451,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            PlayerMap.RemovePeer(peer);
+            State.PlayerMap.RemovePeer(peer);
             UpdatePlayerMap();
         }
 
         public override void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
             // Update latency.
-            var data = PlayerMap.GetCustomData(peer);
+            var data = State.PlayerMap.GetCustomData(peer);
             if (data != null)
                 data.Latency = latency;
         }
@@ -382,7 +476,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (Event.LastTask != Tasks.CourseSelect)
                 return Reject("[Host] Rejected Connection | Not on Course Select");
 
-            if (!PlayerMap.HasEmptySlots())
+            if (!State.PlayerMap.HasEmptySlots())
                 return Reject($"[Host] Rejected Connection | No Empty Slots");
 
             Debug.WriteLine($"[Host] Accepting if Password Matches");
@@ -398,11 +492,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             foreach (var peer in Manager.ConnectedPeerList)
             {
-                var message = PlayerMap.ToMessage(peer, State.SelfInfo);
+                var message = State.PlayerMap.ToMessage(peer, State.SelfInfo);
                 SendAndFlush(peer, new ReliablePacket(message), DeliveryMethod.ReliableUnordered);
             }
 
-            State.PlayerInfo = PlayerMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
+            State.PlayerInfo = State.PlayerMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
         }
         #endregion
     }

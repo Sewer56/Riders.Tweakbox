@@ -13,11 +13,11 @@ namespace Riders.Netplay.Messages.Tests
             var position  = new Vector3(-49.85133362f, -41.55332947f, 167.2761993f);
             var rotation  = 0.03664770722f;
             var rings     = (byte) 52;
-            var state     = PlayerState.Turbulence;
             var velocityX = 0.7286906838f;
             var velocityY = 0.123456789f;
+            var air       = (uint) 123456;
 
-            var player            = new UnreliablePacketPlayer(position, rings, state, rotation, new Vector2(velocityX, velocityY));
+            var player            = new UnreliablePacketPlayer(position, air, rings, PlayerState.ElectricShockCrash, rotation, new Vector2(velocityX, velocityY));
             var unreliablePacket  = new Messages.UnreliablePacket(new[] { player });
 
             var bytes        = unreliablePacket.Serialize();
@@ -35,7 +35,7 @@ namespace Riders.Netplay.Messages.Tests
             var velocityX = 0.7286906838f;
             var velocityY = 0.123456789f;
 
-            var player = new UnreliablePacketPlayer(position, null, null, rotation, new Vector2(velocityX, velocityY));
+            var player = new UnreliablePacketPlayer(position, 0, null, default, rotation, new Vector2(velocityX, velocityY));
             var unreliablePacket = new Messages.UnreliablePacket(new[] { player });
 
             var bytes = unreliablePacket.Serialize();

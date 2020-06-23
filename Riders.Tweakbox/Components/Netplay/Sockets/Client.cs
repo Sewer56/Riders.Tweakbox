@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using LiteNetLib;
+using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
@@ -13,12 +13,15 @@ using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
 using Debug = System.Diagnostics.Debug;
+using PlayerState = Sewer56.SonicRiders.Structures.Enums.PlayerState;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -31,7 +34,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
-            State = new ClientState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
+            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Manager.Start();
             Manager.Connect(ipAddress, port, password);
 
@@ -58,6 +61,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
+            Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
+            Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
+            Event.OnStartAttackTask += OnStartAttackTask;
+            //Event.SetNewPlayerStateHandler += State.SetPlayerStateHandler;
         }
 
         public override void Dispose()
@@ -86,6 +93,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
+            Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
+            Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
+            Event.OnStartAttackTask -= OnStartAttackTask;
+            //Event.SetNewPlayerStateHandler -= State.SetPlayerStateHandler;
         }
 
         public override bool IsHost() => false;
@@ -125,10 +136,31 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (packet.HasSyncStartSkip)
                 State.SkipRequested = true;
 
+            if (packet.GameData.HasValue)
+            {
+                Debug.WriteLine($"[Client] Received Game Data, Applying");
+                packet.GameData.Value.ToGame();
+            }
+
             if (packet.SyncStartGo.HasValue)
             {
                 Debug.WriteLine($"[Client] Set SyncStartGo");
                 State.StartSyncGo = packet.SyncStartGo.Value;
+            }
+
+            if (packet.MovementFlags.HasValue)
+            {
+                packet.MovementFlags.Value.AsInterface().ToArray(State.MovementFlagsSync, MovementFlagsPacked.NumberOfEntries - 1, 0, 1);
+            }
+
+            if (packet.Attack.HasValue)
+            {
+                Debug.WriteLine($"[Client] Received Attack data from host");
+                var value   = packet.Attack.Value;
+                var attacks = new SetAttack[State.AttackSync.Length];
+                value.AsInterface().ToArray(attacks, attacks.Length - 1, 0, 1);
+                for (var x = 0; x < attacks.Length; x++)
+                    State.AttackSync[x] = new Timestamped<SetAttack>(attacks[x]);
             }
         }
 
@@ -280,12 +312,49 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Debug.WriteLine("[Client] Race Started.");
         }
 
-        private void OnRace(Task<byte, RaceTaskState>* task) => State.OnRace();
+        private void OnRace(Task<byte, RaceTaskState>* task)
+        {
+            Poll();
+            State.ApplyRaceSync();
+        }
+
         private void AfterRace(Task<byte, RaceTaskState>* task)
         {
             var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
             SendAndFlush(Manager.FirstPeer, packet, DeliveryMethod.Sequenced);
+
+            State.ProcessAttackTasks();
         }
+
+        private Player* OnAfterSetMovementFlagsOnInput(Player* player)
+        {
+            State.OnAfterSetMovementFlags(player);
+
+            var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (index == 0) 
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, DeliveryMethod.ReliableOrdered);
+
+            return player;
+        }
+
+        private int OnShouldRejectAttackTask(Player* playerOne, Player* playerTwo, int a3) => State.ShouldRejectAttackTask(playerOne, playerTwo);
+        private int OnStartAttackTask(Player* playerOne, Player* playerTwo, int a3)
+        {
+            // Send attack notification to host if not 
+            if (!State.IsProcessingAttackPackets)
+            {
+                var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);
+                if (p1Index != 0)
+                    return 0;
+
+                var p2Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerTwo);
+                Debug.WriteLine($"[Client] Send Attack on {p2Index}");
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { SetAttack = new SetAttack((byte)State.GetRemotePlayerIndex(p2Index)) }, DeliveryMethod.ReliableOrdered);
+            }
+
+            return 0;
+        }
+
         #endregion
 
         #region Overrides

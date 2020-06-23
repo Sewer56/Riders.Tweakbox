@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using Sewer56.Imgui.Shell.Structures;
 
 namespace Sewer56.Imgui.Utilities
@@ -12,12 +13,12 @@ namespace Sewer56.Imgui.Utilities
 
         public override void Write(string message)
         {
-            Shell.Shell.Log(new LogItem(message, Timeout));
+            Shell.Shell.Log(new LogItem($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}", Timeout));
         }
 
         public override void WriteLine(string message)
         {
-            Shell.Shell.Log(new LogItem(message, Timeout));
+            Shell.Shell.Log(new LogItem($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}", Timeout));
         }
     }
 }

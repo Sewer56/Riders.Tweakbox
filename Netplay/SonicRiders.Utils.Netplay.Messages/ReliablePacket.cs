@@ -47,12 +47,22 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Set if client demands to set boost/tornado/attack for them.
         /// </summary>
-        public SetBoostTornadoAttack? SetBoostTornadoAttack;
+        public MovementFlagsMsg? SetMovementFlags;
 
         /// <summary>
         /// Sets boost/tornado/attack if sent to players.
         /// </summary>
-        public BoostTornadoAttackPacked? BoostTornadoAttack;
+        public MovementFlagsPacked? MovementFlags;
+
+        /// <summary>
+        /// Sets an attack to be performed between 2 players.
+        /// </summary>
+        public SetAttack? SetAttack;
+
+        /// <summary>
+        /// Informs people an attack has been performed between players.
+        /// </summary>
+        public AttackPacked? Attack;
 
         /// <summary>
         /// Message from host that anti-cheat was triggered.
@@ -94,9 +104,12 @@ namespace Riders.Netplay.Messages
             if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
             writer.WriteNullable(SyncStartGo);
             writer.WriteNullable(SetLapCounters);
-            writer.WriteNullable(SetBoostTornadoAttack);
+            writer.WriteNullable(SetMovementFlags);
 
-            writer.WriteNullable(BoostTornadoAttack);
+            writer.WriteNullable(SetAttack);
+            writer.WriteNullable(Attack);
+
+            writer.WriteNullable(MovementFlags);
             writer.WriteNullable(AntiCheatTriggered);
             writer.WriteNullable(AntiCheatGameData);
             writer.WriteNullable(AntiCheatHeartbeat);
@@ -118,15 +131,17 @@ namespace Riders.Netplay.Messages
             if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
             if (Flags.HasAllFlags(HasData.HasIncrementLapCounter)) HasIncrementLapCounter = true;
 
-            reader.SetValueIfHasFlags(ref Random, Flags, HasData.HasRand);
+            reader.ReadIfHasFlags(ref Random, Flags, HasData.HasRand);
             if (Flags.HasAllFlags(HasData.HasGameData)) Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
-            reader.SetValueIfHasFlags(ref SyncStartGo, Flags, HasData.HasSyncStartGo);
-            reader.SetValueIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
-            reader.SetValueIfHasFlags(ref SetBoostTornadoAttack, Flags, HasData.HasSetBoostTornadoAttack);
-            reader.SetValueIfHasFlags(ref BoostTornadoAttack, Flags, HasData.HasBoostTornadoAttack);
-            reader.SetValueIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
-            reader.SetValueIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
-            reader.SetValueIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
+            reader.ReadIfHasFlags(ref SyncStartGo, Flags, HasData.HasSyncStartGo);
+            reader.ReadIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
+            reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
+            reader.ReadIfHasFlags(ref MovementFlags, Flags, HasData.HasMovementFlags);
+            reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
+            reader.ReadIfHasFlags(ref Attack, Flags, HasData.HasAttack);
+            reader.ReadIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
+            reader.ReadIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
+            reader.ReadIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
             if (Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
             if (Flags.HasAllFlags(HasData.HasServerMessage)) ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
         }
@@ -148,8 +163,11 @@ namespace Riders.Netplay.Messages
             if (HasIncrementLapCounter) flags |= HasData.HasIncrementLapCounter;
             if (SetLapCounters.HasValue) flags |= HasData.HasLapCounters;
 
-            if (SetBoostTornadoAttack.HasValue) flags |= HasData.HasSetBoostTornadoAttack;
-            if (BoostTornadoAttack.HasValue) flags |= HasData.HasBoostTornadoAttack;
+            if (SetAttack.HasValue) flags |= HasData.HasSetAttack;
+            if (Attack.HasValue) flags |= HasData.HasAttack;
+
+            if (SetMovementFlags.HasValue) flags |= HasData.HasSetMovementFlags;
+            if (MovementFlags.HasValue) flags |= HasData.HasMovementFlags;
 
             if (AntiCheatTriggered.HasValue) flags |= HasData.HasAntiCheatTriggered;
             if (AntiCheatGameData.HasValue) flags |= HasData.HasAntiCheatGameData;
@@ -167,6 +185,7 @@ namespace Riders.Netplay.Messages
         public enum HasData : ushort
         {
             Null = 0,
+
             // Randomization
             HasRand = 1,               // Host -> Client: RNG Seed
 
@@ -177,26 +196,25 @@ namespace Riders.Netplay.Messages
             HasSyncStartGo      = 1 << 3,   // Host -> Client: Ready signal to tell clients to start race at a given time.
             HasSyncStartSkip    = 1 << 4,   // Informs Host/Client to skip the stage intro cutscene.
 
-            HasIncrementLapCounter = 1 << 5,    // Client -> Host: Increment lap counter for the player.
-            HasLapCounters         = 1 << 6,    // Host -> Client: Set Lap counters for each player.
+            HasIncrementLapCounter = 1 << 5,  // Client -> Host: Increment lap counter for the player.
+            HasLapCounters         = 1 << 6,  // Host -> Client: Set Lap counters for each player.
 
             // Race Integrity Synchronization
-            HasSetBoostTornadoAttack    = 1 << 7,  // Client -> Host: Inform host of boost, tornado, attack.
-            HasBoostTornadoAttack       = 1 << 8,  // Host -> Client: Triggers boost, tornado & attack for clients.
+            HasSetMovementFlags    = 1 << 7,  // Client -> Host: Inform host of boost, tornado.
+            HasMovementFlags       = 1 << 8,  // Host -> Client: Triggers boost, tornado for clients.
+            HasSetAttack           = 1 << 9,  // Client -> Host: Inform host to attack a player.
+            HasAttack                = 1 << 10, // Host -> Client: Inform client of an impending attack.
 
             // Anti-Cheat
-            HasAntiCheatTriggered   = 1 << 9,      // Host -> Client: Anti-cheat has been triggered, let all clients know.
-            HasAntiCheatGameData    = 1 << 10,      // Client -> Host: Hash of game data
-            HasAntiCheatHeartbeat   = 1 << 11,     // Client -> Host: Timestamp & frames elapsed
+            HasAntiCheatTriggered   = 1 << 11,      // Host -> Client: Anti-cheat has been triggered, let all clients know.
+            HasAntiCheatGameData    = 1 << 12,      // Client -> Host: Hash of game data
+            HasAntiCheatHeartbeat   = 1 << 13,     // Client -> Host: Timestamp & frames elapsed
 
             // Menu & Server Synchronization
             // These messages are fairly infrequent and/or work outside the actual gameplay loop.
             // We can save a byte during regular gameplay here.
-            HasMenuSynchronizationCommand   = 1 << 12, // [Struct] Menu State Synchronization Command.
-            HasServerMessage                = 1 << 13, // [Struct] General Server Message (Set Name, Try Connect etc.)
-
-            Unused0 = 1 << 14,
-            Unused1 = 1 << 15,
+            HasMenuSynchronizationCommand   = 1 << 14, // [Struct] Menu State Synchronization Command.
+            HasServerMessage                = 1 << 15, // [Struct] General Server Message (Set Name, Try Connect etc.)
         }
     }
 }

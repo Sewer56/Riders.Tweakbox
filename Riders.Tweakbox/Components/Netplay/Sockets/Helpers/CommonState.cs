@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
@@ -9,6 +10,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Netplay.Messages.Unreliable;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -16,12 +18,19 @@ using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
-    public class ClientState
+    public class CommonState
     {
-        public ClientState(HostPlayerData selfInfo)
+        public CommonState(HostPlayerData selfInfo)
         {
             SelfInfo = selfInfo;
+            ResetRace();
+        }
+
+        private void ResetRace()
+        {
             Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
+            Array.Fill(MovementFlagsSync, new Timestamped<MovementFlagsMsg>());
+            Array.Fill(AttackSync, new Timestamped<SetAttack>(new SetAttack(false, 0)));
         }
 
         /// <summary>
@@ -74,6 +83,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public Timestamped<UnreliablePacketPlayer>[] RaceSync = new Timestamped<UnreliablePacketPlayer>[Constants.MaxNumberOfPlayers];
 
         /// <summary>
+        /// Contains movement flags for each client.
+        /// </summary>
+        public MovementFlagsMsg[] MovementFlagsSync = new MovementFlagsMsg[Constants.MaxNumberOfPlayers];
+
+        /// <summary>
+        /// Contains the synchronization data for handling attacks.
+        /// </summary>
+        public Timestamped<SetAttack>[] AttackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
+
+        /// <summary>
         /// Provides event notifications for when contents of menus etc. are changed.
         /// </summary>
         public MenuChangedEventHandler Delta = new MenuChangedEventHandler();
@@ -100,6 +119,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public Volatile<SyncStartGo> StartSyncGo = new Volatile<SyncStartGo>();
 
         /// <summary>
+        /// When true, does not rebroadcast attack events.
+        /// </summary>
+        public bool IsProcessingAttackPackets = false;
+
+        /// <summary>
         /// Drops character select apply packets if true.
         /// </summary>
         private bool _dropCharSelectPackets = false;
@@ -118,6 +142,63 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 return Math.Max(PlayerInfo.Max(x => x.PlayerIndex) + 1, SelfInfo.PlayerIndex + 1);
 
             return 1;
+        }
+
+        /// <summary>
+        /// True if there are any attacks.
+        /// </summary>
+        public bool HasAttacks() => AttackSync.Any(x => !x.IsDiscard(MaxLatency) && x.Value.IsValid);
+
+        /// <summary>
+        /// Checks if an attack should be rejected by rejecting any attacks performed on the player that were not sent over the network.
+        /// </summary>
+        public unsafe int ShouldRejectAttackTask(Sewer56.SonicRiders.Structures.Gameplay.Player* playerOne, Sewer56.SonicRiders.Structures.Gameplay.Player* playerTwo)
+        {
+            if (!IsProcessingAttackPackets)
+            {
+                var p1Index = Player.GetPlayerIndex(playerOne);
+                return p1Index != 0 ? 1 : 0;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Processes all attack tasks and resets them to the default value.
+        /// </summary>
+        public unsafe void ProcessAttackTasks()
+        {
+            IsProcessingAttackPackets = true;
+            for (var x = 0; x < AttackSync.Length; x++)
+            {
+                if (x == 0)
+                    continue;
+
+                var atkSync = AttackSync[x];
+                if (atkSync.IsDiscard(MaxLatency))
+                    continue;
+
+                var value = atkSync.Value;
+                if (value.IsValid)
+                {
+                    Debug.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
+                    StartAttackTask(x, value.Target);
+                }
+            }
+
+            Array.Fill(AttackSync, new Timestamped<SetAttack>(new SetAttack(false, 0)));
+            IsProcessingAttackPackets = false;
+        }
+
+        /// <summary>
+        /// Starts an attack between two players.
+        /// </summary>
+        /// <param name="playerOne">The attacking player index.</param>
+        /// <param name="playerTwo">The player to be attacked index.</param>
+        /// <param name="a3">Unknown Parameter</param>
+        public unsafe void StartAttackTask(int playerOne, int playerTwo, int a3 = 1)
+        {
+            Functions.StartAttackTask.GetWrapper()(&Player.Players.Pointer[playerOne], &Player.Players.Pointer[playerTwo], a3);
         }
 
         /// <summary>
@@ -194,13 +275,13 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
             _dropCharSelectPackets = false;
             _lastCharaSelectSync.ToGameOnlyCharacter();
-            Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
+            ResetRace();
         }
 
         /// <summary>
         /// Applies the current race state obtained from clients/host to the game.
         /// </summary>
-        public void OnRace()
+        public void ApplyRaceSync()
         {
             // Apply data of all players.
             for (int x = 1; x < RaceSync.Length; x++)
@@ -217,6 +298,43 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
                 sync.Value.ToGame(x);
             }
+        }
+
+        /// <summary>
+        /// Handles all Boost/Tornado/Attack tasks received from the clients.
+        /// </summary>
+        public unsafe Sewer56.SonicRiders.Structures.Gameplay.Player* OnAfterSetMovementFlags(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        {
+            var index = Player.GetPlayerIndex(player);
+
+            if (index == 0)
+                return player;
+
+            MovementFlagsSync[index].ToGame(player);
+            return player;
+        }
+
+        /// <summary>
+        /// Gets the index of a remote (on the host's end) player.
+        /// </summary>
+        public virtual int GetRemotePlayerIndex(int localPlayerIndex)
+        {
+            if (localPlayerIndex == 0)
+                return SelfInfo.PlayerIndex;
+
+            return PlayerInfo[localPlayerIndex - 1].PlayerIndex;
+        }
+
+        /// <summary>
+        /// Handles the internal game's SetPlayerState function.
+        /// </summary>
+        public unsafe byte SetPlayerStateHandler(Sewer56.SonicRiders.Structures.Gameplay.Player* player, Sewer56.SonicRiders.Structures.Enums.PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook)
+        {
+            var playerIndex = Player.GetPlayerIndex(player);
+            if (playerIndex == -1 || playerIndex == 0)
+                return hook.OriginalFunction(player, state);
+
+            return hook.OriginalFunction(player, state);
         }
 
         protected MessageQueue _queue = new MessageQueue();

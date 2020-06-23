@@ -25,7 +25,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public void PeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Socket.OnPeerDisconnected(peer, disconnectInfo);
         public void NetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
-            // Sewer... you dumb fuck
             var rawBytes = reader.GetRemainingBytes().AsSpan();
             if (deliveryMethod == DeliveryMethod.Sequenced || deliveryMethod == DeliveryMethod.Unreliable)
             {

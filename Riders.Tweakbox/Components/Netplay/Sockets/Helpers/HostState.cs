@@ -6,9 +6,14 @@ using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
-    public class HostState : ClientState
+    public class HostState : CommonState
     {
         public HostState(HostPlayerData selfInfo) : base(selfInfo) { }
+
+        /// <summary>
+        /// Stores a mapping of peers to players.
+        /// </summary>
+        public PlayerMap<PlayerState> PlayerMap = new PlayerMap<PlayerState>();
 
         /// <summary>
         /// Changes in character select since the last time they were sent to the clients.
@@ -77,5 +82,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
             return loop;
         }
+
+
+        /// <summary>
+        /// Gets the index of a remote (on the host's end) player.
+        /// </summary>
+        public override int GetRemotePlayerIndex(int localPlayerIndex) => localPlayerIndex;
     }
 }

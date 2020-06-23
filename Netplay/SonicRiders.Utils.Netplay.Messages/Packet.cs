@@ -1,5 +1,4 @@
-﻿using System;
-using Riders.Netplay.Messages.Queue;
+﻿using Riders.Netplay.Messages.Queue;
 
 namespace Riders.Netplay.Messages
 {

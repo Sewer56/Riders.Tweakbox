@@ -52,7 +52,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.Position.HasValue)
                 data |= HasData.HasPosition;
 
-            if (player.GetRotationX().HasValue)
+            if (player.Rotation.HasValue)
                 data |= HasData.HasRotation;
 
             if (player.Velocity.HasValue)
@@ -61,8 +61,14 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.Rings.HasValue)
                 data |= HasData.HasRings;
 
-            if (player.State.HasValue)
+            if (player.State.HasValue || player.LastState.HasValue)
                 data |= HasData.HasState;
+
+            if (player.Air.HasValue)
+                data |= HasData.HasAir;
+
+            if (player.TurningAmount.HasValue || player.LeanAmount.HasValue)
+                data |= HasData.HasTurnAndLean;
 
             return data;
         }
@@ -111,8 +117,8 @@ namespace Riders.Netplay.Messages.Unreliable
             HasVelocity        = 1 << 2, 
             HasRings           = 1 << 3, 
             HasState           = 1 << 4,
-            HasUnused0         = 1 << 5, 
-            HasUnused1         = 1 << 6, 
+            HasAir             = 1 << 5,
+            HasTurnAndLean     = 1 << 6, 
             HasUnused2         = 1 << 7, 
             HasUnused3         = 1 << 8, 
             HasUnused4         = 1 << 9, 

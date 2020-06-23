@@ -5,15 +5,50 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Functions;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
+using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
 namespace Riders.Tweakbox.Controllers
 {
     public unsafe class EventController : TaskEvents
     {
+        /// <summary>
+        /// Executed when an attack is executed by the game.
+        /// </summary>
+        public event Functions.StartAttackTaskFn OnStartAttackTask;
+
+        /// <summary>
+        /// Executed when an attack is executed by the game before <see cref="OnStartAttackTask"/>.
+        /// If this returns 1, execution of original code will be omitted.
+        /// </summary>
+        public event Functions.StartAttackTaskFn OnShouldRejectAttackTask;
+
+        /// <summary>
+        /// Executed after an attack is executed by the game.
+        /// </summary>
+        public event Functions.StartAttackTaskFn AfterStartAttackTask;
+
+        /// <summary>
+        /// Executed before the game gets the input flags based on player movements.
+        /// </summary>
+        public event Functions.SetMovementFlagsBasedOnInputFn OnSetMovementFlagsOnInput;
+
+        /// <summary>
+        /// Executed after the game gets the input flags based on player movements.
+        /// </summary>
+        public event Functions.SetMovementFlagsBasedOnInputFn AfterSetMovementFlagsOnInput;
+
+        /// <summary>
+        /// Handles the player state event.
+        /// The handler assigned to this event is responsible for calling the original function.
+        /// </summary>
+        public event SetNewPlayerStateHandlerFn SetNewPlayerStateHandler;
+
         /// <summary>
         /// Sets the stage when the player leaves the course select stage in battle mode picker.
         /// </summary>
@@ -58,6 +93,9 @@ namespace Riders.Tweakbox.Controllers
         private RuleSettingsLoop _rule = new RuleSettingsLoop();
         private CourseSelectLoop _course = new CourseSelectLoop();
 
+        private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
+        private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
+        private IHook<Functions.SetNewPlayerStateFn> _setNewPlayerStateHook;
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
         private IAsmHook _onCheckIfExitCharaSelectHook;
@@ -93,6 +131,9 @@ namespace Riders.Tweakbox.Controllers
             _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
             _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
+            _startAttackTaskHook = Functions.StartAttackTask.Hook(OnStartAttackTaskHook).Activate();
+            _setMovementFlagsOnInputHook = Functions.SetMovementFlagsOnInput.Hook(OnSetMovementFlagsOnInputHook).Activate();
+            _setNewPlayerStateHook = Functions.SetPlayerState.Hook(SetPlayerStateHook).Activate();
 
             _onSetupRaceSettingsHook = hooks.CreateAsmHook(new[]
             {
@@ -107,6 +148,7 @@ namespace Riders.Tweakbox.Controllers
         public new void Disable()
         {
             base.Disable();
+            _setMovementFlagsOnInputHook.Disable();
             _onCourseSelectSetStageHook.Disable();
             _onExitCharaSelectHook.Disable();
             _onCheckIfExitCharaSelectHook.Disable();
@@ -115,6 +157,7 @@ namespace Riders.Tweakbox.Controllers
             _skipIntroCameraHook.Disable();
             _checkIfSkipIntroCamera.Disable();
             _onSetupRaceSettingsHook.Disable();
+            _setNewPlayerStateHook.Disable();
         }
 
         /// <summary>
@@ -123,6 +166,7 @@ namespace Riders.Tweakbox.Controllers
         public new void Enable()
         {
             base.Enable();
+            _setMovementFlagsOnInputHook.Enable();
             _onCourseSelectSetStageHook.Enable();
             _onExitCharaSelectHook.Enable();
             _onCheckIfExitCharaSelectHook.Enable();
@@ -131,8 +175,37 @@ namespace Riders.Tweakbox.Controllers
             _skipIntroCameraHook.Enable();
             _checkIfSkipIntroCamera.Enable();
             _onSetupRaceSettingsHook.Enable();
+            _setNewPlayerStateHook.Enable();
         }
 
+        private byte SetPlayerStateHook(Player* player, PlayerState state)
+        {
+            if (SetNewPlayerStateHandler != null)
+                return SetNewPlayerStateHandler(player, state, _setNewPlayerStateHook);
+
+            return _setNewPlayerStateHook.OriginalFunction(player, state);
+        }
+
+        private Player* OnSetMovementFlagsOnInputHook(Player* player)
+        {
+            OnSetMovementFlagsOnInput?.Invoke(player);
+            var result = _setMovementFlagsOnInputHook.OriginalFunction(player);
+            AfterSetMovementFlagsOnInput?.Invoke(player);
+
+            return result;
+        }
+
+        private int OnStartAttackTaskHook(Player* playerOne, Player* playerTwo, int a3)
+        {
+            var reject = OnShouldRejectAttackTask?.Invoke(playerOne, playerTwo, a3);
+            if (reject.HasValue && reject.Value == 1)
+                return 0;
+
+            OnStartAttackTask?.Invoke(playerOne, playerTwo, a3);
+            var result = _startAttackTaskHook.OriginalFunction(playerOne, playerTwo, a3);
+            AfterStartAttackTask?.Invoke(playerOne, playerTwo, a3);
+            return result;
+        }
 
         private void OnCourseSelectSetStageHook() => OnCourseSelectSetStage?.Invoke();
 
@@ -146,5 +219,6 @@ namespace Riders.Tweakbox.Controllers
         private bool OnCheckIfSkipIntroHook() => OnCheckIfSkipIntro != null && OnCheckIfSkipIntro.Invoke();
 
         public delegate void SetupRace(Task<TitleSequence, TitleSequenceTaskState>* task);
+        public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);
     }
 }

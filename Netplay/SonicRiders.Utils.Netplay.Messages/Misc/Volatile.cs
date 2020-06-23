@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Riders.Netplay.Messages.Misc
+﻿namespace Riders.Netplay.Messages.Misc
 {
     /// <summary>
     /// Represents a singular volatile value.

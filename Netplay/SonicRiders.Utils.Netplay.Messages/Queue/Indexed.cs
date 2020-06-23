@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Riders.Netplay.Messages.Queue
+﻿namespace Riders.Netplay.Messages.Queue
 {
     /// <summary>
     /// A tuple that combines a player index and a given data item together.
