@@ -64,6 +64,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
+            Event.SetItemPickupTaskHandler += State.SetItemPickupTaskHandler;
+            Event.CheckIfPitSkipRenderGauge += State.OnCheckIfPitSkipRenderGaugeFill;
         }
 
         public override void Dispose()
@@ -95,6 +97,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
             Event.OnStartAttackTask -= OnStartAttackTask;
+            Event.SetItemPickupTaskHandler -= State.SetItemPickupTaskHandler;
+            Event.CheckIfPitSkipRenderGauge -= State.OnCheckIfPitSkipRenderGaugeFill;
         }
 
         public override bool IsHost() => false;

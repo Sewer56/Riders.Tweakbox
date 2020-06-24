@@ -325,6 +325,34 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             return PlayerInfo[localPlayerIndex - 1].PlayerIndex;
         }
 
+        /// <summary>
+        /// Disabled rendering of item pickups for players not rendered.
+        /// </summary>
+        public unsafe Task* SetItemPickupTaskHandler(Sewer56.SonicRiders.Structures.Gameplay.Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook)
+        {
+            return CheckIfRenderUiItem(player) ? hook.OriginalFunction(player, a2, a3) 
+                                               : (Task*) 0;
+        }
+
+        /// <summary>
+        /// Checks if to skip pit gauge fill, if initiated by another player. 
+        /// </summary>
+        public unsafe bool OnCheckIfPitSkipRenderGaugeFill(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        {
+            return !CheckIfRenderUiItem(player);
+        }
+
+        /// <summary>
+        /// If true, render UI item. Else false.
+        /// </summary>
+        public unsafe bool CheckIfRenderUiItem(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        {
+            var numScreens = *State.NumberOfCameras;
+            var playerIndex = Player.GetPlayerIndex(player);
+
+            return playerIndex < numScreens;
+        }
+
         protected MessageQueue _queue = new MessageQueue();
     }
 }

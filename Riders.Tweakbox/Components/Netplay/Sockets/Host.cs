@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
+using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
@@ -15,6 +16,7 @@ using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks;
@@ -66,6 +68,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
+            Event.SetItemPickupTaskHandler += State.SetItemPickupTaskHandler;
+            Event.CheckIfPitSkipRenderGauge += State.OnCheckIfPitSkipRenderGaugeFill;
         }
 
         public override unsafe void Dispose()
@@ -98,6 +102,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
             Event.OnStartAttackTask -= OnStartAttackTask;
+            Event.SetItemPickupTaskHandler -= State.SetItemPickupTaskHandler;
+            Event.CheckIfPitSkipRenderGauge -= State.OnCheckIfPitSkipRenderGaugeFill;
         }
 
         public override bool IsHost() => true;

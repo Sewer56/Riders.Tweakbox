@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Memory.Interop;
+using Reloaded.Memory.Pointers;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
@@ -50,6 +53,16 @@ namespace Riders.Tweakbox.Controllers
         public event SetNewPlayerStateHandlerFn SetNewPlayerStateHandler;
 
         /// <summary>
+        /// Handler for the method which sets the task to render an item pickup.
+        /// </summary>
+        public event SetRenderItemPickupTaskHandlerFn SetItemPickupTaskHandler;
+
+        /// <summary>
+        /// Checks if the rendering of the filling up of gauge (when pitted) should be rendered.
+        /// </summary>
+        public event PlayerAsmFunc CheckIfPitSkipRenderGauge;
+
+        /// <summary>
         /// Sets the stage when the player leaves the course select stage in battle mode picker.
         /// </summary>
         public event AsmAction OnCourseSelectSetStage;
@@ -96,6 +109,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
         private IHook<Functions.SetNewPlayerStateFn> _setNewPlayerStateHook;
+        private IHook<Functions.SetRenderItemPickupTaskFn> _setRenderItemPickupTaskHook;
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
         private IAsmHook _onCheckIfExitCharaSelectHook;
@@ -104,10 +118,13 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _skipIntroCameraHook;
         private IAsmHook _checkIfSkipIntroCamera;
         private IAsmHook _onSetupRaceSettingsHook;
+        private IAsmHook _onCheckIfSkipRenderGaugeFill;
+        private unsafe Pinnable<BlittablePointer<Player>> _checkIfSkipRenderGaugePointer;
 
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
+            _checkIfSkipRenderGaugePointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
 
             var onCourseSelectSetStageAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
 
@@ -123,6 +140,9 @@ namespace Riders.Tweakbox.Controllers
             var ifSkipIntroAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, Environment.Is64BitProcess) };
             var onCheckIfSkipIntroAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
 
+            var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
+            var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_checkIfSkipRenderGaugePointer.Pointer}], edi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
+
             var hooks = SDK.ReloadedHooks;
             _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
             _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -131,9 +151,12 @@ namespace Riders.Tweakbox.Controllers
             _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
             _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
+
             _startAttackTaskHook = Functions.StartAttackTask.Hook(OnStartAttackTaskHook).Activate();
             _setMovementFlagsOnInputHook = Functions.SetMovementFlagsOnInput.Hook(OnSetMovementFlagsOnInputHook).Activate();
             _setNewPlayerStateHook = Functions.SetPlayerState.Hook(SetPlayerStateHook).Activate();
+            _setRenderItemPickupTaskHook = Functions.SetRenderItemPickupTask.Hook(SetRenderItemPickupHook).Activate();
 
             _onSetupRaceSettingsHook = hooks.CreateAsmHook(new[]
             {
@@ -158,6 +181,8 @@ namespace Riders.Tweakbox.Controllers
             _checkIfSkipIntroCamera.Disable();
             _onSetupRaceSettingsHook.Disable();
             _setNewPlayerStateHook.Disable();
+            _setRenderItemPickupTaskHook.Disable();
+            _onCheckIfSkipRenderGaugeFill.Disable();
         }
 
         /// <summary>
@@ -176,6 +201,16 @@ namespace Riders.Tweakbox.Controllers
             _checkIfSkipIntroCamera.Enable();
             _onSetupRaceSettingsHook.Enable();
             _setNewPlayerStateHook.Enable();
+            _setRenderItemPickupTaskHook.Enable();
+            _onCheckIfSkipRenderGaugeFill.Enable();
+        }
+
+        private Task* SetRenderItemPickupHook(Player* player, byte a2, ushort a3)
+        {
+            if (SetItemPickupTaskHandler != null)
+                return SetItemPickupTaskHandler(player, a2, a3, _setRenderItemPickupTaskHook);
+
+            return _setRenderItemPickupTaskHook.OriginalFunction(player, a2, a3);
         }
 
         private byte SetPlayerStateHook(Player* player, PlayerState state)
@@ -185,6 +220,7 @@ namespace Riders.Tweakbox.Controllers
 
             return _setNewPlayerStateHook.OriginalFunction(player, state);
         }
+
 
         private Player* OnSetMovementFlagsOnInputHook(Player* player)
         {
@@ -217,8 +253,11 @@ namespace Riders.Tweakbox.Controllers
 
         private void OnSkipIntroHook() => OnRaceSkipIntro?.Invoke();
         private bool OnCheckIfSkipIntroHook() => OnCheckIfSkipIntro != null && OnCheckIfSkipIntro.Invoke();
+        private bool OnCheckIfSkipRenderGaugeHook() => CheckIfPitSkipRenderGauge != null && CheckIfPitSkipRenderGauge.Invoke(_checkIfSkipRenderGaugePointer.Value.Pointer);
 
         public delegate void SetupRace(Task<TitleSequence, TitleSequenceTaskState>* task);
         public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);
+        public unsafe delegate Task* SetRenderItemPickupTaskHandlerFn(Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook);
+        public delegate bool PlayerAsmFunc(Player* player);
     }
 }

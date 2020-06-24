@@ -352,10 +352,10 @@ namespace Riders.Netplay.Messages.Unreliable
             {
                 case PlayerState.Attacking:
                 case PlayerState.GettingAttacked:
+                case PlayerState.Turbulence:
                     return true;
 
                 default:
-                case PlayerState.Turbulence:
                 case PlayerState.FreeFalling:
                 case PlayerState.Running:
                 case PlayerState.NormalOnBoard:
