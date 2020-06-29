@@ -87,6 +87,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Gets the index of a remote (on the host's end) player.
         /// </summary>
-        public override int GetRemotePlayerIndex(int localPlayerIndex) => localPlayerIndex;
+        public override int GetHostPlayerIndex(int localPlayerIndex) => localPlayerIndex;
     }
 }

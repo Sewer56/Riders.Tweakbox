@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Buffers;
+using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
@@ -20,6 +21,16 @@ namespace Riders.Tweakbox.Controllers
 {
     public unsafe class EventController : TaskEvents
     {
+        /// <summary>
+        /// When the spawn location for all players is about to be set.
+        /// </summary>
+        public event SetSpawnLocationsStartOfRaceFn OnSetSpawnLocationsStartOfRace;
+        
+        /// <summary>
+        /// After the spawn location for all players has been set.
+        /// </summary>
+        public event SetSpawnLocationsStartOfRaceFn AfterSetSpawnLocationsStartOfRace;
+
         /// <summary>
         /// Executed when an attack is executed by the game.
         /// </summary>
@@ -78,6 +89,16 @@ namespace Riders.Tweakbox.Controllers
         public event AsmFunc OnCheckIfExitCharaSelect;
 
         /// <summary>
+        /// Checks if a specific player is a human character.
+        /// </summary>
+        public event PlayerAsmFunc OnCheckIfPlayerIsHuman;
+
+        /// <summary>
+        /// Checks if a specific player is to be given a human indicator.
+        /// </summary>
+        public event PlayerAsmFunc OnCheckIfPlayerIsHumanIndicator;
+
+        /// <summary>
         /// Executed when the Enter key is pressed to start a race in character select.
         /// </summary>
         public event AsmAction OnStartRace;
@@ -101,11 +122,24 @@ namespace Riders.Tweakbox.Controllers
         /// Provides a "last-chance" event to modify stage load properties, such as the number of players
         /// or cameras to be displayed after stage load. Consider some fields in the <see cref="State"/> class.
         /// </summary>
-        public event SetupRace OnSetupRace;
+        public event SetupRaceFn OnSetupRace;
+
+        /// <summary>
+        /// Replaces the game's rand function if set. (Random number generator)
+        /// </summary>
+        public event RandFn Random;
+
+        /// <summary>
+        /// Replaces the game's srand function if set. (Seed random number generator)
+        /// </summary>
+        public event SRandFn SeedRandom;
 
         private RuleSettingsLoop _rule = new RuleSettingsLoop();
         private CourseSelectLoop _course = new CourseSelectLoop();
 
+        private IHook<Functions.SRandFn> _srandHook;
+        private IHook<Functions.RandFn>  _randHook;
+        private IHook<Functions.SetSpawnLocationsStartOfRaceFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
         private IHook<Functions.SetNewPlayerStateFn> _setNewPlayerStateHook;
@@ -118,13 +152,18 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _skipIntroCameraHook;
         private IAsmHook _checkIfSkipIntroCamera;
         private IAsmHook _onSetupRaceSettingsHook;
+        private IAsmHook _onCheckIsHumanInputHook;
         private IAsmHook _onCheckIfSkipRenderGaugeFill;
-        private unsafe Pinnable<BlittablePointer<Player>> _checkIfSkipRenderGaugePointer;
+        private IAsmHook _onCheckIfHumanInputIndicatorHook;
+        private IAsmHook _onGetRandomDoubleInPlayerFunctionHook;
+        private Random _random = new Random();
+
+        private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
 
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
-            _checkIfSkipRenderGaugePointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
+            _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
 
             var onCourseSelectSetStageAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
 
@@ -141,8 +180,23 @@ namespace Riders.Tweakbox.Controllers
             var onCheckIfSkipIntroAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
 
             var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
-            var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_checkIfSkipRenderGaugePointer.Pointer}], edi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
+            var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
 
+            var ifIsHumanInput = new string[] { "mov edx, 0" };
+            var ifIsNotHumanInput = new string[] { "mov edx, 1" };
+            var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null, "je")}" };
+
+            var ifIsHumanIndicator = new string[] { "mov ecx, 0" };
+            var ifIsNotHumanIndicator = new string[] { "mov ecx, 1" };
+            var onCheckIsHumanIndicatorAsm = new[]
+            {
+                $"use32",
+                $"{AsmHelpers.PushXmmRegisters(AsmHelpers.XmmRegisters)}",
+                $"{AsmHelpers.AssembleAbsoluteCall(OnCheckIfIsHumanIndicatorHook, out _, ifIsHumanIndicator, ifIsNotHumanIndicator, null, "je")}",
+                $"{AsmHelpers.PopXmmRegisters(AsmHelpers.XmmRegisters)}",
+            };
+
+            var onGetRandomDoubleInPlayerFunctionAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall<GetRandomDouble>(TempNextDouble, out _)}" };
             var hooks = SDK.ReloadedHooks;
             _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
             _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -152,11 +206,17 @@ namespace Riders.Tweakbox.Controllers
             _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onCheckIsHumanInputHook = hooks.CreateAsmHook(onCheckIsHumanInputAsm, 0x004BD0C4, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onCheckIfHumanInputIndicatorHook = hooks.CreateAsmHook(onCheckIsHumanIndicatorAsm, 0x004270D9, AsmHookBehaviour.ExecuteAfter).Activate();
+            _onGetRandomDoubleInPlayerFunctionHook = hooks.CreateAsmHook(onGetRandomDoubleInPlayerFunctionAsm, 0x004E1FA7, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
             _startAttackTaskHook = Functions.StartAttackTask.Hook(OnStartAttackTaskHook).Activate();
             _setMovementFlagsOnInputHook = Functions.SetMovementFlagsOnInput.Hook(OnSetMovementFlagsOnInputHook).Activate();
             _setNewPlayerStateHook = Functions.SetPlayerState.Hook(SetPlayerStateHook).Activate();
             _setRenderItemPickupTaskHook = Functions.SetRenderItemPickupTask.Hook(SetRenderItemPickupHook).Activate();
+            _setSpawnLocationsStartOfRaceHook = Functions.SetSpawnLocationsStartOfRace.Hook(SetSpawnLocationsStartOfRace).Activate();
+            _srandHook = Functions.SRand.Hook(SRandHandler).Activate();
+            _randHook  = Functions.Rand.Hook(RandHandler).Activate();
 
             _onSetupRaceSettingsHook = hooks.CreateAsmHook(new[]
             {
@@ -183,6 +243,11 @@ namespace Riders.Tweakbox.Controllers
             _setNewPlayerStateHook.Disable();
             _setRenderItemPickupTaskHook.Disable();
             _onCheckIfSkipRenderGaugeFill.Disable();
+            _onCheckIsHumanInputHook.Disable();
+            _setSpawnLocationsStartOfRaceHook.Disable();
+            _onGetRandomDoubleInPlayerFunctionHook.Disable();
+            _srandHook.Disable();
+            _randHook.Disable();
         }
 
         /// <summary>
@@ -203,6 +268,43 @@ namespace Riders.Tweakbox.Controllers
             _setNewPlayerStateHook.Enable();
             _setRenderItemPickupTaskHook.Enable();
             _onCheckIfSkipRenderGaugeFill.Enable();
+            _onCheckIsHumanInputHook.Enable();
+            _setSpawnLocationsStartOfRaceHook.Enable();
+            _onGetRandomDoubleInPlayerFunctionHook.Enable();
+            _randHook.Enable();
+            _srandHook.Enable();
+        }
+
+
+        /// <summary>
+        /// Invokes the random number generator. (Original Function)
+        /// </summary>
+        public int InvokeRandom() => _randHook.OriginalFunction();
+
+        /// <summary>
+        /// Invokes the random number seed generator. (Original Function)
+        /// </summary>
+        public void InvokeSeedRandom(int seed) => _srandHook.OriginalFunction((uint) seed);
+
+        private double TempNextDouble() => _random.NextDouble() * -600.0;
+
+        private int RandHandler()
+        {
+            if (Random != null)
+                return Random.Invoke(_randHook);
+
+            return _randHook.OriginalFunction();
+        }
+
+        private void SRandHandler(uint seed)
+        {
+            if (SeedRandom != null)
+            {
+                SeedRandom.Invoke(seed, _srandHook);
+                return;
+            }
+
+            _srandHook.OriginalFunction(seed);
         }
 
         private Task* SetRenderItemPickupHook(Player* player, byte a2, ushort a3)
@@ -231,6 +333,14 @@ namespace Riders.Tweakbox.Controllers
             return result;
         }
 
+        private int SetSpawnLocationsStartOfRace(int numberOfPlayers)
+        {
+            OnSetSpawnLocationsStartOfRace?.Invoke(numberOfPlayers);
+            var result = _setSpawnLocationsStartOfRaceHook.OriginalFunction(numberOfPlayers);
+            AfterSetSpawnLocationsStartOfRace?.Invoke(numberOfPlayers);
+            return result;
+        }
+
         private int OnStartAttackTaskHook(Player* playerOne, Player* playerTwo, int a3)
         {
             var reject = OnShouldRejectAttackTask?.Invoke(playerOne, playerTwo, a3);
@@ -244,20 +354,53 @@ namespace Riders.Tweakbox.Controllers
         }
 
         private void OnCourseSelectSetStageHook() => OnCourseSelectSetStage?.Invoke();
-
         private void OnExitCharaSelectHook() => OnExitCharaSelect?.Invoke();
-        private bool OnCheckIfExitCharaSelectHook() => OnCheckIfExitCharaSelect != null && OnCheckIfExitCharaSelect.Invoke();
+        private Enum<AsmFunctionResult> OnCheckIfExitCharaSelectHook() => OnCheckIfExitCharaSelect != null && OnCheckIfExitCharaSelect.Invoke();
 
         private void OnStartRaceHook() => OnStartRace?.Invoke();
-        private bool OnCheckIfStartRaceHook() => OnCheckIfStartRace != null && OnCheckIfStartRace.Invoke();
+        private Enum<AsmFunctionResult> OnCheckIfStartRaceHook()
+        {
+            if (OnCheckIfStartRace != null)
+                return OnCheckIfStartRace.Invoke();
+
+            return AsmFunctionResult.Indeterminate;
+        }
 
         private void OnSkipIntroHook() => OnRaceSkipIntro?.Invoke();
-        private bool OnCheckIfSkipIntroHook() => OnCheckIfSkipIntro != null && OnCheckIfSkipIntro.Invoke();
-        private bool OnCheckIfSkipRenderGaugeHook() => CheckIfPitSkipRenderGauge != null && CheckIfPitSkipRenderGauge.Invoke(_checkIfSkipRenderGaugePointer.Value.Pointer);
+        private Enum<AsmFunctionResult> OnCheckIfSkipIntroHook() => OnCheckIfSkipIntro != null && OnCheckIfSkipIntro.Invoke();
+        private Enum<AsmFunctionResult> OnCheckIfSkipRenderGaugeHook()
+        {
+            if (CheckIfPitSkipRenderGauge != null)
+                return CheckIfPitSkipRenderGauge.Invoke(_tempPlayerPointer.Value.Pointer);
 
-        public delegate void SetupRace(Task<TitleSequence, TitleSequenceTaskState>* task);
+            return AsmFunctionResult.Indeterminate;
+        }
+
+        private Enum<AsmFunctionResult> OnCheckIfIsHumanInputHook()
+        {
+            if (OnCheckIfPlayerIsHuman != null)
+                return OnCheckIfPlayerIsHuman(_tempPlayerPointer.Value.Pointer);
+
+            return AsmFunctionResult.Indeterminate;
+        }
+
+        private Enum<AsmFunctionResult> OnCheckIfIsHumanIndicatorHook()
+        {
+            if (OnCheckIfPlayerIsHumanIndicator != null)
+                return OnCheckIfPlayerIsHumanIndicator(Sewer56.SonicRiders.API.Player.Players.Pointer);
+
+            return AsmFunctionResult.Indeterminate;
+        }
+
+        [Function(CallingConventions.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate double GetRandomDouble();
+        public delegate void SetSpawnLocationsStartOfRaceFn(int numberOfPlayers);
+        public delegate void SetupRaceFn(Task<TitleSequence, TitleSequenceTaskState>* task);
+        public unsafe delegate void SRandFn(uint seed, IHook<Functions.SRandFn> hook);
+        public unsafe delegate int RandFn(IHook<Functions.RandFn> hook);
         public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);
         public unsafe delegate Task* SetRenderItemPickupTaskHandlerFn(Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook);
-        public delegate bool PlayerAsmFunc(Player* player);
+        public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
     }
 }

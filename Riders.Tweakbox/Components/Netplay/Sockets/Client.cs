@@ -21,7 +21,6 @@ using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
 using Debug = System.Diagnostics.Debug;
-using PlayerState = Sewer56.SonicRiders.Structures.Enums.PlayerState;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -47,6 +46,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
             
+            Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
+            Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnSkipRaceIntro;
 
@@ -64,8 +65,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
-            Event.SetItemPickupTaskHandler += State.SetItemPickupTaskHandler;
-            Event.CheckIfPitSkipRenderGauge += State.OnCheckIfPitSkipRenderGaugeFill;
+            Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
+            Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
+            Event.SeedRandom += OnSeedRandom;
+            Event.Random += State.OnRandom;
         }
 
         public override void Dispose()
@@ -79,7 +82,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
             Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
-            
+
+            Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
+            Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro -= OnSkipRaceIntro;
 
@@ -97,8 +102,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
             Event.OnStartAttackTask -= OnStartAttackTask;
-            Event.SetItemPickupTaskHandler -= State.SetItemPickupTaskHandler;
-            Event.CheckIfPitSkipRenderGauge -= State.OnCheckIfPitSkipRenderGaugeFill;
+            Event.OnCheckIfPlayerIsHuman -= State.OnCheckIfPlayerIsHuman;
+            Event.OnCheckIfPlayerIsHumanIndicator -= State.OnCheckIfPlayerIsHuman;
+            Event.SeedRandom -= OnSeedRandom;
+            Event.Random -= State.OnRandom;
         }
 
         public override bool IsHost() => false;
@@ -162,7 +169,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 var attacks = new SetAttack[State.AttackSync.Length];
                 value.AsInterface().ToArray(attacks, attacks.Length - 1, 0, 1);
                 for (var x = 0; x < attacks.Length; x++)
+                {
+                    attacks[x].Target = State.GetLocalPlayerIndex(attacks[x].Target);
                     State.AttackSync[x] = new Timestamped<SetAttack>(attacks[x]);
+                }
             }
         }
 
@@ -264,7 +274,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 SendAndFlush(Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced);
         }
 
-        private bool MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
+        private Enum<AsmFunctionResult> MenuCheckIfExitCharaSelect() => (State.CharaSelectExit == ExitKind.Exit);
         private void MenuOnExitCharaSelect()
         {
             // We started ourselves, tell host to rebroadcast.
@@ -274,7 +284,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             State.CharaSelectExit = ExitKind.Null;
         }
 
-        private bool MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
+        private Enum<AsmFunctionResult> MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
         private void MenuOnMenuStartRace()
         {
             // We started ourselves, tell host to rebroadcast.
@@ -286,7 +296,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
-        private bool OnCheckIfRaceSkipIntro() => State.SkipRequested;
+        private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
         {
             SyncStartGo goMessage = default;
@@ -350,13 +360,36 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     return 0;
 
                 var p2Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerTwo);
-                Debug.WriteLine($"[Client] Send Attack on {p2Index}");
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { SetAttack = new SetAttack((byte)State.GetRemotePlayerIndex(p2Index)) }, DeliveryMethod.ReliableOrdered);
+                Debug.WriteLine($"[Client] Send Attack on {p2Index} [Host Index: {State.GetHostPlayerIndex(p2Index)}]");
+                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { SetAttack = new SetAttack((byte)State.GetHostPlayerIndex(p2Index)) }, DeliveryMethod.ReliableOrdered);
             }
 
             return 0;
         }
 
+        private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
+        {
+            bool HandleSeedPacket(Packet<NetPeer> packet)
+            {
+                if (packet.Value.Value.GetPacketType() == PacketKind.Unreliable)
+                    return false;
+
+                var reliable = packet.As<ReliablePacket>();
+                if (!reliable.Random.HasValue)
+                    return false;
+
+                Debug.WriteLine($"[Client] Received Random Seed, Seeding {reliable.Random.Value.Value}");
+                Event.InvokeSeedRandom(reliable.Random.Value.Value);
+                return true;
+            }
+
+            SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[Client] Sending dummy random seed and waiting for host response.");
+            if (!TryWaitForMessage(Manager.FirstPeer, HandleSeedPacket, HandshakeTimeout))
+            {
+                hook.OriginalFunction(seed);
+                Dispose();
+            }
+        }
         #endregion
 
         #region Overrides

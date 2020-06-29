@@ -50,6 +50,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public NetplayController Controller;
 
         /// <summary>
+        /// Gets the bandwidth used per second by the socket.
+        /// </summary>
+        public BandwidthTracker Bandwidth;
+
+        /// <summary>
         /// Constructs the current socket.
         /// </summary>
         public Socket(NetplayController controller)
@@ -57,7 +62,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Listener = new NetworkEventListener(this);
             Manager = new NetManager(Listener);
             Controller = controller;
-            Manager.UpdateTime = 1;
+            Manager.EnableStatistics = true;
+            Bandwidth = new BandwidthTracker(Manager);
 
             #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;

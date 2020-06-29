@@ -21,7 +21,7 @@ namespace Riders.Netplay.Messages.Tests
         [Fact]
         public unsafe void PlayerPacket()
         {
-            var player = UnreliablePacketPlayer.GetRandom();
+            var player = UnreliablePacketPlayer.GetRandom(0);
             var playerSerialized = player.Serialize();
 
             // 28 = IP + UDP

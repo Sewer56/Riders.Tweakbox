@@ -13,6 +13,16 @@ namespace Riders.Netplay.Messages.Misc
     public static class Utilities
     {
         /// <summary>
+        /// Rounds up the bitstream to the next byte.
+        /// </summary>
+        public static void Finalize(this BitStream reader)
+        {
+            var remainingBits = 8 - reader.BitPosition;
+            if (remainingBits > 0)
+                reader.WriteByte(0, (int) remainingBits);
+        }
+
+        /// <summary>
         /// Reads a given type from the bitstream.
         /// </summary>
         public static TType Read<TType>(this BitStream reader) where TType : unmanaged

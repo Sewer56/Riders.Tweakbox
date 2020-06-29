@@ -1,5 +1,6 @@
 ﻿using System;
 using DearImguiSharp;
+using LiteNetLib;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -37,11 +38,11 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 if (Controller.Socket.IsHost())
                 {
-                    RenderHostWindow();
+                    RenderCommonWindow();
                 }
                 else
                 {
-                    RenderClientWindow();
+                    RenderCommonWindow();
                 }
             }
             else
@@ -50,9 +51,9 @@ namespace Riders.Tweakbox.Components.Netplay
             }
         }
 
-        private void RenderClientWindow()
+        private void RenderCommonWindow()
         {
-            var client = (Client)Controller.Socket;
+            var client = Controller.Socket;
             foreach (var player in client.State.PlayerInfo)
             {
                 ImGui.Text($"{player.Name} | {player.PlayerIndex}");
@@ -60,18 +61,19 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.Button("Disconnect", Constants.ButtonSize))
                 Disconnect();
+
+            if (ImGui.TreeNodeStr("Bandwidth Statistics"))
+            {
+                RenderBandwidthUsage(client);
+                ImGui.TreePop();
+            }
         }
 
-        private void RenderHostWindow()
+        private void RenderBandwidthUsage(Socket socket)
         {
-            var host = (Host)Controller.Socket;
-            foreach (var player in host.State.PlayerMap.GetPlayerData())
-            {
-                ImGui.Text($"{player.Name} | {player.PlayerIndex}");
-            }
-
-            if (ImGui.Button("Disconnect", Constants.ButtonSize))
-                Disconnect();
+            ImGui.Text($"Upload: {socket.Bandwidth.KBytesSent:####0.0}kbps");
+            ImGui.Text($"Download: {socket.Bandwidth.KBytesReceived:####0.0}kbps");
+            ImGui.Text($"Does not include UDP + IP Overhead");
         }
 
         private void Disconnect()

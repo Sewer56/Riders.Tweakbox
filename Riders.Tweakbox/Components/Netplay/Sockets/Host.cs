@@ -47,6 +47,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
             Event.OnExitCharaSelect += MenuOnExitCharaSelect;
 
+            Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
+            Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfStartRace += MenuCheckIfStartRace;
             Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
@@ -68,8 +70,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
-            Event.SetItemPickupTaskHandler += State.SetItemPickupTaskHandler;
-            Event.CheckIfPitSkipRenderGauge += State.OnCheckIfPitSkipRenderGaugeFill;
+            Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
+            Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
+            Event.SeedRandom += OnSeedRandom;
+            Event.Random += State.OnRandom;
         }
 
         public override unsafe void Dispose()
@@ -81,6 +85,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
             Event.OnExitCharaSelect -= MenuOnExitCharaSelect;
 
+            Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
+            Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
             Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
@@ -102,8 +108,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
             Event.OnStartAttackTask -= OnStartAttackTask;
-            Event.SetItemPickupTaskHandler -= State.SetItemPickupTaskHandler;
-            Event.CheckIfPitSkipRenderGauge -= State.OnCheckIfPitSkipRenderGaugeFill;
+            Event.OnCheckIfPlayerIsHuman -= State.OnCheckIfPlayerIsHuman;
+            Event.OnCheckIfPlayerIsHumanIndicator -= State.OnCheckIfPlayerIsHuman;
+            Event.SeedRandom -= OnSeedRandom;
+            Event.Random -= State.OnRandom;
         }
 
         public override bool IsHost() => true;
@@ -164,6 +172,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
                 Debug.WriteLine($"[Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}");
                 State.AttackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
+            }
+
+            if (packet.Random.HasValue)
+            {
+                Debug.WriteLine("[Host] Received SRandSyncReady from Client.");
+                State.PlayerMap.GetCustomData(peer).SRandSyncReady = true;
             }
         }
 
@@ -276,7 +290,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
         }
 
-        private bool MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
+        private Enum<AsmFunctionResult> MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
         private void MenuOnExitCharaSelect()
         {
             // We started ourselves, tell host to rebroadcast.
@@ -286,7 +300,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             State.CharaSelectExit = ExitKind.Null;
         }
 
-        private bool MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
+        private Enum<AsmFunctionResult> MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
         private void MenuOnMenuStartRace()
         {
             // We skipped the intro ourselves, pass the news along to the clients. 
@@ -298,7 +312,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
-        private bool OnCheckIfRaceSkipIntro() => State.SkipRequested;
+        private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
         {
             bool TestAllReady() => State.PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
@@ -314,7 +328,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (!PollUntil(TestAllReady, HandshakeTimeout))
             {
                 Debug.WriteLine("[Host] It's no use, let's get outta here!.");
-                Manager.DisconnectAll();
+                Dispose();
                 return;
             }
 
@@ -347,7 +361,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 var sync = State.RaceSync[x];
                 if (!sync.IsDiscard(State.MaxLatency))
-                    players[x] = State.RaceSync[x];
+                    players[x] = sync;
+                else
+                    players[x] = UnreliablePacketPlayer.FromGame(x, State.FrameCounter);
             }
 
             // Broadcast data to all clients.
@@ -369,18 +385,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     if (!attacks.Any(x => x.IsValid))
                         continue;
 
-                    for (var x = 0; x < attacks.Length; x++)
-                    {
-                        if (x < excludeIndex)
-                            attacks[x].Target -= 1;
-                    }
-
+                    #if DEBUG
                     for (var x = 0; x < attacks.Length; x++)
                     {
                         var attack = attacks[x];
                         if (attack.IsValid)
                             Debug.WriteLine($"[Host] Send Attack Source ({x}), Target {attack.Target}");
                     }
+                    #endif
 
                     var packed       = new AttackPacked().AsInterface().SetData(attacks);
                     SendAndFlush(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
@@ -426,6 +438,26 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
 
             return 0;
+        }
+
+        private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
+        {
+            bool TestAllReady() => State.PlayerMap.GetCustomData().All(x => x.SRandSyncReady);
+            hook.OriginalFunction(seed);
+
+            if (!PollUntil(TestAllReady, HandshakeTimeout))
+            {
+                Debug.WriteLine("[Host] It's no use, RNG seed sync failed, let's get outta here!.");
+                Dispose();
+                return;
+            }
+
+            SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[Host] Sending Random Seed {(int)seed}");
+
+            // Disable skip flags for everyone.
+            var data = State.PlayerMap.GetCustomData();
+            foreach (var dt in data)
+                dt.SRandSyncReady = false;
         }
         #endregion
 

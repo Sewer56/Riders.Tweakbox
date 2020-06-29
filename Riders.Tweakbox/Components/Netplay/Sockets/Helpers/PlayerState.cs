@@ -11,5 +11,10 @@
         /// Client has skipped intro cutscene and is ready to start the race.
         /// </summary>
         public bool ReadyToStartRace = false;
+
+        /// <summary>
+        /// Client is ready to sync SRand value.
+        /// </summary>
+        public bool SRandSyncReady = false;
     }
 }

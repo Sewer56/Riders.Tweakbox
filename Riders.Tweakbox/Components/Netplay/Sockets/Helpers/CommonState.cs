@@ -9,6 +9,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Netplay.Messages.Unreliable;
+using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -42,6 +43,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Current frame counter for the client/server.
         /// </summary>
         public int FrameCounter;
+
+        /// <summary>
+        /// Current value of rand.
+        /// </summary>
+        public Seed? RandomSeed;
 
         /// <summary>
         /// Packets older than this will be discarded.
@@ -258,7 +264,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// </summary>
         public unsafe void OnIntroCutsceneEnd()
         {
-            for (int x = 0; x < Player.MaxNumberOfPlayers; x++)
+            for (int x = 1; x < Player.MaxNumberOfPlayers; x++)
             {
                 Player.Players[x].IsAiLogic = PlayerType.Human;
                 Player.Players[x].IsAiVisual = PlayerType.Human;
@@ -317,7 +323,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Gets the index of a remote (on the host's end) player.
         /// </summary>
-        public virtual int GetRemotePlayerIndex(int localPlayerIndex)
+        public virtual int GetHostPlayerIndex(int localPlayerIndex)
         {
             if (localPlayerIndex == 0)
                 return SelfInfo.PlayerIndex;
@@ -326,33 +332,51 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Disabled rendering of item pickups for players not rendered.
+        /// Translates a host player index into a local player index. 
         /// </summary>
-        public unsafe Task* SetItemPickupTaskHandler(Sewer56.SonicRiders.Structures.Gameplay.Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook)
+        public byte GetLocalPlayerIndex(int hostIndex)
         {
-            return CheckIfRenderUiItem(player) ? hook.OriginalFunction(player, a2, a3) 
-                                               : (Task*) 0;
+            var selfIndex = SelfInfo.PlayerIndex;
+
+            // e.g. Client 1 : Host 0
+            // e.g. Client Index 1 | Host: 1, Client 0
+            //      Client Index 1 | Host: 2, Client
+            if (hostIndex == selfIndex)
+                return 0;
+            else if (hostIndex < selfIndex)
+                return (byte) (hostIndex + 1);
+            else 
+                return (byte) hostIndex;
         }
 
         /// <summary>
-        /// Checks if to skip pit gauge fill, if initiated by another player. 
+        /// True if a player index is a human, else false.
         /// </summary>
-        public unsafe bool OnCheckIfPitSkipRenderGaugeFill(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        public bool IsHuman(int playerIndex)
         {
-            return !CheckIfRenderUiItem(player);
+            if (playerIndex == SelfInfo.PlayerIndex)
+                return true;
+
+            return PlayerInfo.Any(x => x.PlayerIndex == playerIndex);
         }
 
         /// <summary>
-        /// If true, render UI item. Else false.
+        /// Handles random number generator events.
         /// </summary>
-        public unsafe bool CheckIfRenderUiItem(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        public int OnRandom(IHook<Functions.RandFn> hook)
         {
-            var numScreens = *State.NumberOfCameras;
-            var playerIndex = Player.GetPlayerIndex(player);
-
-            return playerIndex < numScreens;
+            var result = hook.OriginalFunction();
+            Debug.WriteLine($"[State] Current Seed: {result}");
+            return result;
         }
 
+        /// <summary>
+        /// Swaps spawn position of player 0 and the player's real index.
+        /// </summary>
+        public void SwapSpawns() => Sewer56.SonicRiders.API.Misc.SwapSpawnPositions(0, SelfInfo.PlayerIndex);
+
+        public void OnSetSpawnLocationsStartOfRace(int value) => SwapSpawns();
+        public unsafe Enum<AsmFunctionResult> OnCheckIfPlayerIsHuman(Sewer56.SonicRiders.Structures.Gameplay.Player* player) => IsHuman(Player.GetPlayerIndex(player));
         protected MessageQueue _queue = new MessageQueue();
     }
 }

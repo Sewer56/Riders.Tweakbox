@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Numerics;
-using System.Resources;
 using BitStreams;
-using EnumsNET;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Sewer56.NumberUtilities;
@@ -28,6 +25,8 @@ namespace Riders.Netplay.Messages.Unreliable
         private const int RingsBits = 7;
         private const int StateBits = 5;
         private const int AirBits   = 18;
+        private const int AnimationBits = 7;
+        private const int FallStateBits = 3;
 
         /// <summary>
         /// Position of the player in X,Y,Z coordinates.
@@ -37,24 +36,10 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Rotation in the Yaw Direction
         /// </summary>
-        public float? Rotation
+        public float? RotationX
         {
             get => _rotationX?.GetValue((Float) MaxRotation);
-            set
-            {
-                if (value == null)
-                {
-                    _rotationX = null;
-                }
-                else
-                {
-                    if (value < -0.0f)
-                        value = (float)(value + MaxRotation);
-
-                    value = (float)(value % MaxRotation);
-                    _rotationX = new CompressedNumber<float, Float, ushort, UShort>(value.Value, (Float)MaxRotation);
-                }
-            }
+            set => SetRotation(ref _rotationX, value);
         }
 
         /// <summary>
@@ -70,12 +55,22 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// The last player state.
         /// </summary>
-        public PlayerState? LastState;
+        public byte? LastState;
 
         /// <summary>
         /// The individual player state.
         /// </summary>
-        public PlayerState? State;
+        public byte? State;
+
+        /// <summary>
+        /// Last animation index.
+        /// </summary>
+        public byte? LastAnimation;
+
+        /// <summary>
+        /// Current animation index.
+        /// </summary>
+        public byte? Animation;
 
         /// <summary>
         /// Flags that control various behaviours.
@@ -89,6 +84,7 @@ namespace Riders.Netplay.Messages.Unreliable
 
         /// <summary>
         /// Amount the player is currently turning.
+        /// We send this to try to maintain "consistency" when packets drop.
         /// </summary>
         public float? TurningAmount
         {
@@ -103,7 +99,7 @@ namespace Riders.Netplay.Messages.Unreliable
         }
 
         /// <summary>
-        /// Amount the player is currently leaning.
+        /// Amount the player is currently leaning. Range -1 to 1.
         /// </summary>
         public float? LeanAmount
         {
@@ -117,53 +113,41 @@ namespace Riders.Netplay.Messages.Unreliable
             }
         }
 
-        /// <summary>
-        /// Yaw rotation of the player X.
-        /// Measured in radians, i.e. 2PI = 360 degrees.
-        /// </summary>
         private CompressedNumber<float, Float, ushort, UShort>? _rotationX;
-
-        /// <summary>
-        /// Amount the player is currently turning.
-        /// We send this to try to maintain "consistency" when packets drop.
-        /// </summary>
         private CompressedNumber<float, Float, ushort, UShort>? _turnAmount;
-
-        /// <summary>
-        /// Amount the player is currently leaning while performing a drift or turning.
-        /// Range -1 to 1.
-        /// </summary>
         private CompressedNumber<float, Float, ushort, UShort>? _leanAmount;
 
-        public UnreliablePacketPlayer(Vector3? position, uint? air, byte? rings, PlayerState? state, float? rotationXRadians, Vector2? velocity) : this()
+        public UnreliablePacketPlayer(Vector3? position, uint? air, byte? rings, PlayerState? lastState, PlayerState? state, float? rotationXRadians, Vector2? velocity) : this()
         {
             Position = position;
             Air = air;
             Rings = rings;
-            State = state;
+            LastState = (byte?) lastState;
+            State = (byte?) state;
             Velocity = velocity;
-            Rotation = rotationXRadians;
+            RotationX = rotationXRadians;
         }
 
         /// <summary>
         /// Gets a random instance of a player.
         /// </summary>
-        public static UnreliablePacketPlayer GetRandom()
+        public static UnreliablePacketPlayer GetRandom(int framecounter)
         {
             var random = new Random();
             var result = new UnreliablePacketPlayer();
 
-            result.Position = new Vector3((float) random.NextDouble(), (float) random.NextDouble(), (float) random.NextDouble());
-            result.Rotation = (float)random.NextDouble();
-            result.Air = (uint?) random.Next();
-            result.Rings = (byte?) random.Next();
-            result.LastState = (PlayerState?)random.Next();
-            result.State = (PlayerState?) random.Next();
-            result.Velocity = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
-            result.TurningAmount = (float?) random.NextDouble();
-            result.LeanAmount = (float?) random.NextDouble();
-            result.ControlFlags = (PlayerControlFlags?) random.Next();
-
+            if (ShouldISend(framecounter, HasData.HasPosition)) result.Position = new Vector3((float) random.NextDouble(), (float) random.NextDouble(), (float) random.NextDouble());
+            if (ShouldISend(framecounter, HasData.HasRotation)) result.RotationX = (float)random.NextDouble();
+            if (ShouldISend(framecounter, HasData.HasAir)) result.Air = (uint?) random.Next(0, 200000);
+            if (ShouldISend(framecounter, HasData.HasRings)) result.Rings = (byte?) random.Next(0, 99);
+            if (ShouldISend(framecounter, HasData.HasState)) result.LastState = (byte?) random.Next(0, 32);
+            if (ShouldISend(framecounter, HasData.HasState)) result.State = (byte?) random.Next(0, 32);
+            if (ShouldISend(framecounter, HasData.HasVelocity)) result.Velocity = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
+            if (ShouldISend(framecounter, HasData.HasTurnAndLean)) result.TurningAmount = (float?) random.NextDouble();
+            if (ShouldISend(framecounter, HasData.HasTurnAndLean)) result.LeanAmount = (float?) random.NextDouble();
+            if (ShouldISend(framecounter, HasData.HasControlFlags)) result.ControlFlags = (PlayerControlFlags?) random.Next();
+            if (ShouldISend(framecounter, HasData.HasAnimation)) result.Animation = (byte?)random.Next(0, 99);
+            if (ShouldISend(framecounter, HasData.HasAnimation)) result.LastAnimation = (byte?)random.Next(0, 99);
             return result;
         }
 
@@ -179,20 +163,19 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.WriteNullable(Position);
             bitStream.WriteNullable(_rotationX);
             bitStream.WriteNullable(Velocity);
-
-            if (Rings.HasValue) bitStream.WriteByte((byte) Rings, RingsBits);
-            if (State.HasValue || LastState.HasValue)
-            {
-                bitStream.WriteByte((byte)State, StateBits);
-                bitStream.WriteByte((byte)LastState, StateBits);
-            }
-
-            bitStream.WriteNullable(Air, AirBits);
             bitStream.WriteNullable(_turnAmount);
             bitStream.WriteNullable(_leanAmount);
             bitStream.WriteNullable(ControlFlags);
 
-            // Copy back to original stream.
+            bitStream.WriteNullable((byte?) Rings, RingsBits);
+            bitStream.WriteNullable((byte?) State, StateBits);
+            bitStream.WriteNullable((byte?) LastState, StateBits);
+            bitStream.WriteNullable(Air, AirBits);
+            bitStream.WriteNullable(Animation, AnimationBits);
+            bitStream.WriteNullable(LastAnimation, AnimationBits);
+
+            // Write final byte and copy back to original stream.
+            bitStream.Finalize();
             memStream.Seek(0, SeekOrigin.Begin);
             bitStream.CopyStreamTo(memStream);
             return memStream.ToArray();
@@ -205,27 +188,28 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             var player      = new UnreliablePacketPlayer();
             var stream      = reader.BaseStream();
-            stream.Position = reader.Position();
+            var originalPos = reader.Position();
+            stream.Position = originalPos;
             var bitStream   = new BitStream(stream);
             
             bitStream.ReadIfHasFlags(ref player.Position, fields, HasData.HasPosition);
             bitStream.ReadIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
             bitStream.ReadIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
-            
-            if (fields.HasAllFlags(HasData.HasRings)) player.Rings = bitStream.ReadByte(RingsBits);
-            if (fields.HasAllFlags(HasData.HasState))
-            {
-                player.State = (PlayerState?) bitStream.ReadByte(StateBits);
-                player.LastState = (PlayerState?)bitStream.ReadByte(StateBits);
-            }
-
-            bitStream.ReadIfHasFlags(ref player.Air, fields, HasData.HasAir, AirBits);
             bitStream.ReadIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
             bitStream.ReadIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
             bitStream.ReadIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags);
 
+            bitStream.ReadIfHasFlags(ref player.Rings, fields, HasData.HasRings, RingsBits);
+            bitStream.ReadIfHasFlags(ref player.State, fields, HasData.HasState, StateBits);
+            bitStream.ReadIfHasFlags(ref player.LastState, fields, HasData.HasState, StateBits);
+            bitStream.ReadIfHasFlags(ref player.Air, fields, HasData.HasAir, AirBits);
+            bitStream.ReadIfHasFlags(ref player.Animation, fields, HasData.HasAnimation, AnimationBits);
+            bitStream.ReadIfHasFlags(ref player.LastAnimation, fields, HasData.HasAnimation, AnimationBits);
+
             // Seek the BSR
-            reader.Seek(stream.Position, SeekOrigin.Begin);
+            var bitStreamPos = bitStream.GetStream().Position;
+            var extraByte    = bitStream.BitPosition != 0 ? 1 : 0;
+            reader.Seek(originalPos + bitStreamPos + extraByte, SeekOrigin.Begin);
             return player;
         }
 
@@ -240,13 +224,13 @@ namespace Riders.Netplay.Messages.Unreliable
             var packet = new UnreliablePacketPlayer();
 
             if (ShouldISend(framecounter, HasData.HasPosition)) packet.Position = player.Position;
-            if (ShouldISend(framecounter, HasData.HasRotation)) packet.Rotation = player.Rotation.Y;
+            if (ShouldISend(framecounter, HasData.HasRotation)) packet.RotationX = player.Rotation.Y;
             if (ShouldISend(framecounter, HasData.HasVelocity)) packet.Velocity = new Vector2(player.Speed, player.VSpeed);
             if (ShouldISend(framecounter, HasData.HasRings)) packet.Rings = (byte?)player.Rings;
             if (ShouldISend(framecounter, HasData.HasState))
             {
-                packet.State = player.PlayerState;
-                packet.LastState = player.LastPlayerState;
+                packet.State = (byte?) player.PlayerState;
+                packet.LastState = (byte?) player.LastPlayerState;
             }
             if (ShouldISend(framecounter, HasData.HasAir)) packet.Air = (uint?)player.Air;
             if (ShouldISend(framecounter, HasData.HasTurnAndLean))
@@ -255,6 +239,8 @@ namespace Riders.Netplay.Messages.Unreliable
                 packet.LeanAmount = player.DriftAngle;
             }
             if (ShouldISend(framecounter, HasData.HasControlFlags)) packet.ControlFlags = player.PlayerControlFlags;
+            if (ShouldISend(framecounter, HasData.HasAnimation)) packet.Animation = (byte?) player.Animation;
+            if (ShouldISend(framecounter, HasData.HasAnimation)) packet.LastAnimation = (byte?) player.LastAnimation;
 
             return packet;
         }
@@ -267,7 +253,8 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             ref var player = ref Player.Players[index];
             if (Position.HasValue) player.Position = Position.Value;
-            if (Rotation.HasValue) player.Rotation.Y = Rotation.Value;
+            if (RotationX.HasValue) player.Rotation.Y = RotationX.Value;
+
             if (Velocity.HasValue)
             {
                 player.Speed = Velocity.Value.X;
@@ -277,20 +264,32 @@ namespace Riders.Netplay.Messages.Unreliable
             if (Rings.HasValue) player.Rings = (int) Rings;
             if (Air.HasValue) player.Air = (int) Air.Value;
             if (TurningAmount.HasValue) player.TurningAmount = TurningAmount.Value;
-            if (LeanAmount.HasValue) player.DriftAngle = LeanAmount.Value;
+            if (LeanAmount.HasValue) player.DriftAngleCopy = LeanAmount.Value;
             if (LeanAmount.HasValue) player.DriftAngle = LeanAmount.Value;
             if (ControlFlags.HasValue) player.PlayerControlFlags = ControlFlags.Value;
             if (State.HasValue)
             {
-                player.LastPlayerState = LastState.Value;
-                
-                if (!IsCurrentStateBlacklisted(player.PlayerState) && IsWhitelisted(State.Value))
-                    player.PlayerState = State.Value;
+                if (!IsCurrentStateBlacklisted(player.LastPlayerState) && IsWhitelisted((PlayerState) LastState.Value))
+                    player.LastPlayerState = (PlayerState) LastState.Value;
 
-                player.MaybeAttackLastState = PlayerState.None;
+                if (!IsCurrentStateBlacklisted(player.PlayerState) && IsWhitelisted((PlayerState) State.Value))
+                    player.PlayerState = (PlayerState) State.Value;
+
             }
 
-            // TODO: Check if setting last state is the correct thing to do
+            if (Animation.HasValue)
+            {
+                if (Animation.Value != 0)
+                    player.Animation = (CharacterAnimation) Animation.Value;
+                
+                if (LastAnimation.Value != 0)
+                    player.LastAnimation = (CharacterAnimation) LastAnimation.Value;
+            }
+
+            // Hack for Misc Bugs
+            // - Sometimes rotation value not updated after certain state transitions.
+            // - Sometimes repeated attacks do not work.
+            player.MaybeAttackLastState = PlayerState.None;
         }
 
         /// <summary>
@@ -301,6 +300,10 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <returns>True if should be sent, else false.</returns>
         public static bool ShouldISend(int frameCounter, HasData type)
         {
+            // State is currently disabled, seems to be redundant since we synced animations.
+            if (type == HasData.HasState)
+                return false;
+
             // Used to have settings here, removed for now.
             // Will be implemented if we ever need to reduce bandwidth usage.
             return true;
@@ -324,17 +327,17 @@ namespace Riders.Netplay.Messages.Unreliable
                 case PlayerState.Flying:
                 case PlayerState.RunningAfterStart:
                 case PlayerState.ElectricShock:
-                case PlayerState.Turbulence:
                 case PlayerState.FreeFalling:
-                case PlayerState.TrickJumpTurbulence:
+                    return true;
+
+                default:
                 case PlayerState.TrickJumpFlatVertical:
                 case PlayerState.TrickJumpUnknown1:
                 case PlayerState.TrickJumpVertical:
                 case PlayerState.TrickJumpUnknown2:
                 case PlayerState.TrickJumpHorizontal:
-                    return true;
-
-                default:
+                case PlayerState.Turbulence:
+                case PlayerState.TrickJumpTurbulence:
                 case PlayerState.ElectricShockCrash:
                 case PlayerState.Reset:
                 case PlayerState.Retire:
@@ -350,12 +353,12 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             switch (state)
             {
+                default:
                 case PlayerState.Attacking:
                 case PlayerState.GettingAttacked:
                 case PlayerState.Turbulence:
                     return true;
 
-                default:
                 case PlayerState.FreeFalling:
                 case PlayerState.Running:
                 case PlayerState.NormalOnBoard:
@@ -378,15 +381,28 @@ namespace Riders.Netplay.Messages.Unreliable
                 case PlayerState.RotateSection:
                     return false;
             }
+        }
 
-            return (state == PlayerState.Attacking || state == PlayerState.GettingAttacked);
+        private void SetRotation(ref CompressedNumber<float, Float, ushort, UShort>? rotation, float? value)
+        {
+            if (value == null)
+            {
+                rotation = null;
+                return;
+            }
+
+            if (value < -0.0f)
+                value = (float)(value + MaxRotation);
+
+            value = (float)(value % MaxRotation);
+            rotation = new CompressedNumber<float, Float, ushort, UShort>(value.Value, (Float)MaxRotation);
         }
 
         #region Autogenerated by R#
         /// <inheritdoc />
         public bool Equals(UnreliablePacketPlayer other)
         {
-            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && Nullable.Equals(Velocity, other.Velocity) && Nullable.Equals(_rotationX, other._rotationX);
+            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && LastAnimation == other.LastAnimation && Animation == other.Animation && ControlFlags == other.ControlFlags && Nullable.Equals(Velocity, other.Velocity) && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(_leanAmount, other._leanAmount);
         }
 
         /// <inheritdoc />
@@ -398,7 +414,20 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            return HashCode.Combine(Position, Air, Rings, LastState, State, Velocity, _rotationX);
+            var hashCode = new HashCode();
+            hashCode.Add(Position);
+            hashCode.Add(Air);
+            hashCode.Add(Rings);
+            hashCode.Add(LastState);
+            hashCode.Add(State);
+            hashCode.Add(LastAnimation);
+            hashCode.Add(Animation);
+            hashCode.Add(ControlFlags);
+            hashCode.Add(Velocity);
+            hashCode.Add(_rotationX);
+            hashCode.Add(_turnAmount);
+            hashCode.Add(_leanAmount);
+            return hashCode.ToHashCode();
         }
         #endregion
     }

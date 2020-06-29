@@ -52,7 +52,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.Position.HasValue)
                 data |= HasData.HasPosition;
 
-            if (player.Rotation.HasValue)
+            if (player.RotationX.HasValue)
                 data |= HasData.HasRotation;
 
             if (player.Velocity.HasValue)
@@ -72,6 +72,9 @@ namespace Riders.Netplay.Messages.Unreliable
 
             if (player.ControlFlags.HasValue)
                 data |= HasData.HasControlFlags;
+
+            if (player.Animation.HasValue || player.LastAnimation.HasValue)
+                data |= HasData.HasAnimation;
 
             return data;
         }
@@ -123,11 +126,11 @@ namespace Riders.Netplay.Messages.Unreliable
             HasAir             = 1 << 5,
             HasTurnAndLean     = 1 << 6, 
             HasControlFlags    = 1 << 7, 
-            HasUnused3         = 1 << 8, 
-            HasUnused4         = 1 << 9, 
-            HasUnused5         = 1 << 10, 
-            HasUnused6         = 1 << 11,
-            HasUnused7         = 1 << 12,
+            HasAnimation       = 1 << 8, 
+            HasUnused5         = 1 << 9, 
+            HasUnused6         = 1 << 10, 
+            HasUnused7         = 1 << 11,
+            HasUnused8         = 1 << 12,
             // Last 3 bytes occupied by player count.
         }
     }

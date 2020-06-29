@@ -55,6 +55,17 @@ namespace Riders.Netplay.Messages.Tests.Structs
         }
 
         [Fact]
+        public void AttackSerializeLast()
+        {
+            var packed = new AttackPacked().AsInterface();
+            var expected = new SetAttack(1);
+            packed.SetData(expected, 7);
+
+            var playerData = packed.GetData(7);
+            Assert.Equal(expected, playerData);
+        }
+
+        [Fact]
         public void AttackSerializeInvalid()
         {
             var packed = new AttackPacked().AsInterface();
