@@ -9,13 +9,15 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Netplay.Messages.Unreliable;
-using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
@@ -45,14 +47,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public int FrameCounter;
 
         /// <summary>
-        /// Current value of rand.
-        /// </summary>
-        public Seed? RandomSeed;
-
-        /// <summary>
         /// Packets older than this will be discarded.
         /// </summary>
         public int MaxLatency = 1000;
+
+        /// <summary>
+        /// Timeout for various handshakes such as initial exchange of game/gear data or start line synchronization.
+        /// </summary>
+        public int HandshakeTimeout = 2000;
 
         /// <summary>
         /// The currently enabled anti-cheat settings.
@@ -63,24 +65,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Contains information about other players.
         /// </summary>
         public HostPlayerData[] PlayerInfo = new HostPlayerData[0];
-
-        /// <summary>
-        /// Sync data for course select.
-        /// It is applied to the game at the start of the course select function if not default/null.
-        /// </summary>
-        public Volatile<Timestamped<CourseSelectSync>> CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(new Timestamped<CourseSelectSync>());
-
-        /// <summary>
-        /// Sync data for rule settings.
-        /// It is applied to the game at the start of the rule settings function if not default/null.
-        /// </summary>
-        public Volatile<Timestamped<RuleSettingsSync>> RuleSettingsSync = new Volatile<Timestamped<RuleSettingsSync>>(new Timestamped<RuleSettingsSync>());
-
-        /// <summary>
-        /// Sync data for character select.
-        /// It is applied to the game at the start of the character select function if not default/null.
-        /// </summary>
-        public Volatile<Timestamped<CharaSelectSync>> CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(new Timestamped<CharaSelectSync>());
 
         /// <summary>
         /// Sync data for races.
@@ -99,25 +83,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public Timestamped<SetAttack>[] AttackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
 
         /// <summary>
-        /// Provides event notifications for when contents of menus etc. are changed.
-        /// </summary>
-        public MenuChangedEventHandler Delta = new MenuChangedEventHandler();
-
-        /// <summary>
-        /// Character select exit state.
-        /// </summary>
-        public ExitKind CharaSelectExit = ExitKind.Null;
-
-        /// <summary>
         /// Stage intro cutscene skip requested by host.
         /// </summary>
         public bool SkipRequested = false;
-
-        /// <summary>
-        /// Set to true when client receives set stage flag for course select and is discarded
-        /// after the set stage function runs.
-        /// </summary>
-        public bool ReceivedSetStageFlag = false;
 
         /// <summary>
         /// Gets the go command from the host for syncing start time.
@@ -208,57 +176,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Synchronizes the course select state with the currently reported state.
-        /// </summary>
-        public unsafe void SyncCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
-        {
-            if (!CourseSelectSync.HasValue) 
-                return;
-            
-            var sync = CourseSelectSync.Get();
-            if (!sync.IsDiscard(MaxLatency))
-                sync.Value.ToGame(task);
-        }
-
-        /// <summary>
-        /// Synchronizes rule setting state with the currently reported state.
-        /// </summary>
-        public unsafe void SyncRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
-        {
-            if (!RuleSettingsSync.HasValue)
-                return;
-
-            var sync = RuleSettingsSync.Get();
-            if (!sync.IsDiscard(MaxLatency))
-                sync.Value.ToGame(task);
-        }
-
-        /// <summary>
-        /// Common implementation for syncing character select events.
-        /// </summary>
-        /// <param name="task">Current character select task.</param>
-        public unsafe void SyncCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
-        {
-            if (!CharaSelectSync.HasValue)
-                return;
-
-            var result = CharaSelectSync.Get();
-            if (result.IsDiscard(MaxLatency) || _dropCharSelectPackets) 
-                return;
-
-            _lastCharaSelectSync = result.Value;
-            result.Value.ToGame(task);
-        }
-
-        /// <summary>
-        /// Execute this when starting a race in character select..
-        /// </summary>
-        public unsafe void OnCharacterSelectStartRace()
-        {
-            _dropCharSelectPackets = true;
-        }
-
-        /// <summary>
         /// Sets all players to non-CPU when the intro cutscene ends.
         /// We do this because CPUs can still trigger certain events such as boosting in-race.
         /// </summary>
@@ -279,7 +196,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (task->TaskData->RaceMode != RaceMode.TagMode)
                 *State.NumberOfRacers = (byte)GetPlayerCount();
 
-            _dropCharSelectPackets = false;
             _lastCharaSelectSync.ToGameOnlyCharacter();
             ResetRace();
         }
@@ -334,7 +250,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Translates a host player index into a local player index. 
         /// </summary>
-        public byte GetLocalPlayerIndex(int hostIndex)
+        public virtual byte GetLocalPlayerIndex(int hostIndex)
         {
             var selfIndex = SelfInfo.PlayerIndex;
 
@@ -343,10 +259,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             //      Client Index 1 | Host: 2, Client
             if (hostIndex == selfIndex)
                 return 0;
-            else if (hostIndex < selfIndex)
+            if (hostIndex < selfIndex)
                 return (byte) (hostIndex + 1);
-            else 
-                return (byte) hostIndex;
+            
+            return (byte) hostIndex;
         }
 
         /// <summary>

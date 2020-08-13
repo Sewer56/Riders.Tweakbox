@@ -36,7 +36,7 @@ namespace Riders.Tweakbox
 
             /* Your mod code starts here. */
             Trace.AutoFlush = true;
-            Trace.Listeners.Add(new ConsoleOutlListener());
+            Trace.Listeners.Add(new ConsoleOutListener());
             Trace.Listeners.Add(new ShellTraceListener());
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);

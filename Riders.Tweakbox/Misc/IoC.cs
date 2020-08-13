@@ -1,7 +1,5 @@
 ﻿using System.Linq;
 using Ninject;
-using Riders.Tweakbox.Components.Netplay;
-using Riders.Tweakbox.Controllers;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -11,18 +9,6 @@ namespace Riders.Tweakbox.Misc
         /// The standard NInject Kernel.
         /// </summary>
         public static IKernel Kernel { get; } = new StandardKernel();
-
-        /// <summary>
-        /// Initializes global bindings.
-        /// </summary>
-        public static void Initialize(string modFolder)
-        {
-            var io = new IO(modFolder);
-            Kernel.Bind<IO>().ToConstant(io);
-            Kernel.Bind<NetplayConfigFile>().ToConstant(io.GetNetplayConfig());
-            GetConstant<NetplayImguiConfig>();
-            GetConstant<EventController>();
-        }
 
         /// <summary>
         /// Retrieves a service (class) from the IoC of a specified type.
@@ -40,10 +26,8 @@ namespace Riders.Tweakbox.Misc
         {
             var value = Kernel.Get<T>();
 
-            if (!IsExplicitlyBound<T>())
-            {
+            if (!IsExplicitlyBound<T>()) 
                 Kernel.Bind<T>().ToConstant(value);
-            }
 
             return value;
         }

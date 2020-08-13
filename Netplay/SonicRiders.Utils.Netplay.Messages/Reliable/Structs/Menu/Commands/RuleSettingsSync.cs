@@ -62,7 +62,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             };
         }
 
-        public void Merge(RuleSettingsLoop loop)
+        public RuleSettingsSync Merge(RuleSettingsLoop loop)
         {
             MenuSelectionX = (byte) (MenuSelectionX + loop.DeltaMenuSelectionX);
             MenuSelectionY = (byte) (MenuSelectionY + loop.DeltaMenuSelectionY);
@@ -73,6 +73,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             Pit = (byte) (Pit + loop.DeltaPit);
             AirLost = (byte) (AirLost + loop.DeltaAir);
             ExitingMenu = (byte)(ExitingMenu + loop.ExitingMenu);
+            return this;
         }
 
         public unsafe void ToGame(Task<RaceRules, RaceRulesTaskState>* task)

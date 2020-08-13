@@ -10,6 +10,7 @@ using Riders.Tweakbox.Components.Imgui;
 using Riders.Tweakbox.Components.Misc;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.PhysicsEditor;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -41,7 +42,7 @@ namespace Riders.Tweakbox
             string modFolder)
         {
             var tweakBox = new Tweakbox();
-            IoC.Initialize(modFolder);
+            InitializeIoC(modFolder);
             tweakBox._hooks = hooks;
             tweakBox._hooksUtilities = hooksUtilities;
             tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
@@ -83,6 +84,18 @@ namespace Riders.Tweakbox
             tweakBox._hook = imguiHook;
             tweakBox._isReady = true;
             return tweakBox;
+        }
+
+        /// <summary>
+        /// Initializes global bindings.
+        /// </summary>
+        private static void InitializeIoC(string modFolder)
+        {
+            var io = new IO(modFolder);
+            IoC.Kernel.Bind<IO>().ToConstant(io);
+            IoC.Kernel.Bind<NetplayConfigFile>().ToConstant(io.GetNetplayConfig());
+            IoC.GetConstant<NetplayImguiConfig>();
+            IoC.GetConstant<EventController>();
         }
 
         private int BlockGameInputsIfEnabled()

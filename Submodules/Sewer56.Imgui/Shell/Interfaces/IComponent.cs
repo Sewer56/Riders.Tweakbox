@@ -8,7 +8,7 @@
         string Name { get; set; }
 
         /// <summary>
-        /// True if the component is enabled (can be selected), else false.
+        /// True if the component is enabled (is selected), else false.
         /// </summary>
         ref bool IsEnabled();
 

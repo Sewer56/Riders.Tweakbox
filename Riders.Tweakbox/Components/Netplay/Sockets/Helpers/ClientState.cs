@@ -1,6 +1,6 @@
 ﻿namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
-    public class PlayerState
+    public class ClientState
     {
         /// <summary>
         /// Client's last latency readout.
@@ -15,6 +15,6 @@
         /// <summary>
         /// Client is ready to sync SRand value.
         /// </summary>
-        public bool SRandSyncReady = false;
+        public bool SRandSyncReady   = false;
     }
 }

@@ -16,6 +16,8 @@ using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -26,6 +28,7 @@ using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
+    // TODO: Add support for Spectator
     public unsafe class Host : Socket
     {
         /// <summary>
@@ -38,32 +41,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public Host(int port, string password, NetplayController controller) : base(controller)
         {
             Debug.WriteLine($"[Host] Hosting Server on {port} with password {password}");
-
             base.State = new HostState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
-            Password = password;
+            Password   = password;
             Manager.Start(port);
-
-            Event.OnCharacterSelect += OnCharaSelect;
-            Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect += MenuOnExitCharaSelect;
 
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfStartRace += MenuCheckIfStartRace;
-            Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
-
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnSkipRaceIntro;
-
-            Event.OnRaceSettings += OnRuleSettings;
-            Event.AfterRaceSettings += OnAfterRuleSettings;
-            State.Delta.OnRuleSettingsUpdated += OnRuleSettingsChanged;
-
-            Event.OnCourseSelect += OnCourseSelect;
-            Event.AfterCourseSelect += OnAfterCourseSelect;
-            Event.OnCourseSelectSetStage += OnCourseSelectSetStage;
-            State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
@@ -81,27 +67,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Manager.DisconnectAll();
             base.Dispose();
 
-            Event.OnCharacterSelect -= OnCharaSelect;
-            Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect -= MenuOnExitCharaSelect;
-
             Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
-            Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
-
             Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro -= OnSkipRaceIntro;
-
-            Event.OnRaceSettings -= OnRuleSettings;
-            Event.AfterRaceSettings -= OnAfterRuleSettings;
-            State.Delta.OnRuleSettingsUpdated -= OnRuleSettingsChanged;
-
-            Event.OnCourseSelect -= OnCourseSelect;
-            Event.AfterCourseSelect -= OnAfterCourseSelect;
-            Event.OnCourseSelectSetStage -= OnCourseSelectSetStage;
-            State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
@@ -114,7 +84,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.Random -= State.OnRandom;
         }
 
-        public override bool IsHost() => true;
+        public override SocketType GetSocketType() => SocketType.Client;
 
         public override void Update()
         {
@@ -134,19 +104,13 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         private void HandleUnreliable(NetPeer peer, UnreliablePacket result)
         {
             // TODO: Maybe support for multiple local players in the future.
-            var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+            var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
             var player  = result.Players[0];
             State.RaceSync[playerIndex] = player;
         }
 
         private void HandleReliable(NetPeer peer, ReliablePacket packet)
         {
-            if (packet.MenuSynchronizationCommand.HasValue)
-                HandleMenuMessage(peer, packet.MenuSynchronizationCommand.Value);
-
-            if (packet.ServerMessage.HasValue)
-                HandleServerMessage(peer, packet.ServerMessage.Value);
-
             // All remaining messages.
             if (packet.HasSyncStartSkip)
             {
@@ -157,19 +121,19 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (packet.HasSyncStartReady)
             {
                 Debug.WriteLine("[Host] Received HasSyncStartReady from Client.");
-                var customData = State.PlayerMap.GetCustomData(peer);
+                var customData = State.ClientMap.GetCustomData(peer);
                 customData.ReadyToStartRace = true;
             }
 
             if (packet.SetMovementFlags.HasValue)
             {
-                var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                 State.MovementFlagsSync[playerIndex] = new Timestamped<MovementFlagsMsg>(packet.SetMovementFlags.Value);
             }
 
             if (packet.SetAttack.HasValue)
             {
-                var playerIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                 Debug.WriteLine($"[Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}");
                 State.AttackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
             }
@@ -177,145 +141,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (packet.Random.HasValue)
             {
                 Debug.WriteLine("[Host] Received SRandSyncReady from Client.");
-                State.PlayerMap.GetCustomData(peer).SRandSyncReady = true;
-            }
-        }
-
-        private void HandleServerMessage(NetPeer peer, ServerMessage serverMessage)
-        {
-            var message = serverMessage.Message;
-            switch (message)
-            {
-                case ClientSetPlayerData clientSetPlayerData:
-                    State.PlayerMap.AddOrUpdatePlayerData(peer, clientSetPlayerData.Data);
-                    UpdatePlayerMap();
-                    break;
-            }
-        }
-
-        private void HandleMenuMessage(NetPeer peer, MenuSynchronizationCommand syncCommand)
-        {
-            switch (syncCommand.Command)
-            {
-                case CharaSelectLoop charaSelectLoop:
-                    State.CharaSelectLoop[State.PlayerMap.GetPlayerData(peer).PlayerIndex] = charaSelectLoop;
-                    break;
-                case CourseSelectLoop courseSelectLoop:
-                    State.CourseSelectLoop.Enqueue(courseSelectLoop);
-                    break;
-                case CourseSelectSetStage courseSelectSetStage:
-                    *Sewer56.SonicRiders.API.State.Level = (Levels)courseSelectSetStage.StageId;
-                    State.ReceivedSetStageFlag = true;
-                    SendToAllExcept(peer, new ReliablePacket(courseSelectSetStage), DeliveryMethod.ReliableOrdered, "[Host] Received CharaSelect Stage Set Flag, Rebroadcasting");
-                    break;
-                case RuleSettingsLoop ruleSettingsLoop:
-                    State.RuleSettingsLoop.Enqueue(ruleSettingsLoop);
-                    break;
-                case CharaSelectExit exitCommand:
-                    State.CharaSelectExit = exitCommand.Type;
-                    SendToAllExcept(peer, new ReliablePacket(new CharaSelectExit(exitCommand.Type)), DeliveryMethod.ReliableOrdered, "[Host] Got Start / Exit Request Flag, Rebroadcasting");
-                    break;
+                State.ClientMap.GetCustomData(peer).SRandSyncReady = true;
             }
         }
 
         #region Events: On/After Events
-        private void OnCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
-        {
-            // Note: For host, do opposite, set, sync, then resend if changed.
-            State.Delta.Set(task);
-            var sync = CourseSelectSync.FromGame(task);
-            var loop = State.GetCourseSelect();
-            sync.Merge(loop);
-
-            State.CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(sync);
-            State.SyncCourseSelect(task);
-        }
-
-        private void OnAfterCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task) => State.Delta.Update(task);
-        private unsafe void OnCourseSelectChanged(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task)
-        {
-            if (Manager.ConnectedPeersCount <= 0)
-                return;
-
-            SendToAllAndFlush(new ReliablePacket(CourseSelectSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
-        }
-
-        private void OnCourseSelectSetStage()
-        {
-            if (!State.ReceivedSetStageFlag)
-                SendToAllAndFlush(new ReliablePacket(new CourseSelectSetStage((byte)*Sewer56.SonicRiders.API.State.Level)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Stage Set Flag");
-
-            State.ReceivedSetStageFlag = false;
-        }
-
-        private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
-        {
-            State.Delta.Set(task);
-            var sync = RuleSettingsSync.FromGame(task);
-            var loop = State.GetRuleSettings();
-            sync.Merge(loop);
-
-            State.RuleSettingsSync = new Volatile<Timestamped<RuleSettingsSync>>(sync);
-            State.SyncRuleSettings(task);
-        }
-
-        private void OnAfterRuleSettings(Task<RaceRules, RaceRulesTaskState>* task) => State.Delta.Update(task);
-        private unsafe void OnRuleSettingsChanged(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
-        {
-            if (Manager.ConnectedPeersCount <= 0)
-                return;
-
-            SendToAllAndFlush(new ReliablePacket(RuleSettingsSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
-        }
-
-        private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
-        {
-            State.ReceivedSetStageFlag = false;
-
-            // Calculate sync data from client info.
-            var sync = State.GetCharacterSelect();
-            sync[0]  = CharaSelectLoop.FromGame(task);
-            State.CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(new CharaSelectSync(sync.Where((loop, x) => x != 0).ToArray()));
-            State.SyncCharaSelect(task);
-
-            // If not starting, transmit updated sync.
-            if (State.CharaSelectExit == ExitKind.Null)
-            {
-                foreach (var peer in Manager.ConnectedPeerList)
-                {
-                    var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
-                    var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
-                    SendAndFlush(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
-                }
-            }
-        }
-
-        private Enum<AsmFunctionResult> MenuCheckIfExitCharaSelect() => State.CharaSelectExit == ExitKind.Exit;
-        private void MenuOnExitCharaSelect()
-        {
-            // We started ourselves, tell host to rebroadcast.
-            if (State.CharaSelectExit != ExitKind.Exit)
-                SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(ExitKind.Exit)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Exit flag to Clients");
-
-            State.CharaSelectExit = ExitKind.Null;
-        }
-
-        private Enum<AsmFunctionResult> MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
-        private void MenuOnMenuStartRace()
-        {
-            // We skipped the intro ourselves, pass the news along to the clients. 
-            if (State.CharaSelectExit != ExitKind.Start)
-                SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(ExitKind.Start)), DeliveryMethod.ReliableOrdered, "[Host] Sending CharaSelect Start Flag to Clients");
-
-            State.CharaSelectExit = ExitKind.Null;
-            State.OnCharacterSelectStartRace();
-        }
-
         private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
         private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
         {
-            bool TestAllReady() => State.PlayerMap.GetCustomData().All(x => x.ReadyToStartRace);
+            bool TestAllReady() => State.ClientMap.GetCustomData().All(x => x.ReadyToStartRace);
 
             // Send skip signal to clients.
             if (!State.SkipRequested) 
@@ -325,7 +160,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Debug.WriteLine("[Host] Waiting for ready messages.");
 
             // Note to self: Don't use wait for all clients, because the messages may have already been sent by the clients.
-            if (!PollUntil(TestAllReady, HandshakeTimeout))
+            if (!PollUntil(TestAllReady, State.HandshakeTimeout))
             {
                 Debug.WriteLine("[Host] It's no use, let's get outta here!.");
                 Dispose();
@@ -336,7 +171,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SendToAllAndFlush(new ReliablePacket() { SyncStartGo = startTime }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
             
             // Disable skip flags for everyone.
-            var data = State.PlayerMap.GetCustomData();
+            var data = State.ClientMap.GetCustomData();
             foreach (var dt in data)
                 dt.ReadyToStartRace = false;
 
@@ -369,7 +204,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Broadcast data to all clients.
             foreach (var peer in Manager.ConnectedPeerList)
             {
-                var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                var excludeIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                 var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
                 SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
             }
@@ -380,7 +215,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 Debug.WriteLine($"[Host] Sending Attack Matrix to Clients");
                 foreach (var peer in Manager.ConnectedPeerList)
                 {
-                    var excludeIndex = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var excludeIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var attacks      = State.AttackSync.Select(x => x.Value).Where((attack, x) => x != excludeIndex).ToArray();
                     if (!attacks.Any(x => x.IsValid))
                         continue;
@@ -412,7 +247,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 State.MovementFlagsSync[0] = new MovementFlagsMsg(player);
                 foreach (var peer in Manager.ConnectedPeerList)
                 {
-                    var excludeIndex  = State.PlayerMap.GetPlayerData(peer).PlayerIndex;
+                    var excludeIndex  = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var movementFlags = State.MovementFlagsSync.Where((timestamped, x) => x != excludeIndex).ToArray();
                     SendAndFlush(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) } , DeliveryMethod.ReliableOrdered);
                 }
@@ -442,10 +277,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
-            bool TestAllReady() => State.PlayerMap.GetCustomData().All(x => x.SRandSyncReady);
+            bool TestAllReady() => State.ClientMap.GetCustomData().All(x => x.SRandSyncReady);
             hook.OriginalFunction(seed);
 
-            if (!PollUntil(TestAllReady, HandshakeTimeout))
+            if (!PollUntil(TestAllReady, State.HandshakeTimeout))
             {
                 Debug.WriteLine("[Host] It's no use, RNG seed sync failed, let's get outta here!.");
                 Dispose();
@@ -455,7 +290,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[Host] Sending Random Seed {(int)seed}");
 
             // Disable skip flags for everyone.
-            var data = State.PlayerMap.GetCustomData();
+            var data = State.ClientMap.GetCustomData();
             foreach (var dt in data)
                 dt.SRandSyncReady = false;
         }
@@ -469,12 +304,25 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 if (packet.As<IPacket>().GetPacketType() != PacketKind.Reliable)
                     return false;
 
-                return packet.As<ReliablePacket>().ServerMessage?.MessageKind == ServerMessageType.ClientSetPlayerData;
+                var reliable = packet.As<ReliablePacket>();
+                if (!reliable.ServerMessage.HasValue)
+                    return false;
+
+                var message = reliable.ServerMessage.Value.Message;
+                switch (message)
+                {
+                    case ClientSetPlayerData clientSetPlayerData:
+                        State.ClientMap.AddOrUpdatePlayerData(peer, clientSetPlayerData.Data);
+                        UpdatePlayerMap();
+                        return true;
+                }
+
+                return false;
             }
 
             // Handle player handshake here!
             Debug.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.");
-            if (!TryWaitForMessage(peer, CheckIfUserData, HandshakeTimeout))
+            if (!TryWaitForMessage(peer, CheckIfUserData, State.HandshakeTimeout))
             {
                 Debug.WriteLine($"[Host] Disconnecting client, did not receive user data.");
                 peer.Disconnect();
@@ -487,14 +335,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            State.PlayerMap.RemovePeer(peer);
+            State.ClientMap.RemovePeer(peer);
             UpdatePlayerMap();
         }
 
         public override void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
             // Update latency.
-            var data = State.PlayerMap.GetCustomData(peer);
+            var data = State.ClientMap.GetCustomData(peer);
             if (data != null)
                 data.Latency = latency;
         }
@@ -512,7 +360,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (Event.LastTask != Tasks.CourseSelect)
                 return Reject("[Host] Rejected Connection | Not on Course Select");
 
-            if (!State.PlayerMap.HasEmptySlots())
+            if (!State.ClientMap.HasEmptySlots())
                 return Reject($"[Host] Rejected Connection | No Empty Slots");
 
             Debug.WriteLine($"[Host] Accepting if Password Matches");
@@ -528,11 +376,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             foreach (var peer in Manager.ConnectedPeerList)
             {
-                var message = State.PlayerMap.ToMessage(peer, State.SelfInfo);
+                var message = State.ClientMap.ToMessage(peer, State.SelfInfo);
                 SendAndFlush(peer, new ReliablePacket(message), DeliveryMethod.ReliableUnordered);
             }
 
-            State.PlayerInfo = State.PlayerMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
+            State.PlayerInfo = State.ClientMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
         }
         #endregion
     }

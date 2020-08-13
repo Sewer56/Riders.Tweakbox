@@ -23,8 +23,31 @@ namespace Riders.Netplay.Messages
         public bool IsDiscard(int timeout) => Value.IsDiscard(timeout);
 
         /// <summary>
+        /// Returns the <see cref="PacketKind"/> associated with this packet. (e.g. Reliable/Unreliable)
+        /// </summary>
+        public PacketKind GetPacketKind() => Value.Value.GetPacketType();
+
+        /// <summary>
         /// Converts the internal timestamped packet value into a given packet format.
         /// </summary>
         public T As<T>() where T : IPacket => (T)Value.Value;
+
+        /// <summary>
+        /// Attempts to get the packet message if the packet is not discarded based on timeout and matches the given packet kind/type.
+        /// </summary>
+        /// <param name="timeout">The timeout in milliseconds.</param>
+        /// <param name="packet">The packet itself.</param>
+        public bool TryGetPacket<T>(int timeout, out T packet) where T : IPacket, new()
+        {
+            packet = new T();
+            if (Value.IsDiscard(timeout))
+                return false;
+
+            if (GetPacketKind() != packet.GetPacketType())
+                return false;
+
+            packet = As<T>();
+            return true;
+        }
     }
 }

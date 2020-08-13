@@ -1,13 +1,12 @@
 ﻿using System;
 using DearImguiSharp;
-using LiteNetLib;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
-using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
+using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -21,6 +20,11 @@ namespace Riders.Tweakbox.Components.Netplay
         public ref bool IsEnabled() => ref _isEnabled;
         public void Disable() => Controller.Disable();
         public void Enable() => Controller.Enable();
+
+        private void Disconnect()
+        {
+            Controller.Socket?.Dispose();
+        }
 
         public void Render()
         {
@@ -36,14 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             if (Controller.Socket != null)
             {
-                if (Controller.Socket.IsHost())
-                {
-                    RenderCommonWindow();
-                }
-                else
-                {
-                    RenderCommonWindow();
-                }
+                RenderCommonWindow();
             }
             else
             {
@@ -55,9 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             var client = Controller.Socket;
             foreach (var player in client.State.PlayerInfo)
-            {
                 ImGui.Text($"{player.Name} | {player.PlayerIndex}");
-            }
 
             if (ImGui.Button("Disconnect", Constants.ButtonSize))
                 Disconnect();
@@ -74,11 +69,6 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Text($"Upload: {socket.Bandwidth.KBytesSent:####0.0}kbps");
             ImGui.Text($"Download: {socket.Bandwidth.KBytesReceived:####0.0}kbps");
             ImGui.Text($"Does not include UDP + IP Overhead");
-        }
-
-        private void Disconnect()
-        {
-            Controller.Socket?.Dispose();
         }
 
         private void RenderHostJoinWindow()

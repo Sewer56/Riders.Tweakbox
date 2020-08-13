@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -28,8 +27,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
         private void LoadConfig(byte[] data)
         {
             var decompressed = IO.DecompressLZ4(data);
-            var fileSpan = new Span<byte>(decompressed);
-            _config.FromBytes(fileSpan);
+            _config.FromBytes(new Span<byte>(decompressed));
             _config.Apply();
         }
 
@@ -56,8 +54,8 @@ namespace Riders.Tweakbox.Components.FixesEditor
         {
             if (ImGui.TreeNodeStr("Frame Pacing"))
             {
-                ImGui.Checkbox("Frame Pacing Fix", ref Unsafe.AsRef<bool>(_config.Controller.FramePacing.Pointer));
-                Reflection.MakeControl((byte*)_config.Controller.SpinTime.Pointer, nameof(FixesController.SpinTime));
+                ImGui.Checkbox("Frame Pacing Fix", ref _config.Controller.FramePacing);
+                Reflection.MakeControl(ref _config.Controller.SpinTime, nameof(FixesController.SpinTime));
             }
         }
     }

@@ -49,9 +49,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public byte OpenCharacterSelect;
 
         /// <summary>
-        /// Merges the current sync packer with a loop packet.
+        /// Merges the current sync packet with a loop packet and returns a copy of this packet.
         /// </summary>
-        public unsafe void Merge(CourseSelectLoop loop)
+        public unsafe CourseSelectSync Merge(CourseSelectLoop loop)
         {
             SubmenuSelection = (byte) (SubmenuSelection + loop.SubmenuDeltaSelection);
             SelectionX = (byte) (SelectionX + loop.DeltaSelectionX);
@@ -65,6 +65,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 State = CourseSelectTaskState.Normal;
             else if (loop.OpenRaceRules > 0)
                 State = CourseSelectTaskState.OpeningSettings;
+
+            return this;
         }
 
         /// <summary>

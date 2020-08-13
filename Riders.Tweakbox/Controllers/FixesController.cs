@@ -3,9 +3,8 @@ using System.Linq;
 using EnumsNET;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
-using Reloaded.Memory.Interop;
 using Reloaded.WPF.Animations.FrameLimiter;
-using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
@@ -17,8 +16,8 @@ namespace Riders.Tweakbox.Controllers
     public unsafe class FixesController
     {
         // Settings
-        public Pinnable<byte> FramePacing { get; private set; } = new Pinnable<byte>(1);
-        public Pinnable<byte> SpinTime { get; private set; } = new Pinnable<byte>(1);
+        public bool FramePacing = true;
+        public byte SpinTime = 1;
 
         // Hooks
         private IHook<Functions.DefaultFn> _endFrameHook;
@@ -38,7 +37,7 @@ namespace Riders.Tweakbox.Controllers
             var bootToMain = new string[]
             {
                 "use32",
-                $"{AsmHelpers.AssembleAbsoluteCall(UnlockAllAndDisableBootToMenu, out _)}",
+                $"{utils.AssembleAbsoluteCall(UnlockAllAndDisableBootToMenu, out _)}",
                 $"{utils.GetAbsoluteJumpMnemonics((IntPtr) 0x0046AF9D, false)}",
             };
             
@@ -62,15 +61,15 @@ namespace Riders.Tweakbox.Controllers
             _bootToMenu.Disable();
         }
 
-        public void Disable() { _endFrameHook.Disable(); }
-        public void Enable() { _endFrameHook.Enable(); }
+        public void Disable() => _endFrameHook.Disable();
+        public void Enable()  => _endFrameHook.Enable();
 
         /// <summary>
         /// Custom frame pacing implementation,
         /// </summary>
         private void CustomFramePacing()
         {
-            if (FramePacing.Value == 1)
+            if (FramePacing)
             {
                 try
                 {
@@ -83,8 +82,8 @@ namespace Riders.Tweakbox.Controllers
                     /* Game is Stupid */
                 }
 
-                _fps.SpinTimeRemaining = (float) SpinTime.Value;
-                _fps.EndFrame(true);
+                _fps.SpinTimeRemaining = (float) SpinTime;
+                _fps.EndFrame(true, true);
                 *State.TotalFrameCounter += 1;
                 return;
             }

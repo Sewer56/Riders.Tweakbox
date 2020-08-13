@@ -10,9 +10,12 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Unreliable;
+using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -33,32 +36,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
-            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
-            Manager.Start();
-            Manager.Connect(ipAddress, port, password);
-
             // Add undo menu movement when connected.
-            Event.OnCharacterSelect += OnCharaSelect;
-            Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect += MenuOnExitCharaSelect;
-
-            Event.OnCheckIfStartRace += MenuCheckIfStartRace;
-            Event.OnStartRace += MenuOnMenuStartRace;
             Event.OnSetupRace += OnSetupRace;
-            
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnSkipRaceIntro;
-
-            Event.OnRaceSettings += OnRuleSettings;
-            Event.AfterRaceSettings += OnAfterRuleSettings;
-            State.Delta.OnRuleSettingsUpdated += OnRuleSettingsChanged;
-
-            Event.OnCourseSelect += OnCourseSelect;
-            Event.AfterCourseSelect += OnAfterCourseSelect;
-            Event.OnCourseSelectSetStage += OnCourseSelectSetStage;
-            State.Delta.OnCourseSelectUpdated += OnCourseSelectChanged;
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
@@ -67,35 +50,25 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnStartAttackTask += OnStartAttackTask;
             Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
+
             Event.SeedRandom += OnSeedRandom;
             Event.Random += State.OnRandom;
+
+            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
+            Manager.Start();
+            Manager.Connect(ipAddress, port, password);
         }
 
         public override void Dispose()
         {
             Debug.WriteLine($"[Client] Disposing of Socket, Disconnected");
             base.Dispose();
-            Event.OnCharacterSelect -= OnCharaSelect;
-            Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect -= MenuOnExitCharaSelect;
 
-            Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
-            Event.OnStartRace -= MenuOnMenuStartRace;
             Event.OnSetupRace -= OnSetupRace;
-
             Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro -= OnSkipRaceIntro;
-
-            Event.OnRaceSettings -= OnRuleSettings;
-            Event.AfterRaceSettings -= OnAfterRuleSettings;
-            State.Delta.OnRuleSettingsUpdated -= OnRuleSettingsChanged;
-
-            Event.OnCourseSelect -= OnCourseSelect;
-            Event.AfterCourseSelect -= OnAfterCourseSelect;
-            Event.OnCourseSelectSetStage -= OnCourseSelectSetStage;
-            State.Delta.OnCourseSelectUpdated -= OnCourseSelectChanged;
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
@@ -108,7 +81,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.Random -= State.OnRandom;
         }
 
-        public override bool IsHost() => false;
+        public override SocketType GetSocketType() => SocketType.Client;
         public override void Update()
         {
             base.Update();
@@ -135,9 +108,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void HandleReliable(ReliablePacket packet)
         {
-            if (packet.MenuSynchronizationCommand.HasValue)
-                HandleMenuMessage(packet.MenuSynchronizationCommand.Value);
-
             if (packet.ServerMessage.HasValue)
                 HandleServerMessage(packet.ServerMessage.Value);
 
@@ -176,35 +146,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
         }
 
-        private unsafe void HandleMenuMessage(MenuSynchronizationCommand syncCommand)
-        {
-            var cmd = syncCommand.Command;
-            switch (cmd)
-            {
-                case CharaSelectSync charaSelectSync:
-                    State.CharaSelectSync = new Volatile<Timestamped<CharaSelectSync>>(charaSelectSync);
-                    break;
-
-                case CourseSelectSync courseSelectSync:
-                    State.CourseSelectSync = new Volatile<Timestamped<CourseSelectSync>>(courseSelectSync);
-                    break;
-
-                case CourseSelectSetStage courseSelectSetStage:
-                    Debug.WriteLine("[Client] Received CharaSelect Stage Set Flag");
-                    *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
-                    State.ReceivedSetStageFlag = true;
-                    break;
-
-                case RuleSettingsSync ruleSettingsSync:
-                    State.RuleSettingsSync = new Volatile<Timestamped<RuleSettingsSync>>(ruleSettingsSync);
-                    break;
-
-                case CharaSelectExit charaSelectExit:
-                    Debug.WriteLine("[State] Got Start/Exit Request Flag");
-                    State.CharaSelectExit = charaSelectExit.Type;
-                    break;
-            }
-        }
 
         private void HandleServerMessage(ServerMessage serverMessage)
         {
@@ -225,76 +166,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         #region Events: On/After Events
-        private void OnCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
-        {
-            // Note: For host, do opposite, set, sync, then resend if changed.
-            State.SyncCourseSelect(task);
-            State.Delta.Set(task);
-        }
-
-        private void OnAfterCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task) => State.Delta.Update(task);
-        private unsafe void OnCourseSelectChanged(CourseSelectLoop loop, Task<CourseSelect, CourseSelectTaskState>* task)
-        {
-            if (Manager.ConnectedPeersCount <= 0)
-                return;
-
-            loop.Undo(task);
-            SendAndFlush(Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
-        }
-
-        private void OnCourseSelectSetStage()
-        {
-            if (!State.ReceivedSetStageFlag)
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CourseSelectSetStage((byte)*Sewer56.SonicRiders.API.State.Level)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Stage Set Flag");
-
-            State.ReceivedSetStageFlag = false;
-        }
-
-        private void OnRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
-        {
-            State.SyncRuleSettings(task);
-            State.Delta.Set(task);
-        }
-
-        private void OnAfterRuleSettings(Task<RaceRules, RaceRulesTaskState>* task) => State.Delta.Update(task);
-        private unsafe void OnRuleSettingsChanged(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
-        {
-            if (Manager.ConnectedPeersCount <= 0)
-                return;
-
-            loop.Undo(task);
-            SendAndFlush(Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
-        }
-
-        private void OnCharaSelect(Task<CharacterSelect, CharacterSelectTaskState>* task)
-        {
-            State.ReceivedSetStageFlag = false;
-            State.SyncCharaSelect(task);
-            if (State.CharaSelectExit == ExitKind.Null)
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced);
-        }
-
-        private Enum<AsmFunctionResult> MenuCheckIfExitCharaSelect() => (State.CharaSelectExit == ExitKind.Exit);
-        private void MenuOnExitCharaSelect()
-        {
-            // We started ourselves, tell host to rebroadcast.
-            if (State.CharaSelectExit != ExitKind.Exit)
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(ExitKind.Exit)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Exit flag to Host");
-
-            State.CharaSelectExit = ExitKind.Null;
-        }
-
-        private Enum<AsmFunctionResult> MenuCheckIfStartRace() => State.CharaSelectExit == ExitKind.Start;
-        private void MenuOnMenuStartRace()
-        {
-            // We started ourselves, tell host to rebroadcast.
-            if (State.CharaSelectExit != ExitKind.Start)
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(ExitKind.Start)), DeliveryMethod.ReliableOrdered, "[Client] Sending CharaSelect Start flag to Host");
-
-            State.CharaSelectExit = ExitKind.Null;
-            State.OnCharacterSelectStartRace();
-        }
-
         private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
         private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
@@ -312,7 +183,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             State.SkipRequested = false;
             SendAndFlush(Manager.FirstPeer, new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, "[Client] Sending HasSyncStartReady.");
 
-            if (!PollUntil(IsGoSignal, HandshakeTimeout))
+            if (!PollUntil(IsGoSignal, State.HandshakeTimeout))
             {
                 Debug.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
                 Dispose();
@@ -384,7 +255,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
 
             SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[Client] Sending dummy random seed and waiting for host response.");
-            if (!TryWaitForMessage(Manager.FirstPeer, HandleSeedPacket, HandshakeTimeout))
+            if (!TryWaitForMessage(Manager.FirstPeer, HandleSeedPacket, State.HandshakeTimeout))
             {
                 hook.OriginalFunction(seed);
                 Dispose();

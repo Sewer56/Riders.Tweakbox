@@ -3,12 +3,12 @@ using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
+namespace Riders.Tweakbox.Components.Netplay.Helpers
 {
     /// <summary>
     /// Allows for tracking of menu movement by comparing user manually submitted before and after menu states.
     /// </summary>
-    public unsafe class MenuChangedEventHandler
+    public unsafe class MenuChangedManualEvents
     {
         public event RuleSettingsUpdated OnRuleSettingsUpdated;
         public event CourseSelectUpdated OnCourseSelectUpdated;
@@ -16,7 +16,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         private RuleSettingsSync _lastRule   = new RuleSettingsSync();
         private CourseSelectSync _lastCourse = new CourseSelectSync();
 
-        public void Set(Task<RaceRules, RaceRulesTaskState>* task) => _lastRule = RuleSettingsSync.FromGame(task);
+        public void Set(Task<RaceRules, RaceRulesTaskState>* task)       => _lastRule = RuleSettingsSync.FromGame(task);
         public void Set(Task<CourseSelect, CourseSelectTaskState>* task) => _lastCourse = CourseSelectSync.FromGame(task);
 
         public void Update(Task<RaceRules, RaceRulesTaskState>* task)

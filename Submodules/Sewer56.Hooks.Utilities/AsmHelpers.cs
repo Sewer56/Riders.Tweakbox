@@ -3,33 +3,48 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
-using Sewer56.SonicRiders;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
+using static Sewer56.Hooks.Utilities.Macros;
+using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 
-namespace Riders.Tweakbox.Misc
+namespace Sewer56.Hooks.Utilities
 {
+    /// <summary>
+    /// Provides X86 and X64 ASM extensions for <see cref="IReloadedHooksUtilities"/> that are not part of the standard library.
+    /// Intended for advanced hooking scenarios.
+    /// </summary>
     public static class AsmHelpers
     {
-        public static readonly string[] XmmRegisters = new[] { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7" };
-
         private const int SizeOfXmmRegister = 16;
-        private static ConcurrentBag<object> _wrapper = new ConcurrentBag<object>();
+        private static ConcurrentBag<object> _wrappers = new ConcurrentBag<object>();
+
+        /// <summary>
+        /// Macro for push eax, ecx, edx.
+        /// </summary>
+        public static string PushCdeclCallerSavedRegisters(this IReloadedHooksUtilities utilities) => $"push {_eax}\npush {_ecx}\npush {_edx}";
+
+        /// <summary>
+        /// Macro for pop edx, ecx, eax.
+        /// </summary>
+        public static string PopCdeclCallerSavedRegisters(this IReloadedHooksUtilities utilities) => $"pop {_edx}\npop {_ecx}\npop {_eax}";
 
         /// <summary>
         /// Assembles code to push the value of a single XMM register.
         /// </summary>
-        public static string PushXmmRegister(string register = "xmm0")
+        public static string PushXmmRegister(this IReloadedHooksUtilities utilities, string register = "xmm0")
         {
-            return $"sub esp, {SizeOfXmmRegister}\nvmovdqu [esp+{SizeOfXmmRegister}],{register}";
+            return $"sub {_esp}, {SizeOfXmmRegister}\nvmovdqu [{_esp}+{SizeOfXmmRegister}],{register}";
         }
 
         /// <summary>
         /// Assembles code to push the values of a set of XMM registers.
         /// </summary>
-        public static string PushXmmRegisters(string[] registers)
+        public static string PushXmmRegisters(this IReloadedHooksUtilities utilities, string[] registers)
         {
-            string code = $"sub esp, {SizeOfXmmRegister * registers.Length}";
+            string code = $"sub {_esp}, {SizeOfXmmRegister * registers.Length}";
             for (var x = 0; x < registers.Length; x++)
-                code += $"\nmovdqu [esp+{SizeOfXmmRegister * x}],{registers[x]}";
+                code += $"\nmovdqu [{_esp}+{SizeOfXmmRegister * x}],{registers[x]}";
 
             return code;
         }
@@ -37,39 +52,40 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Assembles code to pop the value of a single XMM register.
         /// </summary>
-        public static string PopXmmRegister(string register = "xmm0")
+        public static string PopXmmRegister(this IReloadedHooksUtilities utilities, string register = "xmm0")
         {
-            return $"vmovdqu {register}, [esp+{SizeOfXmmRegister}]\nadd esp, {SizeOfXmmRegister}";
+            return $"vmovdqu {register}, [{_esp}+{SizeOfXmmRegister}]\nadd {_esp}, {SizeOfXmmRegister}";
         }
 
         /// <summary>
         /// Assembles code to pop the values of a set of XMM registers.
         /// </summary>
-        public static string PopXmmRegisters(string[] registers)
+        public static string PopXmmRegisters(this IReloadedHooksUtilities utilities, string[] registers)
         {
             string code = "";
             for (var x = registers.Length - 1; x >= 0; x--)
-                code += $"movdqu {registers[x]}, [esp+{SizeOfXmmRegister * x}]\n";
+                code += $"movdqu {registers[x]}, [{_esp}+{SizeOfXmmRegister * x}]\n";
 
-            code += $"add esp, {SizeOfXmmRegister * registers.Length}";
+            code += $"add {_esp}, {SizeOfXmmRegister * registers.Length}";
             return code;
         }
 
         /// <summary>
         /// Assembles the opcodes for an absolute call to a C# function without parameters.
         /// </summary>
+        /// <param name="utilities"/>
         /// <param name="function">The function to execute.</param>
         /// <param name="reverseWrapper">The reverse wrapper to your function. You can discard it freely, the class will keep an instance.</param>
-        public static string AssembleAbsoluteCall(AsmAction function, out IReverseWrapper<AsmAction> reverseWrapper) => AssembleAbsoluteCall<AsmAction>(function, out reverseWrapper);
+        public static string AssembleAbsoluteCall(this IReloadedHooksUtilities utilities, AsmAction function, out IReverseWrapper<AsmAction> reverseWrapper) => AssembleAbsoluteCall<AsmAction>(utilities, function, out reverseWrapper);
 
         /// <summary>
         /// Assembles the opcodes for an absolute call to a C# function without parameters.
         /// </summary>
+        /// <param name="utilities"/>
         /// <param name="function">The function to execute.</param>
         /// <param name="reverseWrapper">The reverse wrapper to your function. You can discard it freely, the class will keep an instance.</param>
-        public static string AssembleAbsoluteCall<TAsmAction>(TAsmAction function, out IReverseWrapper<TAsmAction> reverseWrapper) where TAsmAction : Delegate
+        public static string AssembleAbsoluteCall<TAsmAction>(this IReloadedHooksUtilities utilities, TAsmAction function, out IReverseWrapper<TAsmAction> reverseWrapper) where TAsmAction : Delegate
         {
-            var utilities = SDK.ReloadedHooks.Utilities;
             var asm = new string[]
             {
                 $"{utilities.PushCdeclCallerSavedRegisters()}",
@@ -77,7 +93,7 @@ namespace Riders.Tweakbox.Misc
                 $"{utilities.PopCdeclCallerSavedRegisters()}",
             };
 
-            _wrapper.Add(reverseWrapper);
+            _wrappers.Add(reverseWrapper);
             return String.Join(Environment.NewLine, asm);
         }
 
@@ -85,25 +101,25 @@ namespace Riders.Tweakbox.Misc
         /// Assembles the opcodes for an absolute call to a C# function that returns true/false.
         /// The return value is compared against a value of 1, i.e. cmp eax, 1.
         /// </summary>
+        /// <param name="utilities"/>
         /// <param name="function">The function to execute.</param>
         /// <param name="reverseWrapper">The reverse wrapper to your function. You can discard it freely, the class will keep an instance.</param>
         /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
         /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
         /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
         /// <param name="condition">The condition, e.g. jump equal, jump less, jump greater.</param>
-        public static string AssembleAbsoluteCall(AsmFunc function, out IReverseWrapper<AsmFunc> reverseWrapper, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
+        public static string AssembleAbsoluteCall(this IReloadedHooksUtilities utilities, AsmFunc function, out IReverseWrapper<AsmFunc> reverseWrapper, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
         {
-            var utilities = SDK.ReloadedHooks.Utilities;
             var asm = new string[]
             {
                 $"{utilities.PushCdeclCallerSavedRegisters()}",
                 $"{utilities.GetAbsoluteCallMnemonics<AsmFunc>(function, out reverseWrapper)}",
-                $"cmp eax, 1",
+                $"cmp {_eax}, 1",
                 $"{utilities.PopCdeclCallerSavedRegisters()}",
-                $"{AsmHelpers.AssembleTrueFalseFinally(trueInstructions, falseInstructions, completeInstructions, condition)}"
+                $"{utilities.AssembleTrueFalseFinally(trueInstructions, falseInstructions, completeInstructions, condition)}"
             };
 
-            _wrapper.Add(reverseWrapper);
+            _wrappers.Add(reverseWrapper);
             return String.Join(Environment.NewLine, asm);
         }
 
@@ -111,11 +127,12 @@ namespace Riders.Tweakbox.Misc
         /// Returns the assembly code to run following a comparison.
         /// This assembly code assumes that the `cmp` opcode has been already executed and appropriate flags set.
         /// </summary>
+        /// <param name="utilities"></param>
         /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
         /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
         /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
         /// <param name="condition">The condition, e.g. jump equal, jump less, jump greater.</param>
-        public static string AssembleTrueFalseFinally(string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
+        public static string AssembleTrueFalseFinally(this IReloadedHooksUtilities utilities, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
         {
             if (trueInstructions == null)
                 trueInstructions = new string[0];
@@ -150,11 +167,4 @@ namespace Riders.Tweakbox.Misc
     [Function(CallingConventions.Cdecl)]
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate Enum<AsmFunctionResult> AsmFunc();
-
-    public enum AsmFunctionResult : int
-    {
-        False = 0,
-        True = 1,
-        Indeterminate = 2,
-    } 
 }

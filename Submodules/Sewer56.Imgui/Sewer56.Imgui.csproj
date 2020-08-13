@@ -23,10 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Submodules\NumberUtilities\Sewer56.NumberUtilities\Sewer56.NumberUtilities.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Controls\ReflectionAutogen.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ReflectionAutogen.cs</LastGenOutput>

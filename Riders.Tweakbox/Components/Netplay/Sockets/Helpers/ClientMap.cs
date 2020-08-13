@@ -11,7 +11,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     /// Maps individual connected peers to individual players.
     /// </summary>
     /// <typeparam name="T">The type of additional data to store for the player.</typeparam>
-    public class PlayerMap<T> where T : class, new()
+    public class ClientMap<T> where T : class, new()
     {
         private Dictionary<int, HostPlayerData> _dictionary = new Dictionary<int, HostPlayerData>();
         private Dictionary<int, T> _dictionaryUserData = new Dictionary<int, T>();
@@ -44,11 +44,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         {
             int emptySlot = GetEmptySlot();
             if (emptySlot != -1)
-            {
-                _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", PlayerIndex = emptySlot };
-                _dictionaryUserData[peer.Id] = new T();
-            }
-
+                _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", ClientType = ClientKind.Client, PlayerIndex = emptySlot };
+            else
+                _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", ClientType = ClientKind.Spectator, PlayerIndex = emptySlot };
+            
+            _dictionaryUserData[peer.Id] = new T();
             return emptySlot;
         }
 

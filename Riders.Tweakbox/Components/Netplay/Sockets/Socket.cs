@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -20,9 +21,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public NetManager Manager;
 
         /// <summary>
-        /// Timeout for various handshakes such as initial exchange of game/gear data or start line synchronization.
+        /// Individual Netplay components associated with this socket.
         /// </summary>
-        public int HandshakeTimeout = 2000;
+        public INetplayComponent[] Components;
 
         /// <summary>
         /// Provides C# events for in-game events such as changing a menu value.
@@ -67,8 +68,26 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
-            HandshakeTimeout = 5000;
+            State.HandshakeTimeout = 5000;
             #endif
+            
+            Components = new INetplayComponent[]
+            {
+                // Menus
+                IoC.Get<Components.Menu.CourseSelect>(),
+                IoC.Get<Components.Menu.CharacterSelect>(),
+                IoC.Get<Components.Menu.RaceSettings>(),
+
+                // Gameplay
+                IoC.Get<Components.Game.Attack>(),
+                IoC.Get<Components.Game.Race>(),
+                IoC.Get<Components.Game.RaceEvents>(),
+                IoC.Get<Components.Game.RaceStartSync>(),
+                IoC.Get<Components.Game.SetupRace>(),
+
+                // Misc
+                IoC.Get<Components.Misc.Random>(),
+            };
         }
 
         /// <summary>
@@ -76,6 +95,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public virtual void Dispose()
         {
+            foreach (var component in Components)
+                component.Dispose();
+
             Controller.Socket = null;
             Manager.Stop(true);
         }
@@ -109,6 +131,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 }
 
                 HandlePacket(packet);
+                foreach (var component in Components)
+                    component.HandlePacket(packet);
             }
         }
 
@@ -119,14 +143,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public abstract void HandlePacket(Packet<NetPeer> packet);
 
         /// <summary>
-        /// Executed at the end of each game frame.
+        /// Gets the type of socket (Host/Client/Spectator) etc.
         /// </summary>
-        public virtual void Update() { }
-
-        /// <summary>
-        /// True if the socket is a host, else false.
-        /// </summary>
-        public abstract bool IsHost();
+        public abstract SocketType GetSocketType();
 
         /// <summary>
         /// New remote peer connected to host, or client connected to remote host
@@ -148,6 +167,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="request">Request information (EndPoint, internal id, additional data)</param>
         /// <returns>Ignored, just there to reduce code count.</returns>
         public abstract bool OnConnectionRequest(ConnectionRequest request);
+
+        /// <summary>
+        /// Executed at the end of each game frame.
+        /// </summary>
+        public virtual void Update() { }
 
         /// <summary>
         /// Sends data to all peers except a certain peer.
@@ -180,7 +204,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             foreach (var peer in Manager.ConnectedPeerList)
             {
-                if (peer.Id == exception.Id)
+                if (exception != null && peer.Id == exception.Id)
                     continue;
 
                 peer.Send(data, method);
@@ -196,6 +220,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="method">The delivery method.</param>
         public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method)
         {
+            if (peer == null)
+                return;
+
             peer.Send(message.Serialize(), method);
             peer.Flush();
         }
@@ -209,6 +236,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to log.</param>
         public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text)
         {
+            if (peer == null)
+                return;
+
             Debug.WriteLine(text);
             SendAndFlush(peer, message, method);
         }

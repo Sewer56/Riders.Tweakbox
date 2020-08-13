@@ -7,6 +7,9 @@ using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
@@ -164,39 +167,39 @@ namespace Riders.Tweakbox.Controllers
         {
             var utilities = SDK.ReloadedHooks.Utilities;
             _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
+            
+            var onCourseSelectSetStageAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
 
-            var onCourseSelectSetStageAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
-
-            var onExitCharaSelectAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnExitCharaSelectHook, out _)}" };
+            var onExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnExitCharaSelectHook, out _)}" };
             var ifExitCharaSelectAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00463741, Environment.Is64BitProcess) };
-            var onCheckIfExitCharaSelectAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfExitCharaSelectHook, out _, ifExitCharaSelectAsm, null, null, "je")}" };
+            var onCheckIfExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfExitCharaSelectHook, out _, ifExitCharaSelectAsm, null, null, "je")}" };
 
-            var onStartRaceAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnStartRaceHook, out _)}" };
+            var onStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnStartRaceHook, out _)}" };
             var ifStartRaceAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x0046364B, Environment.Is64BitProcess) };
-            var onCheckIfStartRaceAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfStartRaceHook, out _, ifStartRaceAsm, null, null, "je")}" };
+            var onCheckIfStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfStartRaceHook, out _, ifStartRaceAsm, null, null, "je")}" };
 
-            var onSkipIntroAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnSkipIntroHook, out _)}" };
+            var onSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnSkipIntroHook, out _)}" };
             var ifSkipIntroAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, Environment.Is64BitProcess) };
-            var onCheckIfSkipIntroAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
+            var onCheckIfSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
 
             var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
-            var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
+            var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
 
             var ifIsHumanInput = new string[] { "mov edx, 0" };
             var ifIsNotHumanInput = new string[] { "mov edx, 1" };
-            var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{AsmHelpers.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null, "je")}" };
+            var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null, "je")}" };
 
             var ifIsHumanIndicator = new string[] { "mov ecx, 0" };
             var ifIsNotHumanIndicator = new string[] { "mov ecx, 1" };
             var onCheckIsHumanIndicatorAsm = new[]
             {
                 $"use32",
-                $"{AsmHelpers.PushXmmRegisters(AsmHelpers.XmmRegisters)}",
-                $"{AsmHelpers.AssembleAbsoluteCall(OnCheckIfIsHumanIndicatorHook, out _, ifIsHumanIndicator, ifIsNotHumanIndicator, null, "je")}",
-                $"{AsmHelpers.PopXmmRegisters(AsmHelpers.XmmRegisters)}",
+                $"{utilities.PushXmmRegisters(Constants.XmmRegisters)}",
+                $"{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanIndicatorHook, out _, ifIsHumanIndicator, ifIsNotHumanIndicator, null, "je")}",
+                $"{utilities.PopXmmRegisters(Constants.XmmRegisters)}",
             };
 
-            var onGetRandomDoubleInPlayerFunctionAsm = new[] { $"use32\n{AsmHelpers.AssembleAbsoluteCall<GetRandomDouble>(TempNextDouble, out _)}" };
+            var onGetRandomDoubleInPlayerFunctionAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall<GetRandomDouble>(TempNextDouble, out _)}" };
             var hooks = SDK.ReloadedHooks;
             _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
             _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -221,7 +224,7 @@ namespace Riders.Tweakbox.Controllers
             _onSetupRaceSettingsHook = hooks.CreateAsmHook(new[]
             {
                 $"use32",
-                $"{AsmHelpers.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
+                $"{utilities.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
             }, 0x0046C139, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using LiteNetLib;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
