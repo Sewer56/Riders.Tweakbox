@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using LiteNetLib;
 using Ninject;
+using Reloaded.WPF.Animations.FrameLimiter;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Components.Menu;
@@ -367,14 +368,32 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         /// <param name="waitUntil">Thread will block until this specified time.</param>
         /// <param name="eventName">(Optional) name of the event</param>
-        public void Wait(DateTime waitUntil, string eventName = "")
+        /// <param name="spinTime">The amount of time in milliseconds before event expired to start spinning.</param>
+        public void WaitWithSpin(DateTime waitUntil, string eventName = "", int spinTime = 100)
         {
+            // TODO: Negotiation between multiple clients on current time so WaitUntil matches.
             Trace.WriteLine($"[Socket] Waiting for event ({eventName}).");
             Trace.WriteLine($"[Socket] Time: {DateTime.UtcNow}");
             Trace.WriteLine($"[Socket] Start Time: {waitUntil}");
 
             // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
-            ActionWrappers.TryWaitUntil(() => DateTime.UtcNow > waitUntil, int.MaxValue);
+            ActionWrappers.TryWaitUntil(() =>
+            {
+                // Check if already done.
+                var timeLeft = waitUntil - DateTime.UtcNow;
+                if (timeLeft.Milliseconds < 0)
+                    return true;
+
+                // Check if should sleep.
+                if (timeLeft.Milliseconds > spinTime) 
+                    return false;
+
+                // Spin for remaining time.
+                do { timeLeft = waitUntil - DateTime.UtcNow; } 
+                while (timeLeft.Ticks > 0);
+
+                return true;
+            }, int.MaxValue);
         }
 
         /// <summary>

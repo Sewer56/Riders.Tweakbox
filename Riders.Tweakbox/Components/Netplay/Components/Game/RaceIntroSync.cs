@@ -124,7 +124,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            Socket.Wait(goMessage.StartTime);
+            Socket.WaitWithSpin(goMessage.StartTime);
             Trace.WriteLine($"[{nameof(RaceIntroSync)} / Client] Race Started.");
             return true;
         }
@@ -157,7 +157,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             foreach (var dt in data)
                 dt.ReadyToStartRace = false;
 
-            Socket.Wait(startTime.StartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.");
+            Socket.WaitWithSpin(startTime.StartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.");
             return true;
         }
 
