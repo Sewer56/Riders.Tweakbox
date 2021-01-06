@@ -22,7 +22,8 @@ namespace Sewer56.Imgui.Controls
 
         public TextInputData(int maxCharacters, int characterwidth = sizeof(int))
         {
-            _textInput = new Pinnable<sbyte>(new sbyte[maxCharacters * characterwidth + 1]);
+            SizeOfData = (ulong)(maxCharacters * characterwidth + 1);
+            _textInput = new Pinnable<sbyte>(new sbyte[SizeOfData]);
         }
 
         public TextInputData(string text, int maxCharacters, int characterwidth = sizeof(int))
