@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
-using MessagePack.Formatters;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;

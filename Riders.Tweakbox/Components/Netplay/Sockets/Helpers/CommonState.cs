@@ -1,5 +1,4 @@
-﻿using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
+﻿using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
@@ -7,8 +6,6 @@ using Riders.Netplay.Messages.Unreliable;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
-using Sewer56.SonicRiders.Functions;
-using Sewer56.SonicRiders.Structures.Enums;
 using System;
 using System.Diagnostics;
 using System.Linq;

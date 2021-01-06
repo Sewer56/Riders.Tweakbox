@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;

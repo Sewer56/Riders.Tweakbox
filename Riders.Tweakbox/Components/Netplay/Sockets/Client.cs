@@ -1,30 +1,18 @@
 ﻿using System;
 using System.Diagnostics;
 using LiteNetLib;
-using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Netplay.Messages.Reliable.Structs.Menu;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Unreliable;
-using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Hooks.Utilities.Enums;
-using Sewer56.NumberUtilities.Helpers;
-using Sewer56.SonicRiders.Functions;
-using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
-using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
-using Debug = System.Diagnostics.Debug;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
