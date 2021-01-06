@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
@@ -32,12 +33,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     {
         public Client(string ipAddress, int port, string password, NetplayController controller) : base(controller)
         {
-            Debug.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}");
+            Trace.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}");
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
+            Manager.Start();
+            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
+
             // Add undo menu movement when connected.
-            Event.OnSetupRace += OnSetupRace;
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
@@ -51,20 +54,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
 
-            Event.SeedRandom += OnSeedRandom;
-            Event.Random += State.OnRandom;
-
-            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
-            Manager.Start();
             Manager.Connect(ipAddress, port, password);
+            Initialize();
         }
 
         public override void Dispose()
         {
-            Debug.WriteLine($"[Client] Disposing of Socket, Disconnected");
+            Trace.WriteLine($"[Client] Disposing of Socket, Disconnected");
             base.Dispose();
 
-            Event.OnSetupRace -= OnSetupRace;
             Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
@@ -77,8 +75,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnStartAttackTask -= OnStartAttackTask;
             Event.OnCheckIfPlayerIsHuman -= State.OnCheckIfPlayerIsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator -= State.OnCheckIfPlayerIsHuman;
-            Event.SeedRandom -= OnSeedRandom;
-            Event.Random -= State.OnRandom;
         }
 
         public override SocketType GetSocketType() => SocketType.Client;
@@ -117,13 +113,13 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (packet.GameData.HasValue)
             {
-                Debug.WriteLine($"[Client] Received Game Data, Applying");
+                Trace.WriteLine($"[Client] Received Game Data, Applying");
                 packet.GameData.Value.ToGame();
             }
 
             if (packet.SyncStartGo.HasValue)
             {
-                Debug.WriteLine($"[Client] Set SyncStartGo");
+                Trace.WriteLine($"[Client] Set SyncStartGo");
                 State.StartSyncGo = packet.SyncStartGo.Value;
             }
 
@@ -134,7 +130,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (packet.Attack.HasValue)
             {
-                Debug.WriteLine($"[Client] Received Attack data from host");
+                Trace.WriteLine($"[Client] Received Attack data from host");
                 var value   = packet.Attack.Value;
                 var attacks = new SetAttack[State.AttackSync.Length];
                 value.AsInterface().ToArray(attacks, attacks.Length - 1, 0, 1);
@@ -153,20 +149,19 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             switch (msg)
             {
                 case HostSetPlayerData hostSetPlayerData:
-                    Debug.WriteLine($"[Client] Received Player Info");
+                    Trace.WriteLine($"[Client] Received Player Info");
                     State.PlayerInfo = hostSetPlayerData.Data;
                     State.SelfInfo.PlayerIndex = hostSetPlayerData.Index;
                     break;
 
                 case SetAntiCheat setAntiCheat:
-                    Debug.WriteLine($"[Client] Received Anticheat Info");
+                    Trace.WriteLine($"[Client] Received Anticheat Info");
                     State.AntiCheatMode = setAntiCheat.Cheats;
                     break;
             }
         }
 
         #region Events: On/After Events
-        private void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task) => State.OnSetupRace(task);
         private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
         private void OnSkipRaceIntro()
         {
@@ -185,14 +180,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (!PollUntil(IsGoSignal, State.HandshakeTimeout))
             {
-                Debug.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
+                Trace.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
                 Dispose();
                 return;
             }
 
             Wait(goMessage.StartTime);
             State.OnIntroCutsceneEnd();
-            Debug.WriteLine("[Client] Race Started.");
+            Trace.WriteLine("[Client] Race Started.");
         }
 
         private void OnRace(Task<byte, RaceTaskState>* task)
@@ -231,35 +226,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     return 0;
 
                 var p2Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerTwo);
-                Debug.WriteLine($"[Client] Send Attack on {p2Index} [Host Index: {State.GetHostPlayerIndex(p2Index)}]");
+                Trace.WriteLine($"[Client] Send Attack on {p2Index} [Host Index: {State.GetHostPlayerIndex(p2Index)}]");
                 SendAndFlush(Manager.FirstPeer, new ReliablePacket() { SetAttack = new SetAttack((byte)State.GetHostPlayerIndex(p2Index)) }, DeliveryMethod.ReliableOrdered);
             }
 
             return 0;
-        }
-
-        private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
-        {
-            bool HandleSeedPacket(Packet<NetPeer> packet)
-            {
-                if (packet.Value.Value.GetPacketType() == PacketKind.Unreliable)
-                    return false;
-
-                var reliable = packet.As<ReliablePacket>();
-                if (!reliable.Random.HasValue)
-                    return false;
-
-                Debug.WriteLine($"[Client] Received Random Seed, Seeding {reliable.Random.Value.Value}");
-                Event.InvokeSeedRandom(reliable.Random.Value.Value);
-                return true;
-            }
-
-            SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[Client] Sending dummy random seed and waiting for host response.");
-            if (!TryWaitForMessage(Manager.FirstPeer, HandleSeedPacket, State.HandshakeTimeout))
-            {
-                hook.OriginalFunction(seed);
-                Dispose();
-            }
         }
         #endregion
 

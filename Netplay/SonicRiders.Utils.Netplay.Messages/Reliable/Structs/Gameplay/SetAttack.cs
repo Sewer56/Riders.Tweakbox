@@ -18,7 +18,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         public bool IsValid;
 
         /// <summary>
-        /// The target player to be attacked.
+        /// The target player to be attacked (Range 0-7).
         /// Set -1 if none.
         /// </summary>
         public byte Target;

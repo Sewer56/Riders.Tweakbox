@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
@@ -36,7 +37,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private int OnRandom(IHook<Functions.RandFn> hook)
         {
-            throw new NotImplementedException();
+            var result = hook.OriginalFunction();
+            Trace.WriteLine($"[{nameof(Random)}] Current Seed: {result}");
+            return result;
         }
 
         private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
@@ -50,12 +53,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
             var state = (HostState)Socket.State;
-            bool TestAllReady() => state.ClientMap.GetCustomData().All(x => x.SRandSyncReady);
             hook.OriginalFunction(seed);
 
-            if (!Socket.PollUntil(TestAllReady, Socket.State.HandshakeTimeout))
+            if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
-                Debug.WriteLine($"[{nameof(Random)}] It's no use, RNG seed sync failed, let's get outta here!.");
+                Trace.WriteLine($"[{nameof(Random)}] It's no use, RNG seed sync failed, let's get outta here!.");
                 Socket.Dispose();
                 return;
             }
@@ -65,6 +67,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             // Disable skip flags for everyone.
             foreach (var dt in state.ClientMap.GetCustomData())
                 dt.SRandSyncReady = false;
+
+            // Local function(s)
+            bool IsEveryoneReady()
+            {
+                return state.ClientMap.GetCustomData().All(x => x.SRandSyncReady);
+            }
         }
 
         private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
@@ -78,7 +86,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 if (!reliable.Random.HasValue)
                     return false;
 
-                Debug.WriteLine($"[{nameof(Random)} / Client] Received Random Seed, Seeding {reliable.Random.Value.Value}");
+                Trace.WriteLine($"[{nameof(Random)} / Client] Received Random Seed, Seeding {reliable.Random.Value.Value}");
                 Event.InvokeSeedRandom(reliable.Random.Value.Value);
                 return true;
             }

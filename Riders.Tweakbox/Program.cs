@@ -28,6 +28,9 @@ namespace Riders.Tweakbox
         /// </summary>
         public async void Start(IModLoaderV1 loader)
         {
+            #if DEBUG
+            Debugger.Launch();
+            #endif
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
@@ -36,7 +39,7 @@ namespace Riders.Tweakbox
 
             /* Your mod code starts here. */
             Trace.AutoFlush = true;
-            Trace.Listeners.Add(new ConsoleOutListener());
+            Trace.Listeners.Add(new ConsoleOutListener(_logger));
             Trace.Listeners.Add(new ShellTraceListener());
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);

@@ -10,13 +10,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
     public class ItemPickupSync : INetplayComponent
     {
         /// <inheritdoc />
+        public Socket Socket { get; set; }
+
+        /// <inheritdoc />
         public void Dispose()
         {
             throw new NotImplementedException();
         }
-
-        /// <inheritdoc />
-        public Socket Socket { get; set; }
 
         /// <inheritdoc />
         public void HandlePacket(Packet<NetPeer> packet)

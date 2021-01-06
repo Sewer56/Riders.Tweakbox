@@ -115,7 +115,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     _loopQueue.Enqueue(courseSelectLoop);
                     break;
                 case CourseSelectSetStage courseSelectSetStage:
-                    Debug.WriteLine($"[{nameof(CourseSelect)}] Received Stage Set Flag");
+                    Trace.WriteLine($"[{nameof(CourseSelect)}] Received Stage Set Flag");
                     *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
                     _receivedSetStageFlag = true;
                     if (Socket.GetSocketType() == SocketType.Host)

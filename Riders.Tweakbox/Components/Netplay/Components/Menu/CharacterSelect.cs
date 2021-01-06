@@ -22,6 +22,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public EventController Event { get; set; }
+        public CharaSelectSync LastSync { get; private set; }
 
         /// <summary> Sync data for character select. </summary>
         private Volatile<Timestamped<CharaSelectSync>> _sync = new Volatile<Timestamped<CharaSelectSync>>(new Timestamped<CharaSelectSync>());
@@ -115,7 +116,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             switch (command.Value.Command)
             {
                 case CharaSelectExit charaSelectExit:
-                    Debug.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag");
+                    Trace.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag");
                     _exit = charaSelectExit.Type;
                     if (Socket.GetSocketType() == SocketType.Host)
                         Socket.SendToAllExcept(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Host] Got Start/Exit Request Flag, Rebroadcasting");
@@ -145,6 +146,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             if (result.IsDiscard(Socket.State.MaxLatency))
                 return;
 
+            LastSync = result.Value;
             result.Value.ToGame(task);
         }
 

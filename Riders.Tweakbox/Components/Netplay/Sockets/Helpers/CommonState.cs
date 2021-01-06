@@ -6,7 +6,6 @@ using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Netplay.Messages.Unreliable;
 using Sewer56.Hooks.Utilities.Enums;
@@ -29,7 +28,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             ResetRace();
         }
 
-        private void ResetRace()
+        public void ResetRace()
         {
             Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
             Array.Fill(MovementFlagsSync, new Timestamped<MovementFlagsMsg>());
@@ -54,7 +53,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Timeout for various handshakes such as initial exchange of game/gear data or start line synchronization.
         /// </summary>
-        public int HandshakeTimeout = 2000;
+        public int HandshakeTimeout = 5000;
 
         /// <summary>
         /// The currently enabled anti-cheat settings.
@@ -101,11 +100,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Drops character select apply packets if true.
         /// </summary>
         private bool _dropCharSelectPackets = false;
-
-        /// <summary>
-        /// Last applied character select sync packet.
-        /// </summary>
-        private CharaSelectSync _lastCharaSelectSync = new CharaSelectSync();
 
         /// <summary>
         /// Returns the total count of players.
@@ -155,7 +149,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 var value = atkSync.Value;
                 if (value.IsValid)
                 {
-                    Debug.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
+                    Trace.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
                     StartAttackTask(x, value.Target);
                 }
             }
@@ -183,21 +177,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         {
             for (int x = 1; x < Player.MaxNumberOfPlayers; x++)
             {
-                Player.Players[x].IsAiLogic = PlayerType.Human;
-                Player.Players[x].IsAiVisual = PlayerType.Human;
+                Player.Players[x].IsAiLogic = PlayerType.CPU;
+                Player.Players[x].IsAiVisual = PlayerType.CPU;
             }
-        }
-
-        /// <summary>
-        /// Common implementation for handling the event of starting a race.
-        /// </summary>
-        public unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
-        {
-            if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *State.NumberOfRacers = (byte)GetPlayerCount();
-
-            _lastCharaSelectSync.ToGameOnlyCharacter();
-            ResetRace();
         }
 
         /// <summary>
@@ -214,7 +196,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
                 if (sync.Value.IsDefault())
                 {
-                    Debug.WriteLine("Discarding Race Packet due to Default Comparison");
+                    Trace.WriteLine("Discarding Race Packet due to Default Comparison");
                     continue;
                 }
 
@@ -277,22 +259,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Handles random number generator events.
-        /// </summary>
-        public int OnRandom(IHook<Functions.RandFn> hook)
-        {
-            var result = hook.OriginalFunction();
-            Debug.WriteLine($"[State] Current Seed: {result}");
-            return result;
-        }
-
-        /// <summary>
         /// Swaps spawn position of player 0 and the player's real index.
         /// </summary>
         public void SwapSpawns() => Sewer56.SonicRiders.API.Misc.SwapSpawnPositions(0, SelfInfo.PlayerIndex);
 
         public void OnSetSpawnLocationsStartOfRace(int value) => SwapSpawns();
         public unsafe Enum<AsmFunctionResult> OnCheckIfPlayerIsHuman(Sewer56.SonicRiders.Structures.Gameplay.Player* player) => IsHuman(Player.GetPlayerIndex(player));
-        protected MessageQueue _queue = new MessageQueue();
     }
 }

@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using LiteNetLib;
+using Ninject;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Components;
+using Riders.Tweakbox.Components.Netplay.Components.Menu;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -23,7 +26,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Individual Netplay components associated with this socket.
         /// </summary>
-        public INetplayComponent[] Components;
+        public Dictionary<Type, INetplayComponent> Components = new Dictionary<Type, INetplayComponent>();
 
         /// <summary>
         /// Provides C# events for in-game events such as changing a menu value.
@@ -68,26 +71,27 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
-            State.HandshakeTimeout = 5000;
             #endif
-            
-            Components = new INetplayComponent[]
-            {
-                // Menus
-                IoC.Get<Components.Menu.CourseSelect>(),
-                IoC.Get<Components.Menu.CharacterSelect>(),
-                IoC.Get<Components.Menu.RaceSettings>(),
+        }
 
-                // Gameplay
-                IoC.Get<Components.Game.Attack>(),
-                IoC.Get<Components.Game.Race>(),
-                IoC.Get<Components.Game.RaceEvents>(),
-                IoC.Get<Components.Game.RaceStartSync>(),
-                IoC.Get<Components.Game.SetupRace>(),
+        protected void Initialize()
+        {
+            IoC.Kernel.Rebind<Socket>().ToConstant(this);
 
-                // Misc
-                IoC.Get<Components.Misc.Random>(),
-            };
+            // Menus
+            AddComponent(IoC.Get<Components.Menu.CourseSelect>());
+            AddComponent(IoC.Get<Components.Menu.CharacterSelect>());
+            AddComponent(IoC.Get<Components.Menu.RaceSettings>());
+
+            // Gameplay
+            //AddComponent(IoC.Get<Components.Game.Attack>());
+            //AddComponent(IoC.Get<Components.Game.Race>());
+            //AddComponent(IoC.Get<Components.Game.RaceEvents>());
+            //AddComponent(IoC.Get<Components.Game.RaceStartSync>());
+            AddComponent(IoC.Get<Components.Game.SetupRace>());
+
+            // Misc
+            AddComponent(IoC.Get<Components.Misc.Random>());
         }
 
         /// <summary>
@@ -95,7 +99,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public virtual void Dispose()
         {
-            foreach (var component in Components)
+            foreach (var component in Components.Values)
                 component.Dispose();
 
             Controller.Socket = null;
@@ -126,12 +130,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 if (packet.IsDiscard(State.MaxLatency))
                 {
-                    Debug.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency");
+                    Trace.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency");
                     continue;
                 }
 
                 HandlePacket(packet);
-                foreach (var component in Components)
+                foreach (var component in Components.Values)
                     component.HandlePacket(packet);
             }
         }
@@ -182,7 +186,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to print to the console.</param>
         public void SendToAllExcept(NetPeer exception, ReliablePacket packet, DeliveryMethod method, string text)
         {
-            Debug.WriteLine(text);
+            Trace.WriteLine(text);
             SendToAllExcept(exception, packet.Serialize(), method);
         }
 
@@ -239,7 +243,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (peer == null)
                 return;
 
-            Debug.WriteLine(text);
+            Trace.WriteLine(text);
             SendAndFlush(peer, message, method);
         }
 
@@ -262,7 +266,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to log.</param>
         public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text)
         {
-            Debug.WriteLine(text);
+            Trace.WriteLine(text);
             SendToAllAndFlush(message, method);
         }
 
@@ -361,10 +365,28 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="eventName">(Optional) name of the event</param>
         public void Wait(DateTime waitUntil, string eventName = "")
         {
-            Debug.WriteLine($"[Socket] Waiting for event ({eventName}).");
-            Debug.WriteLine($"[Socket] Time: {DateTime.UtcNow}");
-            Debug.WriteLine($"[Socket] Start Time: {waitUntil}");
+            Trace.WriteLine($"[Socket] Waiting for event ({eventName}).");
+            Trace.WriteLine($"[Socket] Time: {DateTime.UtcNow}");
+            Trace.WriteLine($"[Socket] Start Time: {waitUntil}");
             ActionWrappers.TryWaitUntil(() => DateTime.UtcNow > waitUntil, int.MaxValue);
+        }
+
+        /// <summary>
+        /// Tries to retrieve a component of a specified type from the socket.
+        /// </summary>
+        public bool TryGetComponent<TComponent>(out TComponent value) where TComponent : INetplayComponent
+        {
+            var result = Components.TryGetValue(typeof(TComponent), out var val);
+            value = (TComponent) val;
+            return result;
+        }
+
+        /// <summary>
+        /// Adds an individual component to this socket.
+        /// </summary>
+        private void AddComponent<TComponent>(TComponent value) where TComponent : INetplayComponent
+        {
+            Components[typeof(TComponent)] = value;
         }
     }
 }
