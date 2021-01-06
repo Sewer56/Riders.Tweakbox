@@ -40,13 +40,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.TryGetComponent(out CharacterSelect charSelect))
                 charSelect.LastSync.ToGameOnlyCharacter();
 
+            if (Socket.TryGetComponent(out Attack attack))
+                attack.Reset();
+
             Socket.State.ResetRace();
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
-        {
-            
-        }
+        public void HandlePacket(Packet<NetPeer> packet) { }
     }
 }

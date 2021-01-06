@@ -84,7 +84,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Menu.RaceSettings>());
 
             // Gameplay
-            //AddComponent(IoC.Get<Components.Game.Attack>());
+            AddComponent(IoC.Get<Components.Game.Attack>());
             //AddComponent(IoC.Get<Components.Game.Race>());
             //AddComponent(IoC.Get<Components.Game.RaceEvents>());
             //AddComponent(IoC.Get<Components.Game.RaceStartSync>());
@@ -175,7 +175,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Executed at the end of each game frame.
         /// </summary>
-        public virtual void Update() { }
+        public virtual void Update()
+        {
+            State.FrameCounter += 1;
+        }
 
         /// <summary>
         /// Sends data to all peers except a certain peer.

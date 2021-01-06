@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using Reloaded.Hooks.Definitions;
-using Riders.Netplay.Messages.Misc;
+﻿using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
@@ -13,9 +9,9 @@ using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
-using Sewer56.SonicRiders.Structures.Tasks;
-using Sewer56.SonicRiders.Structures.Tasks.Base;
-using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using System;
+using System.Diagnostics;
+using System.Linq;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
@@ -32,7 +28,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         {
             Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
             Array.Fill(MovementFlagsSync, new Timestamped<MovementFlagsMsg>());
-            Array.Fill(AttackSync, new Timestamped<SetAttack>(new SetAttack(false, 0)));
         }
 
         /// <summary>
@@ -77,11 +72,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public MovementFlagsMsg[] MovementFlagsSync = new MovementFlagsMsg[Constants.MaxNumberOfPlayers];
 
         /// <summary>
-        /// Contains the synchronization data for handling attacks.
-        /// </summary>
-        public Timestamped<SetAttack>[] AttackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
-
-        /// <summary>
         /// Stage intro cutscene skip requested by host.
         /// </summary>
         public bool SkipRequested = false;
@@ -92,16 +82,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public Volatile<SyncStartGo> StartSyncGo = new Volatile<SyncStartGo>();
 
         /// <summary>
-        /// When true, does not rebroadcast attack events.
-        /// </summary>
-        public bool IsProcessingAttackPackets = false;
-
-        /// <summary>
-        /// Drops character select apply packets if true.
-        /// </summary>
-        private bool _dropCharSelectPackets = false;
-
-        /// <summary>
         /// Returns the total count of players.
         /// </summary>
         public int GetPlayerCount()
@@ -110,63 +90,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 return Math.Max(PlayerInfo.Max(x => x.PlayerIndex) + 1, SelfInfo.PlayerIndex + 1);
 
             return 1;
-        }
-
-        /// <summary>
-        /// True if there are any attacks.
-        /// </summary>
-        public bool HasAttacks() => AttackSync.Any(x => !x.IsDiscard(MaxLatency) && x.Value.IsValid);
-
-        /// <summary>
-        /// Checks if an attack should be rejected by rejecting any attacks performed on the player that were not sent over the network.
-        /// </summary>
-        public unsafe int ShouldRejectAttackTask(Sewer56.SonicRiders.Structures.Gameplay.Player* playerOne, Sewer56.SonicRiders.Structures.Gameplay.Player* playerTwo)
-        {
-            if (!IsProcessingAttackPackets)
-            {
-                var p1Index = Player.GetPlayerIndex(playerOne);
-                return p1Index != 0 ? 1 : 0;
-            }
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Processes all attack tasks and resets them to the default value.
-        /// </summary>
-        public unsafe void ProcessAttackTasks()
-        {
-            IsProcessingAttackPackets = true;
-            for (var x = 0; x < AttackSync.Length; x++)
-            {
-                if (x == 0)
-                    continue;
-
-                var atkSync = AttackSync[x];
-                if (atkSync.IsDiscard(MaxLatency))
-                    continue;
-
-                var value = atkSync.Value;
-                if (value.IsValid)
-                {
-                    Trace.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
-                    StartAttackTask(x, value.Target);
-                }
-            }
-
-            Array.Fill(AttackSync, new Timestamped<SetAttack>(new SetAttack(false, 0)));
-            IsProcessingAttackPackets = false;
-        }
-
-        /// <summary>
-        /// Starts an attack between two players.
-        /// </summary>
-        /// <param name="playerOne">The attacking player index.</param>
-        /// <param name="playerTwo">The player to be attacked index.</param>
-        /// <param name="a3">Unknown Parameter</param>
-        public unsafe void StartAttackTask(int playerOne, int playerTwo, int a3 = 1)
-        {
-            Functions.StartAttackTask.GetWrapper()(&Player.Players.Pointer[playerOne], &Player.Players.Pointer[playerTwo], a3);
         }
 
         /// <summary>

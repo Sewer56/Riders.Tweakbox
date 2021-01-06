@@ -10,6 +10,7 @@
 
         /// <summary>
         /// Replace Player 1 with Host. Other players with rest.
+        /// Currently not implemented.
         /// </summary>
         Spectator
     }

@@ -53,8 +53,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
-            Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
-            Event.OnStartAttackTask += OnStartAttackTask;
             Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
             Initialize();
@@ -73,19 +71,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
-            Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
-            Event.OnStartAttackTask -= OnStartAttackTask;
             Event.OnCheckIfPlayerIsHuman -= State.OnCheckIfPlayerIsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator -= State.OnCheckIfPlayerIsHuman;
         }
 
         public override SocketType GetSocketType() => SocketType.Host;
-
-        public override void Update()
-        {
-            base.Update();
-            State.FrameCounter += 1;
-        }
 
         public override void HandlePacket(Packet<NetPeer> packet)
         {
@@ -124,13 +114,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
                 State.MovementFlagsSync[playerIndex] = new Timestamped<MovementFlagsMsg>(packet.SetMovementFlags.Value);
-            }
-
-            if (packet.SetAttack.HasValue)
-            {
-                var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-                Trace.WriteLine($"[Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}");
-                State.AttackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
             }
 
             if (packet.Random.HasValue)
@@ -202,33 +185,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
                 SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
             }
-
-            // Broadcast Attack Data
-            if (State.HasAttacks())
-            {
-                Trace.WriteLine($"[Host] Sending Attack Matrix to Clients");
-                foreach (var peer in Manager.ConnectedPeerList)
-                {
-                    var excludeIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var attacks      = State.AttackSync.Select(x => x.Value).Where((attack, x) => x != excludeIndex).ToArray();
-                    if (!attacks.Any(x => x.IsValid))
-                        continue;
-
-                    #if DEBUG
-                    for (var x = 0; x < attacks.Length; x++)
-                    {
-                        var attack = attacks[x];
-                        if (attack.IsValid)
-                            Trace.WriteLine($"[Host] Send Attack Source ({x}), Target {attack.Target}");
-                    }
-                    #endif
-
-                    var packed       = new AttackPacked().AsInterface().SetData(attacks);
-                    SendAndFlush(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
-                }
-            }
-
-            State.ProcessAttackTasks();
         }
 
         private Player* OnAfterSetMovementFlagsOnInput(Player* player)
@@ -248,25 +204,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
 
             return player;
-        }
-
-        private int OnShouldRejectAttackTask(Player* playerOne, Player* playerTwo, int a3) => State.ShouldRejectAttackTask(playerOne, playerTwo);
-        private int OnStartAttackTask(Player* playerOne, Player* playerTwo, int a3)
-        {
-            // Send attack notification to host if not 
-            if (!State.IsProcessingAttackPackets)
-            {
-                var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);
-                if (p1Index != 0)
-                    return 0;
-
-                // Append to list of attacks to send out at frame end.
-                var p2Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerTwo);
-                Trace.WriteLine($"[Host] Set Attack on {p2Index}");
-                State.AttackSync[0] = new Timestamped<SetAttack>(new SetAttack((byte) p2Index));
-            }
-
-            return 0;
         }
         #endregion
 
