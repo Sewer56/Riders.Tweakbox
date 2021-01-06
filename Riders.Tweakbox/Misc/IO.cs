@@ -38,8 +38,8 @@ namespace Riders.Tweakbox.Misc
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
 
-        public NetplayConfigFile GetNetplayConfig() => File.Exists(NetplayConfigPath) ? JsonSerializer.Deserialize<NetplayConfigFile>(NetplayConfigPath) : new NetplayConfigFile();
-        public void SaveNetplayConfig(NetplayConfigFile configFile) => File.WriteAllText(NetplayConfigPath, JsonSerializer.Serialize<NetplayConfigFile>(configFile));
+        public NetplayConfigFile GetNetplayConfig() => File.Exists(NetplayConfigPath) ? JsonSerializer.Deserialize<NetplayConfigFile>(File.ReadAllText(NetplayConfigPath)) : new NetplayConfigFile();
+        public void SaveNetplayConfig(NetplayConfigFile configFile) => File.WriteAllText(NetplayConfigPath, JsonSerializer.Serialize<NetplayConfigFile>(configFile, new JsonSerializerOptions() { WriteIndented = true }));
 
         /// <summary>
         /// Compresses a chunk of data using the LZ4 compression algorithm.
