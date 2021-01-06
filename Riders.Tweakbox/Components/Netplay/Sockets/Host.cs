@@ -47,8 +47,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
-            Event.OnRaceSkipIntro += OnSkipRaceIntro;
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
@@ -65,8 +63,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
-            Event.OnRaceSkipIntro -= OnSkipRaceIntro;
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
@@ -96,20 +92,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void HandleReliable(NetPeer peer, ReliablePacket packet)
         {
-            // All remaining messages.
-            if (packet.HasSyncStartSkip)
-            {
-                State.SkipRequested = true;
-                SendToAllExcept(peer, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, "[Host] Received Skip from Client, Rebroadcasting.");
-            }
-
-            if (packet.HasSyncStartReady)
-            {
-                Trace.WriteLine("[Host] Received HasSyncStartReady from Client.");
-                var customData = State.ClientMap.GetCustomData(peer);
-                customData.ReadyToStartRace = true;
-            }
-
             if (packet.SetMovementFlags.HasValue)
             {
                 var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
@@ -124,38 +106,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         #region Events: On/After Events
-        private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
-        private void OnSkipRaceIntro()
-        {
-            bool TestAllReady() => State.ClientMap.GetCustomData().All(x => x.ReadyToStartRace);
-
-            // Send skip signal to clients.
-            if (!State.SkipRequested) 
-                SendToAllAndFlush(new ReliablePacket() { HasSyncStartSkip = true } , DeliveryMethod.ReliableOrdered, "[Host] Broadcasting Skip Signal.");
-
-            State.SkipRequested = false;
-            Trace.WriteLine("[Host] Waiting for ready messages.");
-
-            // Note to self: Don't use wait for all clients, because the messages may have already been sent by the clients.
-            if (!PollUntil(TestAllReady, State.HandshakeTimeout))
-            {
-                Trace.WriteLine("[Host] It's no use, let's get outta here!.");
-                Dispose();
-                return;
-            }
-
-            var startTime = new SyncStartGo(State.MaxLatency);
-            SendToAllAndFlush(new ReliablePacket() { SyncStartGo = startTime }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
-            
-            // Disable skip flags for everyone.
-            var data = State.ClientMap.GetCustomData();
-            foreach (var dt in data)
-                dt.ReadyToStartRace = false;
-
-            Wait(startTime.StartTime, "[Host] Race Started.");
-            State.OnIntroCutsceneEnd();
-        }
-
         private void OnRace(Task<byte, RaceTaskState>* task)
         {
             Poll();

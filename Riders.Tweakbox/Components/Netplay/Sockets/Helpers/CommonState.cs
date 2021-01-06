@@ -72,16 +72,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public MovementFlagsMsg[] MovementFlagsSync = new MovementFlagsMsg[Constants.MaxNumberOfPlayers];
 
         /// <summary>
-        /// Stage intro cutscene skip requested by host.
-        /// </summary>
-        public bool SkipRequested = false;
-
-        /// <summary>
-        /// Gets the go command from the host for syncing start time.
-        /// </summary>
-        public Volatile<SyncStartGo> StartSyncGo = new Volatile<SyncStartGo>();
-
-        /// <summary>
         /// Returns the total count of players.
         /// </summary>
         public int GetPlayerCount()
@@ -90,19 +80,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 return Math.Max(PlayerInfo.Max(x => x.PlayerIndex) + 1, SelfInfo.PlayerIndex + 1);
 
             return 1;
-        }
-
-        /// <summary>
-        /// Sets all players to non-CPU when the intro cutscene ends.
-        /// We do this because CPUs can still trigger certain events such as boosting in-race.
-        /// </summary>
-        public unsafe void OnIntroCutsceneEnd()
-        {
-            for (int x = 1; x < Player.MaxNumberOfPlayers; x++)
-            {
-                Player.Players[x].IsAiLogic = PlayerType.CPU;
-                Player.Players[x].IsAiVisual = PlayerType.CPU;
-            }
         }
 
         /// <summary>

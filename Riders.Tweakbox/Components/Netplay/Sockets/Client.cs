@@ -43,8 +43,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Add undo menu movement when connected.
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
-            Event.OnRaceSkipIntro += OnSkipRaceIntro;
 
             Event.OnRace += OnRace;
             Event.AfterRace += AfterRace;
@@ -63,8 +61,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
-            Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
-            Event.OnRaceSkipIntro -= OnSkipRaceIntro;
 
             Event.OnRace -= OnRace;
             Event.AfterRace -= AfterRace;
@@ -98,20 +94,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (packet.ServerMessage.HasValue)
                 HandleServerMessage(packet.ServerMessage.Value);
 
-            // All remaining messages.
-            if (packet.HasSyncStartSkip)
-                State.SkipRequested = true;
-
             if (packet.GameData.HasValue)
             {
                 Trace.WriteLine($"[Client] Received Game Data, Applying");
                 packet.GameData.Value.ToGame();
-            }
-
-            if (packet.SyncStartGo.HasValue)
-            {
-                Trace.WriteLine($"[Client] Set SyncStartGo");
-                State.StartSyncGo = packet.SyncStartGo.Value;
             }
 
             if (packet.MovementFlags.HasValue)
@@ -140,34 +126,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         }
 
         #region Events: On/After Events
-        private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => State.SkipRequested;
-        private void OnSkipRaceIntro()
-        {
-            SyncStartGo goMessage = default;
-            bool IsGoSignal()
-            {
-                goMessage = State.StartSyncGo.Get();
-                return !goMessage.IsDefault();
-            }
-
-            if (!State.SkipRequested)
-                SendAndFlush(Manager.FirstPeer, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, "[Client] Skipped intro ourselves, sending skip notification to host.");
-
-            State.SkipRequested = false;
-            SendAndFlush(Manager.FirstPeer, new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, "[Client] Sending HasSyncStartReady.");
-
-            if (!PollUntil(IsGoSignal, State.HandshakeTimeout))
-            {
-                Trace.WriteLine("[Client] No Go Signal Received, Bailing Out!.");
-                Dispose();
-                return;
-            }
-
-            Wait(goMessage.StartTime);
-            State.OnIntroCutsceneEnd();
-            Trace.WriteLine("[Client] Race Started.");
-        }
-
         private void OnRace(Task<byte, RaceTaskState>* task)
         {
             Poll();

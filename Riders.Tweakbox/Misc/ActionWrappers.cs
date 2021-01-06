@@ -114,14 +114,13 @@ namespace Riders.Tweakbox.Misc
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            bool flag = false;
-            
+
             while (watch.ElapsedMilliseconds < timeout)
             {
                 if (token.IsCancellationRequested)
                     return false;
 
-                flag = function();
+                var flag = function();
                 if (flag)
                     return true;
 

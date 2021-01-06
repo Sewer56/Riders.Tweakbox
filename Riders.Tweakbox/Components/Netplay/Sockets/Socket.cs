@@ -87,7 +87,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Game.Attack>());
             //AddComponent(IoC.Get<Components.Game.Race>());
             //AddComponent(IoC.Get<Components.Game.RaceEvents>());
-            //AddComponent(IoC.Get<Components.Game.RaceStartSync>());
+            //AddComponent(IoC.Get<Components.Game.ItemPickupSync>());
+            AddComponent(IoC.Get<Components.Game.RaceIntroSync>());
             AddComponent(IoC.Get<Components.Game.SetupRace>());
 
             // Misc
@@ -371,6 +372,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Trace.WriteLine($"[Socket] Waiting for event ({eventName}).");
             Trace.WriteLine($"[Socket] Time: {DateTime.UtcNow}");
             Trace.WriteLine($"[Socket] Start Time: {waitUntil}");
+
+            // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
             ActionWrappers.TryWaitUntil(() => DateTime.UtcNow > waitUntil, int.MaxValue);
         }
 
