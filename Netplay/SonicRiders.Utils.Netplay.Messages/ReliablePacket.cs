@@ -132,7 +132,7 @@ namespace Riders.Netplay.Messages
             if (Flags.HasAllFlags(HasData.HasIncrementLapCounter)) HasIncrementLapCounter = true;
 
             reader.ReadIfHasFlags(ref Random, Flags, HasData.HasRand);
-            if (Flags.HasAllFlags(HasData.HasGameData)) Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
+            if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
             reader.ReadIfHasFlags(ref SyncStartGo, Flags, HasData.HasSyncStartGo);
             reader.ReadIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
             reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
