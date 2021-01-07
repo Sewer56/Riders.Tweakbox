@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Numerics;
 using DearImguiSharp;
 using Sewer56.Imgui.Misc;
 
@@ -22,12 +24,13 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Renders the content of the Menu Bar.
         /// </summary>
-        public void Render()
+        public unsafe void Render()
         {
             ImGui.BeginMainMenuBar();
 
             // Get size of main menu.
-            var menuSize = Utilities.Utilities.RunVectorFunction(ImGui.GetWindowSize);
+            var menuSize = new Vector2();
+            ImGui.__Internal.GetWindowSize((IntPtr)(&menuSize));
 
             // Render all menus.
             foreach (var menu in Menus)

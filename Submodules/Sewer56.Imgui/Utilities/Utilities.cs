@@ -9,17 +9,22 @@ namespace Sewer56.Imgui.Utilities
         /// <summary>
         /// Runs a function that accepts a vector and returns the result.
         /// </summary>
-        public static Vector2 RunVectorFunction(Action<ImVec2> function)
+        public static unsafe Vector2 RunVectorFunction(Action<ImVec2> function)
         {
-            var vec = new ImVec2();
-            function(vec);
-            return new Vector2(vec.X, vec.Y);
+            var vec2 = new Vector2();
+            function(new ImVec2(&vec2));
+            return vec2;
         }
 
         /// <summary>
-        /// Retrieves the content region of the window.
+        /// Runs a function that accepts a vector and returns the result.
         /// </summary>
-        public static Vector2 GetWindowRightCornerPosition() => RunVectorFunction(ImGui.GetWindowPos) + RunVectorFunction(ImGui.GetWindowSize);
+        public static unsafe Vector4 RunVectorFunction(Action<ImVec4> function)
+        {
+            var vec4 = new Vector4();
+            function(new ImVec4(&vec4));
+            return vec4;
+        }
 
         /// <summary/>
         public static ImVec4 ToImVec(this Vector4 vector)
