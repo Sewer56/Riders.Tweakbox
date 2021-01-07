@@ -11,22 +11,10 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
     {
         private static PhysicsEditorConfig _default = PhysicsEditorConfig.FromGame();
 
-        public struct Internal
-        {
-            public RunningPhysics  RunningPhysics1 { get; set; }
-            public RunningPhysics2 RunningPhysics2 { get; set; }
-        }
-
         /// <summary>
         /// Internal data of the physics editor.
         /// </summary>
-        public Internal Data
-        {
-            get => _data;
-            set => _data = value;
-        }
-
-        private Internal _data;
+        public Internal Data;
 
         /// <summary>
         /// Creates a <see cref="PhysicsEditorConfig"/> from the values present in game memory.
@@ -35,7 +23,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
         {
             return new PhysicsEditorConfig
             {
-                _data =
+                Data =
                 {
                     RunningPhysics1 = *Player.RunPhysics,
                     RunningPhysics2 = *Player.RunPhysics2
@@ -45,24 +33,31 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
 
         public unsafe byte[] ToBytes()
         {
-            using var reloadedMemoryStream = new ExtendedMemoryStream(new byte[sizeof(RunningPhysics) + sizeof(RunningPhysics2)]);
+            using var reloadedMemoryStream = new ExtendedMemoryStream(new byte[sizeof(Internal)]);
             reloadedMemoryStream.Write(Data);
             return reloadedMemoryStream.ToArray();
         }
 
         public unsafe Span<byte> FromBytes(Span<byte> bytes)
         {
-            Struct.FromArray(bytes, out _data);
-            return bytes.Slice(sizeof(RunningPhysics) + sizeof(RunningPhysics2));
+            Struct.FromArray(bytes, out Data);
+            return bytes.Slice(sizeof(Internal));
         }
 
         public void Apply()
         {
-            *Player.RunPhysics  = _data.RunningPhysics1;
-            *Player.RunPhysics2 = _data.RunningPhysics2;
+            *Player.RunPhysics  = Data.RunningPhysics1;
+            *Player.RunPhysics2 = Data.RunningPhysics2;
         }
 
         public IConfiguration GetCurrent() => FromGame();
         public IConfiguration GetDefault() => _default;
+
+        /* Internal representation of this config. */
+        public struct Internal
+        {
+            public RunningPhysics RunningPhysics1;
+            public RunningPhysics2 RunningPhysics2;
+        }
     }
 }
