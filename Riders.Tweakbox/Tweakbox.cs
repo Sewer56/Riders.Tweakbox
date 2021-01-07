@@ -64,7 +64,7 @@ namespace Riders.Tweakbox
                         IoC.GetConstant<GearEditor>(),
                         IoC.GetConstant<PhysicsEditor>()
                     }),
-                    new MenuBarItem("Misc", new List<IComponent>()
+                    new MenuBarItem("Debug", new List<IComponent>()
                     {
                         IoC.GetConstant<DemoWindow>(),
                         IoC.GetConstant<UserGuideWindow>(),
