@@ -7,6 +7,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
@@ -26,6 +27,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private bool _skipRequested = false;
 
         /// <summary>
+        /// Reset frame pacing speedup after race start wait.
+        /// </summary>
+        private FixesController _fixesController;
+
+        /// <summary>
         /// [Client] Gets the go command from the host for syncing start time.
         /// </summary>
         private Volatile<SyncStartGo> _startSyncGo = new Volatile<SyncStartGo>();
@@ -34,6 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             Socket = socket;
             Event  = @event;
+            _fixesController = IoC.Get<FixesController>();
 
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnRaceSkipIntro;
@@ -61,6 +68,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
 
             OnIntroCutsceneEnd();
+            _fixesController.ResetSpeedup();
         }
 
         /// <inheritdoc />
@@ -121,8 +129,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            Socket.WaitWithSpin(goMessage.StartTime);
-            Trace.WriteLine($"[{nameof(RaceIntroSync)} / Client] Race Started.");
+            Socket.WaitWithSpin(goMessage.StartTime, $"[{nameof(RaceIntroSync)} / Client] Race Started.");
             return true;
         }
 
