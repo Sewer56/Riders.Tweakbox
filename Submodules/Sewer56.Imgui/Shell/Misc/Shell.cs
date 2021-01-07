@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using DearImguiSharp;
 using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Utilities;
@@ -9,7 +10,7 @@ namespace Sewer56.Imgui.Shell
 {
     public static partial class Shell
     {
-        public static unsafe void SetupTheme(string configFolder)
+        public static unsafe void SetupImGuiConfig(string configFolder)
         {
             var io = ImGui.GetIO();
             io.BackendFlags |= (int)ImGuiBackendFlags.ImGuiBackendFlagsHasGamepad;
@@ -17,8 +18,8 @@ namespace Sewer56.Imgui.Shell
             io.ConfigFlags |= (int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableGamepad;
             io.ConfigFlags |= (int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableKeyboard;
             io.ConfigFlags &= ~(int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableSetMousePos;
-            io.IniFilename = Path.Combine(configFolder, "imgui.ini");
-
+            ((ImGuiIO.__Internal*)io.__Instance)->IniFilename = Marshal.StringToHGlobalAnsi("tweakbox.imgui.ini");
+            
             var fontPath = Path.Combine(configFolder, "Assets/Fonts/Ruda-Bold.ttf");
             var font = ImGui.ImFontAtlasAddFontFromFileTTF(io.Fonts, fontPath, 15.0f, null, ref Constants.NullReference<ushort>());
             if (font != null)

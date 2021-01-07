@@ -80,7 +80,7 @@ namespace Riders.Tweakbox
             };
 
             var imguiHook = await ImguiHook.Create(tweakBox.Render);
-            Shell.SetupTheme(modFolder);
+            Shell.SetupImGuiConfig(modFolder);
             tweakBox._hook = imguiHook;
             tweakBox._isReady = true;
             return tweakBox;
