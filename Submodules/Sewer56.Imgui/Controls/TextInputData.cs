@@ -61,7 +61,7 @@ namespace Sewer56.Imgui.Controls
         /// </summary>
         public int FilterValidPathCharacters(IntPtr ptr)
         {
-            var data = new ImGuiInputTextCallbackData();
+            var data = new ImGuiInputTextCallbackData((void*)ptr);
             return CharacterFilter.IsPathCharacterValid(GetEventCharacter(data)) ? 0 : 1;
         }
 
