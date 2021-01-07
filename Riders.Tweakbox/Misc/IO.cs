@@ -15,6 +15,8 @@ namespace Riders.Tweakbox.Misc
         // Configuration Directories.
         public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
         public string TweakboxConfigFolder => Path.Combine(ConfigFolder, "TweakboxConfigurations");
+
+        public string FixesConfigFolder => Path.Combine(ConfigFolder, "FixesConfigurations");
         public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
@@ -29,6 +31,7 @@ namespace Riders.Tweakbox.Misc
         {
             ModFolder = modFolder;
             Directory.CreateDirectory(TweakboxConfigFolder);
+            Directory.CreateDirectory(FixesConfigFolder);
             Directory.CreateDirectory(GearConfigFolder);
             Directory.CreateDirectory(PhysicsConfigFolder);
             Directory.CreateDirectory(NetplayConfigFolder);
@@ -37,6 +40,7 @@ namespace Riders.Tweakbox.Misc
         public string[] GetTweakboxConfigFiles() => Directory.GetFiles(TweakboxConfigFolder, ConfigSearchPattern);
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
+        public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
 
         public NetplayConfigFile GetNetplayConfig() => File.Exists(NetplayConfigPath) ? JsonSerializer.Deserialize<NetplayConfigFile>(File.ReadAllText(NetplayConfigPath)) : new NetplayConfigFile();
         public void SaveNetplayConfig(NetplayConfigFile configFile) => File.WriteAllText(NetplayConfigPath, JsonSerializer.Serialize<NetplayConfigFile>(configFile, new JsonSerializerOptions() { WriteIndented = true }));

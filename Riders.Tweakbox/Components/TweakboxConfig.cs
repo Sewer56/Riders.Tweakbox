@@ -18,7 +18,7 @@ namespace Riders.Tweakbox.Components
             // DO NOT REARRANGE, THIS IS ORDER OF SERIALIZATION.
             GearEditorConfig.FromGame(),
             PhysicsEditorConfig.FromGame(),
-            IoC.GetConstant<FixesConfig>()
+            IoC.GetConstant<FixesEditorConfig>()
         };
 
         /// <inheritdoc />
