@@ -36,7 +36,8 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
         }
 
         public ref bool IsEnabled() => ref _isEnabled;
-        public bool IsAvailable() => !SharedController.NetplayEnabled;
+        public bool IsAvailable() => !IoC.Get<NetplayController>().IsConnected();
+
         public void Disable() => CurrentConfig.GetDefault().Apply();
         public void Enable() => CurrentConfig?.Apply();
 
