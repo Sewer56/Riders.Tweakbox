@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -69,8 +70,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
                     ImGui.Checkbox("Lag Compensation", ref _config.Data.FramePacingSpeedup);
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
-                    Reflection.MakeControl(ref _config.Data.SpinTime, nameof(_config.Data.SpinTime));
-                    Tooltip.TextOnHover("Higher values use more CPU but make frame pacing more accurate. Recommended value: 1");
+                    ImGui.TextWrapped($"CPU Spin Time Remaining Threshold: {_controller.SpinTime}ms");
                 }
 
                 ImGui.TreePop();

@@ -1,9 +1,15 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security;
+using System.Threading;
 using EnumsNET;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
-using Reloaded.WPF.Animations.FrameLimiter;
+using Reloaded.Hooks.Definitions.Structs;
+using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Memory.Kernel32;
 using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
@@ -17,6 +23,20 @@ namespace Riders.Tweakbox.Controllers
 {
     public unsafe class FixesController
     {
+        /// <summary>
+        /// Amount of time spinning after sleep.
+        /// </summary>
+        public float SpinTime => _timerGranularityMs + 1;
+
+        /*
+            The + 1 above is here because Sleep() has a granularity of 1.
+            
+            With a timer granularity of e.g. 0.5, this means the maximum time spent sleeping
+            can be 1.5 for Sleep(1).
+         
+            Internally SharpFPS uses Sleep(1) until spinning, hence this decision is smart :)
+        */
+
         // Internal
         private bool _resetSpeedup = false;
 
@@ -25,13 +45,30 @@ namespace Riders.Tweakbox.Controllers
 
         // Hooks
         private IHook<Functions.DefaultFn> _endFrameHook;
-        private SharpFPS _fps;
+        private FramePacer _fps;
         private IAsmHook _bootToMenu;
+        private float _timerGranularityMs;
+        private IHook<TimeBeginPeriod> _beginPeriodHook;
+        private IHook<TimeEndPeriod> _endPeriodHook;
 
         public FixesController()
         {
+            // Hook and disable frequency adjusting functions.
+            var winmm = Native.LoadLibraryW("winmm.dll");
+            var timeBeginPeriod = SDK.ReloadedHooks.CreateFunction<TimeBeginPeriod>((long) Native.GetProcAddress(winmm, "timeBeginPeriod"));
+            var timeEndPeriod   = SDK.ReloadedHooks.CreateFunction<TimeEndPeriod>((long) Native.GetProcAddress(winmm, "timeEndPeriod"));
+            var beginEndPeriodPtr = (delegate*unmanaged[Stdcall]<int, int>)&TimeBeginEndPeriodImpl;
+            _beginPeriodHook = timeBeginPeriod.Hook(Unsafe.AsRef<TimeBeginPeriod>((void*)&beginEndPeriodPtr)).Activate();
+            _endPeriodHook = timeEndPeriod.Hook(Unsafe.AsRef<TimeEndPeriod>((void*)&beginEndPeriodPtr)).Activate();
+            
+            // Set Windows Timer resolution.
+            Native.NtQueryTimerResolution(out int maximumResolution, out int _, out int currentResolution);
+            Native.NtSetTimerResolution(maximumResolution, true, out currentResolution);
+            _timerGranularityMs = currentResolution / 10000f; // 100us units to milliseconds.
+            
+            // Now for our 
             _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
-            _fps = new SharpFPS
+            _fps = new FramePacer
             {
                 SpinTimeRemaining = 1,
                 FPSLimit = 60
@@ -91,7 +128,7 @@ namespace Riders.Tweakbox.Controllers
                     /* Game is Stupid */
                 }
 
-                _fps.SpinTimeRemaining = (float) _config.Data.SpinTime;
+                _fps.SpinTimeRemaining = (float)SpinTime;
                 _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup);
                 *State.TotalFrameCounter += 1;
                 return;
@@ -99,5 +136,15 @@ namespace Riders.Tweakbox.Controllers
 
             _endFrameHook.OriginalFunction();
         }
+
+        /* Parameter: uMilliseconds */
+        [UnmanagedCallersOnly(CallConvs = new []{ typeof(CallConvStdcall) })]
+        static int TimeBeginEndPeriodImpl(int uMilliseconds) => 0;
+
+        [Function(CallingConventions.Stdcall)]
+        private struct TimeBeginPeriod { public FuncPtr<int, int> Value; }
+
+        [Function(CallingConventions.Stdcall)]
+        private struct TimeEndPeriod { public FuncPtr<int, int> Value; }
     }
 }

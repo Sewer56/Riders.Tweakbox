@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using DearImguiSharp;
 
 namespace Sewer56.Imgui.Layout
@@ -17,10 +18,13 @@ namespace Sewer56.Imgui.Layout
         /// <summary>
         /// Initializes the content wrapper.
         /// </summary>
-        public ContentWrapper(int itemWidth)
+        public unsafe ContentWrapper(int itemWidth)
         {
-            BottomRight = Utilities.Utilities.RunVectorFunction(ImGui.GetContentRegionAvail);
-            ItemWidth = itemWidth;
+            var vec2 = new Vector2();
+            ImGui.__Internal.GetContentRegionAvail((IntPtr) (&vec2));
+
+            BottomRight = vec2;
+            ItemWidth   = itemWidth;
         }
 
         /// <summary>
@@ -42,12 +46,16 @@ namespace Sewer56.Imgui.Layout
         /// <summary>
         /// Sets <see cref="InitialX"/> if it is not set.
         /// </summary>
-        private void SetInitialX()
+        private unsafe void SetInitialX()
         {
             if (!InitialX.HasValue)
             {
-                var windowPos = Utilities.Utilities.RunVectorFunction(ImGui.GetWindowPos);
-                var rectMin = Utilities.Utilities.RunVectorFunction(ImGui.GetItemRectMin);
+                var windowPos = new Vector2();
+                var rectMin = new Vector2();
+
+                ImGui.__Internal.GetWindowPos((IntPtr)(&windowPos));
+                ImGui.__Internal.GetItemRectMin((IntPtr)(&rectMin));
+
                 InitialX = (int)(rectMin.X - windowPos.X);
                 CurrentX = InitialX.Value;
             }

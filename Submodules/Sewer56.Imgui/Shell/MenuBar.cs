@@ -37,12 +37,12 @@ namespace Sewer56.Imgui.Shell
                 menu.Render(ref menu.IsEnabled());
 
             // Render text.
-            var vector        = new ImVec2();
+            var vector = new ImVec2.__Internal();
             int currentOffset = (int) Constants.Spacing;
             foreach (var text in Text)
             {
-                ImGui.CalcTextSize(vector, text, null, false, -1.0f);
-                currentOffset += (int) vector.X;
+                ImGui.__Internal.CalcTextSize((IntPtr) (&vector), text, null, false, -1.0f);
+                currentOffset += (int) vector.x;
                 currentOffset += (int) Constants.Spacing;
                 ImGui.SameLine(menuSize.X - currentOffset, 0);
                 ImGui.Text(text);
