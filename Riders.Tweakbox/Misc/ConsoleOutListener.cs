@@ -15,6 +15,10 @@ namespace Riders.Tweakbox.Misc
         }
 
         public override void Write(string message)     => _logger.WriteAsync(message);
-        public override void WriteLine(string message) => _logger.WriteLineAsync($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}");
+        public override void WriteLine(string message)
+        {
+            var time = DateTime.UtcNow;
+            _logger.WriteLineAsync($"[{time.Minute}:{time.Second:00}.{time.Millisecond:000}] {message}");
+        }
     }
 }

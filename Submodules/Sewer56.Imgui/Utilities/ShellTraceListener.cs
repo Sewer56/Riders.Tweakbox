@@ -13,12 +13,14 @@ namespace Sewer56.Imgui.Utilities
 
         public override void Write(string message)
         {
-            Shell.Shell.Log(new LogItem($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}", Timeout));
+            var time = DateTime.UtcNow;
+            Shell.Shell.Log(new LogItem($"[{time.Second:00}.{time.Millisecond:000}] {message}", Timeout));
         }
 
         public override void WriteLine(string message)
         {
-            Shell.Shell.Log(new LogItem($"[{DateTime.UtcNow.Second}.{DateTime.UtcNow.Millisecond}] {message}", Timeout));
+            var time = DateTime.UtcNow;
+            Shell.Shell.Log(new LogItem($"[{time.Second:00}.{time.Millisecond:000}] {message}", Timeout));
         }
     }
 }
