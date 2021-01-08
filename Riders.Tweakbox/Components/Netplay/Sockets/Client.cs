@@ -25,7 +25,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
-            Manager.Start();
+            Manager.StartInManualMode(0);
             State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
 
             // Add undo menu movement when connected.
@@ -116,7 +116,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         #region Events: On/After Events
         private void OnRace(Task<byte, RaceTaskState>* task)
         {
-            Poll();
+            Update();
             State.ApplyRaceSync();
         }
 

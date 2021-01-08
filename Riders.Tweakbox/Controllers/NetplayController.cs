@@ -27,8 +27,8 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void OnEndScene()
         {
-            Socket?.Poll();
             Socket?.Update();
+            Socket?.OnFrame();
         }
     }
 }

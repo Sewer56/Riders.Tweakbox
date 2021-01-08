@@ -33,7 +33,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Trace.WriteLine($"[Host] Hosting Server on {port} with password {password}");
             base.State = new HostState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Password   = password;
-            Manager.Start(port);
+            Manager.StartInManualMode(port);
 
             Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
             Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
@@ -98,7 +98,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         #region Events: On/After Events
         private void OnRace(Task<byte, RaceTaskState>* task)
         {
-            Poll();
+            Update();
             State.ApplyRaceSync();
         }
 

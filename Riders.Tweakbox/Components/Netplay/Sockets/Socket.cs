@@ -56,17 +56,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public BandwidthTracker Bandwidth;
 
+        private Stopwatch _stopWatch = new Stopwatch();
+
         /// <summary>
         /// Constructs the current socket.
         /// </summary>
         public Socket(NetplayController controller)
         {
+            _stopWatch.Start();
             Listener = new NetworkEventListener(this);
             Manager = new NetManager(Listener);
             Controller = controller;
             Manager.EnableStatistics = true;
             Bandwidth = new BandwidthTracker(Manager);
-
+            
             #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
             #endif
@@ -113,9 +116,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Updates the current socket state.
         /// </summary>
-        public void Poll()
+        public void Update()
         {
-            Manager.Flush();
+            Manager.ManualReceive();
+            Manager.ManualUpdate((int) _stopWatch.ElapsedMilliseconds);
+            _stopWatch.Restart();
+
             Manager.PollEvents();
             HandlePackets();
         }
@@ -174,7 +180,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Executed at the end of each game frame.
         /// </summary>
-        public virtual void Update()
+        public virtual void OnFrame()
         {
             State.FrameCounter += 1;
         }
@@ -214,8 +220,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     continue;
 
                 peer.Send(data, method);
-                peer.Flush();
             }
+
+            Update();
         }
 
         /// <summary>
@@ -230,7 +237,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 return;
 
             peer.Send(message.Serialize(), method);
-            peer.Flush();
+            Update();
         }
 
         /// <summary>
@@ -257,7 +264,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public void SendToAllAndFlush(IPacket message, DeliveryMethod method)
         {
             Manager.SendToAll(message.Serialize(), method);
-            Manager.Flush();
+            Update();
         }
 
         /// <summary>
@@ -292,7 +299,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Message Test
             bool HasReceived()
             {
-                Poll();
+                Update();
                 return received == true;
             }
 
@@ -326,9 +333,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Message Test
             bool HasReceivedAll()
             {
-                var peer = peers.FirstOrDefault();
-                peer?.NetManager.PollEvents();
-                peer?.NetManager.Flush();
+                Update();
                 return received.All(x => x == true);
             }
 
@@ -355,7 +360,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             return ActionWrappers.TryWaitUntil(() =>
             {
-                Poll();
+                Update();
                 return function();
             }, timeout, sleepTime, token);
         }

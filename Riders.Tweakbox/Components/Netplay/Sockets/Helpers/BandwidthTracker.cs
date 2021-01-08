@@ -15,8 +15,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
         public NetManager Manager;
         private Timer _timer;
-        private ulong _lastSent;
-        private ulong _lastReceived;
+        private long _lastSent;
+        private long _lastReceived;
 
         public BandwidthTracker(NetManager manager, int timeInterval = 1000)
         {
