@@ -27,7 +27,7 @@ namespace Riders.Tweakbox.Components.GearEditor
         public GearEditor(IO io)
         {
             _io = io;
-            _profileSelector = new ProfileSelector(_io.GearConfigFolder, IO.ConfigExtension, IO.CompressLZ4(CurrentConfig.ToBytes()), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            _profileSelector = new ProfileSelector(_io.GearConfigFolder, IO.ConfigExtension, IO.CompressLZ4(CurrentConfig.GetDefault().ToBytes()), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
         }
 

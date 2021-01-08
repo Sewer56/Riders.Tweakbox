@@ -21,7 +21,7 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
         public PhysicsEditor(IO io)
         {
             _io = io;
-            _profileSelector = new ProfileSelector(_io.PhysicsConfigFolder, IO.ConfigExtension, CurrentConfig.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            _profileSelector = new ProfileSelector(_io.PhysicsConfigFolder, IO.ConfigExtension, CurrentConfig.GetDefault().ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
         }
 

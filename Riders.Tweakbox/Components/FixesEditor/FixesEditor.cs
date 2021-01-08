@@ -20,7 +20,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
         public FixesEditor(IO io)
         {
             _io = io;
-            _profileSelector = new ProfileSelector(_io.FixesConfigFolder, IO.ConfigExtension, _config.ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            _profileSelector = new ProfileSelector(_io.FixesConfigFolder, IO.ConfigExtension, _config.GetDefault().ToBytes(), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
             _profileSelector.Save();
         }
 
