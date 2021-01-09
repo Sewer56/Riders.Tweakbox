@@ -10,6 +10,8 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Imgui.Hook.DirectX.Definitions;
+using Reloaded.Imgui.Hook.DirectX.Hooks;
 using Reloaded.Memory.Kernel32;
 using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Misc;
@@ -60,6 +62,7 @@ namespace Riders.Tweakbox.Controllers
         private float _timerGranularityMs;
         private IHook<TimeBeginPeriod> _beginPeriodHook;
         private IHook<TimeEndPeriod> _endPeriodHook;
+        private IHook<DX9Hook.CreateDevice> _createDeviceHook;
 
         public FixesController()
         {
@@ -75,8 +78,11 @@ namespace Riders.Tweakbox.Controllers
             Native.NtQueryTimerResolution(out int maximumResolution, out int _, out int currentResolution);
             Native.NtSetTimerResolution(maximumResolution, true, out currentResolution);
             _timerGranularityMs = currentResolution / 10000f; // 100us units to milliseconds.
-            
-            // Now for our 
+
+            // Now for our hooks.
+            var _dx9Hook = new DX9Hook(SDK.ReloadedHooks);
+            _createDeviceHook = _dx9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+
             _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
             _fps = new FramePacer
             {
@@ -152,6 +158,17 @@ namespace Riders.Tweakbox.Controllers
             }
 
             _endFrameHook.OriginalFunction();
+        }
+
+        private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType devicetype, IntPtr hfocuswindow, CreateFlags behaviorflags, ref PresentParameters ppresentationparameters, int** ppreturneddeviceinterface)
+        {
+            if (_config.Data.D3DDeviceFlags)
+            {
+                behaviorflags &= ~CreateFlags.Multithreaded;
+                behaviorflags |= CreateFlags.DisablePsgpThreading;
+            }
+
+            return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, devicetype, hfocuswindow, behaviorflags, ref ppresentationparameters, ppreturneddeviceinterface);
         }
 
         /* Parameter: uMilliseconds */

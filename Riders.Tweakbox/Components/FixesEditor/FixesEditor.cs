@@ -64,8 +64,11 @@ namespace Riders.Tweakbox.Components.FixesEditor
                 ImGui.TreePop();
             }
 
-            if (ImGui.TreeNodeStr("Frame Pacing"))
+            if (ImGui.TreeNodeStr("Rendering Optimizations"))
             {
+                ImGui.Checkbox("Fix D3D Device Flags", ref _config.Data.D3DDeviceFlags);
+                Tooltip.TextOnHover("Applies on boot.");
+
                 if (ImGui.Checkbox("Frame Pacing Fix", ref _config.Data.FramePacing))
                     _controller.ResetSpeedup();
 
