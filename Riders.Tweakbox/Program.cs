@@ -24,7 +24,10 @@ namespace Riders.Tweakbox
         private IModLoader _modLoader;
 
         private Tweakbox _tweakbox;
-        
+        #if DEBUG
+        private GCMonitor _gcMonitor;
+        #endif
+
         /// <summary>
         /// Entry point for your mod.
         /// </summary>
@@ -32,7 +35,7 @@ namespace Riders.Tweakbox
         {
             #if DEBUG
             Debugger.Launch();
-            new GCLog();
+            _gcMonitor = GCMonitor.Instance;
             #endif
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
@@ -48,10 +51,9 @@ namespace Riders.Tweakbox
             Reloaded.Imgui.Hook.SDK.Init(hooks);
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);
 
-            // Garbage collect and set low latency mode.
+            // Tweak Garbage Collection.
             GC.Collect();
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
-            Console.WriteLine("Low Latency GC yay");
         }
 
         /* Mod loader actions. */
@@ -80,22 +82,5 @@ namespace Riders.Tweakbox
            For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
         */
         public static void Main() { }
-    }
-
-    /// <summary>
-    /// This class is used to get a running log of the number of garbage collections that occur.
-    /// </summary>
-    public sealed class GCLog
-    {
-        /// <summary>
-        /// Releases unmanaged resources and performs other cleanup operations before the
-        /// <see cref="GCLog"/> is reclaimed by garbage collection.
-        /// </summary>
-        ~GCLog()
-        {
-            Trace.WriteLine("Garbage Collection!");
-            if (!AppDomain.CurrentDomain.IsFinalizingForUnload() && !Environment.HasShutdownStarted)
-                new GCLog();
-        }
     }
 }

@@ -42,6 +42,7 @@ namespace Riders.Tweakbox.Controllers
 
         // Settings
         private FixesEditorConfig _config = IoC.GetConstant<FixesEditorConfig>();
+        private Device _device = new Device((IntPtr)0x0);
 
         // Hooks
         private IHook<Functions.DefaultFn> _endFrameHook;
@@ -119,15 +120,15 @@ namespace Riders.Tweakbox.Controllers
             {
                 try
                 {
-                    var deviceAddy  = *(void**)0x016BF1B4;
-                    var device      = new Device((IntPtr)(deviceAddy));
-                    device.EndScene();
+                    var deviceAddress  = *(void**)0x016BF1B4;
+                    _device.NativePointer = (IntPtr) deviceAddress;
+                    _device.EndScene();
                 }
                 catch (Exception)
                 {
                     /* Game is Stupid */
                 }
-
+               
                 _fps.SpinTimeRemaining = (float)SpinTime;
                 _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup);
                 *State.TotalFrameCounter += 1;
