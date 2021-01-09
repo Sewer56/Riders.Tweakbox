@@ -168,6 +168,9 @@ namespace Riders.Tweakbox.Controllers
                 behaviorflags |= CreateFlags.DisablePsgpThreading;
             }
 
+            if (!ppresentationparameters.Windowed)
+                Native.ShowCursor(true);
+            
             return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, devicetype, hfocuswindow, behaviorflags, ref ppresentationparameters, ppreturneddeviceinterface);
         }
 
