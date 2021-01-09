@@ -64,12 +64,16 @@ namespace Riders.Tweakbox.Components.GearEditor
         /* Gear Editor */
         private void EditGears()
         {
+            ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
+
             for (int x = 0; x <= (int)ExtremeGearEnum.Cannonball; x++)
             {
                 var headerName = ((ExtremeGearEnum)x).GetName();
                 if (ImGui.CollapsingHeaderTreeNodeFlags(headerName, 0))
                     EditGear((ExtremeGear*) Player.Gears.GetPointerToElement(x));
             }
+
+            ImGui.PopItemWidth();
         }
 
         private void EditGear(ExtremeGear* gear)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
@@ -53,6 +53,9 @@ namespace Riders.Tweakbox.Components.FixesEditor
 
         private unsafe void EditFixes()
         {
+            // Fix item width for long labels.
+            ImGui.PushItemWidth(ImGui.GetFontSize() * - 20);
+            
             if (ImGui.TreeNodeStr("Startup"))
             {
                 ImGui.Checkbox("Boot to Menu", ref _config.Data.BootToMenu);
@@ -75,6 +78,9 @@ namespace Riders.Tweakbox.Components.FixesEditor
 
                 ImGui.TreePop();
             }
+
+            // Restore item width
+            ImGui.PopItemWidth();
         }
     }
 }

@@ -54,6 +54,8 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
 
         private void EditRunningPhysics()
         {
+            ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
+
             if (ImGui.TreeNodeStr("Speed"))
             {
                 ImGui.Spacing();
@@ -109,6 +111,8 @@ namespace Riders.Tweakbox.Components.PhysicsEditor
 
                 ImGui.TreePop();
             }
+
+            ImGui.PopItemWidth();
         }
     }
 }
