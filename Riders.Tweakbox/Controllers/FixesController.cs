@@ -3,22 +3,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security;
-using System.Threading;
 using EnumsNET;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
-using Reloaded.Imgui.Hook.DirectX.Definitions;
-using Reloaded.Imgui.Hook.DirectX.Hooks;
-using Reloaded.Memory.Kernel32;
 using Riders.Tweakbox.Components.FixesEditor;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
+using Sewer56.SonicRiders.Internal.DirectX;
 using Sewer56.SonicRiders.Structures.Enums;
 using SharpDX.Direct3D9;
 
@@ -80,8 +76,7 @@ namespace Riders.Tweakbox.Controllers
             _timerGranularityMs = currentResolution / 10000f; // 100us units to milliseconds.
 
             // Now for our hooks.
-            var _dx9Hook = new DX9Hook(SDK.ReloadedHooks);
-            _createDeviceHook = _dx9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+            _createDeviceHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
 
             _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
             _fps = new FramePacer { FPSLimit = 60 };
