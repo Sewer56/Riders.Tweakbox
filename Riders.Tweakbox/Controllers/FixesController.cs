@@ -76,7 +76,7 @@ namespace Riders.Tweakbox.Controllers
             _timerGranularityMs = currentResolution / 10000f; // 100us units to milliseconds.
 
             // Now for our hooks.
-            _createDeviceHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+            _createDeviceHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
 
             _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
             _fps = new FramePacer { FPSLimit = 60 };
