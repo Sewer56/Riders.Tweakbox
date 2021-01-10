@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
@@ -66,6 +68,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
             {
                 if (ImGui.Checkbox("Frame Pacing Fix", ref _config.Data.FramePacing))
                     _controller.ResetSpeedup();
+
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
                 if (_config.Data.FramePacing)
@@ -73,7 +76,10 @@ namespace Riders.Tweakbox.Components.FixesEditor
                     ImGui.Checkbox("Lag Compensation", ref _config.Data.FramePacingSpeedup);
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
-                    ImGui.TextWrapped($"CPU Spin Time Remaining Threshold: {_controller.SpinTime}ms");
+                    ImGui.Text($"CPU Load {_controller.CpuUsage:00.00}%");
+                    ImGui.Text($"CPU Spin Time Remaining Threshold: {_controller.SpinTime}ms");
+                    Reflection.MakeControl(ref _config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
+                    Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }
 
                 ImGui.TreePop();

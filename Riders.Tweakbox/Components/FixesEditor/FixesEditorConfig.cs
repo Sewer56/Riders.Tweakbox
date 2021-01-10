@@ -29,12 +29,14 @@ namespace Riders.Tweakbox.Components.FixesEditor
             public bool BootToMenu;
             public bool FramePacing;
             public bool FramePacingSpeedup; // Speed up game to compensate for lag.
+            public float DisableYieldThreshold; //
 
             internal static Internal GetDefault() => new Internal
             {
                 BootToMenu = true,
                 FramePacingSpeedup = true,
                 FramePacing = true,
+                DisableYieldThreshold = 80
             };
         }
         #endregion

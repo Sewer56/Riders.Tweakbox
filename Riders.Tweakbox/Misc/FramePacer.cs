@@ -147,7 +147,11 @@ namespace Riders.Tweakbox.Misc
         ///     Allows for the speeding up of the frame counter to maintain target FPS by sleeping less on the next frame.
         ///     If set to false, frame pacer will not try to catch up on next sleep in cases of lost frames.
         /// </param>
-        public void EndFrame(bool spin = false, bool allowSpeedup = true)
+        /// <param name="spinAllowThreadYield">
+        ///     If true allows the thread to yield when spinning.
+        ///     Only set this to false if the CPU is maxed out (>95% usage).
+        /// </param>
+        public void EndFrame(bool spin = false, bool allowSpeedup = true, bool spinAllowThreadYield = true)
         {
             // Summarize stats for the current frame.
             StatRenderTime = _frameTimeWatch.Elapsed.TotalMilliseconds;
@@ -158,7 +162,7 @@ namespace Riders.Tweakbox.Misc
                 StatSleepTime = 0;
 
             // Sleep
-            Sleep(spin);
+            Sleep(spin, spinAllowThreadYield);
 
             // Restart calculation for new frame.
             StartFrame();
@@ -182,22 +186,28 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Pauses execution for the remaining of the time until the next frame begins.
         /// </summary>
+        /// <param name="b"></param>
         /// <param name="spin">
         ///     If true, uses an alternative timing method where CPU briefly spins (performs junk calculations) after sleeping slightly less time until it is precisely the time to start the next frame.
         ///     Increases accuracy at the expense of CPU load.
         /// 
         ///     See: <see cref="SpinTimeRemaining"/> to control the time in milliseconds left to sleep at which to start spinning at.
         /// </param>
-        private void Sleep(bool spin = false)
+        /// <param name="allowThreadYield">
+        ///    If true allows the thread to yield when spinning.
+        ///    Only set this to false if the CPU is maxed out (>95% usage).
+        /// </param>
+        private void Sleep(bool spin = false, bool allowThreadYield = false)
         {
             double sleepStart = _frameTimeWatch.Elapsed.TotalMilliseconds;
 
             _sleepWatch.Restart();
-            while (_sleepWatch.Elapsed.TotalMilliseconds < StatSleepTime)
+            double timeLeft = double.MaxValue;
+            while ((timeLeft = StatSleepTime - _sleepWatch.Elapsed.TotalMilliseconds) > 0)
             {
                 if (spin)
-                    if (StatSleepTime - _sleepWatch.Elapsed.TotalMilliseconds < SpinTimeRemaining)
-                        Spin();
+                    if (timeLeft < SpinTimeRemaining)
+                        Spin(allowThreadYield);
 
                 Thread.Sleep(1);
             }
@@ -209,16 +219,26 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Spins until it is time to begin the next frame.
         /// </summary>
-        private void Spin()
+        private void Spin(bool allowThreadYield)
         {
             var lastYieldTime = new TimeSpan();
             double timeLeft;
             while ((timeLeft = _sleepWatch.Elapsed.TotalMilliseconds - StatSleepTime) < 0)
             {
+                if (!allowThreadYield)
+                    continue;
+
                 if (lastYieldTime.TotalMilliseconds > 0)
                 {
-                    // Hand testing suggests 0.1ms to be max yield time in practice.
-                    if (timeLeft > lastYieldTime.TotalMilliseconds && timeLeft < 0.12)
+                    /*
+                        The 0.15 value is derived from hand testing on Windows 10 20H2 with
+                        an i7 4790k and 98-100% CPU load.
+                     
+                        The 99.9th percentile for calling Sleep(0) has been ~0.13ms, hence I am
+                        adding a tiny bit extra to compensate.
+                    */
+                     
+                    if (timeLeft > lastYieldTime.TotalMilliseconds || timeLeft > 0.15)
                         Thread.Sleep(0);
                 }
                 else

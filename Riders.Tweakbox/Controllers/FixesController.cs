@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -28,6 +29,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public float SpinTime => _timerGranularityMs + 1;
 
+        /// <summary>
+        /// CPU Usage between 0 - 100.
+        /// </summary>
+        public float CpuUsage { get; private set; }
+
         /*
             The + 1 above is here because Sleep() has a granularity of 1.
             
@@ -39,11 +45,14 @@ namespace Riders.Tweakbox.Controllers
 
         // Internal
         private bool _resetSpeedup = false;
-
-        // Settings
-        private FixesEditorConfig _config = IoC.GetConstant<FixesEditorConfig>();
+        private Stopwatch _cpuLoadSampleWatch = Stopwatch.StartNew();
+        private const float _cpuSampleIntervalMs = (float)((1000 / 60.0f) * 10);
         private Device _device = new Device((IntPtr)0x0);
 
+        // Settings
+        private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        private FixesEditorConfig _config = IoC.GetConstant<FixesEditorConfig>();
+        
         // Hooks
         private IHook<Functions.DefaultFn> _endFrameHook;
         private FramePacer _fps;
@@ -116,6 +125,13 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void EndFrameImpl()
         {
+            // Sample CPU usage.
+            if (_cpuLoadSampleWatch.Elapsed.TotalMilliseconds > _cpuSampleIntervalMs)
+            {
+                _cpuLoadSampleWatch.Restart();
+                CpuUsage = _cpuCounter.NextValue();
+            }
+
             if (_config.Data.FramePacing)
             {
                 try
@@ -128,9 +144,9 @@ namespace Riders.Tweakbox.Controllers
                 {
                     /* Game is Stupid */
                 }
-               
+
                 _fps.SpinTimeRemaining = (float)SpinTime;
-                _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup);
+                _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
                 *State.TotalFrameCounter += 1;
                 return;
             }
