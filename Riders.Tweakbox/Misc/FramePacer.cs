@@ -66,12 +66,6 @@ namespace Riders.Tweakbox.Misc
             }
         }
 
-        /// <summary>
-        /// If using the spinning waiting method, this sets the number of milliseconds left to wait
-        /// until the spinning action starts.
-        /// </summary>
-        public float SpinTimeRemaining { get; set; } = 1;
-
         private float _FPSLimit;
 
         /// <summary>
@@ -122,6 +116,11 @@ namespace Riders.Tweakbox.Misc
         public double StatSleepTime { get; private set; }
 
         /// <summary>
+        /// Granularity of the Windows timer in milliseconds.
+        /// </summary>
+        public float TimerGranularity { get; set; }
+
+        /// <summary>
         /// See summary of <see cref="FramePacer"/>.
         /// </summary>
         public FramePacer()
@@ -131,6 +130,9 @@ namespace Riders.Tweakbox.Misc
             _frameTimeBuffer = new CircularBuffer<double>(StopwatchSamples);
             _threadYieldWatch = new Stopwatch();
             FPSLimit = 144;
+
+            Native.NtQueryTimerResolution(out int maximumResolution, out int _, out int currentResolution);
+            TimerGranularity = currentResolution / 10000f;
         }
 
         /// <summary>
@@ -186,12 +188,9 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Pauses execution for the remaining of the time until the next frame begins.
         /// </summary>
-        /// <param name="b"></param>
         /// <param name="spin">
         ///     If true, uses an alternative timing method where CPU briefly spins (performs junk calculations) after sleeping slightly less time until it is precisely the time to start the next frame.
         ///     Increases accuracy at the expense of CPU load.
-        /// 
-        ///     See: <see cref="SpinTimeRemaining"/> to control the time in milliseconds left to sleep at which to start spinning at.
         /// </param>
         /// <param name="allowThreadYield">
         ///    If true allows the thread to yield when spinning.
@@ -206,10 +205,11 @@ namespace Riders.Tweakbox.Misc
             while ((timeLeft = StatSleepTime - _sleepWatch.Elapsed.TotalMilliseconds) > 0)
             {
                 if (spin)
-                    if (timeLeft < SpinTimeRemaining)
+                    if (timeLeft < TimerGranularity)
                         Spin(allowThreadYield);
 
-                Thread.Sleep(1);
+                var sleepTimeLeft = (int) (timeLeft - TimerGranularity);
+                Thread.Sleep(sleepTimeLeft >= 1 ? sleepTimeLeft : 1);
             }
 
             double timeSlept = (_frameTimeWatch.Elapsed.TotalMilliseconds - sleepStart);

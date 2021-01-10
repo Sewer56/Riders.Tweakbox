@@ -80,7 +80,7 @@ namespace Riders.Tweakbox.Components.FixesEditor
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
                     ImGui.Text($"CPU Load {_controller.CpuUsage:00.00}%");
-                    ImGui.Text($"CPU Spin Time Remaining Threshold: {_controller.SpinTime}ms");
+                    ImGui.Text($"Windows Timer Granularity: {_controller.TimerGranularity}ms");
                     Reflection.MakeControl(ref _config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
                     Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }

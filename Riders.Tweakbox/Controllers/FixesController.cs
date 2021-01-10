@@ -29,7 +29,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Amount of time spinning after sleep.
         /// </summary>
-        public float SpinTime => _timerGranularityMs + 1;
+        public float TimerGranularity => (float) _fps.TimerGranularity;
 
         /// <summary>
         /// CPU Usage between 0 - 100.
@@ -84,11 +84,7 @@ namespace Riders.Tweakbox.Controllers
             _createDeviceHook = _dx9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
 
             _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
-            _fps = new FramePacer
-            {
-                SpinTimeRemaining = 1,
-                FPSLimit = 60
-            };
+            _fps = new FramePacer { FPSLimit = 60 };
 
             if (_config.Data.BootToMenu)
             {
@@ -151,7 +147,6 @@ namespace Riders.Tweakbox.Controllers
                     /* Game is Stupid */
                 }
 
-                _fps.SpinTimeRemaining = (float)SpinTime;
                 _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
                 *State.TotalFrameCounter += 1;
                 return;
