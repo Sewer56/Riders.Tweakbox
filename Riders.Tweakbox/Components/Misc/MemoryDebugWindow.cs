@@ -23,26 +23,37 @@ namespace Riders.Tweakbox.Components.Misc
         private bool _simulatingLoad;
         private Thread _simulateLoadThread;
 
-        public MemoryDebugWindow()
+        public void StartThread(bool start)
         {
-            _simulateLoadThread = new Thread(() =>
-            {
-                var data = new List<byte[]>();
-                while (true)
-                {
-                    if (_simulatingLoad)
-                    {
-                        data = new List<byte[]>(_objects);
-                        for (int x = 0; x < _objects; x++)
-                        {
-                            data.Add(new byte[_objectSize]);
-                        }
-                    }
+            if (!start) 
+                return;
 
-                    Thread.Sleep(_timeBetweenAllocations);
-                }
-            });
+            if (_simulateLoadThread != null && _simulateLoadThread.IsAlive)
+                _simulateLoadThread.Join();
+
+            _simulateLoadThread = new Thread(SimulateMemoryLoad);
             _simulateLoadThread.Start();
+        }
+
+        private void SimulateMemoryLoad()
+        {
+            var data = new List<byte[]>();
+            while (true)
+            {
+                if (!_simulatingLoad)
+                    goto cleanup;
+
+                data = new List<byte[]>(_objects);
+                for (int x = 0; x < _objects; x++)
+                    data.Add(new byte[_objectSize]);
+
+                Thread.Sleep(_timeBetweenAllocations);
+            }
+
+            cleanup:
+            data = null;
+            GC.Collect();
+            return;
         }
 
         /// <inheritdoc />
@@ -62,7 +73,9 @@ namespace Riders.Tweakbox.Components.Misc
                 if (ImGui.Button("Force Full Garbage Collection", Constants.DefaultVector2))
                     GC.Collect();
 
-                ImGui.Checkbox("Simulate GC Load", ref _simulatingLoad);
+                if (ImGui.Checkbox("Simulate GC Load", ref _simulatingLoad))
+                    StartThread(_simulatingLoad);
+
                 if (_simulatingLoad)
                 {
                     ImGui.DragInt("Number of Objects", ref _objects, 1.0f, 0, 99999, null);
