@@ -93,6 +93,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Game.SetupRace>());
 
             // Misc
+            AddComponent(IoC.Get<Components.Misc.TimeSynchronization>());
             AddComponent(IoC.Get<Components.Misc.Random>());
         }
 

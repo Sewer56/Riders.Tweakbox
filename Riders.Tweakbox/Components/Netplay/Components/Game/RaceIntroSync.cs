@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
+using Riders.Tweakbox.Components.Netplay.Components.Misc;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -129,7 +131,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            Socket.WaitWithSpin(goMessage.StartTime, $"[{nameof(RaceIntroSync)} / Client] Race Started.");
+            var localTime = IoC.Get<TimeSynchronization>().ToLocalTime(goMessage.StartTime);
+            Socket.WaitWithSpin(localTime, $"[{nameof(RaceIntroSync)} / Client] Race Started.", 32);
             return true;
         }
 
@@ -153,15 +156,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            var startTime = new SyncStartGo(state.MaxLatency);
-            Socket.SendToAllAndFlush(new ReliablePacket() { SyncStartGo = startTime }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
+            var startTime = DateTime.UtcNow.AddMilliseconds(state.MaxLatency);
+            var serverStartTime = IoC.Get<TimeSynchronization>().ToServerTime(startTime);
+            Socket.SendToAllAndFlush(new ReliablePacket() { SyncStartGo = new SyncStartGo(serverStartTime) }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
 
             // Disable skip flags for everyone.
             var data = state.ClientMap.GetCustomData();
             foreach (var dt in data)
                 dt.ReadyToStartRace = false;
 
-            Socket.WaitWithSpin(startTime.StartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.");
+            Socket.WaitWithSpin(serverStartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.", 32);
             return true;
         }
 
