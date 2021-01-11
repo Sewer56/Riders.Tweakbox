@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;

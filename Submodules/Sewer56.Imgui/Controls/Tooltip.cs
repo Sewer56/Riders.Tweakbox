@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using DearImguiSharp;
+﻿using DearImguiSharp;
 
 namespace Sewer56.Imgui.Controls
 {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Riders.Tweakbox.Controllers;
+﻿using Riders.Tweakbox.Controllers;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.InteropServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;

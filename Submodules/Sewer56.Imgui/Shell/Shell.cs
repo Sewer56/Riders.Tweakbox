@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using DearImguiSharp;
-using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell.Structures;
 using Sewer56.Imgui.Utilities;
 

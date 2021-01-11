@@ -1,10 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Numerics;
-using K4os.Compression.LZ4;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Unreliable;
-using Sewer56.SonicRiders.Structures.Enums;
+﻿using Riders.Netplay.Messages.Unreliable;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;

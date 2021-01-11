@@ -1,5 +1,4 @@
-﻿using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Xunit;
 
