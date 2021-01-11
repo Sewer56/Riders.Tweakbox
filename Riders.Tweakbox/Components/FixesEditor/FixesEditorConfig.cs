@@ -11,10 +11,10 @@ namespace Riders.Tweakbox.Components.FixesEditor
         public Internal Data = Internal.GetDefault();
 
         // Serialization
-        public byte[] ToBytes() => Struct.GetBytes(Data);
+        public byte[] ToBytes() => Json.SerializeStruct(ref Data);
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            Struct.FromArray(bytes, out Data);
+            Data = Json.DeserializeStruct<Internal>(bytes);
             return bytes.Slice(Struct.GetSize<Internal>());
         }
 

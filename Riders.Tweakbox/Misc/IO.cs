@@ -20,6 +20,7 @@ namespace Riders.Tweakbox.Misc
         public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
+        public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
         public string NetplayConfigPath => Path.Combine(NetplayConfigFolder, "Config.json");
 
         /// <summary>
@@ -35,12 +36,14 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(GearConfigFolder);
             Directory.CreateDirectory(PhysicsConfigFolder);
             Directory.CreateDirectory(NetplayConfigFolder);
+            Directory.CreateDirectory(LogConfigFolder);
         }
 
         public string[] GetTweakboxConfigFiles() => Directory.GetFiles(TweakboxConfigFolder, ConfigSearchPattern);
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
         public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
+        public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, ConfigSearchPattern);
 
         public NetplayConfigFile GetNetplayConfig() => File.Exists(NetplayConfigPath) ? JsonSerializer.Deserialize<NetplayConfigFile>(File.ReadAllText(NetplayConfigPath)) : new NetplayConfigFile();
         public void SaveNetplayConfig(NetplayConfigFile configFile) => File.WriteAllText(NetplayConfigPath, JsonSerializer.Serialize<NetplayConfigFile>(configFile, new JsonSerializerOptions() { WriteIndented = true }));

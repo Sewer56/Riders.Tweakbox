@@ -8,7 +8,7 @@ namespace Riders.Tweakbox.Misc
     /// Different categories that can be used for logging.
     /// </summary>
     [Flags]
-    public enum LogCategory
+    public enum LogCategory : short
     {
         Default = 1,
         Memory  = 2,
@@ -24,22 +24,18 @@ namespace Riders.Tweakbox.Misc
     /// </summary>
     public static class Log
     {
-        static Log()
-        {
-            foreach (var value in Enums.GetValues<LogCategory>())
-            {
-                EnabledCategories |= value;
-            }
-
-            // Disable spammy logs by default.
-            EnabledCategories &= ~LogCategory.Random;
-        }
+        /// <summary>
+        /// Default enabled logging categories
+        /// </summary>
+        public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
+                                                     LogCategory.Race | LogCategory.Menu |
+                                                     LogCategory.Ntp | LogCategory.Socket;
 
         /// <summary>
         /// Declares whether each log type is declared or not.
         /// </summary>
-        public static LogCategory EnabledCategories = LogCategory.Default;
-
+        public static LogCategory EnabledCategories = DefaultCategories;
+        
         /// <summary>
         /// Checks if a given category is enabled.
         /// </summary>
