@@ -27,7 +27,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         public NetManager Manager { get; set; }
         private Timer _synchronizeTimer { get; set; }
         private TimeSpan _correctionOffset = TimeSpan.Zero;
-        private bool _receivedNtpResponse = false;
+        private bool _receivedNtpResponse = true;
 
         public TimeSynchronization(Socket socket)
         {
@@ -65,9 +65,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private void RequestNtpSynchronize(object? state)
         {
-            _receivedNtpResponse = false;
-            Manager.CreateNtpRequest(NtpServer);
-            Socket.PollUntil(() => _receivedNtpResponse == true, 0, 0);
+            if (_receivedNtpResponse)
+            {
+                _receivedNtpResponse = false;
+                Manager.CreateNtpRequest(NtpServer);
+                Socket.PollUntil(() => _receivedNtpResponse == true, 0, 0);
+            }
         }
 
         /// <inheritdoc />

@@ -94,7 +94,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Checks if a specific player is a human character.
         /// </summary>
-        public event PlayerAsmFunc OnCheckIfPlayerIsHuman;
+        public event PlayerAsmFunc OnCheckIfPlayerIsHumanInput;
 
         /// <summary>
         /// Checks if a specific player is to be given a human indicator.
@@ -381,8 +381,8 @@ namespace Riders.Tweakbox.Controllers
 
         private Enum<AsmFunctionResult> OnCheckIfIsHumanInputHook()
         {
-            if (OnCheckIfPlayerIsHuman != null)
-                return OnCheckIfPlayerIsHuman(_tempPlayerPointer.Value.Pointer);
+            if (OnCheckIfPlayerIsHumanInput != null)
+                return OnCheckIfPlayerIsHumanInput(_tempPlayerPointer.Value.Pointer);
 
             return AsmFunctionResult.Indeterminate;
         }

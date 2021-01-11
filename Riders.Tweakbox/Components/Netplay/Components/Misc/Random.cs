@@ -100,7 +100,21 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// <inheritdoc />
         public void HandlePacket(Packet<NetPeer> packet)
         {
-            
+            if (packet.GetPacketKind() == PacketKind.Reliable)
+                HandleReliablePacket(packet.Source, packet.As<ReliablePacket>());
+        }
+
+        private void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
+        {
+            if (Socket.GetSocketType() == SocketType.Host)
+            {
+                if (packet.Random.HasValue)
+                {
+                    Trace.WriteLine("[Host] Received SRandSyncReady from Client.");
+                    var hostState = (HostState)Socket.State;
+                    hostState.ClientMap.GetCustomData(peer).SRandSyncReady = true;
+                }
+            }
         }
     }
 }

@@ -1,15 +1,7 @@
-﻿using Riders.Netplay.Messages.Queue;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
-using Riders.Netplay.Messages.Unreliable;
-using Sewer56.Hooks.Utilities.Enums;
-using Sewer56.NumberUtilities.Helpers;
-using Sewer56.SonicRiders.API;
 using System;
-using System.Diagnostics;
 using System.Linq;
-using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
@@ -18,13 +10,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public CommonState(HostPlayerData selfInfo)
         {
             SelfInfo = selfInfo;
-            ResetRace();
-        }
-
-        public void ResetRace()
-        {
-            Array.Fill(RaceSync, new Timestamped<UnreliablePacketPlayer>());
-            Array.Fill(MovementFlagsSync, new Timestamped<MovementFlagsMsg>());
         }
 
         /// <summary>
@@ -58,17 +43,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public HostPlayerData[] PlayerInfo = new HostPlayerData[0];
 
         /// <summary>
-        /// Sync data for races.
-        /// It is applied to the game at the start of the race event if not null.
-        /// </summary>
-        public Timestamped<UnreliablePacketPlayer>[] RaceSync = new Timestamped<UnreliablePacketPlayer>[Constants.MaxNumberOfPlayers];
-
-        /// <summary>
-        /// Contains movement flags for each client.
-        /// </summary>
-        public MovementFlagsMsg[] MovementFlagsSync = new MovementFlagsMsg[Constants.MaxNumberOfPlayers];
-
-        /// <summary>
         /// Returns the total count of players.
         /// </summary>
         public int GetPlayerCount()
@@ -77,42 +51,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 return Math.Max(PlayerInfo.Max(x => x.PlayerIndex) + 1, SelfInfo.PlayerIndex + 1);
 
             return 1;
-        }
-
-        /// <summary>
-        /// Applies the current race state obtained from clients/host to the game.
-        /// </summary>
-        public void ApplyRaceSync()
-        {
-            // Apply data of all players.
-            for (int x = 1; x < RaceSync.Length; x++)
-            {
-                var sync = RaceSync[x];
-                if (sync.IsDiscard(MaxLatency))
-                    continue;
-
-                if (sync.Value.IsDefault())
-                {
-                    Trace.WriteLine("Discarding Race Packet due to Default Comparison");
-                    continue;
-                }
-
-                sync.Value.ToGame(x);
-            }
-        }
-
-        /// <summary>
-        /// Handles all Boost/Tornado/Attack tasks received from the clients.
-        /// </summary>
-        public unsafe Sewer56.SonicRiders.Structures.Gameplay.Player* OnAfterSetMovementFlags(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
-        {
-            var index = Player.GetPlayerIndex(player);
-
-            if (index == 0)
-                return player;
-
-            MovementFlagsSync[index].ToGame(player);
-            return player;
         }
 
         /// <summary>
@@ -154,13 +92,5 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
             return PlayerInfo.Any(x => x.PlayerIndex == playerIndex);
         }
-
-        /// <summary>
-        /// Swaps spawn position of player 0 and the player's real index.
-        /// </summary>
-        public void SwapSpawns() => Sewer56.SonicRiders.API.Misc.SwapSpawnPositions(0, SelfInfo.PlayerIndex);
-
-        public void OnSetSpawnLocationsStartOfRace(int value) => SwapSpawns();
-        public unsafe Enum<AsmFunctionResult> OnCheckIfPlayerIsHuman(Sewer56.SonicRiders.Structures.Gameplay.Player* player) => IsHuman(Player.GetPlayerIndex(player));
     }
 }

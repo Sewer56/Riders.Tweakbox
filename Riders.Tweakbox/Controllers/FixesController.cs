@@ -144,6 +144,10 @@ namespace Riders.Tweakbox.Controllers
 
                 _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
                 *State.TotalFrameCounter += 1;
+
+                if (_resetSpeedup)
+                    _resetSpeedup = false;
+
                 return;
             }
 

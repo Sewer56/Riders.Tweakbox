@@ -1,19 +1,12 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
-using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.Structures.Gameplay;
-using Sewer56.SonicRiders.Structures.Tasks.Base;
-using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
@@ -34,15 +27,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             base.State = new HostState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Password   = password;
             Manager.StartInManualMode(port);
-
-            Event.OnSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
-            Event.AfterSetSpawnLocationsStartOfRace += State.OnSetSpawnLocationsStartOfRace;
-
-            Event.OnRace += OnRace;
-            Event.AfterRace += AfterRace;
-            Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
-            Event.OnCheckIfPlayerIsHuman += State.OnCheckIfPlayerIsHuman;
-            Event.OnCheckIfPlayerIsHumanIndicator += State.OnCheckIfPlayerIsHuman;
             Initialize();
         }
 
@@ -50,102 +34,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             Manager.DisconnectAll();
             base.Dispose();
-
-            Event.OnSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
-            Event.AfterSetSpawnLocationsStartOfRace -= State.OnSetSpawnLocationsStartOfRace;
-
-            Event.OnRace -= OnRace;
-            Event.AfterRace -= AfterRace;
-            Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
-            Event.OnCheckIfPlayerIsHuman -= State.OnCheckIfPlayerIsHuman;
-            Event.OnCheckIfPlayerIsHumanIndicator -= State.OnCheckIfPlayerIsHuman;
         }
 
         public override SocketType GetSocketType() => SocketType.Host;
-
-        public override void HandlePacket(Packet<NetPeer> packet)
-        {
-            if (packet.As<IPacket>().GetPacketType() == PacketKind.Reliable)
-                HandleReliable(packet.Source, packet.As<ReliablePacket>());
-
-            else if (packet.As<IPacket>().GetPacketType() == PacketKind.Unreliable)
-                HandleUnreliable(packet.Source, packet.As<UnreliablePacket>());
-        }
-
-        private void HandleUnreliable(NetPeer peer, UnreliablePacket result)
-        {
-            // TODO: Maybe support for multiple local players in the future.
-            var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-            var player  = result.Players[0];
-            State.RaceSync[playerIndex] = player;
-        }
-
-        private void HandleReliable(NetPeer peer, ReliablePacket packet)
-        {
-            if (packet.SetMovementFlags.HasValue)
-            {
-                var playerIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-                State.MovementFlagsSync[playerIndex] = new Timestamped<MovementFlagsMsg>(packet.SetMovementFlags.Value);
-            }
-
-            if (packet.Random.HasValue)
-            {
-                Trace.WriteLine("[Host] Received SRandSyncReady from Client.");
-                State.ClientMap.GetCustomData(peer).SRandSyncReady = true;
-            }
-        }
-
-        #region Events: On/After Events
-        private void OnRace(Task<byte, RaceTaskState>* task)
-        {
-            Update();
-            State.ApplyRaceSync();
-        }
-
-        private void AfterRace(Task<byte, RaceTaskState>* task)
-        {
-            State.RaceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
-            
-            // Populate data for non-expired packets.
-            var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
-            Array.Fill(players, new UnreliablePacketPlayer());
-            for (int x = 0; x < players.Length; x++)
-            {
-                var sync = State.RaceSync[x];
-                if (!sync.IsDiscard(State.MaxLatency))
-                    players[x] = sync;
-                else
-                    players[x] = UnreliablePacketPlayer.FromGame(x, State.FrameCounter);
-            }
-
-            // Broadcast data to all clients.
-            foreach (var peer in Manager.ConnectedPeerList)
-            {
-                var excludeIndex = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-                var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
-                SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
-            }
-        }
-
-        private Player* OnAfterSetMovementFlagsOnInput(Player* player)
-        {
-            State.OnAfterSetMovementFlags(player);
-
-            var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-            if (index == 0)
-            {
-                State.MovementFlagsSync[0] = new MovementFlagsMsg(player);
-                foreach (var peer in Manager.ConnectedPeerList)
-                {
-                    var excludeIndex  = State.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var movementFlags = State.MovementFlagsSync.Where((timestamped, x) => x != excludeIndex).ToArray();
-                    SendAndFlush(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) } , DeliveryMethod.ReliableOrdered);
-                }
-            }
-
-            return player;
-        }
-        #endregion
+        public override void HandlePacket(Packet<NetPeer> packet) { }
 
         #region Socket Events
         public override void OnPeerConnected(NetPeer peer)

@@ -57,6 +57,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public BandwidthTracker Bandwidth;
 
         private Stopwatch _stopWatch = new Stopwatch();
+        private bool _isDisposed = false;
 
         /// <summary>
         /// Constructs the current socket.
@@ -86,7 +87,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             // Gameplay
             AddComponent(IoC.Get<Components.Game.Attack>());
-            //AddComponent(IoC.Get<Components.Game.Race>());
+            AddComponent(IoC.Get<Components.Game.Race>());
             //AddComponent(IoC.Get<Components.Game.RaceEvents>());
             //AddComponent(IoC.Get<Components.Game.ItemPickupSync>());
             AddComponent(IoC.Get<Components.Game.RaceIntroSync>());
@@ -107,6 +108,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Controller.Socket = null;
             Manager.Stop(true);
+            _isDisposed = true;
         }
 
         /// <summary>
@@ -119,12 +121,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public void Update()
         {
-            Manager.ManualReceive();
-            Manager.ManualUpdate((int) _stopWatch.ElapsedMilliseconds);
-            _stopWatch.Restart();
+            if (!_isDisposed)
+            {
+                Manager.ManualReceive();
+                Manager.ManualUpdate((int)_stopWatch.ElapsedMilliseconds);
+                _stopWatch.Restart();
 
-            Manager.PollEvents();
-            HandlePackets();
+                Manager.PollEvents();
+                HandlePackets();
+            }
         }
 
         /// <summary>

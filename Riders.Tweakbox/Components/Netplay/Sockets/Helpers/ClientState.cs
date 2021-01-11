@@ -1,5 +1,6 @@
 ﻿namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
+    // TODO: Eliminate this class.
     public class ClientState
     {
         /// <summary>
