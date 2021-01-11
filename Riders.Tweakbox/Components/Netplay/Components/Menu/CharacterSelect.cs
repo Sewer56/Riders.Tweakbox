@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
@@ -67,12 +68,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 case SocketType.Host:
                     var state = (HostState)Socket.State;
+                    // Note: Do not use SendAndFlush here as not only is it inefficient, you risk
+                    //       accessing ConnectedPeerList inside the message handler(s); which will break foreach.
                     foreach (var peer in Socket.Manager.ConnectedPeerList)
                     {
                         var excludeIndex = state.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
-                        Socket.SendAndFlush(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
+                        Socket.Send(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
                     }
+                    
+                    Socket.Update();
                     break;
 
                 case SocketType.Client:
@@ -115,10 +120,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 case CharaSelectExit charaSelectExit:
                     Trace.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag");
-                    _exit = charaSelectExit.Type;
                     if (Socket.GetSocketType() == SocketType.Host)
-                        Socket.SendToAllExcept(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Host] Got Start/Exit Request Flag, Rebroadcasting");
-                    
+                        Socket.SendToAllExcept(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered);
+
+                    _exit = charaSelectExit.Type;
+                    Trace.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag Complete");
                     break;
                 case CharaSelectLoop charaSelectLoop:
                     var hostState = (HostState) Socket.State;

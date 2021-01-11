@@ -237,12 +237,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="peer">The peer to send the message to.</param>
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
+        public void Send(NetPeer peer, IPacket message, DeliveryMethod method)
+        {
+            peer?.Send(message.Serialize(), method);
+        }
+
+        /// <summary>
+        /// Sends an individual packet to a specified peer.
+        /// </summary>
+        /// <param name="peer">The peer to send the message to.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="method">The delivery method.</param>
         public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method)
         {
-            if (peer == null)
-                return;
-
-            peer.Send(message.Serialize(), method);
+            Send(peer, message, method);
             Update();
         }
 
@@ -255,9 +263,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to log.</param>
         public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text)
         {
-            if (peer == null)
-                return;
-
             Trace.WriteLine(text);
             SendAndFlush(peer, message, method);
         }

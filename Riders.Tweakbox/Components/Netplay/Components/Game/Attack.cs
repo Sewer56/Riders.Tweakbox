@@ -162,8 +162,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     #endif
 
                     var packed = new AttackPacked().AsInterface().SetData(attacks);
-                    Socket.SendAndFlush(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
+                    Socket.Send(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
                 }
+
+                Socket.Update();
             }
             
             exit: 

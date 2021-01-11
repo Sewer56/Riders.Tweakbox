@@ -157,8 +157,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
-                    Socket.SendAndFlush(peer, packet, DeliveryMethod.Sequenced);
+                    Socket.Send(peer, packet, DeliveryMethod.Sequenced);
                 }
+                
+                Socket.Update();
             }
             else
             {
@@ -182,8 +184,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     {
                         var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.SendAndFlush(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) }, DeliveryMethod.ReliableOrdered);
+                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) }, DeliveryMethod.ReliableOrdered);
                     }
+                    Socket.Update();
                 }
 
                 return player;

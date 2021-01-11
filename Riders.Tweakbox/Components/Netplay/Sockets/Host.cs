@@ -120,9 +120,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             foreach (var peer in Manager.ConnectedPeerList)
             {
                 var message = State.ClientMap.ToMessage(peer, State.SelfInfo);
-                SendAndFlush(peer, new ReliablePacket(message), DeliveryMethod.ReliableUnordered);
+                Send(peer, new ReliablePacket(message), DeliveryMethod.ReliableUnordered);
             }
 
+            Update();
             State.PlayerInfo = State.ClientMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo).Data;
         }
         #endregion
