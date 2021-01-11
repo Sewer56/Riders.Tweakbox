@@ -5,15 +5,10 @@ namespace Riders.Netplay.Messages.Queue
     /// <summary>
     /// Represents an individual timestamped packet/value.
     /// </summary>
-    public class Timestamped<T>
+    public struct Timestamped<T>
     {
         public DateTime TimeStamp;
         public T Value;
-
-        public Timestamped()
-        {
-            TimeStamp = DateTime.UtcNow;
-        }
 
         public Timestamped(T value)
         {

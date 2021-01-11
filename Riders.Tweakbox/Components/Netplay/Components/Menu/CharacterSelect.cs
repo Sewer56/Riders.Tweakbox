@@ -163,7 +163,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             for (var x = 0; x < _loops.Length; x++)
             {
                 var charSelect = _loops[x];
-                if (charSelect == null || charSelect.IsDiscard(Socket.State.MaxLatency))
+                if (charSelect.IsDiscard(Socket.State.MaxLatency))
                     continue;
 
                 charLoops[x] = charSelect;
