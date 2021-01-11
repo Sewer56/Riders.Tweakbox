@@ -24,12 +24,19 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
         public int PlayerIndex = -1;
 
         /// <summary>
+        /// Contains the current ping of the individual player.
+        /// </summary>
+        [Key(3)]
+        public int Latency = 999;
+
+        /// <summary>
         /// Copies data submitted by the client.
         /// </summary>
         public void UpdateFromClient(HostPlayerData data)
         {
             this.Name = data.Name;
             this.ClientType = data.ClientType;
+            this.Latency = data.Latency;
         }
     }
 }

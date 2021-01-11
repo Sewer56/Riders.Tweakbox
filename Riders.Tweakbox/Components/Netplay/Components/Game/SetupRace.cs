@@ -41,6 +41,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             if (Socket.TryGetComponent(out Attack attack))
                 attack.Reset();
+
+            if (Socket.TryGetComponent(out Race race))
+                race.Reset();
         }
 
         /// <inheritdoc />

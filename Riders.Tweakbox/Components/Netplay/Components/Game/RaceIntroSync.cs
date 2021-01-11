@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
@@ -38,6 +39,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private Volatile<SyncStartGo> _startSyncGo = new Volatile<SyncStartGo>();
 
+        private Dictionary<int, bool> _readyToStartRace;
+
         public RaceIntroSync(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -46,6 +49,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnRaceSkipIntro;
+
+            if (Socket.GetSocketType() == SocketType.Host)
+                _readyToStartRace = new Dictionary<int, bool>(8);
         }
 
         /// <inheritdoc />
@@ -93,8 +99,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var state = (HostState)Socket.State;
                     Trace.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(packet.HasSyncStartReady)} from Client.");
-                    var playerCustomData = state.ClientMap.GetCustomData(pkt.Source);
-                    playerCustomData.ReadyToStartRace = true;
+                    _readyToStartRace[pkt.Source.Id] = true;
                 }
             }
             else
@@ -139,7 +144,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private bool HostTrySyncRaceSkip()
         {
             var state = (HostState)Socket.State;
-            bool TestAllReady() => state.ClientMap.GetCustomData().All(x => x.ReadyToStartRace);
+            bool TestAllReady() => _readyToStartRace.All(x => x.Value == true);
 
             // Send skip signal to clients if we are initializing the skip.
             if (!_skipRequested)
@@ -161,9 +166,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Socket.SendToAllAndFlush(new ReliablePacket() { SyncStartGo = new SyncStartGo(serverStartTime) }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.");
 
             // Disable skip flags for everyone.
-            var data = state.ClientMap.GetCustomData();
-            foreach (var dt in data)
-                dt.ReadyToStartRace = false;
+            foreach (var key in _readyToStartRace.Keys)
+                _readyToStartRace[key] = false;
 
             Socket.WaitWithSpin(serverStartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.", 32);
             return true;

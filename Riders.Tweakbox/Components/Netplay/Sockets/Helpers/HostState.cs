@@ -10,7 +10,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Stores a mapping of peers to players.
         /// </summary>
-        public ClientMap<ClientState> ClientMap = new ClientMap<ClientState>();
+        public ClientMap ClientMap = new ClientMap();
 
         /// <summary>
         /// Translates a host player index into a local player index. 

@@ -49,9 +49,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
-
-            Array.Fill(_raceSync, new Volatile<Timestamped<UnreliablePacketPlayer>>());
-            Array.Fill(_movementFlags, new Timestamped<MovementFlagsMsg>());
+            Reset();
         }
 
         /// <inheritdoc />
@@ -65,6 +63,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput -= IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator -= IsHuman;
+        }
+
+
+        public void Reset()
+        {
+            Array.Fill(_raceSync, new Volatile<Timestamped<UnreliablePacketPlayer>>());
+            Array.Fill(_movementFlags, new Timestamped<MovementFlagsMsg>());
         }
 
         /// <inheritdoc />

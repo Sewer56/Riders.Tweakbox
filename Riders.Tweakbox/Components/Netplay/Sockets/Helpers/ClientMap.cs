@@ -11,10 +11,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     /// Maps individual connected peers to individual players.
     /// </summary>
     /// <typeparam name="T">The type of additional data to store for the player.</typeparam>
-    public class ClientMap<T> where T : class, new()
+    public class ClientMap
     {
         private Dictionary<int, HostPlayerData> _dictionary = new Dictionary<int, HostPlayerData>();
-        private Dictionary<int, T> _dictionaryUserData = new Dictionary<int, T>();
 
         /// <summary>
         /// True if there are empty slots available, else false.
@@ -25,16 +24,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Gets the player data for a peer.
         /// </summary>
         public HostPlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
-
-        /// <summary>
-        /// Gets the custom data of a peer.
-        /// </summary>
-        public T GetCustomData(NetPeer peer) => _dictionaryUserData.ContainsKey(peer.Id) ? _dictionaryUserData[peer.Id] : null;
-
-        /// <summary>
-        /// Gets the custom data for all peers.
-        /// </summary>
-        public T[] GetCustomData() => _dictionaryUserData.Values.ToArray();
 
         /// <summary>
         /// Adds a peer ID to the dictionary.
@@ -48,7 +37,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             else
                 _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", ClientType = ClientKind.Spectator, PlayerIndex = emptySlot };
             
-            _dictionaryUserData[peer.Id] = new T();
             return emptySlot;
         }
 
@@ -69,20 +57,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public HostPlayerData[] GetPlayerData() => _dictionary.Values.ToArray();
         
         /// <summary>
-        /// Gets the data for all peers.
-        /// </summary>
-        public DataCustomTuple[] GetData()
-        {
-            var custom = _dictionaryUserData.Values.ToArray();
-            var host   = _dictionary.Values.ToArray();
-            var tuples = new DataCustomTuple[custom.Length];
-            for (int x = 0; x < tuples.Length; x++)
-                tuples[x] = new DataCustomTuple(custom[x], host[x]);
-
-            return tuples;
-        }
-
-        /// <summary>
         /// Removes a given peer from the player map.
         /// </summary>
         /// <param name="peer"></param>
@@ -91,7 +65,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (_dictionary.ContainsKey(peer.Id))
             {
                 _dictionary.Remove(peer.Id);
-                _dictionaryUserData.Remove(peer.Id);
             }
         }
 
@@ -128,18 +101,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             }
 
             return -1;
-        }
-
-        public class DataCustomTuple
-        {
-            public T Custom;
-            public HostPlayerData Host;
-
-            public DataCustomTuple(T custom, HostPlayerData host)
-            {
-                Custom = custom;
-                Host = host;
-            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
@@ -16,6 +17,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public EventController Event { get; set; }
+        private Dictionary<int, bool> _syncReady; 
 
         public Random(Socket socket, EventController @event)
         {
@@ -24,6 +26,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
+
+            if (Socket.GetSocketType() == SocketType.Host)
+            {
+                _syncReady = new Dictionary<int, bool>(8);
+                Socket.Listener.PeerConnectedEvent += OnPeerConnected;
+                Socket.Listener.PeerDisconnectedEvent += OnPeerDisconnected;
+            }
         }
 
         /// <inheritdoc />
@@ -31,7 +40,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             Event.SeedRandom -= OnSeedRandom;
             Event.Random     -= OnRandom;
+            
+            if (Socket.GetSocketType() == SocketType.Host)
+            {
+                Socket.Listener.PeerConnectedEvent -= OnPeerConnected;
+                Socket.Listener.PeerDisconnectedEvent -= OnPeerDisconnected;
+            }
         }
+
+        private void OnPeerConnected(NetPeer peer) => _syncReady[peer.Id] = false;
+        private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => _syncReady.Remove(peer.Id);
 
         private int OnRandom(IHook<Functions.RandFn> hook)
         {
@@ -63,13 +81,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Socket.SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}");
 
             // Disable skip flags for everyone.
-            foreach (var dt in state.ClientMap.GetCustomData())
-                dt.SRandSyncReady = false;
+            foreach (var key in _syncReady.Keys)
+                _syncReady[key] = false;
 
             // Local function(s)
             bool IsEveryoneReady()
             {
-                return state.ClientMap.GetCustomData().All(x => x.SRandSyncReady);
+                return _syncReady.All(x => x.Value == true);
             }
         }
 
@@ -111,8 +129,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 if (packet.Random.HasValue)
                 {
                     Trace.WriteLine("[Host] Received SRandSyncReady from Client.");
-                    var hostState = (HostState)Socket.State;
-                    hostState.ClientMap.GetCustomData(peer).SRandSyncReady = true;
+                    _syncReady[peer.Id] = true;
                 }
             }
         }
