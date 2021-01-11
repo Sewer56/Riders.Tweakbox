@@ -33,7 +33,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <summary>
         /// Contains movement flags for each client.
         /// </summary>
-        private MovementFlagsMsg[] _movementFlags = new MovementFlagsMsg[Constants.MaxNumberOfPlayers];
+        private Timestamped<MovementFlagsMsg>[] _movementFlags = new Timestamped<MovementFlagsMsg>[Constants.MaxNumberOfPlayers];
 
         public Race(Socket socket, EventController @event)
         {
@@ -98,7 +98,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 // TODO: Spectator Support
                 if (packet.MovementFlags.HasValue)
                 {
-                    packet.MovementFlags.Value.AsInterface().ToArray(_movementFlags, MovementFlagsPacked.NumberOfEntries - 1, 0, 1);
+                    var packedFlags = packet.MovementFlags.Value.AsInterface();
+                    for (int x = 0; x < MovementFlagsPacked.NumberOfEntries; x++)
+                        _movementFlags[x] = packedFlags.GetData(x);
                 }
             }
         }
@@ -184,7 +186,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     {
                         var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) }, DeliveryMethod.ReliableOrdered);
+                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value), 0) }, DeliveryMethod.ReliableOrdered);
                     }
                 }
 
@@ -241,7 +243,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (index == 0)
                 return player;
 
-            _movementFlags[index].ToGame(player);
+            var flags = _movementFlags[State.GetHostPlayerIndex(index)];
+            if (flags.IsDiscard(State.MaxLatency))
+                return player;
+
+            flags.Value.ToGame(player);
             return player;
         }
     }

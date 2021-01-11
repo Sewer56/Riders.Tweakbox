@@ -28,6 +28,11 @@ namespace Riders.Netplay.Messages.Queue
         }
 
         /// <summary>
+        /// Sets the packet time to the unix epoch time such that it's discarded for being too old.
+        /// </summary>
+        public void Discard() => TimeStamp = DateTime.UnixEpoch;
+
+        /// <summary>
         /// Checks if a packet should be discarded based on comparing the arrival and current time.
         /// </summary>
         /// <param name="timeout">The timeout in milliseconds.</param>

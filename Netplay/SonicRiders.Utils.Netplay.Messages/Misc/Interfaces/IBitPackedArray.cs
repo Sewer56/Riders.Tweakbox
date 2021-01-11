@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using BitStreams;
 
 namespace Riders.Netplay.Messages.Misc.Interfaces
@@ -70,6 +71,24 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
             }
 
             return (TParent) this;
+        }
+
+        /// <summary>
+        /// Sets a collection of items.
+        /// </summary>
+        /// <param name="data">The data to set.</param>
+        /// <param name="offset">Index of first entry to set.</param>
+        public TParent SetData(IEnumerable<T> data, int offset = 0)
+        {
+            using var enumerator = data.GetEnumerator();
+            int x = 0;
+            while (enumerator.MoveNext())
+            {
+                SetData(enumerator.Current, x + offset);
+                x += 1;
+            }
+
+            return (TParent)this;
         }
 
         /// <summary>
