@@ -19,8 +19,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
     public class TimeSynchronization : INetplayComponent
     {
         private const string NtpServer = "0.pool.ntp.org";
-        private const int NtpSyncEventPeriod = 16000;
-        private const int FirstNtpSyncDueTime = 4000;
+        private const int NtpSyncEventPeriod = 32000;
 
         /// <inheritdoc />
         public Socket Socket { get; set; }
@@ -33,7 +32,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Socket = socket;
             Manager = socket.Manager;
             socket.Listener.NtpResponseEvent += OnNtpResponse;
-            _synchronizeTimer = new Timer(RequestNtpSynchronize, null, FirstNtpSyncDueTime, NtpSyncEventPeriod);
+            CreateNtpRequest(null);
+            _synchronizeTimer = new Timer(CreateNtpRequest, null, NtpSyncEventPeriod, NtpSyncEventPeriod);
         }
 
         /// <inheritdoc />
@@ -62,8 +62,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
         }
 
-        private void RequestNtpSynchronize(object? state)
+        private void CreateNtpRequest(object? state)
         {
+            if (Manager.PendingNtpRequests > 0) 
+                return;
+
+            if (Debugger.IsAttached) 
+                return;
+
             Trace.WriteLine($"[{nameof(TimeSynchronization)}] Queuing NTP Synchronization");
             Manager.CreateNtpRequest(NtpServer);
         }

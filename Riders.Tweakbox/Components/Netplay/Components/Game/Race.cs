@@ -186,7 +186,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
                         Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags, 0) }, DeliveryMethod.ReliableOrdered);
                     }
-                    Socket.Update();
                 }
 
                 return player;
@@ -195,7 +194,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
                 if (index == 0)
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, DeliveryMethod.ReliableOrdered);
+                    Socket.Send(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, DeliveryMethod.ReliableOrdered);
 
                 return player;
             }

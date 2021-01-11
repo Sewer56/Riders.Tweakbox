@@ -123,8 +123,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             if (!_isDisposed)
             {
+                var elapsedMilliseconds = (int)_stopWatch.ElapsedMilliseconds != 0 ? _stopWatch.ElapsedMilliseconds : 1;
                 Manager.ManualReceive();
-                Manager.ManualUpdate((int)_stopWatch.ElapsedMilliseconds);
+                Manager.ManualUpdate((int) elapsedMilliseconds);
                 _stopWatch.Restart();
 
                 Manager.PollEvents();
