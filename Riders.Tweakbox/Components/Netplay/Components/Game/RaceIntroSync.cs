@@ -97,7 +97,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 if (packet.HasSyncStartReady)
                 {
-                    var state = (HostState)Socket.State;
                     Trace.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(packet.HasSyncStartReady)} from Client.");
                     _readyToStartRace[pkt.Source.Id] = true;
                 }
