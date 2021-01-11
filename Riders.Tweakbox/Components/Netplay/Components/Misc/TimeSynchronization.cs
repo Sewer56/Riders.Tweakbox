@@ -27,7 +27,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         public NetManager Manager { get; set; }
         private Timer _synchronizeTimer { get; set; }
         private TimeSpan _correctionOffset = TimeSpan.Zero;
-        private bool _receivedNtpResponse = true;
 
         public TimeSynchronization(Socket socket)
         {
@@ -40,6 +39,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// <inheritdoc />
         public void Dispose()
         {
+            Socket.Listener.NtpResponseEvent -= OnNtpResponse;
             _synchronizeTimer.Dispose();
         }
 
@@ -59,18 +59,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             {
                 Trace.WriteLine($"[{nameof(TimeSynchronization)}] NTP Time Synchronized, Offset: {packet.CorrectionOffset.TotalMilliseconds}ms");
                 _correctionOffset = packet.CorrectionOffset;
-                _receivedNtpResponse = true;
             }
         }
 
         private void RequestNtpSynchronize(object? state)
         {
-            if (_receivedNtpResponse)
-            {
-                _receivedNtpResponse = false;
-                Manager.CreateNtpRequest(NtpServer);
-                Socket.PollUntil(() => _receivedNtpResponse == true, 0, 0);
-            }
+            Trace.WriteLine($"[{nameof(TimeSynchronization)}] Queuing NTP Synchronization");
+            Manager.CreateNtpRequest(NtpServer);
         }
 
         /// <inheritdoc />
