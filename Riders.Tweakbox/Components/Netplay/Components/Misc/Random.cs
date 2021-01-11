@@ -68,12 +68,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
-            var state = (HostState)Socket.State;
             hook.OriginalFunction(seed);
 
             if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
-                Trace.WriteLine($"[{nameof(Random)}] It's no use, RNG seed sync failed, let's get outta here!.");
+                Trace.WriteLine($"[{nameof(Random)} / Host] It's no use, RNG seed sync failed, let's get outta here!.");
                 Socket.Dispose();
                 return;
             }
@@ -107,11 +106,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 return true;
             }
 
-            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.");
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.");
             if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
             {
+                Trace.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.");
                 hook.OriginalFunction(seed);
-                Dispose();
+                Socket.Dispose();
             }
         }
 
@@ -128,7 +128,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             {
                 if (packet.Random.HasValue)
                 {
-                    Trace.WriteLine("[Host] Received SRandSyncReady from Client.");
+                    Trace.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.");
                     _syncReady[peer.Id] = true;
                 }
             }
