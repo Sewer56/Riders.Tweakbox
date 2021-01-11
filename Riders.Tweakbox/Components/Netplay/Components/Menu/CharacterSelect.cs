@@ -9,10 +9,12 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 {
@@ -98,9 +100,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             if (_exit != kind)
             {
                 if (Socket.GetSocketType() == SocketType.Host)
-                    Socket.SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(kind)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Host] Sending Start/Exit Flag to Clients");
+                    Socket.SendToAllAndFlush(new ReliablePacket(new CharaSelectExit(kind)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Host] Sending Start/Exit Flag to Clients", LogCategory.Menu);
                 else
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(kind)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Client] Sending Start/Exit flag to Host");
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(new CharaSelectExit(kind)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Client] Sending Start/Exit flag to Host", LogCategory.Menu);
             }
 
             _exit = ExitKind.Null;
@@ -119,12 +121,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             switch (command.Value.Command)
             {
                 case CharaSelectExit charaSelectExit:
-                    Trace.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag");
+                    Log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag", LogCategory.Menu);
                     if (Socket.GetSocketType() == SocketType.Host)
                         Socket.SendToAllExcept(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered);
 
                     _exit = charaSelectExit.Type;
-                    Trace.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag Complete");
+                    Log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag Complete", LogCategory.Menu);
                     break;
                 case CharaSelectLoop charaSelectLoop:
                     var hostState = (HostState) Socket.State;

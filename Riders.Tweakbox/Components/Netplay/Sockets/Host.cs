@@ -23,7 +23,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         
         public Host(int port, string password, NetplayController controller) : base(controller)
         {
-            Trace.WriteLine($"[Host] Hosting Server on {port} with password {password}");
+            Log.WriteLine($"[Host] Hosting Server on {port} with password {password}", LogCategory.Socket);
             base.State = new HostState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
             Password   = password;
             Manager.StartInManualMode(port);
@@ -64,16 +64,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             }
 
             // Handle player handshake here!
-            Trace.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.");
+            Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
             if (!TryWaitForMessage(peer, CheckIfUserData, State.HandshakeTimeout))
             {
-                Trace.WriteLine($"[Host] Disconnecting client, did not receive user data.");
+                Log.WriteLine($"[Host] Disconnecting client, did not receive user data.", LogCategory.Socket);
                 peer.Disconnect();
                 return;
             }
             
-            SendAndFlush(peer, new ReliablePacket() { GameData = GameData.FromGame() }, DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.");
-            SendAndFlush(peer, new ReliablePacket(CourseSelectSync.FromGame(Event.CourseSelect)), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.");
+            SendAndFlush(peer, new ReliablePacket() { GameData = GameData.FromGame() }, DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
+            SendAndFlush(peer, new ReliablePacket(CourseSelectSync.FromGame(Event.CourseSelect)), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
         }
 
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -94,19 +94,19 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             bool Reject(string message)
             {
-                Trace.WriteLine(message);
+                Log.WriteLine(message, LogCategory.Socket);
                 request.Reject();
                 return false;
             }
 
-            Trace.WriteLine($"[Host] Received Connection Request");
+            Log.WriteLine($"[Host] Received Connection Request", LogCategory.Socket);
             if (Event.LastTask != Tasks.CourseSelect)
                 return Reject("[Host] Rejected Connection | Not on Course Select");
 
             if (!State.ClientMap.HasEmptySlots())
                 return Reject($"[Host] Rejected Connection | No Empty Slots");
 
-            Trace.WriteLine($"[Host] Accepting if Password Matches");
+            Log.WriteLine($"[Host] Accepting if Password Matches", LogCategory.Socket);
             return request.AcceptIfKey(Password) != null;
         }
         #endregion

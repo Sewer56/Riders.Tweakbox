@@ -9,6 +9,7 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
@@ -18,8 +19,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
     /// </summary>
     public class TimeSynchronization : INetplayComponent
     {
-        private const string NtpServer = "0.pool.ntp.org";
-        private const int NtpSyncEventPeriod = 32000;
+        private const string NtpServer = "time.facebook.com";
+        private const int NtpSyncEventPeriod = 16000;
 
         /// <inheritdoc />
         public Socket Socket { get; set; }
@@ -57,7 +58,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             if (packet != null)
             {
-                Trace.WriteLine($"[{nameof(TimeSynchronization)}] NTP Time Synchronized, Offset: {packet.CorrectionOffset.TotalMilliseconds}ms");
+                Log.WriteLine($"[{nameof(TimeSynchronization)}] NTP Time Synchronized, Offset: {packet.CorrectionOffset.TotalMilliseconds}ms", LogCategory.Ntp);
                 _correctionOffset = packet.CorrectionOffset;
             }
         }
@@ -70,7 +71,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             if (Debugger.IsAttached) 
                 return;
 
-            Trace.WriteLine($"[{nameof(TimeSynchronization)}] Queuing NTP Synchronization");
+            Log.WriteLine($"[{nameof(TimeSynchronization)}] Queuing NTP Synchronization", LogCategory.Ntp);
             Manager.CreateNtpRequest(NtpServer);
         }
 

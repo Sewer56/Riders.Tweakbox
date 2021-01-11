@@ -16,7 +16,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     {
         public Client(string ipAddress, int port, string password, NetplayController controller) : base(controller)
         {
-            Trace.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}");
+            Log.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}", LogCategory.Socket);
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
@@ -28,7 +28,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public override void Dispose()
         {
-            Trace.WriteLine($"[Client] Disposing of Socket, Disconnected");
+            Log.WriteLine($"[Client] Disposing of Socket, Disconnected", LogCategory.Socket);
             base.Dispose();
         }
 
@@ -47,7 +47,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (packet.GameData.HasValue)
             {
-                Trace.WriteLine($"[Client] Received Game Data, Applying");
+                Log.WriteLine($"[Client] Received Game Data, Applying", LogCategory.Socket);
                 packet.GameData.Value.ToGame();
             }
         }
@@ -58,20 +58,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             switch (msg)
             {
                 case HostSetPlayerData hostSetPlayerData:
-                    Trace.WriteLine($"[Client] Received Player Info");
+                    Log.WriteLine($"[Client] Received Player Info", LogCategory.Socket);
                     State.PlayerInfo = hostSetPlayerData.Data;
                     State.SelfInfo.PlayerIndex = hostSetPlayerData.Index;
                     break;
 
                 case SetAntiCheat setAntiCheat:
-                    Trace.WriteLine($"[Client] Received Anticheat Info");
+                    Log.WriteLine($"[Client] Received Anticheat Info", LogCategory.Socket);
                     State.AntiCheatMode = setAntiCheat.Cheats;
                     break;
             }
         }
 
         #region Overrides
-        public override void OnPeerConnected(NetPeer peer) => SendAndFlush(peer, new ReliablePacket(new ClientSetPlayerData(State.SelfInfo)), DeliveryMethod.ReliableUnordered, "[Client] Connected to Host, Sending Player Data");
+        public override void OnPeerConnected(NetPeer peer) => SendAndFlush(peer, new ReliablePacket(new ClientSetPlayerData(State.SelfInfo)), DeliveryMethod.ReliableUnordered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Dispose();
 
         // Ignored

@@ -6,6 +6,7 @@ using System.Runtime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox
 {
@@ -32,31 +33,33 @@ namespace Riders.Tweakbox
                 {
                     // Check for a notification of an approaching collection.
                     var status = GC.WaitForFullGCApproach(-1);
-                    if (status == GCNotificationStatus.Succeeded)
+                    switch (status)
                     {
-                        Trace.WriteLine($"[Full GC] About to Begin GC, Mode: {GCSettings.LatencyMode}");
-                    }
-                    else if (status == GCNotificationStatus.Canceled)
-                    {
-                        Trace.WriteLine("[Full GC] Begin Event was Cancelled");
+                        case GCNotificationStatus.Succeeded:
+                            Log.WriteLine($"[Full GC] About to Begin GC, Mode: {GCSettings.LatencyMode}", LogCategory.Memory);
+                            break;
+                        case GCNotificationStatus.Canceled:
+                            Log.WriteLine("[Full GC] Begin Event was Cancelled", LogCategory.Memory);
+                            break;
                     }
 
                     // Check for a notification of a completed collection.
                     status = GC.WaitForFullGCComplete(-1);
-                    if (status == GCNotificationStatus.Succeeded)
+                    switch (status)
                     {
-                        Trace.WriteLine($"[Full GC] Completed");
-                    }
-                    else if (status == GCNotificationStatus.Canceled)
-                    {
-                        Trace.WriteLine($"[Full GC] Completion was cancelled.");
+                        case GCNotificationStatus.Succeeded:
+                            Log.WriteLine($"[Full GC] Completed", LogCategory.Memory);
+                            break;
+                        case GCNotificationStatus.Canceled:
+                            Log.WriteLine($"[Full GC] Completion was cancelled.", LogCategory.Memory);
+                            break;
                     }
                 }
             }
             catch (Exception e)
             {
-                Trace.WriteLine("[Full GC] Logger has encountered an error.");
-                Trace.WriteLine("[Full GC] " + e.Message);
+                Log.WriteLine("[Full GC] Logger has encountered an error.", LogCategory.Memory);
+                Log.WriteLine("[Full GC] " + e.Message, LogCategory.Memory);
             }
         }
     }

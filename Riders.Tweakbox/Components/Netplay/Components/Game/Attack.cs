@@ -3,16 +3,17 @@ using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
@@ -78,7 +79,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 var hostState   = (HostState) Socket.State;
                 var playerIndex = hostState.ClientMap.GetPlayerData(pkt.Source).PlayerIndex;
-                Trace.WriteLine($"[{nameof(Attack)} / Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}");
+                Log.WriteLine($"[{nameof(Attack)} / Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}", LogCategory.Race);
                 _attackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
             }
             else
@@ -86,7 +87,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (!packet.Attack.HasValue)
                     return;
 
-                Trace.WriteLine($"[{nameof(Attack)} / Client] Received Attack data from host");
+                Log.WriteLine($"[{nameof(Attack)} / Client] Received Attack data from host", LogCategory.Race);
                 var value   = packet.Attack.Value;
                 var attacks = new SetAttack[_attackSync.Length];
                 value.AsInterface().ToArray(attacks, attacks.Length - 1, 0, 1);
@@ -122,11 +123,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 switch (Socket.GetSocketType())
                 {
                     case SocketType.Host:
-                        Trace.WriteLine($"[{nameof(Attack)} / Host] Set Attack on {p2Index}");
+                        Log.WriteLine($"[{nameof(Attack)} / Host] Set Attack on {p2Index}", LogCategory.Race);
                         _attackSync[0] = new Timestamped<SetAttack>(new SetAttack((byte)p2Index));
                         break;
                     case SocketType.Client:
-                        Trace.WriteLine($"[{nameof(Attack)} / Client] Send Attack on {p2Index} [Host Index: {Socket.State.GetHostPlayerIndex(p2Index)}]");
+                        Log.WriteLine($"[{nameof(Attack)} / Client] Send Attack on {p2Index} [Host Index: {Socket.State.GetHostPlayerIndex(p2Index)}]", LogCategory.Race);
                         Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { SetAttack = new SetAttack((byte)Socket.State.GetHostPlayerIndex(p2Index)) }, DeliveryMethod.ReliableOrdered);
                         break;
 
@@ -144,7 +145,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (! HasAttacks)
                     goto exit;
 
-                Trace.WriteLine($"[{nameof(Attack)} / Host] Sending Attack Matrix to Clients");
+                Log.WriteLine($"[{nameof(Attack)} / Host] Sending Attack Matrix to Clients", LogCategory.Race);
                 foreach (var peer in Socket.Manager.ConnectedPeerList)
                 {
                     var state = (HostState) Socket.State;
@@ -157,7 +158,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     for (var x = 0; x < attacks.Length; x++)
                     {
                         if (attacks[x].IsValid)
-                            Trace.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({x}), Target {attacks[x].Target}");
+                            Log.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({x}), Target {attacks[x].Target}", LogCategory.Race);
                     }
                     #endif
 
@@ -190,7 +191,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 var value = atkSync.Value;
                 if (value.IsValid)
                 {
-                    Trace.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
+                    Log.WriteLine($"[State] Execute Attack by {x} on {value.Target}", LogCategory.Race);
                     StartAttackTask(x, value.Target);
                 }
             }

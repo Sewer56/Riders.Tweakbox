@@ -10,11 +10,13 @@ using Riders.Netplay.Messages.Unreliable;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
@@ -235,7 +237,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 if (syncStamped.Value.IsDefault())
                 {
-                    Trace.WriteLine("Discarding Race Packet due to Default Comparison");
+                    Log.WriteLine("Discarding Race Packet due to Default Comparison", LogCategory.Race);
                     continue;
                 }
 

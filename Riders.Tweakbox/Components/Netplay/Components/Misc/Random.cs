@@ -8,6 +8,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Functions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
@@ -54,7 +55,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private int OnRandom(IHook<Functions.RandFn> hook)
         {
             var result = hook.OriginalFunction();
-            Trace.WriteLine($"[{nameof(Random)}] Current Seed: {result}");
+            Log.WriteLine($"[{nameof(Random)}] Current Seed: {result}", LogCategory.Random);
             return result;
         }
 
@@ -72,12 +73,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
             if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
-                Trace.WriteLine($"[{nameof(Random)} / Host] It's no use, RNG seed sync failed, let's get outta here!.");
+                Log.WriteLine($"[{nameof(Random)} / Host] It's no use, RNG seed sync failed, let's get outta here!.", LogCategory.Random);
                 Socket.Dispose();
                 return;
             }
 
-            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}");
+            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random);
 
             // Disable skip flags for everyone.
             foreach (var key in _syncReady.Keys)
@@ -101,15 +102,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 if (!reliable.Random.HasValue)
                     return false;
 
-                Trace.WriteLine($"[{nameof(Random)} / Client] Received Random Seed, Seeding {reliable.Random.Value.Value}");
+                Log.WriteLine($"[{nameof(Random)} / Client] Received Random Seed, Seeding {reliable.Random.Value.Value}", LogCategory.Random);
                 Event.InvokeSeedRandom(reliable.Random.Value.Value);
                 return true;
             }
 
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.");
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new Seed((int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random);
             if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
             {
-                Trace.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.");
+                Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
                 hook.OriginalFunction(seed);
                 Socket.Dispose();
             }
@@ -128,7 +129,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             {
                 if (packet.Random.HasValue)
                 {
-                    Trace.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.");
+                    Log.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.", LogCategory.Random);
                     _syncReady[peer.Id] = true;
                 }
             }

@@ -8,6 +8,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Components.Netplay.Helpers;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -78,9 +79,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 var level = (byte) *Sewer56.SonicRiders.API.State.Level;
                 if (Socket.GetSocketType() == SocketType.Host)
-                    Socket.SendToAllAndFlush(new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Host] Sending Stage Set Flag");
+                    Socket.SendToAllAndFlush(new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Host] Sending Stage Set Flag", LogCategory.Menu);
                 else
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Client] Sending Stage Set Flag");
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Client] Sending Stage Set Flag", LogCategory.Menu);
             }
 
             _receivedSetStageFlag = false;
@@ -114,7 +115,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     _loopQueue.Enqueue(courseSelectLoop);
                     break;
                 case CourseSelectSetStage courseSelectSetStage:
-                    Trace.WriteLine($"[{nameof(CourseSelect)}] Received Stage Set Flag");
+                    Log.WriteLine($"[{nameof(CourseSelect)}] Received Stage Set Flag", LogCategory.Menu);
                     *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
                     _receivedSetStageFlag = true;
                     if (Socket.GetSocketType() == SocketType.Host)

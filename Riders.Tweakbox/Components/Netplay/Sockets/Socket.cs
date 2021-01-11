@@ -121,16 +121,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public void Update()
         {
-            if (!_isDisposed)
-            {
-                var elapsedMilliseconds = (int)_stopWatch.ElapsedMilliseconds != 0 ? _stopWatch.ElapsedMilliseconds : 1;
-                Manager.ManualReceive();
-                Manager.ManualUpdate((int) elapsedMilliseconds);
-                _stopWatch.Restart();
+            if (_isDisposed) 
+                return;
 
-                Manager.PollEvents();
-                HandlePackets();
-            }
+            var elapsedMilliseconds = (int)_stopWatch.ElapsedMilliseconds != 0 ? _stopWatch.ElapsedMilliseconds : 1;
+            Manager.ManualReceive();
+            Manager.ManualUpdate((int) elapsedMilliseconds);
+            _stopWatch.Restart();
+
+            Manager.PollEvents();
+            HandlePackets();
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 if (packet.IsDiscard(State.MaxLatency))
                 {
-                    Trace.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency");
+                    Log.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency", LogCategory.Socket);
                     continue;
                 }
 
@@ -262,9 +262,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
         /// <param name="text">The text to log.</param>
-        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text)
+        /// <param name="logCategory">Category under which the text should be logged.</param>
+        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text, LogCategory logCategory)
         {
-            Trace.WriteLine(text);
+            Log.WriteLine(text, logCategory);
             SendAndFlush(peer, message, method);
         }
 
@@ -285,9 +286,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
         /// <param name="text">The text to log.</param>
-        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text)
+        /// <param name="logCategory">Category under which the text should be logged.</param>
+        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text, LogCategory logCategory)
         {
-            Trace.WriteLine(text);
+            Log.WriteLine(text, logCategory);
             SendToAllAndFlush(message, method);
         }
 
@@ -382,13 +384,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         /// <param name="waitUntil">Thread will block until this specified time.</param>
         /// <param name="eventName">(Optional) name of the event</param>
+        /// <param name="eventCategory">(Optional) Category of the event.</param>
         /// <param name="spinTime">The amount of time in milliseconds before event expired to start spinning.</param>
-        public void WaitWithSpin(DateTime waitUntil, string eventName = "", int spinTime = 100)
+        public void WaitWithSpin(DateTime waitUntil, string eventName = "", LogCategory eventCategory = LogCategory.Socket, int spinTime = 100)
         {
             // TODO: Negotiation between multiple clients on current time so WaitUntil matches.
-            Trace.WriteLine($"[Socket] Waiting for event ({eventName}).");
-            Trace.WriteLine($"[Socket] Time: {DateTime.UtcNow}");
-            Trace.WriteLine($"[Socket] Start Time: {waitUntil}");
+            Log.WriteLine($"[Socket] Waiting for event ({eventName}).", LogCategory.Socket);
+            Log.WriteLine($"[Socket] Time: {DateTime.UtcNow}", LogCategory.Socket);
+            Log.WriteLine($"[Socket] Start Time: {waitUntil}", LogCategory.Socket);
 
             // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
             ActionWrappers.TryWaitUntil(() =>
