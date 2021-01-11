@@ -33,7 +33,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <summary>
         /// Contains movement flags for each client.
         /// </summary>
-        private Timestamped<MovementFlagsMsg>[] _movementFlags = new Timestamped<MovementFlagsMsg>[Constants.MaxNumberOfPlayers];
+        private Timestamped<Used<MovementFlagsMsg>>[] _movementFlags = new Timestamped<Used<MovementFlagsMsg>>[Constants.MaxNumberOfPlayers];
 
         public Race(Socket socket, EventController @event)
         {
@@ -69,7 +69,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public void Reset()
         {
             Array.Fill(_raceSync, new Volatile<Timestamped<UnreliablePacketPlayer>>());
-            Array.Fill(_movementFlags, new Timestamped<MovementFlagsMsg>());
+            Array.Fill(_movementFlags, new Timestamped<Used<MovementFlagsMsg>>());
         }
 
         /// <inheritdoc />
@@ -90,7 +90,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var hostState = (HostState) State;
                     var playerIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    _movementFlags[playerIndex] = new Timestamped<MovementFlagsMsg>(packet.SetMovementFlags.Value);
+
+                    // Replace if used, or merge.
+                    ReplaceOrSetCurrentFlags(packet.SetMovementFlags.Value, playerIndex);
                 }
             }
             else
@@ -100,8 +102,20 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var packedFlags = packet.MovementFlags.Value.AsInterface();
                     for (int x = 0; x < MovementFlagsPacked.NumberOfEntries; x++)
-                        _movementFlags[x] = packedFlags.GetData(x);
+                    {
+                        ReplaceOrSetCurrentFlags(packedFlags.GetData(x), x);
+                    }
                 }
+            }
+
+            // Local Function
+            void ReplaceOrSetCurrentFlags(MovementFlagsMsg movementFlags, int playerIndex)
+            {
+                ref var currentFlags = ref _movementFlags[playerIndex];
+                if (currentFlags.IsDiscard(State.MaxLatency) || currentFlags.Value.IsUsed)
+                    currentFlags = new Timestamped<Used<MovementFlagsMsg>>(movementFlags);
+                else
+                    currentFlags.Value.Value.Merge(movementFlags);
             }
         }
 
@@ -181,12 +195,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (index == 0)
                 {
                     var hostState = (HostState) State;
-                    _movementFlags[0] = new MovementFlagsMsg(player);
+                    _movementFlags[0] = new Timestamped<Used<MovementFlagsMsg>>(new MovementFlagsMsg(player));
                     foreach (var peer in Socket.Manager.ConnectedPeerList)
                     {
                         var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value), 0) }, DeliveryMethod.ReliableOrdered);
+                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, DeliveryMethod.ReliableOrdered);
                     }
                 }
 
@@ -243,11 +257,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (index == 0)
                 return player;
 
-            var flags = _movementFlags[State.GetHostPlayerIndex(index)];
+            ref var flags = ref _movementFlags[State.GetHostPlayerIndex(index)];
             if (flags.IsDiscard(State.MaxLatency))
                 return player;
 
-            flags.Value.ToGame(player);
+            var flagData = flags.Value.UseValue();
+            flagData.ToGame(player);
             return player;
         }
     }
