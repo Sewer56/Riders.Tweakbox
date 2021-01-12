@@ -210,6 +210,11 @@ namespace Riders.Netplay.Messages.Unreliable
             var bitStreamPos = bitStream.GetStream().Position;
             var extraByte    = bitStream.BitPosition != 0 ? 1 : 0;
             reader.Seek(originalPos + bitStreamPos + extraByte, SeekOrigin.Begin);
+
+            // TODO: Hack that removes a turbulence related flag in order to prevent crashing in the meantime.
+            // Real way to get around this crash is not yet known; albeit the crash happens at 00457EC9
+            player.ControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
+
             return player;
         }
 
@@ -274,7 +279,6 @@ namespace Riders.Netplay.Messages.Unreliable
 
                 if (!IsCurrentStateBlacklisted(player.PlayerState) && IsWhitelisted((PlayerState) State.Value))
                     player.PlayerState = (PlayerState) State.Value;
-
             }
 
             if (Animation.HasValue)
