@@ -10,51 +10,30 @@ using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using ExtremeGearEnum = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Player = Sewer56.SonicRiders.API.Player;
 
-namespace Riders.Tweakbox.Components.GearEditor
+namespace Riders.Tweakbox.Components.Editors.Gear
 {
     /// <summary>
     /// Provides the capability of editing gears for the mod.
     /// </summary>
-    public unsafe class GearEditor : IComponent
+    public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     {
-        public string Name { get; set; } = "Gear Editor";
-        public GearEditorConfig CurrentConfig { get; private set; } = GearEditorConfig.FromGame();
+        public override string Name { get; set; } = "Gear Editor";
 
-        private bool _isEnabled;
-        private IO _io;
-        private ProfileSelector _profileSelector;
-
-        public GearEditor(IO io)
+        public GearEditor(IO io) : base(io, io.GearConfigFolder, io.GetGearConfigFiles)
         {
-            _io = io;
-            _profileSelector = new ProfileSelector(_io.GearConfigFolder, IO.ConfigExtension, IO.CompressLZ4(CurrentConfig.GetDefault().ToBytes()), GetConfigFiles, LoadConfig, GetCurrentConfigBytes);
-            _profileSelector.Save();
+
         }
 
-        // Profile Selector Implementation
-        private void LoadConfig(byte[] data)
-        {
-            var decompressed = IO.DecompressLZ4(data);
-            var fileSpan = new Span<byte>(decompressed);
-            CurrentConfig.FromBytes(fileSpan);
-            CurrentConfig.Apply();
-        }
-
-        private string[] GetConfigFiles() => _io.GetGearConfigFiles();
-        private byte[] GetCurrentConfigBytes() => IO.CompressLZ4(CurrentConfig.GetCurrent().ToBytes());
-
-        public ref bool IsEnabled() => ref _isEnabled;
         public bool IsAvailable() => !IoC.Get<NetplayController>().IsConnected();
+        public override void Disable() => Config.GetDefault().Apply();
+        public override void Enable()  => Config.Apply();
 
-        public void Disable() => CurrentConfig.GetDefault().Apply();
-        public void Enable() => CurrentConfig?.Apply();
-        
         /// <inheritdoc />
-        public void Render()
+        public override void Render()
         {
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
-                _profileSelector.Render();
+                ProfileSelector.Render();
                 EditGears();
             }
 

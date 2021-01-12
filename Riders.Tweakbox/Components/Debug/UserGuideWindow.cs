@@ -1,7 +1,7 @@
 ﻿using DearImguiSharp;
 using Sewer56.Imgui.Shell.Interfaces;
 
-namespace Riders.Tweakbox.Components.Imgui
+namespace Riders.Tweakbox.Components.Debug
 {
     public class UserGuideWindow : IComponent
     {

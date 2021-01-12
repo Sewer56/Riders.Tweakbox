@@ -8,7 +8,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
-using Riders.Tweakbox.Components.FixesEditor;
+using Riders.Tweakbox.Components.Fixes;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders;
@@ -137,7 +137,7 @@ namespace Riders.Tweakbox.Controllers
                     _device.NativePointer = (IntPtr) deviceAddress;
                     _device.EndScene();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     /* Game is Stupid */
                 }

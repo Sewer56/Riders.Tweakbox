@@ -5,7 +5,7 @@ using Riders.Tweakbox.Definitions.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 
-namespace Riders.Tweakbox.Components.PhysicsEditor
+namespace Riders.Tweakbox.Components.Editors.Physics
 {
     public unsafe class PhysicsEditorConfig : IConfiguration
     {

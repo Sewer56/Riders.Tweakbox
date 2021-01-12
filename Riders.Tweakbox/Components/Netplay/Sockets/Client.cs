@@ -20,7 +20,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
             Manager.StartInManualMode(0);
-            State = new CommonState(IoC.GetConstant<NetplayImguiConfig>().ToHostPlayerData());
+            State = new CommonState(IoC.GetConstant<NetplayConfig>().ToHostPlayerData());
             Manager.Connect(ipAddress, port, password);
             Initialize();
         }

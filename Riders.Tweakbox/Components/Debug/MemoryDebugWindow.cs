@@ -5,7 +5,7 @@ using DearImguiSharp;
 using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell.Interfaces;
 
-namespace Riders.Tweakbox.Components.Misc
+namespace Riders.Tweakbox.Components.Debug
 {
     public class MemoryDebugWindow : IComponent
     {

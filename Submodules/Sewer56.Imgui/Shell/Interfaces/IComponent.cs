@@ -20,12 +20,12 @@
         /// <summary>
         /// Disables the component and restores its original state.
         /// </summary>
-        void Disable();
+        void Disable() { }
 
         /// <summary>
         /// Re-enables the component and sets the modified state.
         /// </summary>
-        void Enable();
+        void Enable() { }
 
         /// <summary>
         /// Renders the component to the screen using Dear Imgui.

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Riders.Tweakbox.Components.FixesEditor;
-using Riders.Tweakbox.Components.GearEditor;
-using Riders.Tweakbox.Components.PhysicsEditor;
+using Riders.Tweakbox.Components.Editors.Gear;
+using Riders.Tweakbox.Components.Editors.Physics;
+using Riders.Tweakbox.Components.Fixes;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 

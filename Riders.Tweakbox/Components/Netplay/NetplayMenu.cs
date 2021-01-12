@@ -10,25 +10,23 @@ using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
-    public class NetplayMenu : IComponent
+    public class NetplayMenu : ComponentBase<NetplayConfig>, IComponent
     {
-        public NetplayImguiConfig Config    = IoC.GetConstant<NetplayImguiConfig>();
         public NetplayController Controller = IoC.GetConstant<NetplayController>();
-        public string Name { get; set; } = "Netplay Menu";
-        private bool _isEnabled;
+        public override string Name { get; set; } = "Netplay Menu";
         
-        public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() => Controller.Disable();
-        public void Enable() => Controller.Enable();
-
-        private void Disconnect()
+        /// <inheritdoc />
+        public NetplayMenu(IO io) : base(io, io.NetplayConfigFolder, io.GetNetplayConfigFiles)
         {
-            Controller.Socket?.Dispose();
+
         }
 
-        public void Render()
+        public override void Disable() => Controller.Disable();
+        public override void Enable() => Controller.Enable();
+
+        public override void Render()
         {
-            if (ImGui.Begin("Netplay Window", ref _isEnabled, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+            if (ImGui.Begin("Netplay Window", ref IsEnabled(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
                 RenderNetplayWindow();
             }
@@ -55,7 +53,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.Text($"{player.Name} | {player.PlayerIndex}");
 
             if (ImGui.Button("Disconnect", Constants.ButtonSize))
-                Disconnect();
+                Controller.Socket?.Dispose();
 
             if (ImGui.TreeNodeStr("Bandwidth Statistics"))
             {
@@ -73,11 +71,12 @@ namespace Riders.Tweakbox.Components.Netplay
 
         private void RenderHostJoinWindow()
         {
+            ref var data = ref Config.Data;
             if (ImGui.TreeNodeStr("Join a Server"))
             {
-                Config.ClientIP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, Config.ClientIP.FilterIPAddress);
-                Config.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                Reflection.MakeControl(ref Config.ClientPort, "Port");
+                data.ClientIP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, data.ClientIP.FilterIPAddress);
+                data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                Reflection.MakeControl(ref data.ClientPort, "Port");
 
                 if (ImGui.Button("Connect", Constants.DefaultVector2))
                     Connect();
@@ -87,8 +86,8 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Host"))
             {
-                Config.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                Reflection.MakeControl(ref Config.HostPort, "Port");
+                data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                Reflection.MakeControl(ref data.HostPort, "Port");
 
                 if (ImGui.Button("Host", Constants.DefaultVector2))
                     HostServer();
@@ -98,17 +97,15 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Player Settings"))
             {
-                Config.PlayerName.Render(nameof(NetplayConfigFile.PlayerName));
-                Reflection.MakeControl(ref Config.ShowPlayers, "Show Player Overlay");
+                data.PlayerName.Render(nameof(data.PlayerName));
+                Reflection.MakeControl(ref data.ShowPlayers, "Show Player Overlay");
 
                 ImGui.TreePop();
             }
 
             ImGui.Spacing();
-            if (ImGui.Button("Save Settings", Constants.DefaultVector2))
-                Config.Save();
 
-            if (Config.ShowPlayers)
+            if (data.ShowPlayers)
                 RenderPlayerMenu();
         }
 
@@ -116,7 +113,8 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                Controller.Socket = new Host(Config.HostPort, Config.Password.Text, Controller);
+                ref var data = ref Config.Data;
+                Controller.Socket = new Host(data.HostPort, data.Password.Text, Controller);
             }
             catch (Exception e)
             {
@@ -128,7 +126,8 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                Controller.Socket = new Client(Config.ClientIP.Text, Config.ClientPort, Config.Password.Text, Controller);
+                ref var data = ref Config.Data;
+                Controller.Socket = new Client(data.ClientIP.Text, data.ClientPort, data.Password.Text, Controller);
             }
             catch (Exception e)
             {

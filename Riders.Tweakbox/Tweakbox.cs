@@ -4,12 +4,12 @@ using System.Windows.Forms;
 using DearImguiSharp;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
-using Riders.Tweakbox.Components.FixesEditor;
-using Riders.Tweakbox.Components.GearEditor;
-using Riders.Tweakbox.Components.Imgui;
-using Riders.Tweakbox.Components.Misc;
+using Riders.Tweakbox.Components.Debug;
+using Riders.Tweakbox.Components.Debug.Log;
+using Riders.Tweakbox.Components.Editors.Gear;
+using Riders.Tweakbox.Components.Editors.Physics;
+using Riders.Tweakbox.Components.Fixes;
 using Riders.Tweakbox.Components.Netplay;
-using Riders.Tweakbox.Components.PhysicsEditor;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
@@ -95,8 +95,7 @@ namespace Riders.Tweakbox
         {
             var io = new IO(modFolder);
             IoC.Kernel.Bind<IO>().ToConstant(io);
-            IoC.Kernel.Bind<NetplayConfigFile>().ToConstant(io.GetNetplayConfig());
-            IoC.GetConstant<NetplayImguiConfig>();
+            IoC.GetConstant<NetplayConfig>();
             IoC.GetConstant<EventController>();
         }
 

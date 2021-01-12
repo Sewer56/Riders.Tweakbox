@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Text.Json;
 using K4os.Compression.LZ4;
-using Riders.Tweakbox.Components.Netplay;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -21,7 +19,6 @@ namespace Riders.Tweakbox.Misc
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
-        public string NetplayConfigPath => Path.Combine(NetplayConfigFolder, "Config.json");
 
         /// <summary>
         /// Folder mod is stored in.
@@ -44,9 +41,7 @@ namespace Riders.Tweakbox.Misc
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
         public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
         public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, ConfigSearchPattern);
-
-        public NetplayConfigFile GetNetplayConfig() => File.Exists(NetplayConfigPath) ? JsonSerializer.Deserialize<NetplayConfigFile>(File.ReadAllText(NetplayConfigPath)) : new NetplayConfigFile();
-        public void SaveNetplayConfig(NetplayConfigFile configFile) => File.WriteAllText(NetplayConfigPath, JsonSerializer.Serialize<NetplayConfigFile>(configFile, new JsonSerializerOptions() { WriteIndented = true }));
+        public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, ConfigSearchPattern);
 
         /// <summary>
         /// Compresses a chunk of data using the LZ4 compression algorithm.
@@ -61,6 +56,18 @@ namespace Riders.Tweakbox.Misc
         }
 
         /// <summary>
+        /// Compresses a chunk of data using the LZ4 compression algorithm.
+        /// </summary>
+        /// <param name="source">The data to compress.</param>
+        /// <param name="level">The level to compress at.</param>
+        public static Span<byte> CompressLZ4(Span<byte> source, LZ4Level level = LZ4Level.L10_OPT)
+        {
+            var target = new byte[LZ4Codec.MaximumOutputSize(source.Length)];
+            var encodedLength = LZ4Codec.Encode(source, target);
+            return new Span<byte>(target).Slice(0, encodedLength);
+        }
+
+        /// <summary>
         /// Decompresses a chunk of data using the LZ4 compression algorithm.
         /// </summary>
         /// <param name="source">The data to decompress.</param>
@@ -69,6 +76,18 @@ namespace Riders.Tweakbox.Misc
             // byte.MaxValue = Maximum possible output size per byte.
             var target = new byte[source.Length * byte.MaxValue]; 
             var decodedLength = LZ4Codec.Decode(source, 0, source.Length, target, 0, target.Length);
+            return new Span<byte>(target).Slice(0, decodedLength).ToArray();
+        }
+
+        /// <summary>
+        /// Decompresses a chunk of data using the LZ4 compression algorithm.
+        /// </summary>
+        /// <param name="source">The data to decompress.</param>
+        public static Span<byte> DecompressLZ4(Span<byte> source)
+        {
+            // byte.MaxValue = Maximum possible output size per byte.
+            var target = new byte[source.Length * byte.MaxValue];
+            var decodedLength = LZ4Codec.Decode(source, target);
             return new Span<byte>(target).Slice(0, decodedLength).ToArray();
         }
     }

@@ -3,7 +3,7 @@ using Reloaded.Memory;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 
-namespace Riders.Tweakbox.Components.FixesEditor
+namespace Riders.Tweakbox.Components.Fixes
 {
     public class FixesEditorConfig : IConfiguration
     {
