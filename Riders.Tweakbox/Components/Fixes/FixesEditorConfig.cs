@@ -31,6 +31,7 @@ namespace Riders.Tweakbox.Components.Fixes
             public float DisableYieldThreshold;
             public bool D3DDeviceFlags;
             public bool DisableVSync;
+            public bool AutoQTE;
 
             internal static Internal GetDefault() => new Internal
             {
@@ -40,6 +41,7 @@ namespace Riders.Tweakbox.Components.Fixes
                 DisableYieldThreshold = 80,
                 D3DDeviceFlags = true,
                 DisableVSync = true,
+                AutoQTE = true
             };
         }
         #endregion

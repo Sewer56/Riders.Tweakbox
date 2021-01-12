@@ -11,6 +11,8 @@ using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Components.Fixes;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
@@ -46,6 +48,7 @@ namespace Riders.Tweakbox.Controllers
         private Stopwatch _cpuLoadSampleWatch = Stopwatch.StartNew();
         private const float _cpuSampleIntervalMs = (float)((1000 / 60.0f) * 10);
         private Device _device = new Device((IntPtr)0x0);
+        private EventController _event = IoC.Get<EventController>();
 
         // Settings
         private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
@@ -93,12 +96,32 @@ namespace Riders.Tweakbox.Controllers
 
                 _bootToMenu = SDK.ReloadedHooks.CreateAsmHook(bootToMain, 0x0046AEE9, AsmHookBehaviour.ExecuteFirst).Activate();
             }
+
+            _event.OnCheckIfQtePressLeft += EventOnOnCheckIfQtePressLeft;
+            _event.OnCheckIfQtePressRight += EventOnOnCheckIfQtePressRight;
         }
 
-        public void Disable() => _endFrameHook.Disable();
-        public void Enable()  => _endFrameHook.Enable();
+        public void Disable()
+        {
+            _endFrameHook.Disable();
+            _createDeviceHook.Disable();
+            _bootToMenu.Disable();
+            _beginPeriodHook.Disable();
+            _endPeriodHook.Enable();
+        }
+
+        public void Enable()
+        {
+            _endFrameHook.Enable();
+            _createDeviceHook.Enable();
+            _bootToMenu.Enable();
+            _beginPeriodHook.Enable();
+            _endPeriodHook.Enable();
+        }
 
         public void ResetSpeedup() => _resetSpeedup = true;
+        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressRight() => _config.Data.AutoQTE;
+        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressLeft() => _config.Data.AutoQTE;
 
         private void UnlockAllAndDisableBootToMenu()
         {

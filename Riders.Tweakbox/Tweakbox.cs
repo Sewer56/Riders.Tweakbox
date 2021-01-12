@@ -95,8 +95,8 @@ namespace Riders.Tweakbox
         {
             var io = new IO(modFolder);
             IoC.Kernel.Bind<IO>().ToConstant(io);
-            IoC.GetConstant<NetplayConfig>();
             IoC.GetConstant<EventController>();
+            IoC.GetConstant<NetplayConfig>();
         }
 
         private int BlockGameInputsIfEnabled()

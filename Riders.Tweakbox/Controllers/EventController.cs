@@ -137,6 +137,16 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event SRandFn SeedRandom;
 
+        /// <summary>
+        /// If true, informs the game the player pressed left in the Quicktime event..
+        /// </summary>
+        public event AsmFunc OnCheckIfQtePressLeft;
+
+        /// <summary>
+        /// If true, informs the game the player pressed left in the Quicktime event..
+        /// </summary>
+        public event AsmFunc OnCheckIfQtePressRight;
+
         private RuleSettingsLoop _rule = new RuleSettingsLoop();
         private CourseSelectLoop _course = new CourseSelectLoop();
 
@@ -159,6 +169,8 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIfSkipRenderGaugeFill;
         private IAsmHook _onCheckIfHumanInputIndicatorHook;
         private IAsmHook _onGetRandomDoubleInPlayerFunctionHook;
+        private IAsmHook _onCheckIfQtePressLeftHook;
+        private IAsmHook _onCheckIfQtePressRightHook;
         private Random _random = new Random();
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
@@ -169,6 +181,12 @@ namespace Riders.Tweakbox.Controllers
             _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
             
             var onCourseSelectSetStageAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
+
+            var ifQtePressLeftAsm = new string[] { $"mov eax,[edx+0xB3C]", utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4B3721, Environment.Is64BitProcess) };
+            var onCheckIfQtePressLeft = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfQtePressLeftHook, out _, ifQtePressLeftAsm, null, null, "je")}" };
+            
+            var ifQtePressRightAsm = new string[] { $"mov ecx,[edx+0xB3C]", utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4B3746, Environment.Is64BitProcess) };
+            var onCheckIfQtePressRight = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfQtePressedRightHook, out _, ifQtePressRightAsm, null, null, "je")}" };
 
             var onExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnExitCharaSelectHook, out _)}" };
             var ifExitCharaSelectAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00463741, Environment.Is64BitProcess) };
@@ -201,6 +219,7 @@ namespace Riders.Tweakbox.Controllers
 
             var onGetRandomDoubleInPlayerFunctionAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall<GetRandomDouble>(TempNextDouble, out _)}" };
             var hooks = SDK.ReloadedHooks;
+
             _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
             _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfExitCharaSelectHook = hooks.CreateAsmHook(onCheckIfExitCharaSelectAsm, 0x00463732, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -226,6 +245,9 @@ namespace Riders.Tweakbox.Controllers
                 $"use32",
                 $"{utilities.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
             }, 0x0046C139, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            _onCheckIfQtePressLeftHook = hooks.CreateAsmHook(onCheckIfQtePressLeft, 0x4B3716, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onCheckIfQtePressRightHook = hooks.CreateAsmHook(onCheckIfQtePressRight, 0x4B373B, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -249,6 +271,8 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIsHumanInputHook.Disable();
             _setSpawnLocationsStartOfRaceHook.Disable();
             _onGetRandomDoubleInPlayerFunctionHook.Disable();
+            _onCheckIfQtePressLeftHook.Disable();
+            _onCheckIfQtePressRightHook.Disable();
             _srandHook.Disable();
             _randHook.Disable();
         }
@@ -274,6 +298,8 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIsHumanInputHook.Enable();
             _setSpawnLocationsStartOfRaceHook.Enable();
             _onGetRandomDoubleInPlayerFunctionHook.Enable();
+            _onCheckIfQtePressLeftHook.Enable();
+            _onCheckIfQtePressRightHook.Enable();
             _randHook.Enable();
             _srandHook.Enable();
         }
@@ -394,6 +420,9 @@ namespace Riders.Tweakbox.Controllers
 
             return AsmFunctionResult.Indeterminate;
         }
+
+        private Enum<AsmFunctionResult> OnCheckIfQtePressedRightHook() => OnCheckIfQtePressRight != null && OnCheckIfQtePressRight();
+        private Enum<AsmFunctionResult> OnCheckIfQtePressLeftHook() => OnCheckIfQtePressLeft != null && OnCheckIfQtePressLeft();
 
         [Function(CallingConventions.Cdecl)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

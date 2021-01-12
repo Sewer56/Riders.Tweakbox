@@ -43,6 +43,12 @@ namespace Riders.Tweakbox.Components.Fixes
                 ImGui.TreePop();
             }
 
+            if (ImGui.TreeNodeStr("Misc"))
+            {
+                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
+                ImGui.TreePop();
+            }
+
             if (ImGui.TreeNodeStr("Rendering Optimizations"))
             {
                 ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
