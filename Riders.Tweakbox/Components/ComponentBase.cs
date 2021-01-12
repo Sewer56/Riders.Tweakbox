@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -23,7 +24,8 @@ namespace Riders.Tweakbox.Components
         {
             Io = io;
             ProfileSelector = new ProfileSelector(configFolder, IO.ConfigExtension, Config.GetDefault().ToBytes(), getConfigFiles, LoadConfig, GetCurrentConfigBytes);
-            ProfileSelector.Save();
+            if (File.Exists(ProfileSelector.CurrentConfiguration))
+                LoadConfig(File.ReadAllBytes(ProfileSelector.CurrentConfiguration));
         }
 
         public virtual void LoadConfig(byte[] data)

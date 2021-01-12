@@ -10,6 +10,7 @@ namespace Riders.Tweakbox.Components
 {
     /// <summary>
     /// Stores a large overarching config file that contains all configurations supported by Tweakbox.
+    /// TODO: Fill this file once Tweakbox reaches a late maturity stage.
     /// </summary>
     public class TweakboxConfig : IConfiguration
     {

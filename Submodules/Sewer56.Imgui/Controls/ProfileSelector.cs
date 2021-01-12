@@ -17,15 +17,27 @@ namespace Sewer56.Imgui.Controls
         private const string NewDialogId    = "New Profile";
         private const string DeleteDialogId = "Delete?";
         
+        /// <summary>
+        /// Contains the path to the config directory.
+        /// </summary>
         public string Directory { get; private set; }
 
+        /// <summary>
+        /// Contains the directory to the current configuration.
+        /// </summary>
+        public string CurrentConfiguration { get; private set; }
+
+        /// <summary>
+        /// Gets the path of the default configuration.
+        /// </summary>
+        public string DefaultConfiguration => $"{Directory}/Default{_configExtension}";
+        
         private TextInputData _inputData = new TextInputData(48);
         private byte[] _newConfigBytes;
         private Func<string[]> _getConfigFiles;
         private Func<byte[]> _getCurrentConfigBytes;
         private Action<byte[]> _loadConfig;
 
-        private string _currentConfiguration;
         private string[] _configurations;
         private FileSystemWatcher _configWatcher;
         private string _configExtension;
@@ -42,21 +54,26 @@ namespace Sewer56.Imgui.Controls
         public ProfileSelector(string directory, string extension, byte[] newConfigBytes, Func<string[]> getConfigFiles, Action<byte[]> loadConfig, Func<byte[]> getCurrentConfigBytes)
         {
             Directory = directory;
+            CurrentConfiguration = $"{Directory}/Default{extension}";
+
             _getConfigFiles = getConfigFiles;
             _loadConfig = loadConfig;
             _newConfigBytes = newConfigBytes;
             _getCurrentConfigBytes = getCurrentConfigBytes;
             _configExtension = extension;
 
-            _currentConfiguration = $"{Directory}/Default{extension}";
             _configWatcher = FileSystemWatcherFactory.CreateGeneric(Directory, OnConfigsUpdated, Changed | Created | Deleted | Renamed, true, $"*{_configExtension}");
+            if (!File.Exists(CurrentConfiguration))
+                File.WriteAllBytes(CurrentConfiguration, newConfigBytes);
+
+            OnConfigsUpdated();
         }
 
         private void OnConfigsUpdated()
         {
             _configurations = _getConfigFiles();
-            if (string.IsNullOrEmpty(_currentConfiguration) || !File.Exists(_currentConfiguration))
-                _currentConfiguration = _configurations.FirstOrDefault();
+            if (string.IsNullOrEmpty(CurrentConfiguration) || !File.Exists(CurrentConfiguration))
+                CurrentConfiguration = _configurations.FirstOrDefault();
         }
 
         /// <summary>
@@ -72,27 +89,27 @@ namespace Sewer56.Imgui.Controls
             var path = $"{Directory}/{name}{_configExtension}";
             File.WriteAllBytes(path, data);
             _loadConfig(data);
-            _currentConfiguration = path;
+            CurrentConfiguration = path;
         }
 
         /// <summary>
         /// Saves the current configuration.
         /// </summary>
-        public void Save() => Save(_getCurrentConfigBytes());
+        public void Save() => Save(_getCurrentConfigBytes(), CurrentConfiguration);
 
         /// <summary>
         /// Saves the current configuration with some custom data.
         /// </summary>
-        public void Save(byte[] data) => File.WriteAllBytes(_currentConfiguration, data);
+        public void Save(byte[] data, string path) => File.WriteAllBytes(CurrentConfiguration, data);
 
         /// <summary>
         /// Deletes the current configuration if it exists.
         /// </summary>
         public void Delete()
         {
-            if (File.Exists(_currentConfiguration))
+            if (File.Exists(CurrentConfiguration))
             {
-                File.Delete(_currentConfiguration);
+                File.Delete(CurrentConfiguration);
                 OnConfigsUpdated();
             }
         }
@@ -103,13 +120,13 @@ namespace Sewer56.Imgui.Controls
         public void Render()
         {
             ImGui.TextWrapped("Profile Selector");
-            var currentConfigName = Path.GetFileName(_currentConfiguration);
+            var currentConfigName = Path.GetFileName(CurrentConfiguration);
             var currentConfigNames = _configurations.Select(Path.GetFileName).ToArray();
 
             Reflection.MakeControlComboBox("Current Profile", currentConfigName, currentConfigName, currentConfigNames, currentConfigNames,
                 x =>
                 {
-                    _currentConfiguration = _configurations[currentConfigNames.IndexOf(y => y == x)];
+                    CurrentConfiguration = _configurations[currentConfigNames.IndexOf(y => y == x)];
                 });
 
             if (ImGui.Button("New", Constants.DefaultVector2))
@@ -122,13 +139,23 @@ namespace Sewer56.Imgui.Controls
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Load", Constants.DefaultVector2))
             {
-                if (!string.IsNullOrEmpty(_currentConfiguration) && File.Exists(_currentConfiguration))
-                    _loadConfig(File.ReadAllBytes(_currentConfiguration));
+                if (!string.IsNullOrEmpty(CurrentConfiguration) && File.Exists(CurrentConfiguration))
+                    _loadConfig(File.ReadAllBytes(CurrentConfiguration));
             }
 
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Save", Constants.DefaultVector2))
                 Save();
+
+            ImGui.SameLine(0, Constants.Spacing);
+            ImGui.SeparatorEx((int) ImGuiSeparatorFlags.ImGuiSeparatorFlagsVertical);
+            ImGui.SameLine(0, Constants.Spacing);
+            if (ImGui.Button("Reset", Constants.DefaultVector2))
+                _loadConfig(_newConfigBytes);
+
+            ImGui.SameLine(0, Constants.Spacing);
+            if (ImGui.Button("Save as Default", Constants.DefaultVector2))
+                Save(_getCurrentConfigBytes(), DefaultConfiguration);
 
             if (ImGui.BeginPopupModal(NewDialogId, ref Constants.NullReference<bool>(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
                 RenderNewDialog();
