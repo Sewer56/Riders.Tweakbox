@@ -154,7 +154,7 @@ namespace Riders.Tweakbox.Controllers
             _endFrameHook.OriginalFunction();
         }
 
-        private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType devicetype, IntPtr hfocuswindow, CreateFlags behaviorflags, ref PresentParameters ppresentationparameters, int** ppreturneddeviceinterface)
+        private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType devicetype, IntPtr hfocuswindow, CreateFlags behaviorflags, ref PresentParameters presentParameters, int** ppreturneddeviceinterface)
         {
             if (_config.Data.D3DDeviceFlags)
             {
@@ -162,10 +162,17 @@ namespace Riders.Tweakbox.Controllers
                 behaviorflags |= CreateFlags.DisablePsgpThreading;
             }
 
-            if (!ppresentationparameters.Windowed)
+            if (!presentParameters.Windowed)
                 Native.ShowCursor(true);
-            
-            return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, devicetype, hfocuswindow, behaviorflags, ref ppresentationparameters, ppreturneddeviceinterface);
+
+            // Disable VSync
+            if (_config.Data.DisableVSync)
+            {
+                presentParameters.PresentationInterval = PresentInterval.Immediate;
+                presentParameters.FullScreenRefreshRateInHz = 0;
+            }
+
+            return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, devicetype, hfocuswindow, behaviorflags, ref presentParameters, ppreturneddeviceinterface);
         }
 
         /* Parameter: uMilliseconds */

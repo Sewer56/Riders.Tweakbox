@@ -48,6 +48,9 @@ namespace Riders.Tweakbox.Components.Fixes
                 ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
                 Tooltip.TextOnHover("Applies on boot.");
 
+                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync);
+                Tooltip.TextOnHover("Applies on boot.");
+
                 if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing))
                     _controller.ResetSpeedup();
 

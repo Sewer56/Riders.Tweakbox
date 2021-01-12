@@ -30,6 +30,7 @@ namespace Riders.Tweakbox.Components.Fixes
             public bool FramePacingSpeedup; // Speed up game to compensate for lag.
             public float DisableYieldThreshold;
             public bool D3DDeviceFlags;
+            public bool DisableVSync;
 
             internal static Internal GetDefault() => new Internal
             {
@@ -37,7 +38,8 @@ namespace Riders.Tweakbox.Components.Fixes
                 FramePacingSpeedup = true,
                 FramePacing = true,
                 DisableYieldThreshold = 80,
-                D3DDeviceFlags = true
+                D3DDeviceFlags = true,
+                DisableVSync = true,
             };
         }
         #endregion
