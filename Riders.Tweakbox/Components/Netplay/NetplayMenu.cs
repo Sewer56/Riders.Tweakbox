@@ -28,6 +28,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             if (ImGui.Begin("Netplay Window", ref IsEnabled(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
+                ProfileSelector.Render();
                 RenderNetplayWindow();
             }
 
