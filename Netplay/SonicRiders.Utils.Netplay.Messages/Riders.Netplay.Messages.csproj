@@ -15,7 +15,7 @@
     <PackageReference Include="MessagePack" Version="2.1.115" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.1.115" />
     <PackageReference Include="Ninject" Version="3.3.4" />
-    <PackageReference Include="Reloaded.Memory" Version="3.0.1" />
+    <PackageReference Include="Reloaded.Memory" Version="3.1.1" />
     <PackageReference Include="rubendal.BitStream" Version="1.2.0" />
     <PackageReference Include="ToString.Fody" Version="1.11.0" />
   </ItemGroup>

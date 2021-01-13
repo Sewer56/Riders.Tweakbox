@@ -4,6 +4,7 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Fixes
 {
@@ -46,6 +47,30 @@ namespace Riders.Tweakbox.Components.Fixes
             if (ImGui.TreeNodeStr("Misc"))
             {
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
+                ImGui.TreePop();
+            }
+
+            if (ImGui.TreeNodeStr("Resolution & Widescreen Hack"))
+            {
+                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
+                Tooltip.TextOnHover("Applies at Startup");
+
+                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
+                Tooltip.TextOnHover("Applies at Startup");
+
+                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
+                Tooltip.TextOnHover("Applies at Startup");
+
+                Reflection.MakeControl(ref Config.Data.Blur, "Blur");
+                Reflection.MakeControl(ref Config.Data.WidescreenHack, "Widescreen Hack");
+                Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen. Work in progress on adding more HUD elements.");
+
+
+                ImGui.ButtonEx("Apply", Constants.ButtonSize, (int) ImGuiButtonFlags.ImGuiButtonFlagsDisabled);
+                Tooltip.TextOnHover("Looking for graphics programmer to help with this one.\n" +
+                                    "Need to find every single texture, buffer etc. that needs to be recreated before calling Reset.\n" +
+                                    "For now, please restart the game.");
+
                 ImGui.TreePop();
             }
 
