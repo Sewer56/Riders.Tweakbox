@@ -7,6 +7,7 @@ using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Components;
+using Riders.Tweakbox.Components.Netplay.Components.Misc;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;

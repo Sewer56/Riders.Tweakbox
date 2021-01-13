@@ -39,7 +39,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private Volatile<SyncStartGo> _startSyncGo = new Volatile<SyncStartGo>();
 
         private Dictionary<int, bool> _readyToStartRace;
-
         public RaceIntroSync(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -134,7 +133,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            var localTime = IoC.Get<TimeSynchronization>().ToLocalTime(goMessage.StartTime);
+            // TODO: Handle error when time component is not available.
+            Socket.TryGetComponent(out TimeSynchronization time); 
+            var localTime = time.ToLocalTime(goMessage.StartTime);
             Socket.WaitWithSpin(localTime, $"[{nameof(RaceIntroSync)} / Client] Race Started.", LogCategory.Race, 32);
             return true;
         }
@@ -159,8 +160,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
+            // TODO: Handle error when time component is not available.
             var startTime = DateTime.UtcNow.AddMilliseconds(state.MaxLatency);
-            var serverStartTime = IoC.Get<TimeSynchronization>().ToServerTime(startTime);
+            Socket.TryGetComponent(out TimeSynchronization time);
+            var serverStartTime = time.ToServerTime(startTime);
             Socket.SendToAllAndFlush(new ReliablePacket() { SyncStartGo = new SyncStartGo(serverStartTime) }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.", LogCategory.Race);
 
             // Disable skip flags for everyone.
