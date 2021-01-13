@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
@@ -47,8 +48,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
         }
 
-        private void OnPeerConnected(NetPeer peer) => _syncReady[peer.Id] = false;
-        private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => _syncReady.Remove(peer.Id);
+        private void OnPeerConnected(NetPeer peer)
+        {
+            Log.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Adding Entry: ", LogCategory.Random);
+            _syncReady[peer.Id] = false;
+        }
+
+        private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
+        {
+            Log.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Removing Entry: ", LogCategory.Random);
+            _syncReady.Remove(peer.Id);
+        }
 
         private int OnRandom(IHook<Functions.RandFn> hook)
         {
@@ -69,6 +79,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             hook.OriginalFunction(seed);
 
+            Log.WriteLine($"[{nameof(Random)} / Host] Calling Random Number Generator", LogCategory.Random);
             if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Host] It's no use, RNG seed sync failed, let's get outta here!.", LogCategory.Random);
