@@ -65,7 +65,6 @@ namespace Riders.Tweakbox.Components.Fixes
                 Reflection.MakeControl(ref Config.Data.WidescreenHack, "Widescreen Hack");
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen. Work in progress on adding more HUD elements.");
 
-
                 ImGui.ButtonEx("Apply", Constants.ButtonSize, (int) ImGuiButtonFlags.ImGuiButtonFlagsDisabled);
                 Tooltip.TextOnHover("Looking for graphics programmer to help with this one.\n" +
                                     "Need to find every single texture, buffer etc. that needs to be recreated before calling Reset.\n" +

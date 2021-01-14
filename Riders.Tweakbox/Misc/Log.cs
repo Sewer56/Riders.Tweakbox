@@ -17,6 +17,7 @@ namespace Riders.Tweakbox.Misc
         Random  = 16,
         Ntp     = 32,
         Socket  = 64,
+        RandomSeed = 128
     }
 
     /// <summary>
@@ -29,7 +30,8 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
                                                      LogCategory.Race | LogCategory.Menu |
-                                                     LogCategory.Ntp | LogCategory.Socket;
+                                                     LogCategory.Ntp | LogCategory.Socket |
+                                                     LogCategory.RandomSeed;
 
         /// <summary>
         /// Declares whether each log type is declared or not.

@@ -22,9 +22,9 @@ namespace Riders.Netplay.Messages
         public HasData Flags { get; private set; }
 
         /// <summary>
-        /// Random seed.
+        /// Random seed and time to resume the game at.
         /// </summary>
-        public Seed? Random;
+        public SRandSync? Random;
 
         /// <summary>
         /// Gear and physics data.
@@ -32,11 +32,6 @@ namespace Riders.Netplay.Messages
         public GameData? GameData;
         public bool HasSyncStartReady;
         public bool HasSyncStartSkip = false;
-
-        /// <summary>
-        /// Time to resume gameplay at after stage load.
-        /// </summary>
-        public SyncStartGo? SyncStartGo;
         public bool HasIncrementLapCounter;
 
         /// <summary>
@@ -102,7 +97,6 @@ namespace Riders.Netplay.Messages
             writer.Write(GetFlags());
             writer.WriteNullable(Random);
             if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
-            writer.WriteNullable(SyncStartGo);
             writer.WriteNullable(SetLapCounters);
             writer.WriteNullable(SetMovementFlags);
 
@@ -131,9 +125,8 @@ namespace Riders.Netplay.Messages
             if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
             if (Flags.HasAllFlags(HasData.HasIncrementLapCounter)) HasIncrementLapCounter = true;
 
-            reader.ReadIfHasFlags(ref Random, Flags, HasData.HasRand);
+            reader.ReadIfHasFlags(ref Random, Flags, HasData.HasSRand);
             if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
-            reader.ReadIfHasFlags(ref SyncStartGo, Flags, HasData.HasSyncStartGo);
             reader.ReadIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
             reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
             reader.ReadIfHasFlags(ref MovementFlags, Flags, HasData.HasMovementFlags);
@@ -153,11 +146,10 @@ namespace Riders.Netplay.Messages
         private HasData GetFlags()
         {
             var flags = new HasData();
-            if (Random.HasValue) flags |= HasData.HasRand;
+            if (Random.HasValue) flags |= HasData.HasSRand;
             if (GameData.HasValue) flags |= HasData.HasGameData;
 
             if (HasSyncStartReady) flags |= HasData.HasSyncStartReady;
-            if (SyncStartGo.HasValue) flags |= HasData.HasSyncStartGo;
             if (HasSyncStartSkip) flags |= HasData.HasSyncStartSkip;
 
             if (HasIncrementLapCounter) flags |= HasData.HasIncrementLapCounter;
@@ -186,14 +178,14 @@ namespace Riders.Netplay.Messages
         {
             Null = 0,
 
-            // Randomization
-            HasRand = 1,               // Host -> Client: RNG Seed
+            // Randomization & Time Sync
+            HasSRand = 1,  // Host -> Client: RNG Seed and Time to Resume Game synced with external NTP source
 
             // Integrity Synchronization
             HasGameData = 1 << 1,           // Host -> Client: Running, Gear Stats, Character Stats (Compressed)
 
             HasSyncStartReady   = 1 << 2,   // Client -> Host: Ready signal to tell host ready after intro cutscene.
-            HasSyncStartGo      = 1 << 3,   // Host -> Client: Ready signal to tell clients to start race at a given time.
+            Unused              = 1 << 3,   // [Removed, Currently Unused] | Old function: `Host -> Client: Ready signal to tell clients to start race at a given time.`
             HasSyncStartSkip    = 1 << 4,   // Informs Host/Client to skip the stage intro cutscene.
 
             HasIncrementLapCounter = 1 << 5,  // Client -> Host: Increment lap counter for the player.
@@ -206,9 +198,9 @@ namespace Riders.Netplay.Messages
             HasAttack                = 1 << 10, // Host -> Client: Inform client of an impending attack.
 
             // Anti-Cheat
-            HasAntiCheatTriggered   = 1 << 11,      // Host -> Client: Anti-cheat has been triggered, let all clients know.
-            HasAntiCheatGameData    = 1 << 12,      // Client -> Host: Hash of game data
-            HasAntiCheatHeartbeat   = 1 << 13,     // Client -> Host: Timestamp & frames elapsed
+            HasAntiCheatTriggered   = 1 << 11, // Host -> Client: Anti-cheat has been triggered, let all clients know.
+            HasAntiCheatGameData    = 1 << 12, // Client -> Host: Hash of game data
+            HasAntiCheatHeartbeat   = 1 << 13, // Client -> Host: Timestamp & frames elapsed
 
             // Menu & Server Synchronization
             // These messages are fairly infrequent and/or work outside the actual gameplay loop.

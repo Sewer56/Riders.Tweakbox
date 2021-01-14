@@ -33,12 +33,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private FixesController _fixesController;
 
-        /// <summary>
-        /// [Client] Gets the go command from the host for syncing start time.
-        /// </summary>
-        private Volatile<SyncStartGo> _startSyncGo = new Volatile<SyncStartGo>();
+        private Dictionary<int, bool> _hostReadyToStartRaceMap;
+        private bool _clientReadyToStartRace;
 
-        private Dictionary<int, bool> _readyToStartRace;
         public RaceIntroSync(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -49,7 +46,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.OnRaceSkipIntro += OnRaceSkipIntro;
 
             if (Socket.GetSocketType() == SocketType.Host)
-                _readyToStartRace = new Dictionary<int, bool>(8);
+                _hostReadyToStartRaceMap = new Dictionary<int, bool>(8);
         }
 
         /// <inheritdoc />
@@ -91,33 +88,23 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     Socket.SendToAllExcept(pkt.Source, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Received Skip from Client, Rebroadcasting.");
             }
 
-            if (Socket.GetSocketType() == SocketType.Host)
+            if (packet.HasSyncStartReady)
             {
-                if (packet.HasSyncStartReady)
+                if (Socket.GetSocketType() == SocketType.Host)
                 {
                     Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(packet.HasSyncStartReady)} from Client.", LogCategory.Race);
-                    _readyToStartRace[pkt.Source.Id] = true;
+                    _hostReadyToStartRaceMap[pkt.Source.Id] = true;
                 }
-            }
-            else
-            {
-                if (packet.SyncStartGo.HasValue)
+                else
                 {
-                    Log.WriteLine($"[{nameof(RaceIntroSync)} / Client] Set {nameof(_startSyncGo)}", LogCategory.Race);
-                    _startSyncGo = packet.SyncStartGo.Value;
+                    _clientReadyToStartRace = true;
                 }
             }
         }
 
         private bool ClientTrySyncRaceSkip()
         {
-            SyncStartGo goMessage = default;
-
-            bool IsGoSignal()
-            {
-                goMessage = _startSyncGo.Get();
-                return !goMessage.IsDefault();
-            }
+            bool IsGoSignal() => _clientReadyToStartRace;
 
             // Send skip message to host.
             if (!_skipRequested)
@@ -133,17 +120,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            // TODO: Handle error when time component is not available.
-            Socket.TryGetComponent(out TimeSynchronization time); 
-            var localTime = time.ToLocalTime(goMessage.StartTime);
-            Socket.WaitWithSpin(localTime, $"[{nameof(RaceIntroSync)} / Client] Race Started.", LogCategory.Race, 32);
+            _clientReadyToStartRace = false;
             return true;
         }
 
         private bool HostTrySyncRaceSkip()
         {
             var state = (HostState)Socket.State;
-            bool TestAllReady() => _readyToStartRace.All(x => x.Value == true);
+            bool TestAllReady() => _hostReadyToStartRaceMap.All(x => x.Value == true);
 
             // Send skip signal to clients if we are initializing the skip.
             if (!_skipRequested)
@@ -160,17 +144,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 return false;
             }
 
-            // TODO: Handle error when time component is not available.
-            var startTime = DateTime.UtcNow.AddMilliseconds(state.MaxLatency);
-            Socket.TryGetComponent(out TimeSynchronization time);
-            var serverStartTime = time.ToServerTime(startTime);
-            Socket.SendToAllAndFlush(new ReliablePacket() { SyncStartGo = new SyncStartGo(serverStartTime) }, DeliveryMethod.ReliableOrdered, "[Host] Sending Race Start Signal.", LogCategory.Race);
-
             // Disable skip flags for everyone.
-            foreach (var key in _readyToStartRace.Keys)
-                _readyToStartRace[key] = false;
+            foreach (var key in _hostReadyToStartRaceMap.Keys)
+                _hostReadyToStartRaceMap[key] = false;
 
-            Socket.WaitWithSpin(serverStartTime, $"[{nameof(RaceIntroSync)} / Host] Race Started.", LogCategory.Race, 32);
+            Socket.SendToAllAndFlush(new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Sending {nameof(ReliablePacket.HasSyncStartReady)}.", LogCategory.Race);
             return true;
         }
 
