@@ -171,6 +171,7 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onGetRandomDoubleInPlayerFunctionHook;
         private IAsmHook _onCheckIfQtePressLeftHook;
         private IAsmHook _onCheckIfQtePressRightHook;
+        private IAsmHook _alwaysSeedRngOnIntroSkipHook;
         private Random _random = new Random();
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
@@ -178,34 +179,49 @@ namespace Riders.Tweakbox.Controllers
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
-            _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
-            
+            var hooks = SDK.ReloadedHooks;
+
+            // Do not move below onCheckIfSkipIntroAsm because both overwrite same regions of code. You want the other to capture this one. 
+            _alwaysSeedRngOnIntroSkipHook = hooks.CreateAsmHook(new[] { $"use32", $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, false)}" }, 0x00415F33, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+
             var onCourseSelectSetStageAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
+            _onCourseSelectSetStageHook   = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
 
             var ifQtePressLeftAsm = new string[] { $"mov eax,[edx+0xB3C]", utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4B3721, Environment.Is64BitProcess) };
             var onCheckIfQtePressLeft = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfQtePressLeftHook, out _, ifQtePressLeftAsm, null, null, "je")}" };
-            
+            _onCheckIfQtePressLeftHook = hooks.CreateAsmHook(onCheckIfQtePressLeft, 0x4B3716, AsmHookBehaviour.ExecuteFirst).Activate();
+
             var ifQtePressRightAsm = new string[] { $"mov ecx,[edx+0xB3C]", utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4B3746, Environment.Is64BitProcess) };
             var onCheckIfQtePressRight = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfQtePressedRightHook, out _, ifQtePressRightAsm, null, null, "je")}" };
+            _onCheckIfQtePressRightHook = hooks.CreateAsmHook(onCheckIfQtePressRight, 0x4B373B, AsmHookBehaviour.ExecuteFirst).Activate();
 
             var onExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnExitCharaSelectHook, out _)}" };
             var ifExitCharaSelectAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00463741, Environment.Is64BitProcess) };
             var onCheckIfExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfExitCharaSelectHook, out _, ifExitCharaSelectAsm, null, null, "je")}" };
+            _onCheckIfExitCharaSelectHook = hooks.CreateAsmHook(onCheckIfExitCharaSelectAsm, 0x00463732, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
 
             var onStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnStartRaceHook, out _)}" };
             var ifStartRaceAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x0046364B, Environment.Is64BitProcess) };
             var onCheckIfStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfStartRaceHook, out _, ifStartRaceAsm, null, null, "je")}" };
+            _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
+            _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
 
             var onSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnSkipIntroHook, out _)}" };
-            var ifSkipIntroAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, Environment.Is64BitProcess) };
+            var ifSkipIntroAsm = new string[] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, Environment.Is64BitProcess)}" };
             var onCheckIfSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipIntroHook, out _, ifSkipIntroAsm, null, null, "je")}" };
+            _skipIntroCameraHook = hooks.CreateAsmHook(onSkipIntroAsm, 0x00416001, AsmHookBehaviour.ExecuteFirst).Activate();
+            _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
 
+            _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
             var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
             var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
+            _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
 
             var ifIsHumanInput = new string[] { "mov edx, 0" };
             var ifIsNotHumanInput = new string[] { "mov edx, 1" };
             var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null, "je")}" };
+            _onCheckIsHumanInputHook = hooks.CreateAsmHook(onCheckIsHumanInputAsm, 0x004BD0C4, AsmHookBehaviour.ExecuteFirst).Activate();
 
             var ifIsHumanIndicator = new string[] { "mov ecx, 0" };
             var ifIsNotHumanIndicator = new string[] { "mov ecx, 1" };
@@ -218,17 +234,6 @@ namespace Riders.Tweakbox.Controllers
             };
 
             var onGetRandomDoubleInPlayerFunctionAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall<GetRandomDouble>(TempNextDouble, out _)}" };
-            var hooks = SDK.ReloadedHooks;
-
-            _onCourseSelectSetStageHook = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
-            _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onCheckIfExitCharaSelectHook = hooks.CreateAsmHook(onCheckIfExitCharaSelectAsm, 0x00463732, AsmHookBehaviour.ExecuteFirst).Activate();
-            _skipIntroCameraHook = hooks.CreateAsmHook(onSkipIntroAsm, 0x00416001, AsmHookBehaviour.ExecuteFirst).Activate();
-            _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onCheckIsHumanInputHook = hooks.CreateAsmHook(onCheckIsHumanInputAsm, 0x004BD0C4, AsmHookBehaviour.ExecuteFirst).Activate();
             _onCheckIfHumanInputIndicatorHook = hooks.CreateAsmHook(onCheckIsHumanIndicatorAsm, 0x004270D9, AsmHookBehaviour.ExecuteAfter).Activate();
             _onGetRandomDoubleInPlayerFunctionHook = hooks.CreateAsmHook(onGetRandomDoubleInPlayerFunctionAsm, 0x004E1FA7, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
@@ -245,9 +250,6 @@ namespace Riders.Tweakbox.Controllers
                 $"use32",
                 $"{utilities.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
             }, 0x0046C139, AsmHookBehaviour.ExecuteFirst).Activate();
-
-            _onCheckIfQtePressLeftHook = hooks.CreateAsmHook(onCheckIfQtePressLeft, 0x4B3716, AsmHookBehaviour.ExecuteFirst).Activate();
-            _onCheckIfQtePressRightHook = hooks.CreateAsmHook(onCheckIfQtePressRight, 0x4B373B, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -275,6 +277,7 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfQtePressRightHook.Disable();
             _srandHook.Disable();
             _randHook.Disable();
+            _alwaysSeedRngOnIntroSkipHook.Disable();
         }
 
         /// <summary>
@@ -302,6 +305,7 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfQtePressRightHook.Enable();
             _randHook.Enable();
             _srandHook.Enable();
+            _alwaysSeedRngOnIntroSkipHook.Enable();
         }
 
 
