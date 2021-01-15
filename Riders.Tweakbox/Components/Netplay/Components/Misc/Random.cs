@@ -11,6 +11,8 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using System.Runtime;
+using Sewer56.Hooks.Utilities.Enums;
+using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Functions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
@@ -38,6 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
             Event.ItemPickupRandom += OnItemPickupRandom;
+            Event.OnCheckIfGiveAiRandomItems += OnChekIfGiveAiRandomItems;
             _itemPickupRandom = new System.Random();
 
             if (Socket.GetSocketType() == SocketType.Host)
@@ -54,12 +57,19 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Event.SeedRandom -= OnSeedRandom;
             Event.Random     -= OnRandom;
             Event.ItemPickupRandom -= OnItemPickupRandom;
+            Event.OnCheckIfGiveAiRandomItems -= OnChekIfGiveAiRandomItems;
 
             if (Socket.GetSocketType() == SocketType.Host)
             {
                 Socket.Listener.PeerConnectedEvent -= OnPeerConnected;
                 Socket.Listener.PeerDisconnectedEvent -= OnPeerDisconnected;
             }
+        }
+
+        private Enum<AsmFunctionResult> OnChekIfGiveAiRandomItems()
+        {
+            Log.WriteLine($"[{nameof(Random)}] Overwriting to Give AI Random Item", LogCategory.RandomSeed);
+            return true;
         }
 
         private void OnPeerConnected(NetPeer peer)

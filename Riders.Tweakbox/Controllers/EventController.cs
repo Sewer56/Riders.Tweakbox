@@ -154,6 +154,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event RandFn ItemPickupRandom;
 
+        /// <summary>
+        /// Queries the user whether the character select menu should be left.
+        /// </summary>
+        public event AsmFunc OnCheckIfGiveAiRandomItems;
+
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
         private IHook<Functions.SetSpawnLocationsStartOfRaceFn> _setSpawnLocationsStartOfRaceHook;
@@ -176,9 +181,9 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIfQtePressLeftHook;
         private IAsmHook _onCheckIfQtePressRightHook;
         private IAsmHook _alwaysSeedRngOnIntroSkipHook;
+        private IAsmHook _onCheckIfGiveAiRandomItemsHook;
         private Patch  _randItemPickupPatch;
         private IReverseWrapper<Functions.DefaultReturnFn> _randItemPickupWrapper;
-
         private Random _random = new Random();
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
@@ -260,6 +265,10 @@ namespace Riders.Tweakbox.Controllers
 
             _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.DefaultReturnFn>(ItemPickupRandImpl);
             _randItemPickupPatch = new Patch((IntPtr)0x004C714C, AsmHelpers.AssembleRelativeCall(0x004C714C, (long)_randItemPickupWrapper.WrapperPointer)).ChangePermission().Enable();
+
+            var ifGiveAiRandomItems = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x004C721F, false) };
+            var onCheckIfAiRandomItemsAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfGiveAiRandomItemsHook, out _, ifGiveAiRandomItems, null, null, "je")}" };
+            _onCheckIfGiveAiRandomItemsHook = hooks.CreateAsmHook(onCheckIfAiRandomItemsAsm, 0x004C71F9, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -289,6 +298,7 @@ namespace Riders.Tweakbox.Controllers
             _randHook.Disable();
             _randItemPickupPatch.Disable();
             _alwaysSeedRngOnIntroSkipHook.Disable();
+            _onCheckIfGiveAiRandomItemsHook.Disable();
         }
 
         /// <summary>
@@ -318,6 +328,7 @@ namespace Riders.Tweakbox.Controllers
             _srandHook.Enable();
             _randItemPickupPatch.Enable();
             _alwaysSeedRngOnIntroSkipHook.Enable();
+            _onCheckIfGiveAiRandomItemsHook.Enable();
         }
 
         /// <summary>
@@ -358,6 +369,8 @@ namespace Riders.Tweakbox.Controllers
 
             _srandHook.OriginalFunction(seed);
         }
+
+        private Enum<AsmFunctionResult> OnCheckIfGiveAiRandomItemsHook() => OnCheckIfGiveAiRandomItems != null && OnCheckIfGiveAiRandomItems.Invoke();
 
         private Task* SetRenderItemPickupHook(Player* player, byte a2, ushort a3)
         {
