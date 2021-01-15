@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
@@ -147,8 +149,10 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event AsmFunc OnCheckIfQtePressRight;
 
-        private RuleSettingsLoop _rule = new RuleSettingsLoop();
-        private CourseSelectLoop _course = new CourseSelectLoop();
+        /// <summary>
+        /// Replaces the game's rand function call for determining what item to give on pickup.
+        /// </summary>
+        public event RandFn ItemPickupRandom;
 
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
@@ -172,10 +176,13 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIfQtePressLeftHook;
         private IAsmHook _onCheckIfQtePressRightHook;
         private IAsmHook _alwaysSeedRngOnIntroSkipHook;
+        private Patch  _randItemPickupPatch;
+        private IReverseWrapper<Functions.DefaultReturnFn> _randItemPickupWrapper;
+
         private Random _random = new Random();
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
-
+        
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
@@ -250,6 +257,9 @@ namespace Riders.Tweakbox.Controllers
                 $"use32",
                 $"{utilities.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
             }, 0x0046C139, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.DefaultReturnFn>(ItemPickupRandImpl);
+            _randItemPickupPatch = new Patch((IntPtr)0x004C714C, AsmHelpers.AssembleRelativeCall(0x004C714C, (long)_randItemPickupWrapper.WrapperPointer)).ChangePermission().Enable();
         }
 
         /// <summary>
@@ -277,6 +287,7 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfQtePressRightHook.Disable();
             _srandHook.Disable();
             _randHook.Disable();
+            _randItemPickupPatch.Disable();
             _alwaysSeedRngOnIntroSkipHook.Disable();
         }
 
@@ -305,9 +316,9 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfQtePressRightHook.Enable();
             _randHook.Enable();
             _srandHook.Enable();
+            _randItemPickupPatch.Enable();
             _alwaysSeedRngOnIntroSkipHook.Enable();
         }
-
 
         /// <summary>
         /// Invokes the random number generator. (Original Function)
@@ -320,6 +331,14 @@ namespace Riders.Tweakbox.Controllers
         public void InvokeSeedRandom(int seed) => _srandHook.OriginalFunction((uint) seed);
 
         private double TempNextDouble() => _random.NextDouble() * -600.0;
+
+        private int ItemPickupRandImpl()
+        {
+            if (ItemPickupRandom != null)
+                return ItemPickupRandom.Invoke(_randHook);
+
+            return RandHandler();
+        }
 
         private int RandHandler()
         {

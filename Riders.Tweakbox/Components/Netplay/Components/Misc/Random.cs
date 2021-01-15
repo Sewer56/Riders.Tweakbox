@@ -10,6 +10,7 @@ using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using System.Runtime;
 using Sewer56.SonicRiders.Functions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
@@ -26,6 +27,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// </summary>
         private FixesController _fixesController;
 
+        private System.Random _itemPickupRandom;
+
         public Random(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -34,6 +37,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
+            Event.ItemPickupRandom += OnItemPickupRandom;
+            _itemPickupRandom = new System.Random();
 
             if (Socket.GetSocketType() == SocketType.Host)
             {
@@ -48,7 +53,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             Event.SeedRandom -= OnSeedRandom;
             Event.Random     -= OnRandom;
-            
+            Event.ItemPickupRandom -= OnItemPickupRandom;
+
             if (Socket.GetSocketType() == SocketType.Host)
             {
                 Socket.Listener.PeerConnectedEvent -= OnPeerConnected;
@@ -66,6 +72,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             Log.WriteLine($"[{nameof(Random)} / Host] Peer Disconnected, Removing Entry: ", LogCategory.Random);
             _syncReady.Remove(peer.Id);
+        }
+
+        private int OnItemPickupRandom(IHook<Functions.RandFn> hook)
+        {
+            var result = _itemPickupRandom.Next();
+            Log.WriteLine($"[{nameof(Random)}] Item Pickup Seed: {result}", LogCategory.RandomSeed);
+            return result;
         }
 
         private int OnRandom(IHook<Functions.RandFn> hook)
@@ -97,6 +110,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 Socket.Dispose();
                 return;
             }
+
+            // Seed a new random value for item pickups.
+            Log.WriteLine($"[{nameof(Random)} / Host] Seeding: {(int)seed}", LogCategory.Random);
+            _itemPickupRandom = new System.Random((int) seed);
 
             // TODO: Handle error when time component is not available.
             var startTime = DateTime.UtcNow.AddMilliseconds(Socket.State.MaxLatency);
@@ -138,7 +155,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
 
             // TODO: Handle error when time component is not available.
+            Log.WriteLine($"[{nameof(Random)} / Client] Seeding: {srand.Seed}", LogCategory.Random);
             Event.InvokeSeedRandom(srand.Seed);
+            _itemPickupRandom = new System.Random(srand.Seed);
+
             Socket.TryGetComponent(out TimeSynchronization time);
             var localTime = time.ToLocalTime(srand.StartTime);
             Socket.WaitWithSpin(localTime, $"[{nameof(Random)} / Client] SRand Synchronized.", LogCategory.Random, 32);

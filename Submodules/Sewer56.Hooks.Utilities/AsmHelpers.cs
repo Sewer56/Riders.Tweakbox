@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
 using Sewer56.Hooks.Utilities.Enums;
@@ -18,6 +19,20 @@ namespace Sewer56.Hooks.Utilities
     {
         private const int SizeOfXmmRegister = 16;
         private static ConcurrentBag<object> _wrappers = new ConcurrentBag<object>();
+        private static Assembler _assembler = new Assembler();
+
+        /// <summary>
+        /// Assembles a relative call from the current address to a given target address.
+        /// </summary>
+        /// <param name="currentAddress">Current address in memory.</param>
+        /// <param name="targetAddress">Target address to call.</param>
+        /// <returns>x86 asm bytes</returns>
+        public static byte[] AssembleRelativeCall(long currentAddress, long targetAddress) => _assembler.Assemble(new[]
+        {
+            Architecture(false),
+            SetAddress(currentAddress),
+            $"call dword {targetAddress}"
+        });
 
         /// <summary>
         /// Macro for push eax, ecx, edx.
@@ -134,14 +149,9 @@ namespace Sewer56.Hooks.Utilities
         /// <param name="condition">The condition, e.g. jump equal, jump less, jump greater.</param>
         public static string AssembleTrueFalseFinally(this IReloadedHooksUtilities utilities, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
         {
-            if (trueInstructions == null)
-                trueInstructions = new string[0];
-
-            if (falseInstructions == null)
-                falseInstructions = new string[0];
-
-            if (completeInstructions == null)
-                completeInstructions = new string[0];
+            trueInstructions ??= new string[0];
+            falseInstructions ??= new string[0];
+            completeInstructions ??= new string[0];
 
             return String.Join(Environment.NewLine, new[]
             {
@@ -158,6 +168,9 @@ namespace Sewer56.Hooks.Utilities
                 $"{String.Join(Environment.NewLine, completeInstructions)}",
             });
         }
+
+        private static string Architecture(bool is64bit) => is64bit ? "use64" : "use32";
+        private static string SetAddress(long address) => $"org {address}";
     }
 
     [Function(CallingConventions.Cdecl)]

@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Reloaded.Hooks.Definitions" Version="1.5.0" />
+    <PackageReference Include="Reloaded.Assembler" Version="1.0.9" />
+    <PackageReference Include="Reloaded.Hooks.Definitions" Version="1.7.1" />
   </ItemGroup>
 
   <ItemGroup>
