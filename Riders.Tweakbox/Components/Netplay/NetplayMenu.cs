@@ -51,7 +51,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             var client = Controller.Socket;
             foreach (var player in client.State.PlayerInfo)
-                ImGui.Text($"{player.Name} | {player.PlayerIndex}");
+                ImGui.Text($"{player.Name} | {player.PlayerIndex} | {player.Latency}ms");
 
             if (ImGui.Button("Disconnect", Constants.ButtonSize))
                 Controller.Socket?.Dispose();
