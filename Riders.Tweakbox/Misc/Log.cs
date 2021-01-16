@@ -31,7 +31,7 @@ namespace Riders.Tweakbox.Misc
         public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
                                                      LogCategory.Race | LogCategory.Menu |
                                                      LogCategory.Ntp | LogCategory.Socket |
-                                                     LogCategory.RandomSeed;
+                                                     LogCategory.Random;
 
         /// <summary>
         /// Declares whether each log type is declared or not.
