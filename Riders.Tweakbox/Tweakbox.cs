@@ -71,7 +71,8 @@ namespace Riders.Tweakbox
                         IoC.GetConstant<ShellTestWindow>(),
                         IoC.GetConstant<TaskTrackerWindow>(),
                         IoC.GetConstant<MemoryDebugWindow>(),
-                        IoC.GetConstant<LogWindow>()
+                        IoC.GetConstant<LogWindow>(),
+                        IoC.GetConstant<RaceSettingsWindow>()
                     })
                 },
                 Text = new List<string>()
