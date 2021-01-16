@@ -70,6 +70,22 @@ namespace Riders.Netplay.Messages.Tests
         }
 
         [Fact]
+        public void SerializeUnreliablePacketFiveSeconds()
+        {
+            for (int x = 0; x < 300; x++)
+            {
+                var random0 = UnreliablePacketPlayer.GetRandom(x);
+                var unreliablePacket = new Messages.UnreliablePacket(new[] { random0 });
+
+                var bytes = unreliablePacket.Serialize();
+                var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
+
+                Assert.Equal(unreliablePacket.Header, deserialized.Header);
+                Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
+            }
+        }
+
+        [Fact]
         public void SerializeUnreliablePacketPartialData()
         {
             var position  = new Vector3(-49.85133362f, -41.55332947f, 167.2761993f);

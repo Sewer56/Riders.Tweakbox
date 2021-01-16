@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Numerics;
 using BitStreams;
@@ -26,7 +26,7 @@ namespace Riders.Netplay.Messages.Unreliable
         private const int StateBits = 5;
         private const int AirBits   = 18;
         private const int AnimationBits = 7;
-        private const int FallStateBits = 3;
+        private const int LapsBits = 7;
 
         /// <summary>
         /// Position of the player in X,Y,Z coordinates.
@@ -113,6 +113,11 @@ namespace Riders.Netplay.Messages.Unreliable
             }
         }
 
+        /// <summary>
+        /// Current lap counter.
+        /// </summary>
+        public byte? LapCounter;
+
         private CompressedNumber<float, Float, ushort, UShort>? _rotationX;
         private CompressedNumber<float, Float, ushort, UShort>? _turnAmount;
         private CompressedNumber<float, Float, ushort, UShort>? _leanAmount;
@@ -148,6 +153,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (ShouldISend(framecounter, HasData.HasControlFlags)) result.ControlFlags = (PlayerControlFlags?) random.Next();
             if (ShouldISend(framecounter, HasData.HasAnimation)) result.Animation = (byte?)random.Next(0, 99);
             if (ShouldISend(framecounter, HasData.HasAnimation)) result.LastAnimation = (byte?)random.Next(0, 99);
+            if (ShouldISend(framecounter, HasData.HasLapCounter)) result.LapCounter = (byte?)random.Next(0, 99);
             return result;
         }
 
@@ -173,9 +179,9 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.WriteNullable(Air, AirBits);
             bitStream.WriteNullable(Animation, AnimationBits);
             bitStream.WriteNullable(LastAnimation, AnimationBits);
+            bitStream.WriteNullable((byte?) LapCounter, LapsBits);
 
             // Write final byte and copy back to original stream.
-            bitStream.Finalize();
             memStream.Seek(0, SeekOrigin.Begin);
             bitStream.CopyStreamTo(memStream);
             return memStream.ToArray();
@@ -205,6 +211,7 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.ReadIfHasFlags(ref player.Air, fields, HasData.HasAir, AirBits);
             bitStream.ReadIfHasFlags(ref player.Animation, fields, HasData.HasAnimation, AnimationBits);
             bitStream.ReadIfHasFlags(ref player.LastAnimation, fields, HasData.HasAnimation, AnimationBits);
+            bitStream.ReadIfHasFlags(ref player.LapCounter, fields, HasData.HasLapCounter, LapsBits);
 
             // Seek the BSR
             var bitStreamPos = bitStream.GetStream().Position;
@@ -244,8 +251,12 @@ namespace Riders.Netplay.Messages.Unreliable
                 packet.LeanAmount = player.DriftAngle;
             }
             if (ShouldISend(framecounter, HasData.HasControlFlags)) packet.ControlFlags = player.PlayerControlFlags;
-            if (ShouldISend(framecounter, HasData.HasAnimation)) packet.Animation = (byte?) player.Animation;
-            if (ShouldISend(framecounter, HasData.HasAnimation)) packet.LastAnimation = (byte?) player.LastAnimation;
+            if (ShouldISend(framecounter, HasData.HasAnimation))
+            {
+                packet.Animation = (byte?) player.Animation;
+                packet.LastAnimation = (byte?) player.LastAnimation;
+            }
+            if (ShouldISend(framecounter, HasData.HasLapCounter)) packet.LapCounter = player.LapCounter;
 
             return packet;
         }
@@ -290,6 +301,8 @@ namespace Riders.Netplay.Messages.Unreliable
                     player.LastAnimation = (CharacterAnimation) LastAnimation.Value;
             }
 
+            if (LapCounter.HasValue) player.LapCounter = (byte)LapCounter;
+
             // Hack for Misc Bugs
             // - Sometimes rotation value not updated after certain state transitions.
             // - Sometimes repeated attacks do not work.
@@ -307,6 +320,16 @@ namespace Riders.Netplay.Messages.Unreliable
             // State is currently disabled, seems to be redundant since we synced animations.
             if (type == HasData.HasState)
                 return false;
+
+            switch (type)
+            {
+                case HasData.HasLapCounter:
+                    return ShouldISendFrequency(frameCounter, 10);
+
+                case HasData.HasRings:
+                case HasData.HasAir:
+                    return ShouldISendFrequency(frameCounter, 30);
+            }
 
             // Used to have settings here, removed for now.
             // Will be implemented if we ever need to reduce bandwidth usage.
@@ -406,7 +429,7 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <inheritdoc />
         public bool Equals(UnreliablePacketPlayer other)
         {
-            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && LastAnimation == other.LastAnimation && Animation == other.Animation && ControlFlags == other.ControlFlags && Nullable.Equals(Velocity, other.Velocity) && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(_leanAmount, other._leanAmount);
+            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && LastAnimation == other.LastAnimation && Animation == other.Animation && Nullable.Equals(Velocity, other.Velocity) && LapCounter == other.LapCounter && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(_turnAmount, other._turnAmount) && Nullable.Equals(_leanAmount, other._leanAmount);
         }
 
         /// <inheritdoc />
@@ -426,8 +449,8 @@ namespace Riders.Netplay.Messages.Unreliable
             hashCode.Add(State);
             hashCode.Add(LastAnimation);
             hashCode.Add(Animation);
-            hashCode.Add(ControlFlags);
             hashCode.Add(Velocity);
+            hashCode.Add(LapCounter);
             hashCode.Add(_rotationX);
             hashCode.Add(_turnAmount);
             hashCode.Add(_leanAmount);

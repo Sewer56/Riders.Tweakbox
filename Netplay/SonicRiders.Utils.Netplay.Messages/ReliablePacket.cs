@@ -32,12 +32,6 @@ namespace Riders.Netplay.Messages
         public GameData? GameData;
         public bool HasSyncStartReady;
         public bool HasSyncStartSkip = false;
-        public bool HasIncrementLapCounter;
-
-        /// <summary>
-        /// Sets the lap counters for each players.
-        /// </summary>
-        public LapCounters? SetLapCounters;
 
         /// <summary>
         /// Set if client demands to set boost/tornado/attack for them.
@@ -97,7 +91,6 @@ namespace Riders.Netplay.Messages
             writer.Write(GetFlags());
             writer.WriteNullable(Random);
             if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
-            writer.WriteNullable(SetLapCounters);
             writer.WriteNullable(SetMovementFlags);
 
             writer.WriteNullable(SetAttack);
@@ -123,11 +116,9 @@ namespace Riders.Netplay.Messages
             Flags = reader.Read<HasData>();
             if (Flags.HasAllFlags(HasData.HasSyncStartReady)) HasSyncStartReady = true;
             if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
-            if (Flags.HasAllFlags(HasData.HasIncrementLapCounter)) HasIncrementLapCounter = true;
 
             reader.ReadIfHasFlags(ref Random, Flags, HasData.HasSRand);
             if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
-            reader.ReadIfHasFlags(ref SetLapCounters, Flags, HasData.HasLapCounters);
             reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
             reader.ReadIfHasFlags(ref MovementFlags, Flags, HasData.HasMovementFlags);
             reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
@@ -151,9 +142,6 @@ namespace Riders.Netplay.Messages
 
             if (HasSyncStartReady) flags |= HasData.HasSyncStartReady;
             if (HasSyncStartSkip) flags |= HasData.HasSyncStartSkip;
-
-            if (HasIncrementLapCounter) flags |= HasData.HasIncrementLapCounter;
-            if (SetLapCounters.HasValue) flags |= HasData.HasLapCounters;
 
             if (SetAttack.HasValue) flags |= HasData.HasSetAttack;
             if (Attack.HasValue) flags |= HasData.HasAttack;
@@ -188,8 +176,8 @@ namespace Riders.Netplay.Messages
             Unused              = 1 << 3,   // [Removed, Currently Unused] | Old function: `Host -> Client: Ready signal to tell clients to start race at a given time.`
             HasSyncStartSkip    = 1 << 4,   // Informs Host/Client to skip the stage intro cutscene.
 
-            HasIncrementLapCounter = 1 << 5,  // Client -> Host: Increment lap counter for the player.
-            HasLapCounters         = 1 << 6,  // Host -> Client: Set Lap counters for each player.
+            Unused0 = 1 << 5,  // Client -> Host: Increment lap counter for the player.
+            Unused1 = 1 << 6,  // Host -> Client: Set Lap counters for each player.
 
             // Race Integrity Synchronization
             HasSetMovementFlags    = 1 << 7,  // Client -> Host: Inform host of boost, tornado.

@@ -76,6 +76,9 @@ namespace Riders.Netplay.Messages.Unreliable
             if (player.Animation.HasValue || player.LastAnimation.HasValue)
                 data |= HasData.HasAnimation;
 
+            if (player.LapCounter.HasValue)
+                data |= HasData.HasLapCounter;
+
             return data;
         }
 
@@ -127,7 +130,7 @@ namespace Riders.Netplay.Messages.Unreliable
             HasTurnAndLean     = 1 << 6, 
             HasControlFlags    = 1 << 7, 
             HasAnimation       = 1 << 8, 
-            HasUnused5         = 1 << 9, 
+            HasLapCounter      = 1 << 9, 
             HasUnused6         = 1 << 10, 
             HasUnused7         = 1 << 11,
             HasUnused8         = 1 << 12,
