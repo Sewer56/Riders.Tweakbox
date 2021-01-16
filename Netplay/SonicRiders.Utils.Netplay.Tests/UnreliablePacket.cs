@@ -57,6 +57,8 @@ namespace Riders.Netplay.Messages.Tests
             random0.Rings = null;
             random0.Air = null;
             random1.Air = null;
+            random0.ControlFlags = 0;
+            random1.ControlFlags = 0;
             var unreliablePacket = new Messages.UnreliablePacket(new[] { random0, random1 });
 
             var bytes = unreliablePacket.Serialize();

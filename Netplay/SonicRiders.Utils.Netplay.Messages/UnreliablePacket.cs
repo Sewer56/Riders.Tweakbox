@@ -5,7 +5,7 @@ using Riders.Netplay.Messages.Unreliable;
 
 namespace Riders.Netplay.Messages
 {
-    public class UnreliablePacket : IPacket<UnreliablePacket>, IPacket 
+    public struct UnreliablePacket : IPacket<UnreliablePacket>, IPacket 
     {
         public PacketKind GetPacketType() => PacketKind.Unreliable;
 
@@ -29,8 +29,6 @@ namespace Riders.Netplay.Messages
         /// Contains all of the player data present in this structure.
         /// </summary>
         public UnreliablePacketPlayer[] Players { get; private set; }
-
-        public UnreliablePacket() { }
 
         /// <summary>
         /// Constructs a packet to be sent over the unreliable channel.
