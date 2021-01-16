@@ -5,6 +5,7 @@ using K4os.Compression.LZ4;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 
@@ -13,7 +14,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     public struct GameData
     {
         public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears) +
-                                                Struct.GetSize<RunningPhysics>() + Struct.GetSize<RunningPhysics2>();
+                                                Struct.GetSize<RunningPhysics>() + Struct.GetSize<RunningPhysics2>() + Struct.GetSize<RaceSettings>();
 
         /// <summary>
         /// Extreme gears of the host player.
@@ -31,6 +32,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         public RunningPhysics2 RunningPhysics2;
 
         /// <summary>
+        /// The current settings for the race.
+        /// </summary>
+        public RaceSettings RaceSettings;
+
+        /// <summary>
         /// Writes the contents of this packet to the game memory.
         /// </summary>
         public unsafe void ToGame()
@@ -38,17 +44,19 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             *Player.RunPhysics  = RunningPhysics1;
             *Player.RunPhysics2 = RunningPhysics2;
             Player.Gears.CopyFrom(Gears, Gears.Length);
+            *State.CurrentRaceSettings = RaceSettings;
         }
 
         public static unsafe GameData FromGame()
         {
             var data = new GameData
             {
-                RunningPhysics1 = *Player.RunPhysics, 
-                RunningPhysics2 = *Player.RunPhysics2
+                RunningPhysics1 = *Player.RunPhysics,
+                RunningPhysics2 = *Player.RunPhysics2,
+                RaceSettings = *State.CurrentRaceSettings,
+                Gears = Player.Gears.ToArray()
             };
 
-            data.Gears = Player.Gears.ToArray();
             return data;
         }
 
@@ -65,6 +73,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 
                 gameData.RunningPhysics1 = gameDataStream.Read<RunningPhysics>();
                 gameData.RunningPhysics2 = gameDataStream.Read<RunningPhysics2>();
+                gameData.RaceSettings = gameDataStream.Read<RaceSettings>();
                 return gameData;
             }
         }
@@ -77,6 +86,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
                 memStream.Write(StructArray.GetBytes(Gears));
                 memStream.Write(Struct.GetBytes(RunningPhysics1));
                 memStream.Write(Struct.GetBytes(RunningPhysics2));
+                memStream.Write(Struct.GetBytes(RaceSettings));
                 return memStream.ToArray();
             }
         }

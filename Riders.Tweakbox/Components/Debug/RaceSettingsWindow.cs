@@ -31,6 +31,7 @@ namespace Riders.Tweakbox.Components.Debug
                 ImGui.Text($"{nameof(RaceSettings.AirPit)}: {settings->AirPit}");
                 ImGui.Text($"{nameof(RaceSettings.Ghost)}: {settings->Ghost}");
                 ImGui.Text($"{nameof(RaceSettings.TimeLimit)}: {settings->TimeLimit}");
+                ImGui.Text($"{nameof(RaceSettings.RunOnAirLoss)}: {settings->RunOnAirLoss}");
                 ImGui.Text($"{nameof(RaceSettings.Unknown)}: {settings->Unknown}");
                 ImGui.Text($"{nameof(RaceSettings.NumberOfPoints)}: {settings->NumberOfPoints}");
             }
