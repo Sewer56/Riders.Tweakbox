@@ -159,6 +159,16 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event AsmFunc OnCheckIfGiveAiRandomItems;
 
+        /// <summary>
+        /// Sets up the task that displays the new lap and results screen once the player crosses for a new lap.
+        /// </summary>
+        public event SetGoalRaceFinishTaskHandlerFn SetGoalRaceFinishTask;
+
+        /// <summary>
+        /// Updates the player's lap counter.
+        /// </summary>
+        public event UpdateLapCounterHandlerFn UpdateLapCounter;
+
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
         private IHook<Functions.SetSpawnLocationsStartOfRaceFn> _setSpawnLocationsStartOfRaceHook;
@@ -166,6 +176,9 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
         private IHook<Functions.SetNewPlayerStateFn> _setNewPlayerStateHook;
         private IHook<Functions.SetRenderItemPickupTaskFn> _setRenderItemPickupTaskHook;
+        private IHook<Functions.SetGoalRaceFinishTaskFn> _setGoalRaceFinishTaskHook;
+        private IHook<Functions.UpdateLapCounterFn> _updateLapCounterHook;
+
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
         private IAsmHook _onCheckIfExitCharaSelectHook;
@@ -269,6 +282,9 @@ namespace Riders.Tweakbox.Controllers
             var ifGiveAiRandomItems = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x004C721F, false) };
             var onCheckIfAiRandomItemsAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfGiveAiRandomItemsHook, out _, ifGiveAiRandomItems, null, null, "je")}" };
             _onCheckIfGiveAiRandomItemsHook = hooks.CreateAsmHook(onCheckIfAiRandomItemsAsm, 0x004C71F9, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            _setGoalRaceFinishTaskHook = Functions.SetGoalRaceFinishTask.Hook(SetGoalRaceFinishTaskHook).Activate();
+            _updateLapCounterHook = Functions.UpdateLapCounter.Hook(UpdateLapCounterHook).Activate();
         }
 
         /// <summary>
@@ -299,6 +315,8 @@ namespace Riders.Tweakbox.Controllers
             _randItemPickupPatch.Disable();
             _alwaysSeedRngOnIntroSkipHook.Disable();
             _onCheckIfGiveAiRandomItemsHook.Disable();
+            _setGoalRaceFinishTaskHook.Disable();
+            _updateLapCounterHook.Disable();
         }
 
         /// <summary>
@@ -329,6 +347,8 @@ namespace Riders.Tweakbox.Controllers
             _randItemPickupPatch.Enable();
             _alwaysSeedRngOnIntroSkipHook.Enable();
             _onCheckIfGiveAiRandomItemsHook.Enable();
+            _setGoalRaceFinishTaskHook.Enable();
+            _updateLapCounterHook.Enable();
         }
 
         /// <summary>
@@ -340,6 +360,11 @@ namespace Riders.Tweakbox.Controllers
         /// Invokes the random number seed generator. (Original Function)
         /// </summary>
         public void InvokeSeedRandom(int seed) => _srandHook.OriginalFunction((uint) seed);
+
+        /// <summary>
+        /// Invokes the original function for setting the `GOAL` splash on race finish.
+        /// </summary>
+        public void InvokeSetGoalRaceFinishTask(Player* player) => _setGoalRaceFinishTaskHook.OriginalFunction(player);
 
         private double TempNextDouble() => _random.NextDouble() * -600.0;
 
@@ -460,6 +485,22 @@ namespace Riders.Tweakbox.Controllers
         private Enum<AsmFunctionResult> OnCheckIfQtePressedRightHook() => OnCheckIfQtePressRight != null && OnCheckIfQtePressRight();
         private Enum<AsmFunctionResult> OnCheckIfQtePressLeftHook() => OnCheckIfQtePressLeft != null && OnCheckIfQtePressLeft();
 
+        private int UpdateLapCounterHook(Player* player, int a2)
+        {
+            if (UpdateLapCounter != null)
+                return UpdateLapCounter.Invoke(_updateLapCounterHook, player, a2);
+
+            return _updateLapCounterHook.OriginalFunction(player, a2);
+        }
+
+        private int SetGoalRaceFinishTaskHook(Player* player)
+        {
+            if (SetGoalRaceFinishTask != null)
+                return SetGoalRaceFinishTask.Invoke(_setGoalRaceFinishTaskHook, player);
+
+            return _setGoalRaceFinishTaskHook.OriginalFunction(player);
+        }
+
         [Function(CallingConventions.Cdecl)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate double GetRandomDouble();
@@ -469,6 +510,9 @@ namespace Riders.Tweakbox.Controllers
         public unsafe delegate int RandFn(IHook<Functions.RandFn> hook);
         public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);
         public unsafe delegate Task* SetRenderItemPickupTaskHandlerFn(Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook);
+        public unsafe delegate int SetGoalRaceFinishTaskHandlerFn(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player);
+        public unsafe delegate int UpdateLapCounterHandlerFn(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2);
+
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
     }
 }

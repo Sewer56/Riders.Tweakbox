@@ -89,8 +89,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Gameplay
             AddComponent(IoC.Get<Components.Game.Attack>());
             AddComponent(IoC.Get<Components.Game.Race>());
-            //AddComponent(IoC.Get<Components.Game.RaceEvents>());
-            //AddComponent(IoC.Get<Components.Game.ItemPickupSync>());
+            AddComponent(IoC.Get<Components.Game.RaceEndSync>());
             AddComponent(IoC.Get<Components.Game.RaceIntroSync>());
             AddComponent(IoC.Get<Components.Game.SetupRace>());
 

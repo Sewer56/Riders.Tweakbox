@@ -8,7 +8,7 @@
         public const int MaxNumberOfPeers = 7;
 
         /// <summary>
-        /// Maximum number of peers a message can have.
+        /// Maximum number of players in the game.
         /// </summary>
         public const int MaxNumberOfPlayers = 8;
     }
