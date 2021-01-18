@@ -106,6 +106,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 HostOnSeedRandom(seed, hook);
             else
                 ClientOnSeedRandom(seed, hook);
+
+            _fixesController.ResetSpeedup();
         }
 
         private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
