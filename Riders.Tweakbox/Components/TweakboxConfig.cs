@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Riders.Tweakbox.Components.Editors.Gear;
 using Riders.Tweakbox.Components.Editors.Physics;
-using Riders.Tweakbox.Components.Fixes;
+using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 
@@ -19,7 +19,7 @@ namespace Riders.Tweakbox.Components
             // DO NOT REARRANGE, THIS IS ORDER OF SERIALIZATION.
             GearEditorConfig.FromGame(),
             PhysicsEditorConfig.FromGame(),
-            IoC.GetConstant<FixesEditorConfig>()
+            IoC.GetConstant<TweaksEditorConfig>()
         };
 
         /// <inheritdoc />

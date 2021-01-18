@@ -1,19 +1,18 @@
-﻿using System;
-using DearImguiSharp;
+﻿using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;
 
-namespace Riders.Tweakbox.Components.Fixes
+namespace Riders.Tweakbox.Components.Tweaks
 {
-    public class FixesEditor : ComponentBase<FixesEditorConfig>, IComponent
+    public class TweaksEditor : ComponentBase<TweaksEditorConfig>, IComponent
     {
         public override string Name { get; set; } = "Various Fixes";
 
         private FixesController _controller = IoC.GetConstant<FixesController>();
-        public FixesEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles)
+        public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles)
         {
 
         }

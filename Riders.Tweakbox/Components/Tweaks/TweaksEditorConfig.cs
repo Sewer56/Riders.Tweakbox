@@ -4,12 +4,11 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Internal.DirectX;
-using SharpDX.Direct3D9;
 using Vanara.PInvoke;
 
-namespace Riders.Tweakbox.Components.Fixes
+namespace Riders.Tweakbox.Components.Tweaks
 {
-    public class FixesEditorConfig : IConfiguration
+    public class TweaksEditorConfig : IConfiguration
     {
         private static DX9Hook.Reset Reset;
 
@@ -55,7 +54,7 @@ namespace Riders.Tweakbox.Components.Fixes
         }
 
         public IConfiguration GetCurrent() => this;
-        public IConfiguration GetDefault() => new FixesEditorConfig();
+        public IConfiguration GetDefault() => new TweaksEditorConfig();
 
         #region Internal
         public struct Internal

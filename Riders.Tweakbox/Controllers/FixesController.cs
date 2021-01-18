@@ -11,7 +11,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
-using Riders.Tweakbox.Components.Fixes;
+using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Graphics;
 using Sewer56.Hooks.Utilities;
@@ -59,7 +59,7 @@ namespace Riders.Tweakbox.Controllers
 
         // Settings
         private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        private FixesEditorConfig _config = IoC.GetConstant<FixesEditorConfig>();
+        private TweaksEditorConfig _config = IoC.GetConstant<TweaksEditorConfig>();
 
         // Hooks
         private IHook<Functions.DefaultFn> _endFrameHook;

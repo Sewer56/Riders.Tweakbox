@@ -8,8 +8,8 @@ using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
 using Riders.Tweakbox.Components.Editors.Physics;
-using Riders.Tweakbox.Components.Fixes;
 using Riders.Tweakbox.Components.Netplay;
+using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
@@ -22,15 +22,15 @@ namespace Riders.Tweakbox
     public class Tweakbox
     {
         /* Class Declarations */
-        private ImguiHook _hook;
-        private IReloadedHooks _hooks;
-        private IReloadedHooksUtilities _hooksUtilities;
-        
-        private bool _inputsEnabled = true;
-        private bool _isEnabled = true;
-        private bool _isReady = false;
-        private MenuBar _menuBar;
-        private IHook<Functions.GetInputsFn> _blockInputsHook;
+        public ImguiHook Hook { get; private set; }
+        public IReloadedHooks Hooks { get; private set; }
+        public IReloadedHooksUtilities HooksUtilities { get; private set; }
+
+        public bool InputsEnabled { get; private set; } = true;
+        public bool IsEnabled { get; private set; } = true;
+        public bool IsReady { get; private set; } = false;
+        public MenuBar MenuBar { get; private set; }
+        public IHook<Functions.GetInputsFn> BlockInputsHook { get; private set; }
 
         /* Creation & Disposal */
         private Tweakbox(){}
@@ -43,11 +43,11 @@ namespace Riders.Tweakbox
         {
             var tweakBox = new Tweakbox();
             InitializeIoC(modFolder);
-            tweakBox._hooks = hooks;
-            tweakBox._hooksUtilities = hooksUtilities;
-            tweakBox._blockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
+            tweakBox.Hooks = hooks;
+            tweakBox.HooksUtilities = hooksUtilities;
+            tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
 
-            tweakBox._menuBar = new MenuBar()
+            tweakBox.MenuBar = new MenuBar()
             {
                 Menus = new List<MenuBarItem>()
                 {
@@ -55,9 +55,9 @@ namespace Riders.Tweakbox
                     {
                         IoC.GetConstant<NetplayMenu>()
                     }),
-                    new MenuBarItem("Fixes", new List<IComponent>()
+                    new MenuBarItem("Tweaks", new List<IComponent>()
                     {
-                        IoC.GetConstant<FixesEditor>()
+                        IoC.GetConstant<TweaksEditor>()
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
@@ -82,10 +82,13 @@ namespace Riders.Tweakbox
                 }
             };
 
-            var imguiHook = await ImguiHook.Create(tweakBox.Render);
+            tweakBox.Hook = await ImguiHook.Create(tweakBox.Render);
+            
+            // Post-setup steps
             Shell.SetupImGuiConfig(modFolder);
-            tweakBox._hook = imguiHook;
-            tweakBox._isReady = true;
+            IoC.Kernel.Bind<Tweakbox>().ToConstant(tweakBox);
+
+            tweakBox.IsReady = true;
             return tweakBox;
         }
 
@@ -103,8 +106,8 @@ namespace Riders.Tweakbox
         private int BlockGameInputsIfEnabled()
         {
             // Skips game controller input obtain function is menu is open.
-            if (_inputsEnabled)
-                return _blockInputsHook.OriginalFunction();
+            if (InputsEnabled)
+                return BlockInputsHook.OriginalFunction();
 
             return 0;
         }
@@ -112,28 +115,28 @@ namespace Riders.Tweakbox
         /* Implementation */
         private void Render()
         { 
-            if (!_isReady)
+            if (!IsReady)
                 return;
 
             // This works because the keys sent to imgui in WndProc follow
             // the Windows key code order.
             if (ImGui.IsKeyPressed((int) Keys.F11, false))
-                _isEnabled = !_isEnabled;
+                IsEnabled = !IsEnabled;
 
             if (ImGui.IsKeyPressed((int)Keys.F10, false))
-                _inputsEnabled = !_inputsEnabled;
+                InputsEnabled = !InputsEnabled;
 
-            if (!_isEnabled) 
+            if (!IsEnabled) 
                 return;
 
             // Update Menu Bar Text
-            if (_inputsEnabled)
-                _menuBar.Text[1] = "F10: Disable Game Input";
+            if (InputsEnabled)
+                MenuBar.Text[1] = "F10: Disable Game Input";
             else
-                _menuBar.Text[1] = "F10: Enable Game Input";
+                MenuBar.Text[1] = "F10: Enable Game Input";
 
             // Render MenuBar and Menus
-            _menuBar.Render();
+            MenuBar.Render();
 
             // Render Shell
             Shell.Render();
@@ -141,14 +144,14 @@ namespace Riders.Tweakbox
 
         public void Suspend()
         {
-            _hook.Disable();
-            _menuBar.Suspend();
+            Hook.Disable();
+            MenuBar.Suspend();
         }
 
         public void Resume()
         {
-            _hook.Enable();
-            _menuBar.Resume();
+            Hook.Enable();
+            MenuBar.Resume();
         }
     }
 }
