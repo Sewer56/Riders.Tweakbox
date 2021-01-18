@@ -1,10 +1,15 @@
 ﻿using System;
+using DearImguiSharp;
 using Reloaded.Memory;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Internal.DirectX;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
+using Vanara.Extensions;
 using Vanara.PInvoke;
+using static Vanara.PInvoke.User32_Gdi;
+using Task = System.Threading.Tasks.Task;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
@@ -30,27 +35,100 @@ namespace Riders.Tweakbox.Components.Tweaks
             *Sewer56.SonicRiders.API.Misc.ResolutionX = Data.ResolutionX;
             *Sewer56.SonicRiders.API.Misc.ResolutionY = Data.ResolutionY;
 
-            *Sewer56.SonicRiders.API.Misc.Blur       = Data.Blur;
             if (Data.Fullscreen == true)
                 *Sewer56.SonicRiders.API.Misc.MultiSampleType = 0;
 
             *Sewer56.SonicRiders.API.Misc.Fullscreen = Data.Fullscreen;
+            *Sewer56.SonicRiders.API.Misc.Blur = Data.Blur;
 
+            // ResetDevice();
+            ChangeBorderless(Data.Borderless);
+        }
+
+        public unsafe void ChangeBorderless(bool borderless)
+        {
+            // Reset Game Window
+            var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
+            if (handle != IntPtr.Zero)
+            {
+                var style = GetWindowLongAuto(handle, WindowLongFlags.GWL_STYLE);
+
+                if (style == IntPtr.Zero) 
+                    return;
+
+                var flags = (WindowStyles) style;
+                if (borderless)
+                {
+                    // Change the window style.
+                    flags &= ~WindowStyles.WS_CAPTION;
+                    flags &= ~WindowStyles.WS_MAXIMIZEBOX;
+                    flags &= ~WindowStyles.WS_MINIMIZEBOX;
+                }
+                else
+                {
+                    flags |= WindowStyles.WS_CAPTION;
+                    flags |= WindowStyles.WS_MAXIMIZEBOX;
+                    flags |= WindowStyles.WS_MINIMIZEBOX;
+                }
+
+                SetWindowLong(handle, WindowLongFlags.GWL_STYLE, (int) flags);
+                Task.Delay(100).ContinueWith((x) => ResizeWindow(Data.ResolutionX, Data.ResolutionY, handle));
+            }
+        }
+
+        public unsafe void ResetDevice()
+        {
             // Reset Game Window
             var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
             if (handle != IntPtr.Zero)
             {
                 // Resize Window
-                User32_Gdi.MoveWindow(new HWND(handle), 0, 0, Data.ResolutionX, Data.ResolutionY, true);
-
+                ResizeWindow(Data.ResolutionX, Data.ResolutionY, handle);
+                
                 // Reset D3D Device
                 // TODO: Write code to recreate all textures and possibly other assets, as described in Reset() function.
                 var controller = IoC.Get<FixesController>();
                 var presentParametersCopy = controller.PresentParameters;
                 presentParametersCopy.BackBufferHeight = Data.ResolutionY;
-                presentParametersCopy.BackBufferWidth  = Data.ResolutionX;
+                presentParametersCopy.BackBufferWidth = Data.ResolutionX;
                 controller.Reset(controller.DX9Device, ref presentParametersCopy);
             }
+        }
+
+        private void GetWindowSizeWithBorder(IntPtr handle, int x, int y, out int newX, out int newY)
+        {
+            // get size of window and the client area
+            RECT clientRect = new RECT();
+            GetWindowRect(handle, out var windowRect);
+            GetClientRect(handle, ref clientRect);
+
+            // calculate size of non-client area
+            int extraX = windowRect.right - windowRect.left - clientRect.right;
+            int extraY = windowRect.bottom - windowRect.top - clientRect.bottom;
+            newX = x + extraX;
+            newY = y + extraY;
+        }
+
+        private void ResizeWindow(int x, int y, IntPtr handle, bool centered = true)
+        {
+            GetWindowSizeWithBorder(handle, x, y, out var newX, out var newY);
+
+            int left = 0;
+            int top  = 0;
+
+            if (centered)
+            {
+                var monitor = MonitorFromWindow(handle, MonitorFlags.MONITOR_DEFAULTTONEAREST);
+                var info = new MONITORINFO { cbSize = (uint)Struct.GetSize<MONITORINFO>() };
+
+                if (GetMonitorInfo(monitor, ref info))
+                {
+                    left += (info.rcMonitor.Width - newX) / 2;
+                    top += (info.rcMonitor.Height - newY) / 2;
+                }
+            }
+            
+            MoveWindow(handle, left, top, newX, newY, true);
         }
 
         public IConfiguration GetCurrent() => this;
@@ -71,6 +149,7 @@ namespace Riders.Tweakbox.Components.Tweaks
             public bool Fullscreen;
             public bool Blur;
             public bool WidescreenHack;
+            public bool Borderless;
 
             internal static Internal GetDefault() => new Internal
             {
@@ -85,7 +164,8 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ResolutionY = 720,
                 Fullscreen = false,
                 Blur = false,
-                WidescreenHack = false
+                WidescreenHack = false,
+                Borderless = false
             };
 
             public void Sanitize()
