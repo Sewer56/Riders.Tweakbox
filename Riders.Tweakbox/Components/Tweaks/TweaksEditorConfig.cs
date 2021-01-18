@@ -1,12 +1,8 @@
 ﻿using System;
-using DearImguiSharp;
 using Reloaded.Memory;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.Internal.DirectX;
-using Sewer56.SonicRiders.Structures.Tasks.Base;
-using Vanara.Extensions;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32_Gdi;
 using Task = System.Threading.Tasks.Task;
@@ -15,9 +11,6 @@ namespace Riders.Tweakbox.Components.Tweaks
 {
     public class TweaksEditorConfig : IConfiguration
     {
-        private static DX9Hook.Reset Reset;
-
-
         public Internal Data = Internal.GetDefault();
         
         // Serialization
