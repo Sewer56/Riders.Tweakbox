@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dolphin.Memory.Access" Version="1.0.2" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="K4os.Compression.LZ4" Version="1.2.2-beta" />
     <PackageReference Include="Ninject" Version="3.3.4" />

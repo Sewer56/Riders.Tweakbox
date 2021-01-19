@@ -81,8 +81,8 @@ namespace Riders.Tweakbox.Components.Editors.Gear
             if (ImGui.TreeNodeStr("Speed & Acceleration"))
             {
                 Reflection.MakeControl(&gear->Acceleration, nameof(ExtremeGear.Acceleration));
-                Reflection.MakeControl(&gear->SpeedHandlingMultiplier, nameof(ExtremeGear.SpeedHandlingMultiplier));
-                Reflection.MakeControl(&gear->Field_14, nameof(ExtremeGear.Field_14));
+                Reflection.MakeControl(&gear->AdditiveSpeed, nameof(ExtremeGear.AdditiveSpeed));
+                Reflection.MakeControl(&gear->OffroadSpeed, nameof(ExtremeGear.OffroadSpeed));
                 Reflection.MakeControl(&gear->TurnLowSpeedMultiplier, nameof(ExtremeGear.TurnLowSpeedMultiplier));
                 Reflection.MakeControl(&gear->TurnAcceleration, nameof(ExtremeGear.TurnAcceleration));
                 ImGui.TreePop();
