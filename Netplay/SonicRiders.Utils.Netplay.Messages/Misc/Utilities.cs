@@ -131,12 +131,36 @@ namespace Riders.Netplay.Messages.Misc
         /// <summary>
         /// Deserialized a MessagePack packed message from a given stream.
         /// </summary>
-        public static T DesrializeMessagePack<T>(BufferedStreamReader reader)
+        public static unsafe T DeserializeMessagePack<T>(Span<byte> bytes, out int numBytesRead, MessagePackSerializerOptions options = null)
+        {
+            fixed (byte* bytePtr = &bytes[0])
+            {
+                using Stream stream = new UnmanagedMemoryStream(bytePtr, bytes.Length);
+                return DesrializeMessagePack<T>(stream, out numBytesRead, options);
+            }
+        }
+
+        /// <summary>
+        /// Deserialized a MessagePack packed message from a given stream.
+        /// </summary>
+        public static unsafe T DesrializeMessagePack<T>(Stream stream, out int numBytesRead, MessagePackSerializerOptions options = null)
+        {
+            var originalPosition = stream.Position;
+            var value = MessagePackSerializer.Deserialize<T>(stream, options);
+            numBytesRead = (int) (stream.Position - originalPosition);
+
+            return value;
+        }
+
+        /// <summary>
+        /// Deserialized a MessagePack packed message from a given stream.
+        /// </summary>
+        public static T DesrializeMessagePack<T>(BufferedStreamReader reader, MessagePackSerializerOptions options = null)
         {
             var baseStream = reader.BaseStream();
             baseStream.Position = reader.Position();
 
-            var value = MessagePackSerializer.Deserialize<T>(baseStream);
+            var value = MessagePackSerializer.Deserialize<T>(baseStream, options);
             reader.Seek(baseStream.Position, SeekOrigin.Begin);
 
             return value;

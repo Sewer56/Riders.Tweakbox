@@ -1,5 +1,7 @@
 ﻿using System;
+using MessagePack;
 using Reloaded.Memory;
+using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 
@@ -11,15 +13,15 @@ namespace Riders.Tweakbox.Components.Debug.Log
         public Action ConfigUpdated { get; set; }
 
         /// <inheritdoc />
-        public byte[] ToBytes() => Json.SerializeStruct(ref Misc.Log.EnabledCategories);
+        public byte[] ToBytes() => MessagePackSerializer.Serialize(Misc.Log.EnabledCategories, MessagePack.Resolvers.ContractlessStandardResolver.Options);
         public LogCategory Data = Misc.Log.DefaultCategories;
 
         /// <inheritdoc />
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            Data = Json.DeserializeStruct<LogCategory>(bytes);
+            Data = Utilities.DeserializeMessagePack<LogCategory>(bytes, out int bytesRead, MessagePack.Resolvers.ContractlessStandardResolver.Options);
             ConfigUpdated?.Invoke();
-            return bytes.Slice(Struct.GetSize<LogCategory>());
+            return bytes.Slice(bytesRead);
         }
 
         /// <inheritdoc />

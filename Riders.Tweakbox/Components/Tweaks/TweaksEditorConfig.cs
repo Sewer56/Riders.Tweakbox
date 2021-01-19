@@ -1,5 +1,7 @@
 ﻿using System;
+using MessagePack;
 using Reloaded.Memory;
+using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -17,13 +19,14 @@ namespace Riders.Tweakbox.Components.Tweaks
 
         /// <inheritdoc />
         public Action ConfigUpdated { get; set; }
-        public byte[] ToBytes() => Json.SerializeStruct(ref Data);
+
+        public byte[] ToBytes() => MessagePackSerializer.Serialize(Data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            Data = Json.DeserializeStruct<Internal>(bytes);
+            Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int bytesRead, MessagePack.Resolvers.ContractlessStandardResolver.Options);
             Data.Sanitize();
             ConfigUpdated?.Invoke();
-            return bytes.Slice(Struct.GetSize<Internal>());
+            return bytes.Slice(bytesRead);
         }
 
         // Apply
