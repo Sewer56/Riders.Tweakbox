@@ -129,21 +129,46 @@ namespace Riders.Netplay.Messages.Misc
         }
 
         /// <summary>
-        /// Deserialized a MessagePack packed message from a given stream.
+        /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
+        /// </summary>
+        public static void ReadIfHasFlags<TType, TEnum>(this BufferedStreamReader reader, ref TType value, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum
+        {
+            if (flags.HasAllFlags(flagsToCheck))
+            {
+                reader.Read(out TType result);
+                value = result;
+            }
+        }
+
+        /// <summary>
+        /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
+        /// </summary>
+        public static void ReadIfHasFlags<TType, TEnum>(this BufferedStreamReader reader, ref TType[] value, int numElements, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum
+        {
+            if (flags.HasAllFlags(flagsToCheck))
+            {
+                value = new TType[numElements];
+                for (int x = 0; x < numElements; x++)
+                    reader.Read(out value[x]);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes a MessagePack packed message from a given stream.
         /// </summary>
         public static unsafe T DeserializeMessagePack<T>(Span<byte> bytes, out int numBytesRead, MessagePackSerializerOptions options = null)
         {
             fixed (byte* bytePtr = &bytes[0])
             {
                 using Stream stream = new UnmanagedMemoryStream(bytePtr, bytes.Length);
-                return DesrializeMessagePack<T>(stream, out numBytesRead, options);
+                return DeserializeMessagePack<T>(stream, out numBytesRead, options);
             }
         }
 
         /// <summary>
-        /// Deserialized a MessagePack packed message from a given stream.
+        /// Deserializes a MessagePack packed message from a given stream.
         /// </summary>
-        public static unsafe T DesrializeMessagePack<T>(Stream stream, out int numBytesRead, MessagePackSerializerOptions options = null)
+        public static unsafe T DeserializeMessagePack<T>(Stream stream, out int numBytesRead, MessagePackSerializerOptions options = null)
         {
             var originalPosition = stream.Position;
             var value = MessagePackSerializer.Deserialize<T>(stream, options);
@@ -155,7 +180,7 @@ namespace Riders.Netplay.Messages.Misc
         /// <summary>
         /// Deserialized a MessagePack packed message from a given stream.
         /// </summary>
-        public static T DesrializeMessagePack<T>(BufferedStreamReader reader, MessagePackSerializerOptions options = null)
+        public static T DeserializeMessagePack<T>(BufferedStreamReader reader, MessagePackSerializerOptions options = null)
         {
             var baseStream = reader.BaseStream();
             baseStream.Position = reader.Position();

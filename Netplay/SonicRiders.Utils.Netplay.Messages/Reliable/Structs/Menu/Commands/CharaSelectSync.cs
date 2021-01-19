@@ -27,7 +27,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public CharaSelectSync(CharaSelectLoop[] sync) => Sync = sync;
 
         public byte[] ToBytes() => MessagePackSerializer.Serialize(this);
-        public static CharaSelectSync FromBytes(BufferedStreamReader reader) => Utilities.DesrializeMessagePack<CharaSelectSync>(reader);
+        public static CharaSelectSync FromBytes(BufferedStreamReader reader) => Utilities.DeserializeMessagePack<CharaSelectSync>(reader);
 
         /// <summary>
         /// Applies the current struct to game data, but only the character data.

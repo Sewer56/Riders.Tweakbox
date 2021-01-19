@@ -11,6 +11,6 @@
   "ModNativeDll32": "",
   "ModNativeDll64": "",
   "ModDependencies": [ "reloaded.sharedlib.hooks", "Reloaded.Universal.DInputPleaseCooperate" ],
-  "OptionalDependencies": null,
+  "OptionalDependencies": [ ],
   "SupportedAppId": [ "sonicriders.exe" ]
 }

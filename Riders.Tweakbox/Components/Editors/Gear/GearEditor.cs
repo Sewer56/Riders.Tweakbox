@@ -5,10 +5,13 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Sewer56.SonicRiders.Utility;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using ExtremeGearEnum = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Player = Sewer56.SonicRiders.API.Player;
+using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Editors.Gear
 {
@@ -80,11 +83,19 @@ namespace Riders.Tweakbox.Components.Editors.Gear
 
             if (ImGui.TreeNodeStr("Speed & Acceleration"))
             {
-                Reflection.MakeControl(&gear->Acceleration, nameof(ExtremeGear.Acceleration));
-                Reflection.MakeControl(&gear->AdditiveSpeed, nameof(ExtremeGear.AdditiveSpeed));
+                // Estimate cruise speeds.
+                for (int x = 0; x <= (int) FormationTypes.Power; x++)
+                {
+                    var estimateSpeed = Formula.GetGearSpeed(gear, FormationTypes.Speed, x, out float rawSpeed);
+                    ImGui.Text($"Estimate Speed Lv{x}: {estimateSpeed} (Speed Type)");
+                }
+                ImGui.Separator();
+
+                Reflection.MakeControl(&gear->AdditiveSpeed, nameof(ExtremeGear.AdditiveSpeed), 0.025f, $"%f ({Formula.SpeedToSpeedometer(gear->AdditiveSpeed)})");
+                Reflection.MakeControl(&gear->Acceleration, nameof(ExtremeGear.Acceleration), 0.05f, $"%f ({Formula.SpeedToSpeedometer(gear->Acceleration)})");
                 Reflection.MakeControl(&gear->OffroadSpeed, nameof(ExtremeGear.OffroadSpeed));
                 Reflection.MakeControl(&gear->TurnLowSpeedMultiplier, nameof(ExtremeGear.TurnLowSpeedMultiplier));
-                Reflection.MakeControl(&gear->TurnAcceleration, nameof(ExtremeGear.TurnAcceleration));
+                Reflection.MakeControl(&gear->TurnAcceleration, nameof(ExtremeGear.TurnAcceleration), 0.05f, $"%f ({Formula.SpeedToSpeedometer(gear->TurnAcceleration)})");
                 ImGui.TreePop();
             }
 
@@ -96,15 +107,18 @@ namespace Riders.Tweakbox.Components.Editors.Gear
                 Reflection.MakeControl(&gear->DriftMinimumRadius, nameof(ExtremeGear.DriftMinimumRadius));
                 Reflection.MakeControl(&gear->DriftAcceleration, nameof(ExtremeGear.DriftAcceleration));
                 Reflection.MakeControl(&gear->DriftBoostFramesOffset, nameof(ExtremeGear.DriftBoostFramesOffset));
+                Reflection.MakeControl(&gear->Weight, nameof(ExtremeGear.Weight));
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNodeStr("Air Multipliers"))
             {
-                Reflection.MakeControl(&gear->AirGainTrickMultiplier, nameof(ExtremeGear.AirGainTrickMultiplier));
-                Reflection.MakeControl(&gear->AirGainShortcutMultiplier, nameof(ExtremeGear.AirGainShortcutMultiplier));
-                Reflection.MakeControl(&gear->AirGainAutorotateMultiplier, nameof(ExtremeGear.AirGainAutorotateMultiplier));
-                Reflection.MakeControl(&gear->JumpAirMultiplier, nameof(ExtremeGear.JumpAirMultiplier));
+                float ToPercent(float multiplier) => (1 + multiplier) * 100f;
+
+                Reflection.MakeControl(&gear->AirGainTrickMultiplier, nameof(ExtremeGear.AirGainTrickMultiplier), 0.01f, $"%f ({ToPercent(gear->AirGainTrickMultiplier)}%%)");
+                Reflection.MakeControl(&gear->AirGainShortcutMultiplier, nameof(ExtremeGear.AirGainShortcutMultiplier), 0.01f, $"%f ({ToPercent(gear->AirGainShortcutMultiplier)}%%)");
+                Reflection.MakeControl(&gear->AirGainAutorotateMultiplier, nameof(ExtremeGear.AirGainAutorotateMultiplier), 0.01f, $"%f ({ToPercent(gear->AirGainAutorotateMultiplier)}%%)");
+                Reflection.MakeControl(&gear->JumpAirMultiplier, nameof(ExtremeGear.JumpAirMultiplier), 1f, $"%f ({gear->JumpAirMultiplier * 100}%%)");
                 ImGui.TreePop();
             }
 
@@ -147,8 +161,8 @@ namespace Riders.Tweakbox.Components.Editors.Gear
                 Reflection.MakeControl(&stats->DriftAirCost, nameof(ExtremeGearLevelStats.DriftAirCost));
                 Reflection.MakeControl(&stats->BoostCost, nameof(ExtremeGearLevelStats.BoostCost));
                 Reflection.MakeControl(&stats->TornadoCost, nameof(ExtremeGearLevelStats.TornadoCost));
-                Reflection.MakeControl(&stats->SpeedGainedFromDriftDash, nameof(ExtremeGearLevelStats.SpeedGainedFromDriftDash));
-                Reflection.MakeControl(&stats->BoostSpeed, nameof(ExtremeGearLevelStats.BoostSpeed));
+                Reflection.MakeControl(&stats->SpeedGainedFromDriftDash, nameof(ExtremeGearLevelStats.SpeedGainedFromDriftDash), 0.01f, $"%f ({Formula.SpeedToSpeedometer(stats->SpeedGainedFromDriftDash)})");
+                Reflection.MakeControl(&stats->BoostSpeed, nameof(ExtremeGearLevelStats.BoostSpeed), 0.01f, $"%f ({Formula.SpeedToSpeedometer(stats->BoostSpeed)})");
                 ImGui.TreePop();
             }
         }

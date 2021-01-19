@@ -31,6 +31,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages
         }
 
         public byte[] ToBytes() => MessagePackSerializer.Serialize(this);
-        public static HostSetPlayerData FromBytes(BufferedStreamReader reader) => Utilities.DesrializeMessagePack<HostSetPlayerData>(reader);
+        public static HostSetPlayerData FromBytes(BufferedStreamReader reader) => Utilities.DeserializeMessagePack<HostSetPlayerData>(reader);
     }
 }

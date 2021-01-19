@@ -1,10 +1,15 @@
-﻿using DearImguiSharp;
+﻿using System;
+using DearImguiSharp;
+using EnumsNET;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Sewer56.SonicRiders.Utility;
 using Player = Sewer56.SonicRiders.API.Player;
+using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Editors.Physics
 {
@@ -26,17 +31,55 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 ProfileSelector.Render();
+                ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
+
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Running Physics", 0))
                     EditRunningPhysics();
+
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Character Type Stats", 0))
+                {
+                    foreach (var type in Enums.GetValues<FormationTypes>())
+                        EditTypeStatsType(type);
+                }
+
+                ImGui.PopItemWidth();
             }
 
             ImGui.End();
         }
 
+        private void EditTypeStatsType(FormationTypes type)
+        {
+            if (ImGui.TreeNodeStr(type.ToString()))
+            {
+                var typeStats = &Player.TypeStats.Pointer[(int) type];
+                for (int x = 0; x < 3; x++)
+                {
+                    var levelStats = CharacterTypeStats.GetLevelStats(typeStats, x);
+                    EditTypeStatsLevel(x, levelStats);
+                }
+
+                ImGui.TreePop();
+            }
+        }
+
+        private void EditTypeStatsLevel(int level, CharacterTypeLevelStats* characterTypeStats)
+        {
+            if (ImGui.TreeNodeStr($"Level {level}"))
+            {
+                Reflection.MakeControl(&characterTypeStats->AdditiveSpeed, nameof(CharacterTypeLevelStats.AdditiveSpeed), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->AdditiveSpeed)})");
+                Reflection.MakeControl(&characterTypeStats->LowSpeedAccel, nameof(CharacterTypeLevelStats.LowSpeedAccel), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->LowSpeedAccel)})");
+                Reflection.MakeControl(&characterTypeStats->HighSpeedAccel, nameof(CharacterTypeLevelStats.HighSpeedAccel), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->HighSpeedAccel)})");
+                Reflection.MakeControl(&characterTypeStats->OffRoadCruisingResistance, nameof(CharacterTypeLevelStats.OffRoadCruisingResistance), 1.0f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->OffRoadCruisingResistance)})");
+                Reflection.MakeControl(&characterTypeStats->Field_14, nameof(CharacterTypeLevelStats.Field_14), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->Field_14)})");
+                Reflection.MakeControl(&characterTypeStats->Field_18, nameof(CharacterTypeLevelStats.Field_18), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->Field_18)})");
+
+                ImGui.TreePop();
+            }
+        }
+
         private void EditRunningPhysics()
         {
-            ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
-
             if (ImGui.TreeNodeStr("Speed"))
             {
                 ImGui.Spacing();
@@ -92,8 +135,6 @@ namespace Riders.Tweakbox.Components.Editors.Physics
 
                 ImGui.TreePop();
             }
-
-            ImGui.PopItemWidth();
         }
     }
 }

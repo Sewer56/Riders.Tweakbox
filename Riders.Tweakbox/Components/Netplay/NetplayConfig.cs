@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using MessagePack;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers;
@@ -31,21 +32,14 @@ namespace Riders.Tweakbox.Components.Netplay
         public Action ConfigUpdated { get; set; }
 
         /// <inheritdoc />
-        public byte[] ToBytes() { return MessagePackSerializer.Serialize(Data); }
+        public byte[] ToBytes() => MessagePackSerializer.Serialize(Data);
 
         /// <inheritdoc />
         public unsafe Span<byte> FromBytes(Span<byte> bytes)
-        {
-            fixed (byte* ptr = bytes)
-            {
-                using var stream = new UnmanagedMemoryStream(ptr, bytes.Length);
-                var initialOffset = stream.Position;
-                Data = MessagePackSerializer.Deserialize<Internal>(stream);
-                var bytesRead = stream.Position - initialOffset;
-
-                ConfigUpdated?.Invoke();
-                return bytes.Slice((int) bytesRead);
-            }
+        { 
+            Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int numBytesRead);
+            ConfigUpdated?.Invoke();
+            return bytes.Slice((int)numBytesRead);
         }
 
         /// <inheritdoc />
