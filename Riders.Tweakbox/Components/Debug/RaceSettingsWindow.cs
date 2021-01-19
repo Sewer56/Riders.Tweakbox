@@ -10,19 +10,15 @@ using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class RaceSettingsWindow : IComponent
+    public class RaceSettingsWindow : ComponentBase
     {
         /// <inheritdoc />
-        public string Name { get; set; } = "Race Settings Viewer";
-        private bool _isEnabled;
+        public override string Name { get; set; } = "Race Settings Viewer";
 
         /// <inheritdoc />
-        public ref bool IsEnabled() => ref _isEnabled;
-
-        /// <inheritdoc />
-        public unsafe void Render()
+        public override unsafe void Render()
         {
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 var settings = State.CurrentRaceSettings;
                 ImGui.Text($"{nameof(RaceSettings.Laps)}: {settings->Laps}");

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Ninject;
 
 namespace Riders.Tweakbox.Misc
@@ -30,6 +31,42 @@ namespace Riders.Tweakbox.Misc
                 Kernel.Bind<T>().ToConstant(value);
 
             return value;
+        }
+
+        /// <summary>
+        /// Retrieves a constant service/class.
+        /// If none is registered, binds it as the new constant to then be re-acquired.
+        /// </summary>
+        public static T GetConstant<T>(Type type)
+        {
+            var value = (T) Kernel.Get(type);
+
+            if (!IsExplicitlyBound(type))
+                Kernel.Bind(type).ToConstant(value);
+
+            return value;
+        }
+
+        /// <summary>
+        /// Retrieves a constant service/class.
+        /// If none is registered, binds it as the new constant to then be re-acquired.
+        /// </summary>
+        public static object GetConstant(Type type)
+        {
+            var value = Kernel.Get(type);
+
+            if (!IsExplicitlyBound(type))
+                Kernel.Bind(type).ToConstant(value);
+
+            return value;
+        }
+
+        /// <summary>
+        /// Returns true if a type has been bound by the user, else false.
+        /// </summary>
+        public static bool IsExplicitlyBound(Type t)
+        {
+            return !Kernel.GetBindings(t).All(x => x.IsImplicit);
         }
 
         /// <summary>

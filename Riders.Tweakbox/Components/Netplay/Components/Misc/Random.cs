@@ -24,18 +24,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         public EventController Event { get; set; }
         private Dictionary<int, bool> _syncReady;
 
-        /// <summary>
-        /// Reset frame pacing speedup after race start wait.
-        /// </summary>
-        private FixesController _fixesController;
-
+        private FramePacingController _framePacingController;
         private System.Random _itemPickupRandom;
 
         public Random(Socket socket, EventController @event)
         {
             Socket = socket;
             Event  = @event;
-            _fixesController = IoC.Get<FixesController>();
+            _framePacingController = IoC.Get<FramePacingController>();
 
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
@@ -107,7 +103,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             else
                 ClientOnSeedRandom(seed, hook);
 
-            _fixesController.ResetSpeedup();
+            _framePacingController.ResetSpeedup();
         }
 
         private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)

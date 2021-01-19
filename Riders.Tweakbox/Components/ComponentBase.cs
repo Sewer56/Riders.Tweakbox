@@ -7,16 +7,25 @@ using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components
 {
-    /// <summary>
-    /// Provides a base implementation for various windows to be implemented.
-    /// </summary>
-    public abstract class ComponentBase<TConfig> : IComponent where TConfig : IConfiguration
+    public abstract class ComponentBase : IComponent
     {
         /// <inheritdoc />
         public abstract string Name { get; set; }
-
         protected bool Enabled = false;
-        protected TConfig Config = IoC.GetConstant<TConfig>();
+
+        /// <inheritdoc />
+        public ref bool IsEnabled() => ref Enabled;
+
+        /// <inheritdoc />
+        public abstract void Render();
+    }
+
+    /// <summary>
+    /// Provides a base implementation for various windows to be implemented.
+    /// </summary>
+    public abstract class ComponentBase<TConfig> : ComponentBase, IComponent where TConfig : IConfiguration
+    {
+        protected TConfig Config = IoC.Get<TConfig>();
         protected IO Io;
         protected ProfileSelector ProfileSelector;
 
@@ -37,15 +46,9 @@ namespace Riders.Tweakbox.Components
         public virtual byte[] GetCurrentConfigBytes() => Config.GetCurrent().ToBytes();
 
         /// <inheritdoc />
-        public ref bool IsEnabled() => ref Enabled;
-
-        /// <inheritdoc />
         public virtual void Disable() { }
 
         /// <inheritdoc />
         public virtual void Enable() { }
-
-        /// <inheritdoc />
-        public abstract void Render();
     }
 }

@@ -28,11 +28,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private bool _skipRequested = false;
 
-        /// <summary>
-        /// Reset frame pacing speedup after race start wait.
-        /// </summary>
-        private FixesController _fixesController;
-
+        private FramePacingController _framePacingController;
         private Dictionary<int, bool> _hostReadyToStartRaceMap;
         private bool _clientReadyToStartRace;
 
@@ -40,7 +36,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             Socket = socket;
             Event  = @event;
-            _fixesController = IoC.Get<FixesController>();
+            _framePacingController = IoC.Get<FramePacingController>();
 
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro += OnRaceSkipIntro;
@@ -71,7 +67,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
 
             OnIntroCutsceneEnd();
-            _fixesController.ResetSpeedup();
+            _framePacingController.ResetSpeedup();
         }
 
         /// <inheritdoc />

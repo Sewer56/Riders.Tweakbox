@@ -3,21 +3,13 @@ using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class UserGuideWindow : IComponent
+    public class UserGuideWindow : ComponentBase
     {
-        public string Name { get; set; } = "User Guide";
-        private bool _isEnabled;
+        public override string Name { get; set; } = "User Guide";
 
-        public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() { }
-        public void Enable() { }
-        
-        public void Render()
+        public override void Render()
         {
-            if (!_isEnabled) 
-                return;
-            
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
                 ImGui.ShowUserGuide();
 
             ImGui.End();

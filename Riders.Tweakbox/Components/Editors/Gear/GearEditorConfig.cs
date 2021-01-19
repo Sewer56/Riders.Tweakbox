@@ -40,20 +40,18 @@ namespace Riders.Tweakbox.Components.Editors.Gear
         /// </summary>
         public unsafe void Apply() => Player.Gears.CopyFrom(Gears, Gears.Length);
 
-        public byte[] ToBytes() => Utilities.CompressLZ4Stream(StructArray.GetBytes(Gears), LZ4Level.L12_MAX);
+        /// <inheritdoc />
+        public Action ConfigUpdated { get; set; }
+        public byte[] ToBytes() => LZ4.CompressLZ4Stream(StructArray.GetBytes(Gears), LZ4Level.L12_MAX);
 
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            fixed (byte* ptr = bytes)
-            {
-                using var source = new UnmanagedMemoryStream(ptr, bytes.Length);
-                using var compressor = LZ4Stream.Decode(source, 0, true);
-                using var target = new MemoryStream(LZ4Codec.MaximumOutputSize(bytes.Length));
+            var outputArray  = new byte[StructArray.GetSize<ExtremeGear>(Player.NumberOfGears)];
+            var decompressed = LZ4.DecompressLZ4Stream(outputArray, bytes, out int bytesRead);
 
-                compressor.CopyTo(target);
-                StructArray.FromArray(target.ToArray(), out Gears, true, Player.NumberOfGears);
-                return bytes.Slice((int)source.Position);
-            }
+            StructArray.FromArray(decompressed, out Gears, true, Player.NumberOfGears);
+            ConfigUpdated?.Invoke();
+            return bytes.Slice((int)bytesRead);
         }
 
         public IConfiguration GetCurrent() => FromGame();

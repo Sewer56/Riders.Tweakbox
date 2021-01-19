@@ -6,7 +6,7 @@ using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Debug.Log
 {
-    public class LogWindow : ComponentBase<LogWindowConfig>, IComponent
+    public class LogWindow : ComponentBase<LogWindowConfig>
     {
         /// <inheritdoc />
         public override string Name { get; set; } = "Log Configuration";

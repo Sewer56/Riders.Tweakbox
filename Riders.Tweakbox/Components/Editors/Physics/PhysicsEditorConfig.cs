@@ -31,6 +31,9 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             };
         }
 
+        /// <inheritdoc />
+        public Action ConfigUpdated { get; set; }
+
         public unsafe byte[] ToBytes()
         {
             using var reloadedMemoryStream = new ExtendedMemoryStream(new byte[sizeof(Internal)]);
@@ -41,6 +44,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         public unsafe Span<byte> FromBytes(Span<byte> bytes)
         {
             Struct.FromArray(bytes, out Data);
+            ConfigUpdated?.Invoke();
             return bytes.Slice(sizeof(Internal));
         }
 

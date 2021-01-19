@@ -1,24 +1,18 @@
 ﻿using DearImguiSharp;
 using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell;
-using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class ShellTestWindow : IComponent
+    public class ShellTestWindow : ComponentBase
     {
-        public string Name { get; set; } = "Shell Test Window";
+        public override string Name { get; set; } = "Shell Test Window";
         private string TestDialogId => "Cool Test Dialog";
         private string TestWindowId => "Cool Test Window";
-        private bool _isEnabled;
 
-        public ref bool IsEnabled() => ref _isEnabled;
-        public void Disable() { }
-        public void Enable() { }
-
-        public void Render()
+        public override void Render()
         {
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 if (ImGui.Button("Shell Dialog Manual", Constants.DefaultVector2)) 
                     Shell.AddCustom(TestManualDialog);

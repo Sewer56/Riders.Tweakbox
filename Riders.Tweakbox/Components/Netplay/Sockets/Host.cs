@@ -20,12 +20,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public string Password { get; private set; }
         
-        public Host(int port, string password, NetplayController controller) : base(controller)
+        public Host(NetplayConfig config, NetplayController controller) : base(controller)
         {
-            Log.WriteLine($"[Host] Hosting Server on {port} with password {password}", LogCategory.Socket);
-            base.State = new HostState(IoC.GetConstant<NetplayConfig>().ToHostPlayerData());
-            Password   = password;
-            Manager.StartInManualMode(port);
+            Log.WriteLine($"[Host] Hosting Server on {config.Data.HostPort} with password {config.Data.Password.Text}", LogCategory.Socket);
+            base.State = new HostState(config.ToHostPlayerData());
+            Password   = config.Data.Password.Text;
+            Manager.StartInManualMode(config.Data.HostPort);
             Initialize();
         }
 

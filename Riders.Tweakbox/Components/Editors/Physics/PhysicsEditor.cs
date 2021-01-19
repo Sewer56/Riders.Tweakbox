@@ -26,7 +26,8 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 ProfileSelector.Render();
-                EditRunningPhysics();
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Running Physics", 0))
+                    EditRunningPhysics();
             }
 
             ImGui.End();

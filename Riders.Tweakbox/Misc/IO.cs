@@ -42,53 +42,5 @@ namespace Riders.Tweakbox.Misc
         public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
         public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, ConfigSearchPattern);
         public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, ConfigSearchPattern);
-
-        /// <summary>
-        /// Compresses a chunk of data using the LZ4 compression algorithm.
-        /// </summary>
-        /// <param name="source">The data to compress.</param>
-        /// <param name="level">The level to compress at.</param>
-        public static byte[] CompressLZ4(byte[] source, LZ4Level level = LZ4Level.L10_OPT)
-        {
-            var target        = new byte[LZ4Codec.MaximumOutputSize(source.Length)];
-            var encodedLength = LZ4Codec.Encode(source, 0, source.Length, target, 0, target.Length);
-            return new Span<byte>(target).Slice(0, encodedLength).ToArray();
-        }
-
-        /// <summary>
-        /// Compresses a chunk of data using the LZ4 compression algorithm.
-        /// </summary>
-        /// <param name="source">The data to compress.</param>
-        /// <param name="level">The level to compress at.</param>
-        public static Span<byte> CompressLZ4(Span<byte> source, LZ4Level level = LZ4Level.L10_OPT)
-        {
-            var target = new byte[LZ4Codec.MaximumOutputSize(source.Length)];
-            var encodedLength = LZ4Codec.Encode(source, target);
-            return new Span<byte>(target).Slice(0, encodedLength);
-        }
-
-        /// <summary>
-        /// Decompresses a chunk of data using the LZ4 compression algorithm.
-        /// </summary>
-        /// <param name="source">The data to decompress.</param>
-        public static byte[] DecompressLZ4(byte[] source)
-        {
-            // byte.MaxValue = Maximum possible output size per byte.
-            var target = new byte[source.Length * byte.MaxValue]; 
-            var decodedLength = LZ4Codec.Decode(source, 0, source.Length, target, 0, target.Length);
-            return new Span<byte>(target).Slice(0, decodedLength).ToArray();
-        }
-
-        /// <summary>
-        /// Decompresses a chunk of data using the LZ4 compression algorithm.
-        /// </summary>
-        /// <param name="source">The data to decompress.</param>
-        public static Span<byte> DecompressLZ4(Span<byte> source)
-        {
-            // byte.MaxValue = Maximum possible output size per byte.
-            var target = new byte[source.Length * byte.MaxValue];
-            var decodedLength = LZ4Codec.Decode(source, target);
-            return new Span<byte>(target).Slice(0, decodedLength).ToArray();
-        }
     }
 }

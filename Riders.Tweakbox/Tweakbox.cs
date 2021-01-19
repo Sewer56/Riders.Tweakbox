@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
+using Ninject;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Components.Debug;
@@ -11,6 +14,8 @@ using Riders.Tweakbox.Components.Editors.Physics;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Controllers.Interfaces;
+using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -30,6 +35,7 @@ namespace Riders.Tweakbox
         public bool IsEnabled { get; private set; } = true;
         public bool IsReady { get; private set; } = false;
         public MenuBar MenuBar { get; private set; }
+        public List<IController> Controllers { get; private set; } = new List<IController>();
         public IHook<Functions.GetInputsFn> BlockInputsHook { get; private set; }
 
         /* Creation & Disposal */
@@ -42,7 +48,7 @@ namespace Riders.Tweakbox
             string modFolder)
         {
             var tweakBox = new Tweakbox();
-            InitializeIoC(modFolder);
+            tweakBox.InitializeIoC(modFolder);
             tweakBox.Hooks = hooks;
             tweakBox.HooksUtilities = hooksUtilities;
             tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
@@ -83,11 +89,9 @@ namespace Riders.Tweakbox
             };
 
             tweakBox.Hook = await ImguiHook.Create(tweakBox.Render);
-            
+
             // Post-setup steps
             Shell.SetupImGuiConfig(modFolder);
-            IoC.Kernel.Bind<Tweakbox>().ToConstant(tweakBox);
-
             tweakBox.IsReady = true;
             return tweakBox;
         }
@@ -95,12 +99,21 @@ namespace Riders.Tweakbox
         /// <summary>
         /// Initializes global bindings.
         /// </summary>
-        private static void InitializeIoC(string modFolder)
+        private void InitializeIoC(string modFolder)
         {
             var io = new IO(modFolder);
             IoC.Kernel.Bind<IO>().ToConstant(io);
-            IoC.GetConstant<EventController>();
-            IoC.GetConstant<NetplayConfig>();
+            IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
+
+            // Initialize all configs.
+            var configTypes = Assembly.GetExecutingAssembly().GetTypes().Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface);
+            foreach (var type in configTypes)
+                IoC.GetConstant(type);
+
+            // Initialize all controllers.
+            var controllerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface);
+            foreach (var type in controllerTypes)
+                Controllers.Add(IoC.GetConstant<IController>(type));
         }
 
         private int BlockGameInputsIfEnabled()
@@ -146,12 +159,14 @@ namespace Riders.Tweakbox
         {
             Hook.Disable();
             MenuBar.Suspend();
+            Controllers.ForEach(x => x.Disable());
         }
 
         public void Resume()
         {
             Hook.Enable();
             MenuBar.Resume();
+            Controllers.ForEach(x => x.Enable());
         }
     }
 }

@@ -8,6 +8,7 @@ using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
+using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
 using Sewer56.Hooks.Utilities.Enums;
@@ -24,7 +25,7 @@ using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
 namespace Riders.Tweakbox.Controllers
 {
-    public unsafe class EventController : TaskEvents
+    public unsafe class EventController : TaskEvents, IController
     {
         /// <summary>
         /// When the spawn location for all players is about to be set.
@@ -317,6 +318,7 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfGiveAiRandomItemsHook.Disable();
             _setGoalRaceFinishTaskHook.Disable();
             _updateLapCounterHook.Disable();
+            _startAttackTaskHook.Disable();
         }
 
         /// <summary>
@@ -349,12 +351,8 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfGiveAiRandomItemsHook.Enable();
             _setGoalRaceFinishTaskHook.Enable();
             _updateLapCounterHook.Enable();
+            _startAttackTaskHook.Enable();
         }
-
-        /// <summary>
-        /// Invokes the random number generator. (Original Function)
-        /// </summary>
-        public int InvokeRandom() => _randHook.OriginalFunction();
 
         /// <summary>
         /// Invokes the random number seed generator. (Original Function)
@@ -512,7 +510,6 @@ namespace Riders.Tweakbox.Controllers
         public unsafe delegate Task* SetRenderItemPickupTaskHandlerFn(Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook);
         public unsafe delegate int SetGoalRaceFinishTaskHandlerFn(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player);
         public unsafe delegate int UpdateLapCounterHandlerFn(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2);
-
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
     }
 }

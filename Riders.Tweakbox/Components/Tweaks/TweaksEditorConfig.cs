@@ -14,11 +14,15 @@ namespace Riders.Tweakbox.Components.Tweaks
         public Internal Data = Internal.GetDefault();
         
         // Serialization
+
+        /// <inheritdoc />
+        public Action ConfigUpdated { get; set; }
         public byte[] ToBytes() => Json.SerializeStruct(ref Data);
         public Span<byte> FromBytes(Span<byte> bytes)
         {
             Data = Json.DeserializeStruct<Internal>(bytes);
             Data.Sanitize();
+            ConfigUpdated?.Invoke();
             return bytes.Slice(Struct.GetSize<Internal>());
         }
 
@@ -50,23 +54,28 @@ namespace Riders.Tweakbox.Components.Tweaks
                     return;
 
                 var flags = (WindowStyles) style;
-                if (borderless)
-                {
-                    // Change the window style.
-                    flags &= ~WindowStyles.WS_CAPTION;
-                    flags &= ~WindowStyles.WS_MAXIMIZEBOX;
-                    flags &= ~WindowStyles.WS_MINIMIZEBOX;
-                }
+                if (borderless) 
+                    RemoveBorder(ref flags);
                 else
-                {
-                    flags |= WindowStyles.WS_CAPTION;
-                    flags |= WindowStyles.WS_MAXIMIZEBOX;
-                    flags |= WindowStyles.WS_MINIMIZEBOX;
-                }
+                    AddBorder(ref flags);
 
                 SetWindowLong(handle, WindowLongFlags.GWL_STYLE, (int) flags);
                 Task.Delay(100).ContinueWith((x) => ResizeWindow(Data.ResolutionX, Data.ResolutionY, handle));
             }
+        }
+
+        public void RemoveBorder(ref WindowStyles flags)
+        {
+            flags &= ~WindowStyles.WS_CAPTION;
+            flags &= ~WindowStyles.WS_MAXIMIZEBOX;
+            flags &= ~WindowStyles.WS_MINIMIZEBOX;
+        }
+
+        public void AddBorder(ref WindowStyles flags)
+        {
+            flags |= WindowStyles.WS_CAPTION;
+            flags |= WindowStyles.WS_MAXIMIZEBOX;
+            flags |= WindowStyles.WS_MINIMIZEBOX;
         }
 
         public unsafe void ResetDevice()
@@ -80,11 +89,11 @@ namespace Riders.Tweakbox.Components.Tweaks
                 
                 // Reset D3D Device
                 // TODO: Write code to recreate all textures and possibly other assets, as described in Reset() function.
-                var controller = IoC.Get<FixesController>();
-                var presentParametersCopy = controller.PresentParameters;
+                var controller = IoC.Get<GraphicsController>();
+                var presentParametersCopy = controller.LastPresentParameters;
                 presentParametersCopy.BackBufferHeight = Data.ResolutionY;
                 presentParametersCopy.BackBufferWidth = Data.ResolutionX;
-                controller.Reset(controller.DX9Device, ref presentParametersCopy);
+                controller.Reset(controller.Dx9Device, ref presentParametersCopy);
             }
         }
 

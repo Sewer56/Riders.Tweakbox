@@ -10,14 +10,14 @@ namespace Riders.Tweakbox.Misc
     [Flags]
     public enum LogCategory : short
     {
-        Default = 1,
-        Memory  = 2,
-        Race    = 4,
-        Menu    = 8,
-        Random  = 16,
-        Ntp     = 32,
-        Socket  = 64,
-        RandomSeed = 128
+        Default = 1 << 0,
+        Memory  = 1 << 1,
+        Race    = 1 << 2,
+        Menu    = 1 << 3,
+        Random  = 1 << 4,
+        Ntp     = 1 << 5,
+        Socket  = 1 << 6,
+        RandomSeed = 1 << 7
     }
 
     /// <summary>

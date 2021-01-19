@@ -12,7 +12,7 @@ namespace Riders.Tweakbox.Components.Netplay
 {
     public class NetplayMenu : ComponentBase<NetplayConfig>, IComponent
     {
-        public NetplayController Controller = IoC.GetConstant<NetplayController>();
+        public NetplayController Controller = IoC.Get<NetplayController>();
         public override string Name { get; set; } = "Netplay Menu";
         
         /// <inheritdoc />
@@ -20,9 +20,6 @@ namespace Riders.Tweakbox.Components.Netplay
         {
 
         }
-
-        public override void Disable() => Controller.Disable();
-        public override void Enable() => Controller.Enable();
 
         public override void Render()
         {
@@ -114,8 +111,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                ref var data = ref Config.Data;
-                Controller.Socket = new Host(data.HostPort, data.Password.Text, Controller);
+                Controller.Socket = new Host(Config, Controller);
             }
             catch (Exception e)
             {
@@ -127,8 +123,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                ref var data = ref Config.Data;
-                Controller.Socket = new Client(data.ClientIP.Text, data.ClientPort, data.Password.Text, Controller);
+                Controller.Socket = new Client(Config, Controller);
             }
             catch (Exception e)
             {

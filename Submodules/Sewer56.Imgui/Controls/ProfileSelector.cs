@@ -31,14 +31,18 @@ namespace Sewer56.Imgui.Controls
         /// Gets the path of the default configuration.
         /// </summary>
         public string DefaultConfiguration => $"{Directory}/Default{_configExtension}";
-        
+
+        /// <summary>
+        /// List of all available configuration files.
+        /// </summary>
+        public string[] Configurations { get; private set; }
+
         private TextInputData _inputData = new TextInputData(48);
         private byte[] _newConfigBytes;
         private Func<string[]> _getConfigFiles;
         private Func<byte[]> _getCurrentConfigBytes;
         private Action<byte[]> _loadConfig;
 
-        private string[] _configurations;
         private FileSystemWatcher _configWatcher;
         private string _configExtension;
 
@@ -67,13 +71,6 @@ namespace Sewer56.Imgui.Controls
                 File.WriteAllBytes(CurrentConfiguration, newConfigBytes);
 
             OnConfigsUpdated();
-        }
-
-        private void OnConfigsUpdated()
-        {
-            _configurations = _getConfigFiles();
-            if (string.IsNullOrEmpty(CurrentConfiguration) || !File.Exists(CurrentConfiguration))
-                CurrentConfiguration = _configurations.FirstOrDefault();
         }
 
         /// <summary>
@@ -121,12 +118,12 @@ namespace Sewer56.Imgui.Controls
         {
             ImGui.TextWrapped("Profile Selector");
             var currentConfigName = Path.GetFileName(CurrentConfiguration);
-            var currentConfigNames = _configurations.Select(Path.GetFileName).ToArray();
+            var currentConfigNames = Configurations.Select(Path.GetFileName).ToArray();
 
             Reflection.MakeControlComboBox("Current Profile", currentConfigName, currentConfigName, currentConfigNames, currentConfigNames,
                 x =>
                 {
-                    CurrentConfiguration = _configurations[currentConfigNames.IndexOf(y => y == x)];
+                    CurrentConfiguration = Configurations[currentConfigNames.IndexOf(y => y == x)];
                 });
 
             if (ImGui.Button("New", Constants.DefaultVector2))
@@ -201,6 +198,13 @@ namespace Sewer56.Imgui.Controls
                 ImGui.CloseCurrentPopup();
 
             ImGui.EndPopup();
+        }
+
+        private void OnConfigsUpdated()
+        {
+            Configurations = _getConfigFiles();
+            if (string.IsNullOrEmpty(CurrentConfiguration) || !File.Exists(CurrentConfiguration))
+                CurrentConfiguration = Configurations.FirstOrDefault();
         }
     }
 }

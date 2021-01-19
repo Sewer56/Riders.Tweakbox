@@ -11,14 +11,11 @@ namespace Riders.Tweakbox.Components.Tweaks
     {
         public override string Name { get; set; } = "Various Fixes";
 
-        private FixesController _controller = IoC.GetConstant<FixesController>();
+        private FramePacingController _pacingController = IoC.Get<FramePacingController>();
         public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles)
         {
 
         }
-
-        public override void Disable() => _controller.Disable();
-        public override void Enable() => _controller.Enable();
 
         // UI
         public override void Render()
@@ -35,36 +32,25 @@ namespace Riders.Tweakbox.Components.Tweaks
         private unsafe void EditFixes()
         {
             // Fix item width for long labels.
-            ImGui.PushItemWidth(ImGui.GetFontSize() * - 20);
+            ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
             
-            if (ImGui.TreeNodeStr("Startup"))
+            if (ImGui.CollapsingHeaderTreeNodeFlags("Startup", 0))
             {
                 ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu);
-                ImGui.TreePop();
             }
 
-            if (ImGui.TreeNodeStr("Misc"))
+            if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
-                ImGui.TreePop();
             }
 
-            if (ImGui.TreeNodeStr("Graphics"))
+            if (ImGui.CollapsingHeaderTreeNodeFlags("Graphics", 0))
             {
                 ImGui.Text("Live Settings");
                 Reflection.MakeControl(ref Config.Data.Blur, "Blur");
                 Reflection.MakeControl(ref Config.Data.Borderless, "Borderless Windowed");
                 Reflection.MakeControl(ref Config.Data.WidescreenHack, "Widescreen Hack");
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen. Work in progress on adding more HUD elements.");
-
-                ImGui.Separator();
-                ImGui.Text("Startup Settings");
-
-                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
-                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
-                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
-
-                ImGui.Separator();
 
                 if (ImGui.ButtonEx("Apply", Constants.ButtonSize, 0))
                     Config.Apply();
@@ -73,11 +59,17 @@ namespace Riders.Tweakbox.Components.Tweaks
                                     "Need to find every single texture, buffer etc. that needs to be recreated before calling Reset.\n" +
                                     "I need help of a graphics programmer experienced with DX9 for this one.");
 
-                ImGui.TreePop();
+                ImGui.Separator();
+                ImGui.Text("Startup Settings");
+
+                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
+                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
+                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
             }
 
-            if (ImGui.TreeNodeStr("Rendering Optimizations"))
+            if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))
             {
+                ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
                 ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
                 Tooltip.TextOnHover("Applies on boot.");
 
@@ -85,7 +77,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Tooltip.TextOnHover("Applies on boot.");
 
                 if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing))
-                    _controller.ResetSpeedup();
+                    _pacingController.ResetSpeedup();
 
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
@@ -94,13 +86,13 @@ namespace Riders.Tweakbox.Components.Tweaks
                     ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup);
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
-                    ImGui.Text($"CPU Load {_controller.CpuUsage:00.00}%");
-                    ImGui.Text($"Windows Timer Granularity: {_controller.TimerGranularity}ms");
+                    ImGui.Text($"CPU Load {_pacingController.CpuUsage:00.00}%");
+                    ImGui.Text($"Windows Timer Granularity: {_pacingController.TimerGranularity}ms");
                     Reflection.MakeControl(ref Config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
                     Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }
 
-                ImGui.TreePop();
+                ImGui.PopItemWidth();
             }
 
             // Restore item width

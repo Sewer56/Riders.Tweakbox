@@ -30,7 +30,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Provides C# events for in-game events such as changing a menu value.
         /// </summary>
-        public EventController Event = IoC.GetConstant<EventController>();
+        public EventController Event = IoC.Get<EventController>();
 
         /// <summary>
         /// Provides shared state for the client and host.

@@ -28,6 +28,9 @@ namespace Riders.Tweakbox.Components.Netplay
         }
 
         /// <inheritdoc />
+        public Action ConfigUpdated { get; set; }
+
+        /// <inheritdoc />
         public byte[] ToBytes() { return MessagePackSerializer.Serialize(Data); }
 
         /// <inheritdoc />
@@ -39,6 +42,8 @@ namespace Riders.Tweakbox.Components.Netplay
                 var initialOffset = stream.Position;
                 Data = MessagePackSerializer.Deserialize<Internal>(stream);
                 var bytesRead = stream.Position - initialOffset;
+
+                ConfigUpdated?.Invoke();
                 return bytes.Slice((int) bytesRead);
             }
         }

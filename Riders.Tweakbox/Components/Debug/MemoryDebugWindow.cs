@@ -7,16 +7,15 @@ using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class MemoryDebugWindow : IComponent
+    public class MemoryDebugWindow : ComponentBase
     {
         /// <inheritdoc />
-        public string Name { get; set; } = "Memory Debug";
+        public override string Name { get; set; } = "Memory Debug";
 
         private int _objects    = 1000;
         private int _objectSize = 100;
         private int _timeBetweenAllocations = 100;
 
-        private bool _isEnabled;
         private bool _simulatingLoad;
         private Thread _simulateLoadThread;
 
@@ -54,18 +53,9 @@ namespace Riders.Tweakbox.Components.Debug
         }
 
         /// <inheritdoc />
-        public ref bool IsEnabled() => ref _isEnabled;
-
-        /// <inheritdoc />
-        public void Disable() { }
-
-        /// <inheritdoc />
-        public void Enable() { }
-
-        /// <inheritdoc />
-        public void Render() 
+        public override void Render() 
         {
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 if (ImGui.Button("Force Full Garbage Collection", Constants.DefaultVector2))
                     GC.Collect();

@@ -17,7 +17,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         {
             using (var extendedMemoryStream = new ExtendedMemoryStream())
             {
-                GameData.FromGame().ToUncompressedBytes(extendedMemoryStream);
+                extendedMemoryStream.Write(GameData.FromGame().ToUncompressedBytes());
                 var data = extendedMemoryStream.ToArray();
 
                 return new DataHash(XXH64.DigestOf(data, 0, data.Length));

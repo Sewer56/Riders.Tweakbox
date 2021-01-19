@@ -60,7 +60,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             return data;
         }
 
-        public static GameData FromCompressedBytes(BufferedStreamReader reader) => FromUncompressedBytes(Utilities.DecompressLZ4Stream(new byte[StructSize], reader));
+        public static GameData FromCompressedBytes(BufferedStreamReader reader) => FromUncompressedBytes(LZ4.DecompressLZ4Stream(new byte[StructSize], reader));
         public static GameData FromUncompressedBytes(byte[] data)
         {
             using (var memoryStream = new MemoryStream(data))
@@ -78,22 +78,18 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             }
         }
 
-        public byte[] ToCompressedBytes(LZ4Level level = LZ4Level.L10_OPT) => Utilities.CompressLZ4Stream(ToUncompressedBytes(), level);
+        public byte[] ToCompressedBytes(LZ4Level level = LZ4Level.L10_OPT) => LZ4.CompressLZ4Stream(ToUncompressedBytes(), level);
         public byte[] ToUncompressedBytes()
         {
-            using (var memStream = new ExtendedMemoryStream())
-            {
-                memStream.Write(StructArray.GetBytes(Gears));
-                memStream.Write(Struct.GetBytes(RunningPhysics1));
-                memStream.Write(Struct.GetBytes(RunningPhysics2));
-                memStream.Write(Struct.GetBytes(RaceSettings));
-                return memStream.ToArray();
-            }
+            using var memStream = new ExtendedMemoryStream();
+            
+            memStream.Write(StructArray.GetBytes(Gears));
+            memStream.Write(RunningPhysics1);
+            memStream.Write(RunningPhysics2);
+            memStream.Write(RaceSettings);
+            return memStream.ToArray();
         }
 
-        public void ToCompressedBytes(ExtendedMemoryStream stream, LZ4Level level = LZ4Level.L10_OPT) => stream.Write(ToCompressedBytes(level));
-        public void ToUncompressedBytes(ExtendedMemoryStream stream) => stream.Write(ToUncompressedBytes());
-        
         /// <summary>
         /// Internal use only.
         /// </summary>

@@ -1,4 +1,6 @@
-﻿namespace Riders.Tweakbox.Definitions.Interfaces
+﻿using System;
+
+namespace Riders.Tweakbox.Definitions.Interfaces
 {
     public interface IConfiguration : ISerializable
     {

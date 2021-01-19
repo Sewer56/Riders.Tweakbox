@@ -1,4 +1,5 @@
 ﻿using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Controllers.Interfaces;
 using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Controllers
@@ -6,7 +7,7 @@ namespace Riders.Tweakbox.Controllers
     /// <summary>
     /// Owned by <see cref="Netplay"/>
     /// </summary>
-    public class NetplayController
+    public class NetplayController : IController
     {
         /// <summary>
         /// The current socket instance, either a <see cref="Client"/> or <see cref="Host"/>.
@@ -14,7 +15,13 @@ namespace Riders.Tweakbox.Controllers
         public Socket Socket;
 
         public NetplayController() => Event.AfterEndScene += OnEndScene;
-        public void Disable() => Event.AfterEndScene -= OnEndScene;
+        public void Disable()
+        {
+            Event.AfterEndScene -= OnEndScene;
+            Socket?.Dispose();
+            Socket = null;
+        }
+
         public void Enable() => Event.AfterEndScene += OnEndScene;
 
         /// <summary>

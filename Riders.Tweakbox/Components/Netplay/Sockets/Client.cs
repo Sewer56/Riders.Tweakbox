@@ -13,15 +13,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     /// <inheritdoc />
     public unsafe class Client : Socket
     {
-        public Client(string ipAddress, int port, string password, NetplayController controller) : base(controller)
+        public Client(NetplayConfig config, NetplayController controller) : base(controller)
         {
-            Log.WriteLine($"[Client] Joining Server on {ipAddress}:{port} with password {password}", LogCategory.Socket);
+            Log.WriteLine($"[Client] Joining Server on {config.Data.ClientIP}:{config.Data.ClientPort} with password {config.Data.Password.Text}", LogCategory.Socket);
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
             Manager.StartInManualMode(0);
-            State = new CommonState(IoC.GetConstant<NetplayConfig>().ToHostPlayerData());
-            Manager.Connect(ipAddress, port, password);
+            State = new CommonState(IoC.Get<NetplayConfig>().ToHostPlayerData());
+            Manager.Connect(config.Data.ClientIP.Text, config.Data.ClientPort, config.Data.Password.Text);
             Initialize();
         }
 

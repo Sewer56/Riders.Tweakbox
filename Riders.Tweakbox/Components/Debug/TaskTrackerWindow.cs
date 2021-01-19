@@ -1,24 +1,19 @@
 ﻿using DearImguiSharp;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class TaskTrackerWindow : IComponent
+    public class TaskTrackerWindow : ComponentBase
     {
-        public string Name { get; set; } = "Task Tracker";
-        public TaskEvents Events = IoC.GetConstant<TaskEvents>(); 
-        private bool _isEnabled;
+        public override string Name { get; set; } = "Task Tracker";
+        public EventController Events = IoC.Get<EventController>(); 
 
-        public ref bool IsEnabled() => ref _isEnabled;
-
-        public void Disable() { }
-        public void Enable() { }
-
-        public void Render()
+        public override void Render()
         {
-            if (ImGui.Begin(Name, ref _isEnabled, 0))
+            if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 RenderStateTracker();
             }
