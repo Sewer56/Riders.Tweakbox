@@ -314,7 +314,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             bool received = false;
             Listener.OnQueuePacket += TestPacket;
-            var result = ActionWrappers.TryWaitUntil(HasReceived, timeout, 1, token);
+            var result = ActionWrappers.TryWaitUntil(HasReceived, timeout, sleepTime, token);
             Listener.OnQueuePacket -= TestPacket;
             return result;
 
@@ -348,7 +348,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             bool[] received = new bool[peers.Length];
             Listener.OnQueuePacket += TestPacket;
-            var result = ActionWrappers.TryWaitUntil(HasReceivedAll, timeout, 1, token);
+            var result = ActionWrappers.TryWaitUntil(HasReceivedAll, timeout, sleepTime, token);
             Listener.OnQueuePacket -= TestPacket;
             return result;
 
@@ -397,9 +397,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public void WaitWithSpin(DateTime waitUntil, string eventName = "", LogCategory eventCategory = LogCategory.Socket, int spinTime = 100)
         {
             // TODO: Negotiation between multiple clients on current time so WaitUntil matches.
-            Log.WriteLine($"[Socket] Waiting for event ({eventName}).", LogCategory.Socket);
-            Log.WriteLine($"[Socket] Time: {DateTime.UtcNow}", LogCategory.Socket);
-            Log.WriteLine($"[Socket] Start Time: {waitUntil}", LogCategory.Socket);
+            Log.WriteLine($"[Socket] Waiting for event ({eventName}).", eventCategory);
+            Log.WriteLine($"[Socket] Time: {DateTime.UtcNow}", eventCategory);
+            Log.WriteLine($"[Socket] Start Time: {waitUntil}", eventCategory);
 
             // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
             ActionWrappers.TryWaitUntil(() =>
