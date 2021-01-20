@@ -119,7 +119,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             foreach (var peer in Manager.ConnectedPeerList)
             {
                 var message = State.ClientMap.ToMessage(peer, State.SelfInfo);
-                Send(peer, new ReliablePacket(message), DeliveryMethod.ReliableSequenced);
+                Send(peer, new ReliablePacket(message), DeliveryMethod.ReliableOrdered);
             }
 
             Update();

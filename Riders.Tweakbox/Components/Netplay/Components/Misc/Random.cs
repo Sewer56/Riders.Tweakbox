@@ -127,7 +127,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             var startTime = DateTime.UtcNow.AddMilliseconds(Socket.State.MaxLatency);
             Socket.TryGetComponent(out TimeSynchronization time);
             var serverStartTime = time.ToServerTime(startTime);
-            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new SRandSync(serverStartTime, (int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random);
+            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new SRandSync(serverStartTime, (int)seed) }, DeliveryMethod.ReliableOrdered, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random);
 
             // Disable skip flags for everyone.
             foreach (var key in _syncReady.Keys)
@@ -153,7 +153,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 return true;
             }
 
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, DeliveryMethod.ReliableSequenced, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random);
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, DeliveryMethod.ReliableUnordered, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random);
             if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
