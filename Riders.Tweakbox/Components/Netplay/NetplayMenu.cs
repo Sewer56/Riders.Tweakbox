@@ -26,7 +26,6 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             if (ImGui.Begin("Netplay Window", ref IsEnabled(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
-                ProfileSelector.Render();
                 RenderNetplayWindow();
             }
 
@@ -36,16 +35,12 @@ namespace Riders.Tweakbox.Components.Netplay
         public unsafe void RenderNetplayWindow()
         {
             if (Controller.Socket != null)
-            {
-                RenderCommonWindow();
-            }
+                RenderConnectedWindow();
             else
-            {
-                RenderHostJoinWindow();
-            }
+                RenderDisconnectedWindow();
         }
 
-        private void RenderCommonWindow()
+        private void RenderConnectedWindow()
         {
             var client = Controller.Socket;
             foreach (var player in client.State.PlayerInfo)
@@ -68,8 +63,9 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Text($"Does not include UDP + IP Overhead");
         }
 
-        private void RenderHostJoinWindow()
+        private void RenderDisconnectedWindow()
         {
+            ProfileSelector.Render();
             ref var data = ref Config.Data;
             if (ImGui.TreeNodeStr("Join a Server"))
             {
