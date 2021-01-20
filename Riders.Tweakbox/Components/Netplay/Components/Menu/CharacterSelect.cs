@@ -121,7 +121,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                 case CharaSelectExit charaSelectExit:
                     Log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag", LogCategory.Menu);
                     if (Socket.GetSocketType() == SocketType.Host)
-                        Socket.SendToAllExcept(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered);
+                        Socket.SendToAllExceptAndFlush(packet.Source, new ReliablePacket(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered);
 
                     _exit = charaSelectExit.Type;
                     Log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag Complete", LogCategory.Menu);

@@ -81,7 +81,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 _skipRequested = true;
                 if (Socket.GetSocketType() == SocketType.Host)
-                    Socket.SendToAllExcept(pkt.Source, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Received Skip from Client, Rebroadcasting.");
+                    Socket.SendToAllExceptAndFlush(pkt.Source, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Received Skip from Client, Rebroadcasting.");
             }
 
             if (packet.HasSyncStartReady)

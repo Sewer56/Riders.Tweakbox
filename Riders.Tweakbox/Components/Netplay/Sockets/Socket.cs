@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -199,10 +199,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="packet">The packet to be transferred.</param>
         /// <param name="method">The channel to send the data in.</param>
         /// <param name="text">The text to print to the console.</param>
-        public void SendToAllExcept(NetPeer exception, ReliablePacket packet, DeliveryMethod method, string text)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendToAllExceptAndFlush(NetPeer exception, ReliablePacket packet, DeliveryMethod method, string text, byte channelIndex = 0)
         {
             Trace.WriteLine(text);
-            SendToAllExcept(exception, packet.Serialize(), method);
+            SendToAllExceptAndFlush(exception, packet.Serialize(), method, channelIndex);
         }
 
         /// <summary>
@@ -211,7 +212,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="exception">The peer to not send data to.</param>
         /// <param name="packet">The packet to be transferred.</param>
         /// <param name="method">The channel to send the data in.</param>
-        public void SendToAllExcept(NetPeer exception, IPacket packet, DeliveryMethod method) => SendToAllExcept(exception, packet.Serialize(), method);
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendToAllExceptAndFlush(NetPeer exception, IPacket packet, DeliveryMethod method, byte channelIndex = 0) => SendToAllExceptAndFlush(exception, packet.Serialize(), method, channelIndex);
 
         /// <summary>
         /// Sends data to all peers except a certain peer.
@@ -219,14 +221,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="exception">The peer to not send data to.</param>
         /// <param name="data">The data to send.</param>
         /// <param name="method">The channel to send the data in.</param>
-        public void SendToAllExcept(NetPeer exception, byte[] data, DeliveryMethod method)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendToAllExceptAndFlush(NetPeer exception, byte[] data, DeliveryMethod method, byte channelIndex = 0)
         {
             foreach (var peer in Manager.ConnectedPeerList)
             {
                 if (exception != null && peer.Id == exception.Id)
                     continue;
 
-                peer.Send(data, method);
+                peer.Send(data, channelIndex, method);
             }
 
             Update();
@@ -238,9 +241,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="peer">The peer to send the message to.</param>
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
-        public void Send(NetPeer peer, IPacket message, DeliveryMethod method)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void Send(NetPeer peer, IPacket message, DeliveryMethod method, byte channelIndex = 0)
         {
-            peer?.Send(message.Serialize(), method);
+            peer?.Send(message.Serialize(), channelIndex, method);
         }
 
         /// <summary>
@@ -249,9 +253,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="peer">The peer to send the message to.</param>
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
-        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, byte channelIndex = 0)
         {
-            Send(peer, message, method);
+            Send(peer, message, method, channelIndex);
             Update();
         }
 
@@ -263,10 +268,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="method">The delivery method.</param>
         /// <param name="text">The text to log.</param>
         /// <param name="logCategory">Category under which the text should be logged.</param>
-        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text, LogCategory logCategory)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0)
         {
             Log.WriteLine(text, logCategory);
-            SendAndFlush(peer, message, method);
+            SendAndFlush(peer, message, method, channelIndex);
         }
 
         /// <summary>
@@ -274,9 +280,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
-        public void SendToAllAndFlush(IPacket message, DeliveryMethod method)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, byte channelIndex = 0)
         {
-            Manager.SendToAll(message.Serialize(), method);
+            Manager.SendToAll(message.Serialize(), channelIndex, method);
             Update();
         }
 
@@ -287,10 +294,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="method">The delivery method.</param>
         /// <param name="text">The text to log.</param>
         /// <param name="logCategory">Category under which the text should be logged.</param>
-        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text, LogCategory logCategory)
+        /// <param name="channelIndex">Index of the channel to send the message on.</param>
+        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0)
         {
             Log.WriteLine(text, logCategory);
-            SendToAllAndFlush(message, method);
+            SendToAllAndFlush(message, method, channelIndex);
         }
 
         /// <summary>

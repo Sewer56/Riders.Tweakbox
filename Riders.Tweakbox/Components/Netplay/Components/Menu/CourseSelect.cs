@@ -118,7 +118,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
                     _receivedSetStageFlag = true;
                     if (Socket.GetSocketType() == SocketType.Host)
-                        Socket.SendToAllExcept(packet.Source, new ReliablePacket(courseSelectSetStage), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)}] Is Host, Rebroadcasting Stage Set Flag");
+                        Socket.SendToAllExceptAndFlush(packet.Source, new ReliablePacket(courseSelectSetStage), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)}] Is Host, Rebroadcasting Stage Set Flag");
                     
                     break;
                 case CourseSelectSync courseSelectSync:
