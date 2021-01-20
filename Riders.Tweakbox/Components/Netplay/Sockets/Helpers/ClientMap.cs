@@ -10,7 +10,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     /// <summary>
     /// Maps individual connected peers to individual players.
     /// </summary>
-    /// <typeparam name="T">The type of additional data to store for the player.</typeparam>
     public class ClientMap
     {
         private Dictionary<int, HostPlayerData> _dictionary = new Dictionary<int, HostPlayerData>();
