@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -57,6 +57,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public BandwidthTracker Bandwidth;
 
+        /// <summary>
+        /// Used for allocating channels for reliable packets.
+        /// </summary>
+        public LnlChannelAllocator ChannelAllocator;
+
         private Stopwatch _stopWatch = new Stopwatch();
         private bool _isDisposed = false;
 
@@ -67,7 +72,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             _stopWatch.Start();
             Listener = new NetworkEventListener(this);
-            Manager = new NetManager(Listener);
+            Manager = new NetManager(Listener) { ChannelsCount = 64 };
+            ChannelAllocator = new LnlChannelAllocator(Manager.ChannelsCount);
             Controller = controller;
             Manager.EnableStatistics = true;
             Bandwidth = new BandwidthTracker(Manager);
