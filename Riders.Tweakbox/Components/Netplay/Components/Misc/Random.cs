@@ -157,7 +157,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 return true;
             }
 
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, DeliveryMethod.ReliableUnordered, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
             if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
