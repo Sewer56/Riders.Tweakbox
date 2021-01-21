@@ -74,13 +74,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private void OnPeerConnected(NetPeer peer)
         {
-            Log.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Adding Entry: ", LogCategory.Random);
+            Log.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Adding Entry.", LogCategory.Random);
             _syncReady[peer.Id] = false;
         }
 
         private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            Log.WriteLine($"[{nameof(Random)} / Host] Peer Disconnected, Removing Entry: ", LogCategory.Random);
+            Log.WriteLine($"[{nameof(Random)} / Host] Peer Disconnected, Removing Entry.", LogCategory.Random);
             _syncReady.Remove(peer.Id);
         }
 
