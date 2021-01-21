@@ -75,6 +75,9 @@ namespace Riders.Tweakbox.Components.Netplay
             [Key(5)]
             public bool ShowPlayers;
 
+            [Key(6)]
+            public SimulateBadInternet BadInternet;
+
             public static Internal Create()
             {
                 return new Internal
@@ -84,8 +87,37 @@ namespace Riders.Tweakbox.Components.Netplay
                     ClientIP = new TextInputData("127.0.0.1", IPLength),
                     HostPort = 42069,
                     ClientPort = 42069,
-                    ShowPlayers = false
+                    ShowPlayers = false,
+                    BadInternet = new SimulateBadInternet() { IsEnabled = false },
                 };
+            }
+
+            [MessagePackObject]
+            public struct SimulateBadInternet
+            {
+                /// <summary>
+                /// True if enabled.
+                /// </summary>
+                [Key(0)]
+                public bool IsEnabled;
+
+                /// <summary>
+                /// Packet loss between 0 and 100.
+                /// </summary>
+                [Key(1)]
+                public byte PacketLoss;
+
+                /// <summary>
+                /// Latency in ms to simulate.
+                /// </summary>
+                [Key(2)]
+                public byte MinLatency;
+
+                /// <summary>
+                /// Latency in ms to simulate.
+                /// </summary>
+                [Key(3)]
+                public byte MaxLatency;
             }
         }
     }

@@ -98,6 +98,19 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
+#if DEBUG
+            if (ImGui.TreeNodeStr("Debug"))
+            {
+                Reflection.MakeControl(ref data.BadInternet.IsEnabled, "Simulate Bad Internet");
+                if (data.BadInternet.IsEnabled)
+                {
+                    Reflection.MakeControl(ref data.BadInternet.MinLatency, "Min Latency");
+                    Reflection.MakeControl(ref data.BadInternet.MaxLatency, "Max Latency");
+                    Reflection.MakeControl(ref data.BadInternet.PacketLoss, "Packet Loss Percent");
+                }
+            }
+#endif
+
             ImGui.Spacing();
 
             if (data.ShowPlayers)

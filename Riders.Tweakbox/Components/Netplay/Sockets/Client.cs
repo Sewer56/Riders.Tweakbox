@@ -13,7 +13,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     /// <inheritdoc />
     public unsafe class Client : Socket
     {
-        public Client(NetplayConfig config, NetplayController controller) : base(controller)
+        public Client(NetplayConfig config, NetplayController controller) : base(controller, config)
         {
             Log.WriteLine($"[Client] Joining Server on {config.Data.ClientIP}:{config.Data.ClientPort} with password {config.Data.Password.Text}", LogCategory.Socket);
             if (Event.LastTask != Tasks.CourseSelect)
