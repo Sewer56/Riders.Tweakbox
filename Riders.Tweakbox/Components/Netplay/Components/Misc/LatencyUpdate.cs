@@ -49,7 +49,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             catch (Exception e)
             {
                 Log.WriteLine($"[{nameof(LatencyUpdate)} / Host] Failed to send updated client latency. {e.Message} | {e.StackTrace}", LogCategory.Socket);
-                throw;
             }
         }
 
@@ -97,7 +96,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                     catch (Exception e)
                     {
                         Log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}", LogCategory.Socket);
-                        throw;
                     }
                     break;
             }
