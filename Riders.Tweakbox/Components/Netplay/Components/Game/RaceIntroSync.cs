@@ -42,7 +42,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.OnRaceSkipIntro += OnRaceSkipIntro;
 
             if (Socket.GetSocketType() == SocketType.Host)
+            {
                 _hostReadyToStartRaceMap = new Dictionary<int, bool>(8);
+                Socket.Listener.PeerConnectedEvent += OnPeerConnected;
+                Socket.Listener.PeerDisconnectedEvent += OnPeerDisconnected;
+            }
         }
 
         /// <inheritdoc />
@@ -50,6 +54,24 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
             Event.OnRaceSkipIntro -= OnRaceSkipIntro;
+
+            if (Socket.GetSocketType() == SocketType.Host)
+            {
+                Socket.Listener.PeerConnectedEvent -= OnPeerConnected;
+                Socket.Listener.PeerDisconnectedEvent -= OnPeerDisconnected;
+            }
+        }
+
+        private void OnPeerConnected(NetPeer peer)
+        {
+            Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Connected, Adding Entry.", LogCategory.Random);
+            _hostReadyToStartRaceMap[peer.Id] = false;
+        }
+
+        private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
+        {
+            Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Disconnected, Removing Entry.", LogCategory.Random);
+            _hostReadyToStartRaceMap.Remove(peer.Id);
         }
 
         private Enum<AsmFunctionResult> OnCheckIfRaceSkipIntro() => _skipRequested;
