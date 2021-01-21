@@ -130,12 +130,12 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public virtual void Dispose()
         {
+            _isDisposed = true;
             foreach (var component in Components.Values)
                 component.Dispose();
 
             Controller.Socket = null;
             Manager.Stop(true);
-            _isDisposed = true;
         }
 
         /// <summary>
