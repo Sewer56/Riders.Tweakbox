@@ -29,12 +29,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Initialize();
         }
 
-        public override unsafe void Dispose()
-        {
-            Manager.DisconnectAll();
-            base.Dispose();
-        }
-
         public override SocketType GetSocketType() => SocketType.Host;
         public override void HandlePacket(Packet<NetPeer> packet) { }
 

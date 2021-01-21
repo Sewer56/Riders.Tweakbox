@@ -131,10 +131,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.GetSocketType() == SocketType.Host)
             {
                 // TODO: Maybe support for multiple local players in the future.
-                var hostState   = (HostState) State;
-                var playerIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                var player = packet.Players[0];
-                _raceSync[playerIndex] = new Volatile<Timestamped<UnreliablePacketPlayer>>(player);
+                try
+                {
+                    var hostState = (HostState)State;
+                    var playerIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
+                    var player = packet.Players[0];
+                    _raceSync[playerIndex] = new Volatile<Timestamped<UnreliablePacketPlayer>>(player);
+                }
+                catch (Exception e)
+                {
+                    Log.WriteLine($"[{nameof(Race)}] Warning: Failed to update Race Sync", LogCategory.Race);
+                }
             }
             else
             {
