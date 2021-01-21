@@ -38,11 +38,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             {
                 var state = (HostState)Socket.State;
                 var clientMap = state.ClientMap;
-                foreach (var peer in Manager.ConnectedPeerList)
+                for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
                 {
-                    var hostIndex = 0;
+                    var peer         = Manager.ConnectedPeerList[x];
+                    var hostIndex    = 0;
                     var excludeIndex = clientMap.GetPlayerData(peer).PlayerIndex;
-                    var latencies = clientMap.GetPlayerData().Where(x => x.PlayerIndex != excludeIndex && x.PlayerIndex != hostIndex).Select(x => (short)x.Latency);
+                    var latencies    = clientMap.GetPlayerData().Where(x => x.PlayerIndex != excludeIndex && x.PlayerIndex != hostIndex).Select(x => (short) x.Latency);
                     Socket.Send(peer, new ReliablePacket(new HostUpdateLatency(latencies.ToArray())), DeliveryMethod.ReliableOrdered);
                 }
             }

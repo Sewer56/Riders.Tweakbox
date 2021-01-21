@@ -246,8 +246,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
         public void SendToAllExceptAndFlush(NetPeer exception, byte[] data, DeliveryMethod method, byte channelIndex = 0)
         {
-            foreach (var peer in Manager.ConnectedPeerList)
+            for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
             {
+                var peer = Manager.ConnectedPeerList[x];
                 if (exception != null && peer.Id == exception.Id)
                     continue;
 

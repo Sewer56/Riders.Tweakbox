@@ -73,13 +73,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     var state = (HostState)Socket.State;
                     // Note: Do not use SendAndFlush here as not only is it inefficient, you risk
                     //       accessing ConnectedPeerList inside the message handler(s); which will break foreach.
-                    foreach (var peer in Socket.Manager.ConnectedPeerList)
+                    for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
                     {
+                        var peer = Socket.Manager.ConnectedPeerList[x];
                         var excludeIndex = state.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
                         Socket.Send(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced, _sequencedChannel);
                     }
-                    
+
                     Socket.Update();
                     break;
 

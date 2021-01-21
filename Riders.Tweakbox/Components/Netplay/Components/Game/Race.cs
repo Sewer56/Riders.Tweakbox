@@ -183,13 +183,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 // Broadcast data to all clients.
                 var hostState = (HostState)State;
-                foreach (var peer in Socket.Manager.ConnectedPeerList)
+                for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
                 {
+                    var peer = Socket.Manager.ConnectedPeerList[x];
                     var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
                     Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
                 }
-                
+
                 Socket.Update();
             }
             else
@@ -210,9 +211,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var hostState = (HostState) State;
                     _movementFlags[0] = new Timestamped<Used<MovementFlagsMsg>>(new MovementFlagsMsg(player));
-                    foreach (var peer in Socket.Manager.ConnectedPeerList)
+                    for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
                     {
-                        var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
+                        var peer          = Socket.Manager.ConnectedPeerList[x];
+                        var excludeIndex  = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
                         Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, _movementFlagsDeliveryMethod);
                     }
@@ -265,18 +267,27 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private unsafe Player* ApplyMovementFlags(Player* player)
         {
-            var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            try
+            {
+                var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
 
-            // TODO: Handle Spectator
-            if (index == 0)
-                return player;
+                // TODO: Handle Spectator
+                if (index == 0)
+                    return player;
 
-            ref var flags = ref _movementFlags[State.GetHostPlayerIndex(index)];
-            if (flags.IsDiscard(State.MaxLatency))
-                return player;
+                var hostIndex = State.GetHostPlayerIndex(index);
+                ref var flags = ref _movementFlags[hostIndex];
+                if (flags.IsDiscard(State.MaxLatency))
+                    return player;
 
-            var flagData = flags.Value.UseValue();
-            flagData.ToGame(player);
+                var flagData = flags.Value.UseValue();
+                flagData.ToGame(player);
+            }
+            catch (Exception e)
+            {
+                Log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}", LogCategory.Race);
+            }
+
             return player;
         }
     }

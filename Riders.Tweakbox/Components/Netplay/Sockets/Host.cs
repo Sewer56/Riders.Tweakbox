@@ -102,8 +102,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public void UpdatePlayerMap()
         {
-            foreach (var peer in Manager.ConnectedPeerList)
+            for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
             {
+                var peer    = Manager.ConnectedPeerList[x];
                 var message = State.ClientMap.ToMessage(peer, State.SelfInfo);
                 Send(peer, new ReliablePacket(message), DeliveryMethod.ReliableOrdered);
             }

@@ -145,24 +145,25 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     goto exit;
 
                 Log.WriteLine($"[{nameof(Attack)} / Host] Sending Attack Matrix to Clients", LogCategory.Race);
-                foreach (var peer in Socket.Manager.ConnectedPeerList)
+                for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
                 {
+                    var peer = Socket.Manager.ConnectedPeerList[x];
                     var state = (HostState) Socket.State;
                     var excludeIndex = state.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var attacks = _attackSync.Select(x => x.Value).Where((attack, x) => x != excludeIndex).ToArray();
                     if (!attacks.Any(x => x.IsValid))
                         continue;
 
-                    #if DEBUG
-                    for (var x = 0; x < attacks.Length; x++)
+#if DEBUG
+                    for (var y = 0; x < attacks.Length; x++)
                     {
-                        if (attacks[x].IsValid)
-                            Log.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({x}), Target {attacks[x].Target}", LogCategory.Race);
+                        if (attacks[y].IsValid)
+                            Log.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({y}), Target {attacks[y].Target}", LogCategory.Race);
                     }
-                    #endif
+#endif
 
                     var packed = new AttackPacked().AsInterface().SetData(attacks);
-                    Socket.Send(peer, new ReliablePacket() { Attack = packed }, DeliveryMethod.ReliableOrdered);
+                    Socket.Send(peer, new ReliablePacket() {Attack = packed}, DeliveryMethod.ReliableOrdered);
                 }
 
                 Socket.Update();
