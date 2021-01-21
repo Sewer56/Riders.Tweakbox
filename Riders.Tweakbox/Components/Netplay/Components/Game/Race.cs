@@ -36,12 +36,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private Timestamped<Used<MovementFlagsMsg>>[] _movementFlags = new Timestamped<Used<MovementFlagsMsg>>[Constants.MaxNumberOfPlayers];
 
+        private DeliveryMethod _movementFlagsDeliveryMethod = DeliveryMethod.ReliableOrdered;
+        private DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Sequenced;
+        private readonly byte _raceChannel;
+
         public Race(Socket socket, EventController @event)
         {
             Socket = socket;
             Event = @event;
             State = socket.State;
 
+            _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(_raceDeliveryMethod);
             Event.OnSetSpawnLocationsStartOfRace += SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace += SwapSpawns;
 
@@ -56,6 +61,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <inheritdoc />
         public void Dispose()
         {
+            Socket.ChannelAllocator.ReleaseChannel(_raceDeliveryMethod, _raceChannel);
             Event.OnSetSpawnLocationsStartOfRace -= SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace -= SwapSpawns;
 
@@ -174,7 +180,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                     var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
-                    Socket.Send(peer, packet, DeliveryMethod.Sequenced);
+                    Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
                 }
                 
                 Socket.Update();
@@ -182,7 +188,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             else
             {
                 var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
-                Socket.SendAndFlush(Socket.Manager.FirstPeer, packet, DeliveryMethod.Sequenced);
+                Socket.SendAndFlush(Socket.Manager.FirstPeer, packet, _raceDeliveryMethod, _raceChannel);
             }
         }
 
@@ -201,7 +207,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     {
                         var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, DeliveryMethod.ReliableOrdered);
+                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, _movementFlagsDeliveryMethod);
                     }
                 }
 
@@ -211,7 +217,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
                 if (index == 0)
-                    Socket.Send(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, DeliveryMethod.ReliableOrdered);
+                    Socket.Send(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, _movementFlagsDeliveryMethod);
 
                 return player;
             }

@@ -26,12 +26,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private FramePacingController _framePacingController;
         private System.Random _itemPickupRandom;
+        private byte _randomChannel;
+        private DeliveryMethod _randomDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
         public Random(Socket socket, EventController @event)
         {
             Socket = socket;
             Event  = @event;
             _framePacingController = IoC.Get<FramePacingController>();
+            _randomChannel = (byte)Socket.ChannelAllocator.GetChannel(_randomDeliveryMethod);
 
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
@@ -50,6 +53,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// <inheritdoc />
         public void Dispose()
         {
+            Socket.ChannelAllocator.ReleaseChannel(_randomDeliveryMethod, _randomChannel);
             Event.SeedRandom -= OnSeedRandom;
             Event.Random     -= OnRandom;
             Event.ItemPickupRandom -= OnItemPickupRandom;
@@ -127,7 +131,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             var startTime = DateTime.UtcNow.AddMilliseconds(Socket.State.MaxLatency);
             Socket.TryGetComponent(out TimeSynchronization time);
             var serverStartTime = time.ToServerTime(startTime);
-            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new SRandSync(serverStartTime, (int)seed) }, DeliveryMethod.ReliableOrdered, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random);
+            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new SRandSync(serverStartTime, (int)seed) }, _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
 
             // Disable skip flags for everyone.
             foreach (var key in _syncReady.Keys)
@@ -153,7 +157,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 return true;
             }
 
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, DeliveryMethod.ReliableUnordered, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random);
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, DeliveryMethod.ReliableUnordered, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
             if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);

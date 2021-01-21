@@ -27,12 +27,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         private Volatile<Timestamped<CharaSelectSync>> _sync = new Volatile<Timestamped<CharaSelectSync>>(new Timestamped<CharaSelectSync>());
         private Timestamped<CharaSelectLoop>[] _loops = new Timestamped<CharaSelectLoop>[Constants.MaxNumberOfPlayers];
         private ExitKind _exit = ExitKind.Null;
+        private readonly byte _sequencedChannel;
 
         public CharacterSelect(Socket socket, EventController @event)
         {
             Socket = socket;
             Event  = @event;
 
+            _sequencedChannel = (byte) Socket.ChannelAllocator.GetChannel(DeliveryMethod.ReliableSequenced);
             Event.OnCharacterSelect         += OnCharaSelect;
             Event.OnCheckIfExitCharaSelect  += MenuCheckIfExitCharaSelect;
             Event.OnExitCharaSelect         += MenuOnExitCharaSelect;
@@ -43,6 +45,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         /// <inheritdoc />
         public void Dispose()
         {
+            Socket.ChannelAllocator.ReleaseChannel(DeliveryMethod.ReliableSequenced, _sequencedChannel);
             Event.OnCharacterSelect         -= OnCharaSelect;
             Event.OnCheckIfExitCharaSelect  -= MenuCheckIfExitCharaSelect;
             Event.OnExitCharaSelect         -= MenuOnExitCharaSelect;
@@ -74,14 +77,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     {
                         var excludeIndex = state.ClientMap.GetPlayerData(peer).PlayerIndex;
                         var selectSync = new CharaSelectSync(sync.Where((loop, x) => x != excludeIndex).ToArray());
-                        Socket.Send(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced);
+                        Socket.Send(peer, new ReliablePacket(selectSync), DeliveryMethod.ReliableSequenced, _sequencedChannel);
                     }
                     
                     Socket.Update();
                     break;
 
                 case SocketType.Client:
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced);
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(CharaSelectLoop.FromGame(task)), DeliveryMethod.ReliableSequenced, _sequencedChannel);
                     break;
 
                 case SocketType.Spectator: break;

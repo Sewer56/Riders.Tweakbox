@@ -62,7 +62,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                                                .Where(x => State.IsHuman(x))
                                                .All(x => Players[x].LapCounter > CurrentRaceSettings->Laps);
 
-            // TODO: Multiplayer support.
+            // TODO: Local Multiplayer support.
             if (allPlayersFinished)
                 Event.InvokeSetGoalRaceFinishTask(Players.Pointer);
 
