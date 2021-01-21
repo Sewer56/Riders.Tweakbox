@@ -123,6 +123,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // Misc
             AddComponent(IoC.Get<Components.Misc.TimeSynchronization>());
             AddComponent(IoC.Get<Components.Misc.Random>());
+            AddComponent(IoC.Get<Components.Misc.LatencyUpdate>());
         }
 
         /// <summary>
@@ -136,6 +137,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             Controller.Socket = null;
             Manager.Stop(true);
+            Listener.Dispose();
         }
 
         /// <summary>
@@ -198,11 +200,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="peer">disconnected peer</param>
         /// <param name="disconnectInfo">additional info about reason, errorCode or data received with disconnect message</param>
         public abstract void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo);
-
-        /// <summary>Latency information updated</summary>
-        /// <param name="peer">Peer with updated latency</param>
-        /// <param name="latency">latency value in milliseconds</param>
-        public abstract void OnNetworkLatencyUpdate(NetPeer peer, int latency);
 
         /// <summary>On peer connection requested</summary>
         /// <param name="request">Request information (EndPoint, internal id, additional data)</param>

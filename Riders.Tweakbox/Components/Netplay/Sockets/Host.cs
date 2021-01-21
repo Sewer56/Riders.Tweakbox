@@ -75,14 +75,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             UpdatePlayerMap();
         }
 
-        public override void OnNetworkLatencyUpdate(NetPeer peer, int latency)
-        {
-            // Update latency.
-            var data = State.ClientMap.GetPlayerData(peer);
-            if (data != null)
-                data.Latency = latency;
-        }
-
         public override bool OnConnectionRequest(ConnectionRequest request)
         {
             bool Reject(string message)

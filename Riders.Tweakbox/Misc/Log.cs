@@ -17,7 +17,7 @@ namespace Riders.Tweakbox.Misc
         Random  = 1 << 4,
         Ntp     = 1 << 5,
         Socket  = 1 << 6,
-        RandomSeed = 1 << 7
+        RandomSeed = 1 << 7,
     }
 
     /// <summary>

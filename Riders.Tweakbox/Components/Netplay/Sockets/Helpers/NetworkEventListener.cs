@@ -4,7 +4,7 @@ using Riders.Netplay.Messages;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
-    public class NetworkEventListener : EventBasedNetListener
+    public class NetworkEventListener : EventBasedNetListener, IDisposable
     {
         public Socket Socket;
         public event HandlePacketFn<NetPeer>  OnQueuePacket;
@@ -15,9 +15,18 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             base.PeerConnectedEvent += PeerConnected;
             base.PeerDisconnectedEvent += PeerDisconnected;
             base.NetworkReceiveEvent += NetworkReceive;
-            base.NetworkLatencyUpdateEvent += NetworkLatencyUpdate;
             base.ConnectionRequestEvent += ConnectionRequest;
             OnQueuePacket += QueuePacket;
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            base.PeerConnectedEvent -= PeerConnected;
+            base.PeerDisconnectedEvent -= PeerDisconnected;
+            base.NetworkReceiveEvent -= NetworkReceive;
+            base.ConnectionRequestEvent -= ConnectionRequest;
+            OnQueuePacket -= QueuePacket;
         }
 
         public void QueuePacket(Packet<NetPeer> packet) => Socket.Queue.Enqueue(packet);
@@ -38,7 +47,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             }
         }
 
-        public void NetworkLatencyUpdate(NetPeer peer, int latency) => Socket.OnNetworkLatencyUpdate(peer, latency);
         public void ConnectionRequest(ConnectionRequest request) => Socket.OnConnectionRequest(request);
 
         #region Delegates

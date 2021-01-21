@@ -72,7 +72,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         #region Overrides
         public override void OnPeerConnected(NetPeer peer) => SendAndFlush(peer, new ReliablePacket(new ClientSetPlayerData(State.SelfInfo)), DeliveryMethod.ReliableUnordered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
         public override void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => Dispose();
-        public override void OnNetworkLatencyUpdate(NetPeer peer, int latency) => State.PlayerInfo[0].Latency = latency;
 
         // Ignored
         public override bool OnConnectionRequest(ConnectionRequest request) { return true; }

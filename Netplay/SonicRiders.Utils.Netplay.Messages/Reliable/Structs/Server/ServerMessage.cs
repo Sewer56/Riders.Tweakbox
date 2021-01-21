@@ -50,6 +50,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
                 case ServerMessageType.HasSetAntiCheatTypes:
                     message.Message = reader.Read<SetAntiCheat>();
                     break;
+                case ServerMessageType.HostUpdateClientPing:
+                    message.Message = HostUpdateLatency.FromBytes(reader);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
