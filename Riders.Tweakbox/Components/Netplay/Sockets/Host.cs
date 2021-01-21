@@ -88,7 +88,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             bool Reject(string message)
             {
                 Log.WriteLine(message, LogCategory.Socket);
-                request.Reject();
+                request.RejectForce();
                 return false;
             }
 
