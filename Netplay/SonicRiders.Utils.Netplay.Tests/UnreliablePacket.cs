@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System.Linq;
+using System.Numerics;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Unreliable;
 using Sewer56.SonicRiders.Structures.Enums;
 using Xunit;
@@ -30,7 +32,7 @@ namespace Riders.Netplay.Messages.Tests
         }
 
         [Fact]
-        public void SerializeUnreliablePacketMultiplePlayers()
+        public void SerializeUnreliablePacketTwoPlayers()
         {
             var random0 = UnreliablePacketPlayer.GetRandom(0);
             var random1 = UnreliablePacketPlayer.GetRandom(0);
@@ -82,6 +84,28 @@ namespace Riders.Netplay.Messages.Tests
 
                 Assert.Equal(unreliablePacket.Header, deserialized.Header);
                 Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
+            }
+        }
+
+        [Fact]
+        public void SerializeUnreliablePacketManyPlayers()
+        {
+            for (int x = 0; x < 60; x++)
+            {
+                for (int y = 1; y < Constants.MaxNumberOfPlayers; y++)
+                {
+                    var randomPlayers = Enumerable.Range(0, y).Select(x => UnreliablePacketPlayer.GetRandom(0)).ToArray();
+                    var unreliablePacket = new Messages.UnreliablePacket(randomPlayers);
+
+                    var bytes = unreliablePacket.Serialize();
+                    var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
+
+                    Assert.Equal(unreliablePacket.Header, deserialized.Header);
+                    for (int z = 0; z < y; z++)
+                    {
+                        Assert.Equal(unreliablePacket.Players[z], deserialized.Players[z]);
+                    }
+                }
             }
         }
 
