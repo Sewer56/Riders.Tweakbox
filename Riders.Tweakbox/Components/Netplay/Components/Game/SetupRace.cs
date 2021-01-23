@@ -1,7 +1,9 @@
-﻿using LiteNetLib;
+﻿using System;
+using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
@@ -13,22 +15,26 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
     public unsafe class SetupRace : INetplayComponent
     {
+        private static Patch _disableGrandPrixOverridePlayerCount = new Patch((IntPtr)0x0050BC34, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 });
+
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public EventController Event { get; set; }
-
+        
         public SetupRace(Socket socket, EventController @event)
         {
             Socket = socket;
             Event  = @event;
 
             Event.OnSetupRace += OnSetupRace;
+            _disableGrandPrixOverridePlayerCount.Enable();
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
             Event.OnSetupRace -= OnSetupRace;
+            _disableGrandPrixOverridePlayerCount.Disable();
         }
 
         private unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
