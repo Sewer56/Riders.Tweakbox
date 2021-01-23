@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using LiteNetLib;
+using Reloaded.Memory;
+using Reloaded.Memory.Sources;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
@@ -39,7 +41,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private DeliveryMethod _movementFlagsDeliveryMethod = DeliveryMethod.ReliableOrdered;
         private DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Sequenced;
         private readonly byte _raceChannel;
-
+        
         public Race(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -55,6 +57,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+
             Reset();
         }
 
@@ -172,7 +175,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var sync = _raceSync[x];
                     if (!sync.HasValue)
+                    {
+                        players[x] = UnreliablePacketPlayer.FromGame(x);
                         continue;
+                    }
 
                     var syncStamped = sync.GetNonvolatile();
                     if (!syncStamped.IsDiscard(State.MaxLatency))

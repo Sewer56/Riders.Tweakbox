@@ -280,10 +280,15 @@ namespace Riders.Netplay.Messages.Unreliable
 
             if (LapCounter.HasValue) player.LapCounter = (byte)LapCounter;
 
+            // TODO: Find real solutions for these hacks.
             // Hack for Misc Bugs
             // - Sometimes rotation value not updated after certain state transitions.
             // - Sometimes repeated attacks do not work.
             player.MaybeAttackLastState = PlayerState.None;
+
+            // Game removes floor flag 
+            if (player.PlayerState == PlayerState.Running || player.PlayerState == PlayerState.RunningAfterStart)
+                player.PlayerControlFlags |= PlayerControlFlags.IsFloored;
         }
 
         public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
