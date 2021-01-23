@@ -54,8 +54,12 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
             player.Character = (Characters)Character;
             player.ExtremeGear = (ExtremeGear)Board;
 
-            player.IsAiLogic = PlayerType.CPU;
-            player.IsAiVisual = PlayerType.CPU;
+            player.IsAiLogic  = PlayerType.CPU;
+            player.IsAiVisual = PlayerType.Human; // This is necessary for Super Sonic
+
+            // Replace character with SS if necessary.
+            if (player.ExtremeGear == ExtremeGear.ChaosEmerald)
+                player.Character = Characters.SuperSonic;
         }
 
         /// <summary>
