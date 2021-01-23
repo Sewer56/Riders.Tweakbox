@@ -28,7 +28,7 @@ namespace Riders.Netplay.Messages.Unreliable
         private const int AirBits   = 18;
         private const int AnimationBits = 7;
         private const int LapsBits = 7;
-        private const int ControlFlagsBits = 24;
+        private const int ControlFlagsBits = 21;
 
         /// <summary>
         /// Position of the player in X,Y,Z coordinates.
