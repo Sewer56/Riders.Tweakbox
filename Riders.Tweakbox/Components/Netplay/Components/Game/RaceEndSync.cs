@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
@@ -24,26 +25,25 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public Socket Socket            { get; set; }
         public EventController Event    { get; set; }
         public CommonState State        { get; set; }
-
+        
         public RaceEndSync(Socket socket, EventController @event)
         {
             Socket = socket;
             Event  = @event;
             State  = socket.State;
 
-            Event.UpdateLapCounter += OnUpdateLapCounter;
             Event.SetGoalRaceFinishTask += OnSetGoalRaceFinishTask;
+            Sewer56.SonicRiders.API.Event.AfterSleep += CheckIfAllFinishedRace;
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            Event.UpdateLapCounter -= OnUpdateLapCounter;
             Event.SetGoalRaceFinishTask -= OnSetGoalRaceFinishTask;
+            Sewer56.SonicRiders.API.Event.AfterSleep -= CheckIfAllFinishedRace;
         }
 
         /* Implementation */
-
         private unsafe int OnSetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player)
         {
             // Suppress task creation one player finished race.
@@ -53,10 +53,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             return hook.OriginalFunction(player);
         }
 
-        private unsafe int OnUpdateLapCounter(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2)
+        private void CheckIfAllFinishedRace()
         {
-            var result = hook.OriginalFunction(player, a2);
-
             // Set goal race finish task if all players finished racing.
             var allPlayersFinished = Enumerable.Range(0, Constants.MaxNumberOfPlayers)
                                                .Where(x => State.IsHuman(x))
@@ -65,8 +63,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             // TODO: Local Multiplayer support.
             if (allPlayersFinished)
                 Event.InvokeSetGoalRaceFinishTask(Players.Pointer);
-
-            return result;
         }
 
         /// <inheritdoc />
