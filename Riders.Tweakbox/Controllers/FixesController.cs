@@ -75,6 +75,7 @@ namespace Riders.Tweakbox.Controllers
                 if (defaultModels.Any(z => (int)z.Value == x))
                     State.UnlockedGearModels[x] = true;
 
+            *State.IsBabylonCupUnlocked = true;
             _bootToMenu.Disable();
         }
 
