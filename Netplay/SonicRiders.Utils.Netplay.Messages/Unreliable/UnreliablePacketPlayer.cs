@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using BitStreams;
+using EnumsNET;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Sewer56.NumberUtilities;
@@ -27,6 +28,7 @@ namespace Riders.Netplay.Messages.Unreliable
         private const int AirBits   = 18;
         private const int AnimationBits = 7;
         private const int LapsBits = 7;
+        private const int ControlFlagsBits = 24;
 
         /// <summary>
         /// Position of the player in X,Y,Z coordinates.
@@ -134,52 +136,37 @@ namespace Riders.Netplay.Messages.Unreliable
         }
 
         /// <summary>
-        /// Gets a random instance of a player.
-        /// </summary>
-        public static UnreliablePacketPlayer GetRandom(int framecounter)
-        {
-            var random = new Random();
-            var result = new UnreliablePacketPlayer();
-
-            if (ShouldISend(framecounter, HasData.HasPosition)) result.Position = new Vector3((float) random.NextDouble(), (float) random.NextDouble(), (float) random.NextDouble());
-            if (ShouldISend(framecounter, HasData.HasRotation)) result.RotationX = (float)random.NextDouble();
-            if (ShouldISend(framecounter, HasData.HasAir)) result.Air = (uint?) random.Next(0, 200000);
-            if (ShouldISend(framecounter, HasData.HasRings)) result.Rings = (byte?) random.Next(0, 99);
-            if (ShouldISend(framecounter, HasData.HasState)) result.LastState = (byte?) random.Next(0, 32);
-            if (ShouldISend(framecounter, HasData.HasState)) result.State = (byte?) random.Next(0, 32);
-            if (ShouldISend(framecounter, HasData.HasVelocity)) result.Velocity = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
-            if (ShouldISend(framecounter, HasData.HasTurnAndLean)) result.TurningAmount = (float?) random.NextDouble();
-            if (ShouldISend(framecounter, HasData.HasTurnAndLean)) result.LeanAmount = (float?) random.NextDouble();
-            if (ShouldISend(framecounter, HasData.HasControlFlags)) result.ControlFlags = (PlayerControlFlags?) random.Next();
-            if (ShouldISend(framecounter, HasData.HasAnimation)) result.Animation = (byte?)random.Next(0, 99);
-            if (ShouldISend(framecounter, HasData.HasAnimation)) result.LastAnimation = (byte?)random.Next(0, 99);
-            if (ShouldISend(framecounter, HasData.HasLapCounter)) result.LapCounter = (byte?)random.Next(0, 99);
-            return result;
-        }
-
-        /// <summary>
         /// Serializes the current packet.
         /// </summary>
-        public unsafe byte[] Serialize()
+        public unsafe byte[] Serialize(HasData data = HasData.All)
         {
             using var memStream = new MemoryStream(sizeof(UnreliablePacketPlayer));
             var bitStream       = new BitStream(memStream);
             bitStream.AutoIncreaseStream = true;
 
-            bitStream.WriteNullable(Position);
-            bitStream.WriteNullable(_rotationX);
-            bitStream.WriteNullable(Velocity);
-            bitStream.WriteNullable(_turnAmount);
-            bitStream.WriteNullable(_leanAmount);
-            bitStream.WriteNullable(ControlFlags);
+            if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteNullable(Position);
+            if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteNullable(_rotationX);
+            if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteNullable(Velocity);
+            if (data.HasAllFlags(HasData.HasTurnAndLean))
+            {
+                bitStream.WriteNullable(_turnAmount);
+                bitStream.WriteNullable(_leanAmount);
+            }
 
-            bitStream.WriteNullable((byte?) Rings, RingsBits);
-            bitStream.WriteNullable((byte?) State, StateBits);
-            bitStream.WriteNullable((byte?) LastState, StateBits);
-            bitStream.WriteNullable(Air, AirBits);
-            bitStream.WriteNullable(Animation, AnimationBits);
-            bitStream.WriteNullable(LastAnimation, AnimationBits);
-            bitStream.WriteNullable((byte?) LapCounter, LapsBits);
+            if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteNullable(ControlFlags, ControlFlagsBits);
+            if (data.HasAllFlags(HasData.HasRings)) bitStream.WriteNullable((byte?) Rings, RingsBits);
+            if (data.HasAllFlags(HasData.HasState))
+            {
+                bitStream.WriteNullable((byte?)State, StateBits);
+                bitStream.WriteNullable((byte?)LastState, StateBits);
+            }
+            if (data.HasAllFlags(HasData.HasAir)) bitStream.WriteNullable(Air, AirBits);
+            if (data.HasAllFlags(HasData.HasAnimation))
+            {
+                bitStream.WriteNullable(Animation, AnimationBits);
+                bitStream.WriteNullable(LastAnimation, AnimationBits);
+            }
+            if (data.HasAllFlags(HasData.HasLapCounter)) bitStream.WriteNullable((byte?)LapCounter, LapsBits);
 
             // Write final byte and copy back to original stream.
             memStream.Seek(0, SeekOrigin.Begin);
@@ -203,7 +190,7 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.ReadIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
             bitStream.ReadIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
             bitStream.ReadIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
-            bitStream.ReadIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags);
+            bitStream.ReadIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags, ControlFlagsBits);
 
             bitStream.ReadIfHasFlags(ref player.Rings, fields, HasData.HasRings, RingsBits);
             bitStream.ReadIfHasFlags(ref player.State, fields, HasData.HasState, StateBits);
@@ -229,34 +216,24 @@ namespace Riders.Netplay.Messages.Unreliable
         /// Gets a packet for an individual player given the index of the player.
         /// </summary>
         /// <param name="index">The current player index (0-7).</param>
-        /// <param name="framecounter">The current frame counter used to include/exclude values.</param>
-        public static UnreliablePacketPlayer FromGame(int index, int framecounter = 0)
+        public static UnreliablePacketPlayer FromGame(int index)
         {
             ref var player = ref Player.Players[index];
             var packet = new UnreliablePacketPlayer();
 
-            if (ShouldISend(framecounter, HasData.HasPosition)) packet.Position = player.Position;
-            if (ShouldISend(framecounter, HasData.HasRotation)) packet.RotationX = player.Rotation.Y;
-            if (ShouldISend(framecounter, HasData.HasVelocity)) packet.Velocity = new Vector2(player.Speed, player.VSpeed);
-            if (ShouldISend(framecounter, HasData.HasRings)) packet.Rings = (byte?)player.Rings;
-            if (ShouldISend(framecounter, HasData.HasState))
-            {
-                packet.State = (byte?) player.PlayerState;
-                packet.LastState = (byte?) player.LastPlayerState;
-            }
-            if (ShouldISend(framecounter, HasData.HasAir)) packet.Air = (uint?)player.Air;
-            if (ShouldISend(framecounter, HasData.HasTurnAndLean))
-            {
-                packet.TurningAmount = player.TurningAmount;
-                packet.LeanAmount = player.DriftAngle;
-            }
-            if (ShouldISend(framecounter, HasData.HasControlFlags)) packet.ControlFlags = player.PlayerControlFlags;
-            if (ShouldISend(framecounter, HasData.HasAnimation))
-            {
-                packet.Animation = (byte?) player.Animation;
-                packet.LastAnimation = (byte?) player.LastAnimation;
-            }
-            if (ShouldISend(framecounter, HasData.HasLapCounter)) packet.LapCounter = player.LapCounter;
+            packet.Position = player.Position;
+            packet.RotationX = player.Rotation.Y;
+            packet.Velocity = new Vector2(player.Speed, player.VSpeed);
+            packet.Rings = (byte?)player.Rings;
+            packet.State = (byte?) player.PlayerState;
+            packet.LastState = (byte?) player.LastPlayerState;
+            packet.Air = (uint?)player.Air;
+            packet.TurningAmount = player.TurningAmount;
+            packet.LeanAmount = player.DriftAngle;
+            packet.ControlFlags = player.PlayerControlFlags;
+            packet.Animation = (byte?) player.Animation;
+            packet.LastAnimation = (byte?) player.LastAnimation;
+            packet.LapCounter = player.LapCounter;
 
             return packet;
         }
@@ -309,39 +286,7 @@ namespace Riders.Netplay.Messages.Unreliable
             player.MaybeAttackLastState = PlayerState.None;
         }
 
-        /// <summary>
-        /// Determines if on a given frame, a piece of data should be sent.
-        /// </summary>
-        /// <param name="frameCounter">The current frame counter.</param>
-        /// <param name="type">The type of data.</param>
-        /// <returns>True if should be sent, else false.</returns>
-        public static bool ShouldISend(int frameCounter, HasData type)
-        {
-            // State is currently disabled, seems to be redundant since we synced animations.
-            if (type == HasData.HasState)
-                return false;
-
-            switch (type)
-            {
-                case HasData.HasLapCounter:
-                    return ShouldISendFrequency(frameCounter, 10);
-
-                case HasData.HasRings:
-                case HasData.HasAir:
-                    return ShouldISendFrequency(frameCounter, 30);
-            }
-
-            // Used to have settings here, removed for now.
-            // Will be implemented if we ever need to reduce bandwidth usage.
-            return true;
-        }
-
         public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
-
-        private static bool ShouldISendFrequency(int framecounter, int frequency) =>
-            framecounter % ((int) (60 / frequency)) == 0;
-
-
         public bool IsWhitelisted(PlayerState state)
         {
             switch (state)

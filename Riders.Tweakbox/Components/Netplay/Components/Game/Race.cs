@@ -163,7 +163,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             if (Socket.GetSocketType() == SocketType.Host)
             {
-                _raceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
+                _raceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0));
 
                 // Populate data for non-expired packets.
                 var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
@@ -174,11 +174,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     if (!sync.HasValue)
                         continue;
 
-                    var syncStamped = sync.Get();
+                    var syncStamped = sync.GetNonvolatile();
                     if (!syncStamped.IsDiscard(State.MaxLatency))
                         players[x] = syncStamped;
                     else
-                        players[x] = UnreliablePacketPlayer.FromGame(x, State.FrameCounter);
+                        players[x] = UnreliablePacketPlayer.FromGame(x);
                 }
 
                 // Broadcast data to all clients.
@@ -187,7 +187,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var peer = Socket.Manager.ConnectedPeerList[x];
                     var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
+                    var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray(), State.FrameCounter);
                     Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
                 }
 
@@ -195,7 +195,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
             else
             {
-                var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0, State.FrameCounter));
+                var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0));
                 Socket.SendAndFlush(Socket.Manager.FirstPeer, packet, _raceDeliveryMethod, _raceChannel);
             }
         }
@@ -245,7 +245,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (!sync.HasValue) 
                     continue;
 
-                var syncStamped = sync.Get();
+                var syncStamped = Socket.GetSocketType() == SocketType.Host ? sync.GetNonvolatile() : sync.Get();
                 if (syncStamped.IsDiscard(State.MaxLatency))
                     continue;
 

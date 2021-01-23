@@ -1,4 +1,5 @@
 ﻿using System;
+using EnumsNET;
 using Reloaded.Memory;
 using Reloaded.Memory.Streams;
 
@@ -37,49 +38,28 @@ namespace Riders.Netplay.Messages.Unreliable
             if (players.Length < 1 || players.Length > 8)
                 throw new Exception("Number of players must be in the range 1-8.");
 
-            NumberOfPlayers = (byte) players.Length;
-            Fields          = GetDataFlags(players[0]);
+            NumberOfPlayers = (byte)players.Length;
+            Fields = HasData.All;
         }
 
         /// <summary>
-        /// Retrieves the flags declaring what data is included from a player to be sent.
+        /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
-        /// <param name="player">The player to get flags from.</param>
-        public static HasData GetDataFlags(UnreliablePacketPlayer player)
+        /// <param name="players">List of players to include in the packet.</param>
+        /// <param name="data">The data to include in the packet.</param>
+        public UnreliablePacketHeader(UnreliablePacketPlayer[] players, HasData data = HasData.All) : this(players)
         {
-            var data = HasData.Null;
+            Fields = data;
+        }
 
-            if (player.Position.HasValue)
-                data |= HasData.HasPosition;
-
-            if (player.RotationX.HasValue)
-                data |= HasData.HasRotation;
-
-            if (player.Velocity.HasValue)
-                data |= HasData.HasVelocity;
-
-            if (player.Rings.HasValue)
-                data |= HasData.HasRings;
-
-            if (player.State.HasValue || player.LastState.HasValue)
-                data |= HasData.HasState;
-
-            if (player.Air.HasValue)
-                data |= HasData.HasAir;
-
-            if (player.TurningAmount.HasValue || player.LeanAmount.HasValue)
-                data |= HasData.HasTurnAndLean;
-
-            if (player.ControlFlags.HasValue)
-                data |= HasData.HasControlFlags;
-
-            if (player.Animation.HasValue || player.LastAnimation.HasValue)
-                data |= HasData.HasAnimation;
-
-            if (player.LapCounter.HasValue)
-                data |= HasData.HasLapCounter;
-
-            return data;
+        /// <summary>
+        /// Creates a packet header given a list of players to include in the packet.
+        /// </summary>
+        /// <param name="players">List of players to include in the packet.</param>
+        /// <param name="frameCounter">The current frame counter used to determine if data should be sent or not.</param>
+        public UnreliablePacketHeader(UnreliablePacketPlayer[] players, int frameCounter) : this(players)
+        {
+            Fields = GetData(frameCounter);
         }
 
         /// <summary>
@@ -89,10 +69,10 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             // f: Fields, n: Numbers
             // ffff ffff ffff fnnn
-            short fieldsPacked = (short)((short)Fields << 3);
+            ushort fieldsPacked = (ushort)((ushort)Fields << 3);
             byte numPlayersPacked = (byte)(NumberOfPlayers - 1);
 
-            short message = (short)((short)fieldsPacked | (short)numPlayersPacked);
+            ushort message = (ushort)((ushort)fieldsPacked | (ushort)numPlayersPacked);
             return Struct.GetBytes(message);
         }
 
@@ -103,7 +83,7 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             // f: Fields, n: Numbers
             // ffff ffff ffff fnnn
-            reader.Read(out short message);
+            reader.Read(out ushort message);
             byte numberOfPlayers = (byte)((byte)(message & NumPlayersMask) + 1);
             var fields = message >> 3;
 
@@ -115,12 +95,77 @@ namespace Riders.Netplay.Messages.Unreliable
         }
 
         /// <summary>
+        /// Determines if on a given frame, a piece of data should be sent.
+        /// </summary>
+        /// <param name="frameCounter">The current frame counter.</param>
+        /// <param name="type">The type of data.</param>
+        /// <returns>True if should be sent, else false.</returns>
+        private static bool ShouldISend(int frameCounter, HasData type)
+        {
+            // Send every freq frame.
+            bool ShouldISendFrequency(int frame, int freq) => frame % freq == 0;
+
+            // State is currently disabled, seems to be redundant since we synced animations.
+            if (type == HasData.HasState)
+                return false;
+
+            switch (type)
+            {
+                case HasData.HasLapCounter:
+                    return ShouldISendFrequency(frameCounter, 20);
+
+                case HasData.HasRings:
+                    return ShouldISendFrequency(frameCounter, 6);
+
+                case HasData.HasAir:
+                    return ShouldISendFrequency(frameCounter, 12);
+
+                case HasData.HasTurnAndLean:
+                    return ShouldISendFrequency(frameCounter, 3);
+
+                case HasData.HasControlFlags:
+                    return ShouldISendFrequency(frameCounter, 3);
+            }
+
+            // Used to have settings here, removed for now.
+            // Will be implemented if we ever need to reduce bandwidth usage.
+            return true;
+        }
+
+        /// <summary>
+        /// Determines the information to be sent.
+        /// Only use if available bandwidth is constrained.
+        /// </summary>
+        /// <param name="frameCounter">The current frame counter.</param>
+        public static HasData GetData(int frameCounter)
+        {
+            var hasData = HasData.Null;
+            if (ShouldISend(frameCounter, HasData.HasPosition)) hasData |= HasData.HasPosition;
+            if (ShouldISend(frameCounter, HasData.HasRotation)) hasData |= HasData.HasRotation;
+            if (ShouldISend(frameCounter, HasData.HasVelocity)) hasData |= HasData.HasVelocity;
+            if (ShouldISend(frameCounter, HasData.HasRings)) hasData |= HasData.HasRings;
+            if (ShouldISend(frameCounter, HasData.HasState)) hasData |= HasData.HasState;
+            if (ShouldISend(frameCounter, HasData.HasAir)) hasData |= HasData.HasAir;
+            if (ShouldISend(frameCounter, HasData.HasTurnAndLean)) hasData |= HasData.HasTurnAndLean;
+            if (ShouldISend(frameCounter, HasData.HasControlFlags)) hasData |= HasData.HasControlFlags;
+            if (ShouldISend(frameCounter, HasData.HasAnimation)) hasData |= HasData.HasAnimation;
+            if (ShouldISend(frameCounter, HasData.HasLapCounter)) hasData |= HasData.HasLapCounter;
+            if (ShouldISend(frameCounter, HasData.HasUnused6)) hasData |= HasData.HasUnused6;
+            if (ShouldISend(frameCounter, HasData.HasUnused7)) hasData |= HasData.HasUnused7;
+            if (ShouldISend(frameCounter, HasData.HasUnused8)) hasData |= HasData.HasUnused8;
+
+            return hasData;
+        }
+
+        /// <summary>
         /// Declares whether the packet has a particular component of data.
         /// </summary>
         [Flags]
         public enum HasData : ushort
         {
+            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasLapCounter | HasUnused6 | HasUnused7 | HasUnused8,
             Null               = 0,
+            
             HasPosition        = 1, 
             HasRotation        = 1 << 1, 
             HasVelocity        = 1 << 2, 

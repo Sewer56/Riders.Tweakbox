@@ -2,6 +2,7 @@
 using System.IO;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Unreliable;
+using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
 
 namespace Riders.Netplay.Messages
 {
@@ -37,9 +38,26 @@ namespace Riders.Netplay.Messages
         ///     The individual player data associated with this packet to be sent.
         ///     Should be of length 1 - 8.
         /// </param>
-        public UnreliablePacket(UnreliablePacketPlayer[] players)
+        /// <param name="data">The data to include in the player packets.</param>
+        public UnreliablePacket(UnreliablePacketPlayer[] players, HasData data = HasData.All)
         {
-            Header = new UnreliablePacketHeader(players);
+            Header = new UnreliablePacketHeader(players, data);
+            Players = players;
+        }
+
+        /// <summary>
+        /// Constructs a packet to be sent over the unreliable channel.
+        /// This overload uses a frame counter to determine what should be sent
+        /// and should be used when upload bandwidth is constrained (Bad Internet + 7/8 player game)
+        /// </summary>
+        /// <param name="players">
+        ///     The individual player data associated with this packet to be sent.
+        ///     Should be of length 1 - 8.
+        /// </param>
+        /// <param name="frameCounter">The current frame counter.</param>
+        public UnreliablePacket(UnreliablePacketPlayer[] players, int frameCounter)
+        {
+            Header = new UnreliablePacketHeader(players, frameCounter);
             Players = players;
         }
 
@@ -49,10 +67,11 @@ namespace Riders.Netplay.Messages
         /// <param name="player">
         ///     The individual player data associated with this packet to be sent.
         /// </param>
-        public UnreliablePacket(UnreliablePacketPlayer player)
+        /// <param name="data">The data to include in the player packets.</param>
+        public UnreliablePacket(UnreliablePacketPlayer player, HasData data = HasData.All)
         {
             Players = new[] {player};
-            Header = new UnreliablePacketHeader(Players);
+            Header = new UnreliablePacketHeader(Players, data);
         }
 
         /// <summary>
@@ -64,7 +83,7 @@ namespace Riders.Netplay.Messages
             writer.Write(Header.Serialize());
 
             foreach (var player in Players)
-                writer.Write(player.Serialize());
+                writer.Write(player.Serialize(Header.Fields));
 
             return writer.ToArray();
         }
