@@ -57,12 +57,14 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 sync.ToGame(task, index + 1);
             }
 
-            var statuses = task->TaskData->PlayerStatuses;
-            var fixedArrayPtr = new FixedArrayPtr<byte>((ulong)statuses, 4);
-            if (fixedArrayPtr.All(x => x > (int)PlayerStatus.SetReady || x == (int)PlayerStatus.Inactive) && task->TaskStatus != CharacterSelectTaskState.LoadingStage)
+            // Check player's own status & others' statuses.
+            var ownStatus = (PlayerStatus) task->TaskData->PlayerStatuses[0];
+            if (IsJoinedAndReady(ownStatus) && Sync.All(x => IsJoinedAndReady(x.Status) && task->TaskStatus != CharacterSelectTaskState.LoadingStage))
                 task->TaskData->AreYouReadyEnabled = true;
             else
                 task->TaskData->AreYouReadyEnabled = false;
+
+            bool IsJoinedAndReady(PlayerStatus status) => status > PlayerStatus.SetReady || status == PlayerStatus.Inactive;
         }
 
         /// <summary>
