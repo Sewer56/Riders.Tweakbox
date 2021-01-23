@@ -1,6 +1,7 @@
 ﻿using System;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
+using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.Shared;
@@ -98,6 +99,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 
                 if (data->MenuState != MenuState.Closed)
                     data->MenuState = MenuState.Exit;
+
+                // Save current settings.
+                Functions.RuleSettingsSaveCurrentSettings.GetWrapper()(task->TaskData);
             }
         }
 
