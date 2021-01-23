@@ -93,13 +93,13 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             if (Modes.HasAllFlags(MovementFlags.Up))
             {
                 player->NewMovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Up;
-                player->AnalogY = -100;
+                player->AnalogY = 100;
             }
 
             if (Modes.HasAllFlags(MovementFlags.Down))
             {
                 player->NewMovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Down;
-                player->AnalogY = 100;
+                player->AnalogY = -100;
             }
         }
 

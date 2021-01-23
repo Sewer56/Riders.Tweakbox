@@ -271,11 +271,15 @@ namespace Riders.Netplay.Messages.Unreliable
 
             if (Animation.HasValue)
             {
-                if (Animation.Value != 0)
-                    player.Animation = (CharacterAnimation) Animation.Value;
-                
-                if (LastAnimation.Value != 0)
-                    player.LastAnimation = (CharacterAnimation) LastAnimation.Value;
+                // Animation playback for running state is a bit weird; so we'll let the game handle it.
+                if (player.PlayerState != PlayerState.RunningAfterStart)
+                {
+                    if (Animation.Value != 0)
+                        player.Animation = (CharacterAnimation)Animation.Value;
+
+                    if (LastAnimation.Value != 0)
+                        player.LastAnimation = (CharacterAnimation)LastAnimation.Value;
+                }
             }
 
             if (LapCounter.HasValue) player.LapCounter = (byte)LapCounter;
