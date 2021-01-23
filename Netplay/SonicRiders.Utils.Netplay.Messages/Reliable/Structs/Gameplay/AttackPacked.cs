@@ -10,7 +10,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     {
         public const int  NumberOfEntries = Constants.MaxNumberOfPlayers;
         private const int SizeOfEntryBits = SetAttack.SizeOfEntryBits;
-        private const int SizeOfAllEntriesBytes = ((SizeOfEntryBits * NumberOfEntries) / 8);
+        private const int SizeOfAllEntriesBytes = (((SizeOfEntryBits * NumberOfEntries) + SizeOfAllEntriesMod) / 8);
+        private const int SizeOfAllEntriesMod = (SizeOfEntryBits * NumberOfEntries) % 8;
 
         private fixed byte _data[SizeOfAllEntriesBytes];
 
