@@ -113,7 +113,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     var packedFlags = packet.MovementFlags.Value.AsInterface();
                     for (int x = 0; x < MovementFlagsPacked.NumberOfEntries; x++)
                     {
-                        ReplaceOrSetCurrentFlags(packedFlags.GetData(x), x);
+                        // Fill in from player 2.
+                        ReplaceOrSetCurrentFlags(packedFlags.GetData(x), x + 1);
                     }
                 }
             }
@@ -281,8 +282,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (index == 0)
                     return player;
 
-                var hostIndex = State.GetHostPlayerIndex(index);
-                ref var flags = ref _movementFlags[hostIndex];
+                ref var flags = ref _movementFlags[index];
                 if (flags.IsDiscard(State.MaxLatency))
                     return player;
 
