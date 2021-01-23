@@ -70,14 +70,12 @@ namespace Riders.Tweakbox.Components.Tweaks
         public void RemoveBorder(ref WindowStyles flags)
         {
             flags &= ~WindowStyles.WS_CAPTION;
-            flags &= ~WindowStyles.WS_MAXIMIZEBOX;
             flags &= ~WindowStyles.WS_MINIMIZEBOX;
         }
 
         public void AddBorder(ref WindowStyles flags)
         {
             flags |= WindowStyles.WS_CAPTION;
-            flags |= WindowStyles.WS_MAXIMIZEBOX;
             flags |= WindowStyles.WS_MINIMIZEBOX;
         }
 
