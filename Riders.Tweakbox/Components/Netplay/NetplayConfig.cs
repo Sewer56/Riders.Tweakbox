@@ -78,6 +78,9 @@ namespace Riders.Tweakbox.Components.Netplay
             [Key(6)]
             public SimulateBadInternet BadInternet;
 
+            [Key(7)]
+            public bool ReducedTickRate;
+
             public static Internal Create()
             {
                 return new Internal
@@ -89,6 +92,7 @@ namespace Riders.Tweakbox.Components.Netplay
                     ClientPort = 42069,
                     ShowPlayers = false,
                     BadInternet = new SimulateBadInternet() { IsEnabled = false },
+                    ReducedTickRate = false
                 };
             }
 

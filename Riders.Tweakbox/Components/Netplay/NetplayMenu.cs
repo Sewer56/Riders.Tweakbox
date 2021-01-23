@@ -90,6 +90,10 @@ namespace Riders.Tweakbox.Components.Netplay
                 data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
                 Reflection.MakeControl(ref data.HostPort, "Port");
 
+                ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref data.ReducedTickRate);
+                Tooltip.TextOnHover("Reduces the send-rate of non-essential elements such as players' amount of air, rings, flags and other misc. stuff.\n" +
+                                    "Saves around 200Kbit/s upload. Use only if hosting 8 player lobby and your upload speed is below 1 Mbit/s.");
+
                 if (ImGui.Button("Host", Constants.DefaultVector2))
                     HostServer();
 

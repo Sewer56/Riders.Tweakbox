@@ -194,7 +194,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     var peer = Socket.Manager.ConnectedPeerList[x];
                     var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var packet = new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray(), State.FrameCounter);
+                    var packet = Socket.Config.Data.ReducedTickRate 
+                        ? new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray(), State.FrameCounter) 
+                        : new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
+
                     Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
                 }
 

@@ -62,6 +62,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public LnlChannelAllocator ChannelAllocator;
 
+        /// <summary>
+        /// The netplay configuration with which this socket was created with.
+        /// </summary>
+        public NetplayConfig Config { get; set; }
+
         private Stopwatch _stopWatch = new Stopwatch();
         private bool _isDisposed = false;
 
@@ -77,8 +82,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Controller = controller;
             Manager.EnableStatistics = true;
             Bandwidth = new BandwidthTracker(Manager);
-            
-            #if DEBUG
+            Config = config;
+
+#if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
 
             var badInternet = config.Data.BadInternet;
@@ -101,7 +107,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                     Log.WriteLine($"Simulating Latency (bool/Min/Max): {Manager.SimulateLatency}, {Manager.SimulationMinLatency}, {Manager.SimulationMaxLatency}", LogCategory.Socket);
                 }
             }
-            #endif
+#endif
         }
 
         protected void Initialize()
