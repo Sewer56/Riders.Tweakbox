@@ -30,7 +30,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Timeout for various handshakes such as initial exchange of game/gear data or start line synchronization.
         /// </summary>
-        public int HandshakeTimeout = 5000;
+        public int HandshakeTimeout = 8000;
 
         /// <summary>
         /// The currently enabled anti-cheat settings.
