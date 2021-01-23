@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Unreliable;
 using Xunit;
 using Xunit.Abstractions;
@@ -13,6 +14,29 @@ namespace Riders.Netplay.Messages.Tests
     {
         private readonly ITestOutputHelper _testOutputHelper;
         public PacketSizeTest(ITestOutputHelper testOutputHelper) => _testOutputHelper = testOutputHelper;
+
+        [Fact]
+        public unsafe void MovementFlagsPacket()
+        {
+            // 28 = IP + UDP
+            // 4  = LiteNetLib
+            var headerSize = 28 + 4 + sizeof(ReliablePacket.HasData);
+            var flagsPackedSize = new MovementFlagsPacked().GetBufferSize();
+
+            _testOutputHelper.WriteLine($"Message Sizes:");
+            _testOutputHelper.WriteLine($"Packet Overhead: {headerSize} bytes");
+            _testOutputHelper.WriteLine($"Transmission Upload Costs:");
+
+            // Players
+            for (int x = 2; x <= 8; x++)
+            {
+                var numPeers = x - 1;
+                _testOutputHelper.WriteLine("----------");
+                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Min): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
+                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Avg): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
+                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Max): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
+            }
+        }
 
         [Fact]
         public unsafe void PlayerPacket()

@@ -183,7 +183,7 @@ namespace Riders.Netplay.Messages
             HasSetMovementFlags    = 1 << 7,  // Client -> Host: Inform host of boost, tornado.
             HasMovementFlags       = 1 << 8,  // Host -> Client: Triggers boost, tornado for clients.
             HasSetAttack           = 1 << 9,  // Client -> Host: Inform host to attack a player.
-            HasAttack                = 1 << 10, // Host -> Client: Inform client of an impending attack.
+            HasAttack              = 1 << 10, // Host -> Client: Inform client of an impending attack.
 
             // Anti-Cheat
             HasAntiCheatTriggered   = 1 << 11, // Host -> Client: Anti-cheat has been triggered, let all clients know.

@@ -1,4 +1,4 @@
-using Riders.Netplay.Messages.Misc;
+﻿using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Misc.Interfaces;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
@@ -8,7 +8,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     /// </summary>
     public unsafe struct MovementFlagsPacked : IBitPackedArray<MovementFlagsMsg, MovementFlagsPacked>
     {
-        public const int NumberOfEntries        = Constants.MaxNumberOfPlayers;
+        public const int NumberOfEntries        = Constants.MaxNumberOfPeers;
         private const int SizeOfEntryBits       = MovementFlagsMsg.SizeOfEntry;
         private const int SizeOfAllEntriesBytes = (((SizeOfEntryBits * NumberOfEntries) + SizeOfAllEntriesMod) / 8);
         private const int SizeOfAllEntriesMod   = (SizeOfEntryBits * NumberOfEntries) % 8;
