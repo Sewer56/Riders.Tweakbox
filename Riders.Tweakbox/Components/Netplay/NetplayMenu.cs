@@ -59,13 +59,13 @@ namespace Riders.Tweakbox.Components.Netplay
         private void RenderBandwidthUsage(Socket socket)
         {
             ImGui.Text($"Including UDP + IP Overhead");
-            ImGui.Text($"Upload: {socket.Bandwidth.KBytesSentWithOverhead:####0.0}kbps");
-            ImGui.Text($"Download: {socket.Bandwidth.KBytesReceivedWithOverhead:####0.0}kbps");
+            ImGui.Text($"Upload: {socket.Bandwidth.KBytesSentWithOverhead * 8:####0.0}kbps");
+            ImGui.Text($"Download: {socket.Bandwidth.KBytesReceivedWithOverhead * 8:####0.0}kbps");
             ImGui.Separator();
 
             ImGui.Text($"IP + UDP Overhead");
-            ImGui.Text($"Upload: {socket.Bandwidth.KBytesPacketOverheadSent:####0.0}kbps");
-            ImGui.Text($"Download: {socket.Bandwidth.KBytesPacketOverheadReceived:####0.0}kbps");
+            ImGui.Text($"Upload: {socket.Bandwidth.KBytesPacketOverheadSent * 8:####0.0}kbps");
+            ImGui.Text($"Download: {socket.Bandwidth.KBytesPacketOverheadReceived * 8:####0.0}kbps");
 
         }
 
