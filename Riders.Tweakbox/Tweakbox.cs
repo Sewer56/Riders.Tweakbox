@@ -80,6 +80,7 @@ namespace Riders.Tweakbox
                         IoC.GetConstant<LogWindow>(),
                         IoC.GetConstant<RaceSettingsWindow>(),
                         IoC.GetConstant<DolphinDumperWindow>(),
+                        IoC.GetConstant<LapCounterWindow>(),
                     })
                 },
                 Text = new List<string>()

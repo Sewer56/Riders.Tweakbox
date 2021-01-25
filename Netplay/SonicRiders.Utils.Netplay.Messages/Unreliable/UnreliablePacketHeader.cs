@@ -111,9 +111,6 @@ namespace Riders.Netplay.Messages.Unreliable
 
             switch (type)
             {
-                case HasData.HasLapCounter:
-                    return ShouldISendFrequency(frameCounter, 20);
-
                 case HasData.HasRings:
                     return ShouldISendFrequency(frameCounter, 6);
 
@@ -149,7 +146,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (ShouldISend(frameCounter, HasData.HasTurnAndLean)) hasData |= HasData.HasTurnAndLean;
             if (ShouldISend(frameCounter, HasData.HasControlFlags)) hasData |= HasData.HasControlFlags;
             if (ShouldISend(frameCounter, HasData.HasAnimation)) hasData |= HasData.HasAnimation;
-            if (ShouldISend(frameCounter, HasData.HasLapCounter)) hasData |= HasData.HasLapCounter;
+            if (ShouldISend(frameCounter, HasData.HasUnused5)) hasData |= HasData.HasUnused5;
             if (ShouldISend(frameCounter, HasData.HasUnused6)) hasData |= HasData.HasUnused6;
             if (ShouldISend(frameCounter, HasData.HasUnused7)) hasData |= HasData.HasUnused7;
             if (ShouldISend(frameCounter, HasData.HasUnused8)) hasData |= HasData.HasUnused8;
@@ -163,7 +160,7 @@ namespace Riders.Netplay.Messages.Unreliable
         [Flags]
         public enum HasData : ushort
         {
-            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasLapCounter | HasUnused6 | HasUnused7 | HasUnused8,
+            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasUnused5 | HasUnused6 | HasUnused7 | HasUnused8,
             Null               = 0,
             
             HasPosition        = 1, 
@@ -175,7 +172,7 @@ namespace Riders.Netplay.Messages.Unreliable
             HasTurnAndLean     = 1 << 6, 
             HasControlFlags    = 1 << 7, 
             HasAnimation       = 1 << 8, 
-            HasLapCounter      = 1 << 9, 
+            HasUnused5      = 1 << 9, 
             HasUnused6         = 1 << 10, 
             HasUnused7         = 1 << 11,
             HasUnused8         = 1 << 12,

@@ -36,7 +36,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <summary>
         /// Contains movement flags for each client.
         /// </summary>
-        private Timestamped<Used<MovementFlagsMsg>>[] _movementFlags = new Timestamped<Used<MovementFlagsMsg>>[Constants.MaxNumberOfPlayers];
+        private Timestamped<Used<MovementFlagsMsg>>[] _movementFlags = new Timestamped<Used<MovementFlagsMsg>>[Constants.MaxNumberOfPlayers + 1];
 
         private DeliveryMethod _movementFlagsDeliveryMethod = DeliveryMethod.ReliableOrdered;
         private DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Sequenced;

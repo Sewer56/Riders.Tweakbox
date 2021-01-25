@@ -18,6 +18,7 @@ namespace Riders.Tweakbox.Misc
         Ntp     = 1 << 5,
         Socket  = 1 << 6,
         RandomSeed = 1 << 7,
+        LapSync = 1 << 8
     }
 
     /// <summary>

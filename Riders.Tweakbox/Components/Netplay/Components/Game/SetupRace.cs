@@ -50,6 +50,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             if (Socket.TryGetComponent(out Race race))
                 race.Reset();
+
+            if (Socket.TryGetComponent(out RaceLapSync lap))
+                lap.Reset();
         }
 
         /// <inheritdoc />

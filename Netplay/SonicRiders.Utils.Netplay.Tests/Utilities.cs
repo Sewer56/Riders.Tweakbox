@@ -29,7 +29,6 @@ namespace Riders.Netplay.Messages.Tests
             result.ControlFlags = (PlayerControlFlags?)random.Next(0, 0xFFFFFF);
             result.Animation = (byte?)random.Next(0, 99);
             result.LastAnimation = (byte?)random.Next(0, 99);
-            result.LapCounter = (byte?)random.Next(0, 99);
 
             return result;
         }

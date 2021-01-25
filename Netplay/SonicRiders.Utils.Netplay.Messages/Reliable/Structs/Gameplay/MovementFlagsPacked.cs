@@ -8,7 +8,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     /// </summary>
     public unsafe struct MovementFlagsPacked : IBitPackedArray<MovementFlagsMsg, MovementFlagsPacked>
     {
-        public const int NumberOfEntries        = Constants.MaxNumberOfPeers;
+        public const int NumberOfEntries        = Constants.MaxNumberOfPlayers; // Note: Spectators will need host information too, hence max players not max peers.
         private const int SizeOfEntryBits       = MovementFlagsMsg.SizeOfEntry;
         private const int SizeOfAllEntriesBytes = (((SizeOfEntryBits * NumberOfEntries) + SizeOfAllEntriesMod) / 8);
         private const int SizeOfAllEntriesMod   = (SizeOfEntryBits * NumberOfEntries) % 8;
