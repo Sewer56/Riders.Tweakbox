@@ -1,0 +1,14 @@
+﻿GetWindowRect
+GetClientRect
+SetWindowLong
+GetWindowLong
+MoveWindow
+
+GetMonitorInfo
+MonitorFromWindow
+
+LoadLibraryW
+GetProcAddress
+ShowCursor
+
+MONITORINFO

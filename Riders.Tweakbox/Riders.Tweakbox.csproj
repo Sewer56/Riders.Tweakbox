@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
+	<IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>WinExe</OutputType>
@@ -31,15 +32,17 @@
   <ItemGroup>
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.2" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
-    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.2-beta" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.6" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.1.319-beta">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.5" />
     <PackageReference Include="Reloaded.Memory" Version="3.1.1" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.8.0" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.5.2" />
     <PackageReference Include="Reloaded.WPF.Animations" Version="1.2.2" />
-    <PackageReference Include="Vanara.PInvoke.Shared" Version="3.3.0" />
-    <PackageReference Include="Vanara.PInvoke.User32.Gdi" Version="2.3.10" />
   </ItemGroup>
 
   <ItemGroup>

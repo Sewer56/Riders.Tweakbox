@@ -5,8 +5,8 @@ using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Vanara.PInvoke;
-using static Vanara.PInvoke.User32_Gdi;
+using Microsoft.Windows.Sdk;
+using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;
 
 namespace Riders.Tweakbox.Components.Tweaks
@@ -51,9 +51,10 @@ namespace Riders.Tweakbox.Components.Tweaks
             var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
             if (handle != IntPtr.Zero)
             {
-                var style = GetWindowLongAuto(handle, WindowLongFlags.GWL_STYLE);
+                const int GWL_STYLE = -16;
+                var style = PInvoke.GetWindowLong(new HWND(handle), GWL_STYLE);
 
-                if (style == IntPtr.Zero) 
+                if (style == 0) 
                     return;
 
                 var flags = (WindowStyles) style;
@@ -61,8 +62,8 @@ namespace Riders.Tweakbox.Components.Tweaks
                     RemoveBorder(ref flags);
                 else
                     AddBorder(ref flags);
-
-                SetWindowLong(handle, WindowLongFlags.GWL_STYLE, (int) flags);
+                
+                PInvoke.SetWindowLong(new HWND(handle), GWL_STYLE, (int) flags);
                 Task.Delay(100).ContinueWith((x) => ResizeWindow(Data.ResolutionX, Data.ResolutionY, handle));
             }
         }
@@ -101,9 +102,8 @@ namespace Riders.Tweakbox.Components.Tweaks
         private void GetWindowSizeWithBorder(IntPtr handle, int x, int y, out int newX, out int newY)
         {
             // get size of window and the client area
-            RECT clientRect = new RECT();
-            GetWindowRect(handle, out var windowRect);
-            GetClientRect(handle, ref clientRect);
+            PInvoke.GetWindowRect(new HWND(handle), out var windowRect);
+            PInvoke.GetClientRect(new HWND(handle), out var clientRect);
 
             // calculate size of non-client area
             int extraX = windowRect.right - windowRect.left - clientRect.right;
@@ -121,17 +121,17 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             if (centered)
             {
-                var monitor = MonitorFromWindow(handle, MonitorFlags.MONITOR_DEFAULTTONEAREST);
+                var monitor = PInvoke.MonitorFromWindow(new HWND(handle), MONITOR_DEFAULTTONEAREST);
                 var info = new MONITORINFO { cbSize = (uint)Struct.GetSize<MONITORINFO>() };
 
-                if (GetMonitorInfo(monitor, ref info))
+                if (PInvoke.GetMonitorInfo(monitor, ref info))
                 {
-                    left += (info.rcMonitor.Width - newX) / 2;
-                    top += (info.rcMonitor.Height - newY) / 2;
+                    left += (info.rcMonitor.right - newX) / 2;
+                    top += (info.rcMonitor.bottom - newY) / 2;
                 }
             }
             
-            MoveWindow(handle, left, top, newX, newY, true);
+            PInvoke.MoveWindow(new HWND(handle), left, top, newX, newY, true);
         }
 
         public IConfiguration GetCurrent() => this;

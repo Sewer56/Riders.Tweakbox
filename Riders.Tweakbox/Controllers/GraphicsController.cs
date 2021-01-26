@@ -19,7 +19,8 @@ using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX.Direct3D9;
 using static Sewer56.SonicRiders.API.Misc;
-using static Vanara.PInvoke.User32_Gdi;
+using Microsoft.Windows.Sdk;
+using static Riders.Tweakbox.Misc.Native;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -119,7 +120,7 @@ namespace Riders.Tweakbox.Controllers
             }
 
             if (!presentParameters.Windowed)
-                Native.ShowCursor(true);
+                PInvoke.ShowCursor(true);
 
             // Disable VSync
             if (_config.Data.DisableVSync)

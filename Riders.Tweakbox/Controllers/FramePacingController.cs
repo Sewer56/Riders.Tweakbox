@@ -12,6 +12,7 @@ using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using SharpDX.Direct3D9;
+using Microsoft.Windows.Sdk;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -52,7 +53,7 @@ namespace Riders.Tweakbox.Controllers
         public FramePacingController()
         {
             // Hook and disable frequency adjusting functions.
-            var winmm             = Native.LoadLibraryW("winmm.dll");
+            var winmm             = PInvoke.LoadLibrary("winmm.dll");
             var timeBeginPeriod   = SDK.ReloadedHooks.CreateFunction<TimeBeginPeriod>((long)Native.GetProcAddress(winmm, "timeBeginPeriod"));
             var timeEndPeriod     = SDK.ReloadedHooks.CreateFunction<TimeEndPeriod>((long)Native.GetProcAddress(winmm, "timeEndPeriod"));
             var beginEndPeriodPtr = (delegate* unmanaged[Stdcall]<int, int>)&TimeBeginEndPeriodImpl;
