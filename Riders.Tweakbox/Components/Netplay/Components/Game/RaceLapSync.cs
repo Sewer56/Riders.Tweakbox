@@ -14,6 +14,8 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.Hooks.Utilities;
+using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -50,6 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         public const int StopwatchLapDiscardPeriod = 100;
         private static Patch _disableRacePositionOverwrite = new Patch((IntPtr) 0x4B40E6, new byte[] { 0xEB, 0x44 });
+        private static IAsmHook _injectRunTimerPostRace;
 
         /// <inheritdoc />
         public Socket Socket            { get; set; }
@@ -66,7 +69,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private bool  _isTaskEnabled;
         private Stopwatch _applyTimeWatch;
 
-
         public RaceLapSync(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -82,6 +84,24 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.RemoveAllTasks += RemoveAllTasks;
             _applyTimeWatch = Stopwatch.StartNew();
             _disableRacePositionOverwrite.Enable();
+
+            if (_injectRunTimerPostRace == null)
+            {
+                var utilities = SDK.ReloadedHooks.Utilities;
+                var runTimerPostRace = new string[]
+                {
+                    "use32",
+                    "lea eax, dword [ebp+8]",
+                    "push 0x00692AE0",
+                    "push eax",
+                    $"{utilities.GetAbsoluteCallMnemonics((IntPtr) 0x00414F00, false)}",
+                    "add esp, 8"
+                };
+
+                _injectRunTimerPostRace = SDK.ReloadedHooks.CreateAsmHook(runTimerPostRace, 0x004166EB).Activate();
+            }
+
+            _injectRunTimerPostRace.Enable();
         }
 
         /// <inheritdoc />
@@ -95,6 +115,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterRace -= CheckIfAllFinishedRace;
             Event.RemoveAllTasks -= RemoveAllTasks;
             _disableRacePositionOverwrite.Disable();
+            _injectRunTimerPostRace.Disable();
         }
 
         public void Reset()
