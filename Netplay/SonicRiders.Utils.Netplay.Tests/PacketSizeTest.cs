@@ -67,13 +67,17 @@ namespace Riders.Netplay.Messages.Tests
             _testOutputHelper.WriteLine($"Avg Size of Player: {avgPlayer} bytes");
             _testOutputHelper.WriteLine($"Max Size of Player: {maxPlayer} bytes");
             
-            _testOutputHelper.WriteLine($"Size of all Players (Min): {minPlayer} bytes");
-            _testOutputHelper.WriteLine($"Size of all Players (Avg): {avgPlayer} bytes");
-            _testOutputHelper.WriteLine($"Size of all Players (Max): {maxPlayer} bytes");
+            _testOutputHelper.WriteLine($"Size of 8 Players (Min): {minPlayer * 8} bytes");
+            _testOutputHelper.WriteLine($"Size of 8 Players (Avg): {avgPlayer * 8} bytes");
+            _testOutputHelper.WriteLine($"Size of 8 Players (Max): {maxPlayer * 8} bytes");
+
+            _testOutputHelper.WriteLine($"Size of 32 Players (Min): {minPlayer * 32} bytes");
+            _testOutputHelper.WriteLine($"Size of 32 Players (Avg): {avgPlayer * 32} bytes");
+            _testOutputHelper.WriteLine($"Size of 32 Players (Max): {maxPlayer * 32} bytes");
 
             _testOutputHelper.WriteLine($"Transmission Upload Costs:");
             
-            for (int x = 2; x <= 8; x++)
+            for (int x = 2; x <= 32; x++)
             {
                 var numPeers = x - 1;
                 _testOutputHelper.WriteLine("----------");
