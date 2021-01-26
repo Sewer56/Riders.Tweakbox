@@ -11,12 +11,14 @@ namespace Riders.Netplay.Messages.Unreliable
     [Equals(DoNotAddEqualityOperators = true)]
     public struct UnreliablePacketHeader
     {
-        private const short NumPlayersMask = 0x0007;
-
+        public const int    MaxNumPlayers = 32;
+        private const short NumPlayersMask = 0x001F;
+        private const int   NumPlayersBits = 5;
+        
         /*
            // Header (2 bytes)
-           Data Bitfields    = 13 bits
-           Number of Players = 3 bits 
+           Data Bitfields    = 11 bits
+           Number of Players = 5 bits 
         */
 
         /// <summary>
@@ -35,8 +37,8 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <param name="players">List of players to include in the packet.</param>
         public UnreliablePacketHeader(UnreliablePacketPlayer[] players)
         {
-            if (players.Length < 1 || players.Length > 8)
-                throw new Exception("Number of players must be in the range 1-8.");
+            if (players.Length < 1 || players.Length > MaxNumPlayers)
+                throw new Exception($"Number of players must be in the range 1-{MaxNumPlayers}.");
 
             NumberOfPlayers = (byte)players.Length;
             Fields = HasData.All;
@@ -69,7 +71,7 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             // f: Fields, n: Numbers
             // ffff ffff ffff fnnn
-            ushort fieldsPacked = (ushort)((ushort)Fields << 3);
+            ushort fieldsPacked = (ushort)((ushort)Fields << NumPlayersBits);
             byte numPlayersPacked = (byte)(NumberOfPlayers - 1);
 
             ushort message = (ushort)((ushort)fieldsPacked | (ushort)numPlayersPacked);
@@ -85,7 +87,7 @@ namespace Riders.Netplay.Messages.Unreliable
             // ffff ffff ffff fnnn
             reader.Read(out ushort message);
             byte numberOfPlayers = (byte)((byte)(message & NumPlayersMask) + 1);
-            var fields = message >> 3;
+            var fields = message >> NumPlayersBits;
 
             return new UnreliablePacketHeader
             {
@@ -148,8 +150,6 @@ namespace Riders.Netplay.Messages.Unreliable
             if (ShouldISend(frameCounter, HasData.HasAnimation)) hasData |= HasData.HasAnimation;
             if (ShouldISend(frameCounter, HasData.HasUnused5)) hasData |= HasData.HasUnused5;
             if (ShouldISend(frameCounter, HasData.HasUnused6)) hasData |= HasData.HasUnused6;
-            if (ShouldISend(frameCounter, HasData.HasUnused7)) hasData |= HasData.HasUnused7;
-            if (ShouldISend(frameCounter, HasData.HasUnused8)) hasData |= HasData.HasUnused8;
 
             return hasData;
         }
@@ -160,10 +160,10 @@ namespace Riders.Netplay.Messages.Unreliable
         [Flags]
         public enum HasData : ushort
         {
-            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasUnused5 | HasUnused6 | HasUnused7 | HasUnused8,
+            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasUnused5 | HasUnused6,
             Null               = 0,
             
-            HasPosition        = 1, 
+            HasPosition        = 1 << 0, 
             HasRotation        = 1 << 1, 
             HasVelocity        = 1 << 2, 
             HasRings           = 1 << 3, 
@@ -172,11 +172,9 @@ namespace Riders.Netplay.Messages.Unreliable
             HasTurnAndLean     = 1 << 6, 
             HasControlFlags    = 1 << 7, 
             HasAnimation       = 1 << 8, 
-            HasUnused5      = 1 << 9, 
+            HasUnused5         = 1 << 9, 
             HasUnused6         = 1 << 10, 
-            HasUnused7         = 1 << 11,
-            HasUnused8         = 1 << 12,
-            // Last 3 bytes occupied by player count.
+            // Last 5 bytes occupied by player count.
         }
     }
 }

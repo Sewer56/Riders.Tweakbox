@@ -12,10 +12,7 @@ namespace Riders.Netplay.Messages
 
         /*
             // Packet Format (Some Features Currently Unimplemented)
-            // 30Hz indicates, send every 2nd frame. 
-            // 10Hz indicates, send every 6th frame. etc.
-            // See structs inside this struct for definitions.
-
+        
             // Data:
             // -> Header       (2 bytes)
             // -> Player Data  (All Optional)
@@ -36,7 +33,6 @@ namespace Riders.Netplay.Messages
         /// </summary>
         /// <param name="players">
         ///     The individual player data associated with this packet to be sent.
-        ///     Should be of length 1 - 8.
         /// </param>
         /// <param name="data">The data to include in the player packets.</param>
         public UnreliablePacket(UnreliablePacketPlayer[] players, HasData data = HasData.All)
@@ -52,7 +48,6 @@ namespace Riders.Netplay.Messages
         /// </summary>
         /// <param name="players">
         ///     The individual player data associated with this packet to be sent.
-        ///     Should be of length 1 - 8.
         /// </param>
         /// <param name="frameCounter">The current frame counter.</param>
         public UnreliablePacket(UnreliablePacketPlayer[] players, int frameCounter)
@@ -79,7 +74,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public byte[] Serialize()
         {
-            using var writer = new ExtendedMemoryStream(1024);
+            using var writer = new ExtendedMemoryStream(1280);
             writer.Write(Header.Serialize());
 
             foreach (var player in Players)
@@ -96,7 +91,7 @@ namespace Riders.Netplay.Messages
             fixed (byte* dataPtr = data)
             {
                 using var unmanagedMemoryStream = new UnmanagedMemoryStream(dataPtr, data.Length);
-                using var bufferedStreamReader  = new BufferedStreamReader(unmanagedMemoryStream, 512);
+                using var bufferedStreamReader  = new BufferedStreamReader(unmanagedMemoryStream, 1280);
 
                 var header  = UnreliablePacketHeader.Deserialize(bufferedStreamReader);
                 var players = new UnreliablePacketPlayer[header.NumberOfPlayers];
