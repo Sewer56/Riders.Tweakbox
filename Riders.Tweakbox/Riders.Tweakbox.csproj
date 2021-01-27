@@ -7,14 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>WinExe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>C:\Users\Sewer56\Desktop\Reloaded II\Mods\riders.utils.tweakbox\</OutputPath>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>C:\Users\Sewer56\Desktop\Reloaded II\Mods\riders.utils.tweakbox\</OutputPath>
+	<OutputPath>$(TWEAKBOX_DIR)</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
