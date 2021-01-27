@@ -4,6 +4,7 @@ using LiteNetLib;
 using Reloaded.Memory;
 using Reloaded.Memory.Sources;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;

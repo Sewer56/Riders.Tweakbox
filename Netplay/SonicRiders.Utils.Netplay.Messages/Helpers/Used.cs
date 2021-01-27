@@ -1,4 +1,4 @@
-﻿namespace Riders.Netplay.Messages.Queue
+﻿namespace Riders.Netplay.Messages.Helpers
 {
     /// <summary>
     /// A structure type which determines if an action has been performed on the underlying value.

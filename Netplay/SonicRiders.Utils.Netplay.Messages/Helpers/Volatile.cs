@@ -1,4 +1,4 @@
-﻿namespace Riders.Netplay.Messages.Misc
+﻿namespace Riders.Netplay.Messages.Helpers
 {
     /// <summary>
     /// Represents a singular volatile value.

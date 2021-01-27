@@ -6,6 +6,7 @@ using System.Threading;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;

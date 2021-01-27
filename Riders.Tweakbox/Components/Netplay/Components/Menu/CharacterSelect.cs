@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Queue;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;

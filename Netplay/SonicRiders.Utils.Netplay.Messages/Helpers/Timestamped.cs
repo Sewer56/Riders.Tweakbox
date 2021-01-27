@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Riders.Netplay.Messages.Queue
+namespace Riders.Netplay.Messages.Helpers
 {
     /// <summary>
     /// Represents an individual timestamped packet/value.
