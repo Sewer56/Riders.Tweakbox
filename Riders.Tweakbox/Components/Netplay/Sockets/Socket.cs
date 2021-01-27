@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -176,12 +177,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 if (packet.IsDiscard(State.MaxLatency))
                 {
                     Log.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency", LogCategory.Socket);
-                    continue;
+                }
+                else
+                {
+                    HandlePacket(packet);
+                    foreach (var component in Components.Values)
+                        component.HandlePacket(packet);
                 }
 
-                HandlePacket(packet);
-                foreach (var component in Components.Values)
-                    component.HandlePacket(packet);
+                // Dispose of packet contents.
+                packet.Value.Value.Dispose();
             }
         }
 

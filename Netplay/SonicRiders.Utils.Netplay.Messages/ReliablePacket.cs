@@ -101,14 +101,15 @@ namespace Riders.Netplay.Messages
             writer.Write(GetFlags());
             writer.WriteNullable(Random);
             if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
+
             writer.WriteNullable(SetMovementFlags);
-            writer.WriteNullable(MovementFlags);
+            if (MovementFlags.HasValue) writer.Write(MovementFlags.Value.AsInterface().Serialize());
 
             writer.WriteNullable(SetLapCounter);
-            writer.WriteNullable(LapCounters);
+            if (LapCounters.HasValue) writer.Write(LapCounters.Value.AsInterface().Serialize());
 
             writer.WriteNullable(SetAttack);
-            writer.WriteNullable(Attack);
+            if (Attack.HasValue) writer.Write(Attack.Value.AsInterface().Serialize());
 
             writer.WriteNullable(AntiCheatTriggered);
             writer.WriteNullable(AntiCheatGameData);
@@ -134,13 +135,13 @@ namespace Riders.Netplay.Messages
             if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
 
             reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
-            reader.ReadIfHasFlags(ref MovementFlags, Flags, HasData.HasMovementFlags);
+            if (Flags.HasAllFlags(HasData.HasMovementFlags)) MovementFlags = new MovementFlagsPacked().AsInterface().Deserialize(reader);
 
             reader.ReadIfHasFlags(ref SetLapCounter, Flags, HasData.HasSetLapCounter);
-            reader.ReadIfHasFlags(ref LapCounters, Flags, HasData.HasLapCounters);
+            if (Flags.HasAllFlags(HasData.HasLapCounters)) LapCounters = new LapCounters().AsInterface().Deserialize(reader);
 
             reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
-            reader.ReadIfHasFlags(ref Attack, Flags, HasData.HasAttack);
+            if (Flags.HasAllFlags(HasData.HasAttack)) Attack = new AttackPacked().AsInterface().Deserialize(reader);
 
             reader.ReadIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
             reader.ReadIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
@@ -217,6 +218,14 @@ namespace Riders.Netplay.Messages
             // We can save a byte during regular gameplay here.
             HasMenuSynchronizationCommand   = 1 << 14, // [Struct] Menu State Synchronization Command.
             HasServerMessage                = 1 << 15, // [Struct] General Server Message (Set Name, Try Connect etc.)
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            MovementFlags?.AsInterface().Dispose();
+            Attack?.AsInterface().Dispose();
+            LapCounters?.AsInterface().Dispose();
         }
     }
 }

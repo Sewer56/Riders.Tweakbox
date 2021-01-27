@@ -93,7 +93,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         private int GetEmptySlot()
         {
             // Index 0 reserved for host.
-            for (int x = 1; x < Constants.MaxNumberOfPlayers; x++)
+            for (int x = 1; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
                 if (!_dictionary.Values.Any(y => y.PlayerIndex == x))
                     return x;

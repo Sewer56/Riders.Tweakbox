@@ -21,7 +21,6 @@ namespace Riders.Netplay.Messages.Tests
             // 28 = IP + UDP
             // 4  = LiteNetLib
             var headerSize = 28 + 4 + sizeof(ReliablePacket.HasData);
-            var flagsPackedSize = new MovementFlagsPacked().GetBufferSize();
 
             _testOutputHelper.WriteLine($"Message Sizes:");
             _testOutputHelper.WriteLine($"Packet Overhead: {headerSize} bytes");
@@ -30,7 +29,9 @@ namespace Riders.Netplay.Messages.Tests
             // Players
             for (int x = 2; x <= 8; x++)
             {
-                var numPeers = x - 1;
+                var flagsPacked     = new MovementFlagsPacked().AsInterface().Create(new MovementFlagsMsg[x]);
+                var flagsPackedSize = flagsPacked.AsInterface().SizeOfDataBytes;
+                var numPeers        = x - 1;
                 _testOutputHelper.WriteLine("----------");
                 _testOutputHelper.WriteLine($"Lobby ({x} Players) (Min): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
                 _testOutputHelper.WriteLine($"Lobby ({x} Players) (Avg): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");

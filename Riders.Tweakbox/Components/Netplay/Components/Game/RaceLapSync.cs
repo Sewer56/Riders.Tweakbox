@@ -197,7 +197,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                     var counters = packet.LapCounters.Value.AsInterface();
                     for (int x = 1; x < _lapSync.Length; x++)
-                        _lapSync[x] = new Timestamped<LapCounter>(counters.GetData(x - 1));
+                        _lapSync[x] = new Timestamped<LapCounter>(counters.Elements[x - 1]);
 
                     ApplyLapSync();
                     break;
@@ -214,8 +214,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 var peer            = Socket.Manager.ConnectedPeerList[x];
                 var excludeIndex    = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                var laps            = _lapSync.Where((loop, y) => y != excludeIndex).Select(y => y.Value);
-                Socket.Send(peer, new ReliablePacket() { LapCounters = new LapCounters().AsInterface().SetData(laps) }, _lapDeliveryMethod);
+                var laps            = _lapSync.Where((loop, y) => y != excludeIndex).Select(y => y.Value).ToArray();
+                Socket.Send(peer, new ReliablePacket() { LapCounters = new LapCounters().AsInterface().Create(laps) }, _lapDeliveryMethod);
             }
 
             Socket.Update();

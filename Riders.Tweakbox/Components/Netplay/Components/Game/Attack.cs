@@ -47,6 +47,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
             Event.AfterRace += AfterRace;
+            Reset();
         }
 
         /// <inheritdoc />
@@ -90,11 +91,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 Log.WriteLine($"[{nameof(Attack)} / Client] Received Attack data from host", LogCategory.Race);
                 var value   = packet.Attack.Value;
                 var attacks = new SetAttack[_attackSync.Length];
-                value.AsInterface().ToArray(attacks, attacks.Length - 1, 0, 1);
                 for (var x = 0; x < attacks.Length; x++)
                 {
-                    attacks[x].Target = Socket.State.GetLocalPlayerIndex(attacks[x].Target);
-                    _attackSync[x] = new Timestamped<SetAttack>(attacks[x]);
+                    value.Elements[x].Target = Socket.State.GetLocalPlayerIndex(value.Elements[x].Target);
+                    _attackSync[x] = new Timestamped<SetAttack>(value.Elements[x]);
                 }
             }
         }
@@ -163,10 +163,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     }
 #endif
 
-                    var packed = new AttackPacked().AsInterface().SetData(attacks);
+                    var packed = new AttackPacked().AsInterface().Create(attacks);
                     Socket.Send(peer, new ReliablePacket() {Attack = packed}, DeliveryMethod.ReliableOrdered);
                 }
 
+                Log.WriteLine($"[{nameof(Attack)} / Host] Attack Matrix Sent", LogCategory.Race);
                 Socket.Update();
             }
             
@@ -209,6 +210,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <param name="a3">Unknown Parameter</param>
         public unsafe void StartAttackTask(int playerOne, int playerTwo, int a3 = 1)
         {
+            // TODO: 32-Player Support | Replace Pointers
             Functions.StartAttackTask.GetWrapper()(&Sewer56.SonicRiders.API.Player.Players.Pointer[playerOne], &Sewer56.SonicRiders.API.Player.Players.Pointer[playerTwo], a3);
         }
     }

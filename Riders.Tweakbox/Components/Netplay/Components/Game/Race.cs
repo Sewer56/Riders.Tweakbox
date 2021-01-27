@@ -106,18 +106,22 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     ReplaceOrSetCurrentFlags(packet.SetMovementFlags.Value, playerIndex);
                 }
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 // TODO: Spectator Support
                 if (packet.MovementFlags.HasValue)
                 {
                     var packedFlags = packet.MovementFlags.Value.AsInterface();
-                    for (int x = 0; x < MovementFlagsPacked.NumberOfEntries; x++)
+                    for (int x = 0; x < packedFlags.NumElements; x++)
                     {
                         // Fill in from player 2.
-                        ReplaceOrSetCurrentFlags(packedFlags.GetData(x), x + 1);
+                        ReplaceOrSetCurrentFlags(packedFlags.Elements[x], x + 1);
                     }
                 }
+            }
+            else
+            {
+                throw new NotImplementedException($"Not Implemented");
             }
 
             // Local Function
@@ -226,8 +230,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     {
                         var peer          = Socket.Manager.ConnectedPeerList[x];
                         var excludeIndex  = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                        var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, _movementFlagsDeliveryMethod);
+                        var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).Select(x => x.Value.Value).ToArray();
+                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().Create(movementFlags) }, _movementFlagsDeliveryMethod);
                     }
                 }
 

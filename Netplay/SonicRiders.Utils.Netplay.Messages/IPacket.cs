@@ -2,7 +2,7 @@
 
 namespace Riders.Netplay.Messages
 {
-    public interface IPacket
+    public interface IPacket : IDisposable
     {
         /// <summary>
         /// Gets the type of packet this individual packet corresponds to.

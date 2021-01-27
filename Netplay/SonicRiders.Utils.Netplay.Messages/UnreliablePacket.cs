@@ -70,6 +70,11 @@ namespace Riders.Netplay.Messages
         }
 
         /// <summary>
+        /// Nothing to dispose.
+        /// </summary>
+        public void Dispose() { }
+
+        /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
         public byte[] Serialize()

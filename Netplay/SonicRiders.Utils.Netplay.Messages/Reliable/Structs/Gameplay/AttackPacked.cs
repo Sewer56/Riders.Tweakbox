@@ -1,5 +1,4 @@
-﻿using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.Interfaces;
+﻿using Riders.Netplay.Messages.Misc.Interfaces;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
@@ -8,20 +7,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     /// </summary>
     public unsafe struct AttackPacked : IBitPackedArray<SetAttack, AttackPacked>
     {
-        public const int  NumberOfEntries = Constants.MaxNumberOfPlayers;
-        private const int SizeOfEntryBits = SetAttack.SizeOfEntryBits;
-        private const int SizeOfAllEntriesBytes = (((SizeOfEntryBits * NumberOfEntries) + SizeOfAllEntriesMod) / 8);
-        private const int SizeOfAllEntriesMod = (SizeOfEntryBits * NumberOfEntries) % 8;
+        /// <inheritdoc />
+        public SetAttack[] Elements { get; set; }
 
-        private fixed byte _data[SizeOfAllEntriesBytes];
+        /// <inheritdoc />
+        public int NumElements { get; set; }
+
+        /// <inheritdoc />
+        public bool IsPooled { get; set; }
 
         /// <inheritdoc />
         public IBitPackedArray<SetAttack, AttackPacked> AsInterface() => this;
-
-        /// <inheritdoc />
-        public int GetBufferSize() => SizeOfAllEntriesBytes;
-
-        /// <inheritdoc />
-        public ref byte GetFixedBuffer() => ref _data[0];
     }
 }
