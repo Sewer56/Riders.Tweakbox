@@ -180,6 +180,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 _raceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0));
 
                 // Populate data for non-expired packets.
+                // TODO: 32-Player Support | Fix Called Function (UnreliablePacketPlayer.FromGame)
                 var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
                 for (int x = 0; x < players.Length; x++)
                 {
@@ -268,7 +269,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             // Apply data of all players.
             // TODO: Race | Spectator.
-            for (int x = 1; x < _raceSync.Length; x++)
+            for (int x = 1; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
                 var sync = _raceSync[x];
                 if (!sync.HasValue) 

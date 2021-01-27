@@ -201,7 +201,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                         return;
 
                     var counters = packet.LapCounters.Value.AsInterface();
-                    for (int x = 1; x < _lapSync.Length; x++)
+                    for (int x = 1; x < counters.Elements.Length; x++)
                         _lapSync[x] = new Timestamped<LapCounter>(counters.Elements[x - 1]);
 
                     ApplyLapSync();
@@ -230,7 +230,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private void ApplyLapSync()
         {
             // TODO: RaceLapSync | Spectator
-            for (int x = 1; x < _lapSync.Length; x++)
+            for (int x = 1; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
                 var timestampedSync = _lapSync[x];
                 if (timestampedSync.IsDiscard(State.MaxLatency))

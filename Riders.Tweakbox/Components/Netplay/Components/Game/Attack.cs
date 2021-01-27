@@ -187,7 +187,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             _isProcessingAttackPackets = true;
 
             // TODO: Attack | Spectator
-            for (var x = 1; x < _attackSync.Length; x++)
+            for (var x = 1; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
                 var atkSync = _attackSync[x];
                 if (atkSync.IsDiscard(Socket.State.MaxLatency))

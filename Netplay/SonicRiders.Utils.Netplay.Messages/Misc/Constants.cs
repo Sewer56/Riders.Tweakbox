@@ -8,7 +8,8 @@ namespace Riders.Netplay.Messages.Misc
 
         /// <summary>
         /// Maximum number of players supported by Sonic Riders.
-        /// Hint: 32-player mod in the future.
+        /// The use of this variable indicates code/game needs adjusting for extra players.
+        /// Hint: 32-player mode in the future.
         /// </summary>
         public static int MaxRidersNumberOfPlayers => 8;
 
