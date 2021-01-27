@@ -19,7 +19,7 @@ namespace Riders.Tweakbox.Components.Debug
         {
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
-                for (int x = 0; x < Riders.Netplay.Messages.Misc.Constants.MaxNumberOfPlayers; x++)
+                for (int x = 0; x < Riders.Netplay.Messages.Misc.Constants.MaxRidersNumberOfPlayers; x++)
                     ImGui.TextWrapped($"Player {x}: {Player.Players[x].LapCounter}");
             }
 

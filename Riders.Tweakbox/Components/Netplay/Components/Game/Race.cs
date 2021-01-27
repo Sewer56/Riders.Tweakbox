@@ -108,7 +108,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
             else if (Socket.GetSocketType() == SocketType.Client)
             {
-                // TODO: Spectator Support
                 if (packet.MovementFlags.HasValue)
                 {
                     var packedFlags = packet.MovementFlags.Value.AsInterface();
@@ -121,6 +120,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
             else
             {
+                // TODO: Race | Spectator
                 throw new NotImplementedException($"Not Implemented");
             }
 
@@ -139,7 +139,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             if (Socket.GetSocketType() == SocketType.Host)
             {
-                // TODO: Maybe support for multiple local players in the future.
+                // TODO: Race: Multiple local players in the future.
                 try
                 {
                     var hostState = (HostState)State;
@@ -152,13 +152,18 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     Log.WriteLine($"[{nameof(Race)}] Warning: Failed to update Race Sync", LogCategory.Race);
                 }
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 var players = packet.Players;
 
                 // Fill in from player 2.
                 for (int x = 0; x < players.Length; x++)
                     _raceSync[x + 1] = new Volatile<Timestamped<UnreliablePacketPlayer>>(players[x]);
+            }
+            else
+            {
+                // TODO: Race | Spectator
+                throw new NotImplementedException("Not Implemented");
             }
         }
 
@@ -176,7 +181,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 // Populate data for non-expired packets.
                 var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
-                Array.Fill(players, new UnreliablePacketPlayer());
                 for (int x = 0; x < players.Length; x++)
                 {
                     var sync = _raceSync[x];
@@ -208,10 +212,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 Socket.Update();
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0));
                 Socket.SendAndFlush(Socket.Manager.FirstPeer, packet, _raceDeliveryMethod, _raceChannel);
+            }
+            else
+            {
+                // TODO: Race | Spectator
+                throw new NotImplementedException("Not Implemented");
             }
         }
 
@@ -237,13 +246,18 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 return player;
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
                 if (index == 0)
                     Socket.Send(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, _movementFlagsDeliveryMethod);
 
                 return player;
+            }
+            else
+            {
+                // TODO: Race | Spectator
+                throw new NotImplementedException("Not Implemented");
             }
         }
 
@@ -253,7 +267,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private void ApplyRaceSync()
         {
             // Apply data of all players.
-            // TODO: Update for spectator.
+            // TODO: Race | Spectator.
             for (int x = 1; x < _raceSync.Length; x++)
             {
                 var sync = _raceSync[x];
@@ -286,7 +300,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
 
-                // TODO: Handle Spectator
+                // TODO: Race | Spectator.
                 if (index == 0)
                     return player;
 

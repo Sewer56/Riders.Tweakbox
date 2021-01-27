@@ -157,10 +157,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 _lapSync[0] = new Timestamped<LapCounter>(new LapCounter(player->LapCounter));
                 HostSendLapCounters();
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 // Send updated lap counter to host.
                 Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { SetLapCounter = new LapCounter(player->LapCounter) }, _lapDeliveryMethod);
+            }
+            else
+            {
+                // TODO: RaceLapSync | Spectator
+                throw new NotImplementedException("Not Implemented");
             }
 
             return result;
@@ -202,7 +207,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     ApplyLapSync();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    // TODO: RaceLapSync | Spectator
+                    throw new NotImplementedException("Not Implemented");
             }
         }
 
@@ -223,6 +229,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private void ApplyLapSync()
         {
+            // TODO: RaceLapSync | Spectator
             for (int x = 1; x < _lapSync.Length; x++)
             {
                 var timestampedSync = _lapSync[x];

@@ -83,19 +83,23 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 Log.WriteLine($"[{nameof(Attack)} / Host] Received Attack from {playerIndex} to hit {packet.SetAttack.Value.Target}", LogCategory.Race);
                 _attackSync[playerIndex] = new Timestamped<SetAttack>(packet.SetAttack.Value);
             }
-            else
+            else if (Socket.GetSocketType() == SocketType.Client)
             {
                 if (!packet.Attack.HasValue)
                     return;
 
                 Log.WriteLine($"[{nameof(Attack)} / Client] Received Attack data from host", LogCategory.Race);
                 var value   = packet.Attack.Value;
-                var attacks = new SetAttack[_attackSync.Length];
-                for (var x = 0; x < attacks.Length; x++)
+                for (var x = 0; x < _attackSync.Length; x++)
                 {
                     value.Elements[x].Target = Socket.State.GetLocalPlayerIndex(value.Elements[x].Target);
                     _attackSync[x] = new Timestamped<SetAttack>(value.Elements[x]);
                 }
+            }
+            else
+            {
+                // TODO: Attack | Spectator
+                throw new NotImplementedException("Not Implemented");
             }
         }
 
@@ -181,11 +185,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public unsafe void ProcessAttackTasks()
         {
             _isProcessingAttackPackets = true;
-            for (var x = 0; x < _attackSync.Length; x++)
-            {
-                if (x == 0)
-                    continue;
 
+            // TODO: Attack | Spectator
+            for (var x = 1; x < _attackSync.Length; x++)
+            {
                 var atkSync = _attackSync[x];
                 if (atkSync.IsDiscard(Socket.State.MaxLatency))
                     continue;

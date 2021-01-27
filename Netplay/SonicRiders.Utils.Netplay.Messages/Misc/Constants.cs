@@ -4,7 +4,7 @@ namespace Riders.Netplay.Messages.Misc
 {
     public static class Constants
     {
-        // TODO: 32-Player Support | Replace APIs: GetPlayerIndex
+        // TODO: 32-Player Support | Replace APIs: GetPlayerIndex, Player.Players
 
         /// <summary>
         /// Maximum number of players supported by Sonic Riders.

@@ -175,6 +175,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private unsafe void OnIntroCutsceneEnd()
         {
+            // TODO: RaceIntroSync | Spectator
             for (int x = 1; x < Player.MaxNumberOfPlayers; x++)
             {
                 Player.Players[x].IsAiLogic = PlayerType.CPU;
