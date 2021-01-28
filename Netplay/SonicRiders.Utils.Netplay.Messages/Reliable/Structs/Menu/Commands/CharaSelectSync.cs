@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using MessagePack;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.Interfaces;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -12,31 +15,37 @@ using Sewer56.SonicRiders.Structures.Tasks.Enums.Structs;
 namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 {
     [Equals(DoNotAddEqualityOperators = true)]
-    [MessagePackObject()]
-    public struct CharaSelectSync : IMenuSynchronizationCommand
+    public struct CharaSelectSync : IMenuSynchronizationCommand, IBitPackedArray<CharaSelectLoop, CharaSelectSync>
     {
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CharaSelectSync;
 
-        /// <summary>
-        /// List of loops, in player order.
-        /// Excludes self, starts with player 2.
-        /// </summary>
-        [Key(0)]
-        public CharaSelectLoop[] Sync;
+        /// <inheritdoc />
+        public CharaSelectLoop[] Elements { get; set; }
 
-        public CharaSelectSync(CharaSelectLoop[] sync) => Sync = sync;
+        /// <inheritdoc />
+        public int NumElements { get; set; }
 
-        public byte[] ToBytes() => MessagePackSerializer.Serialize(this);
-        public static CharaSelectSync FromBytes(BufferedStreamReader reader) => Utilities.DeserializeMessagePack<CharaSelectSync>(reader);
+        /// <inheritdoc />
+        public bool IsPooled { get; set; }
+
+        public CharaSelectSync(CharaSelectLoop[] sync)
+        {
+            Elements = sync;
+            NumElements = sync.Length;
+            IsPooled = false;
+        }
+
+        public Span<byte> ToBytes(Span<byte> buffer) => AsInterface().Serialize(buffer);
+        public static CharaSelectSync FromBytes(BufferedStreamReader reader) => new CharaSelectSync().AsInterface().Deserialize(reader);
 
         /// <summary>
         /// Applies the current struct to game data, but only the character data.
         /// </summary>
         public unsafe void ToGameOnlyCharacter()
         {
-            for (var index = 0; index < Sync.Length; index++)
+            for (var index = 0; index < Elements.Length; index++)
             {
-                var sync = Sync[index];
+                var sync = Elements[index];
                 sync.ToGameOnlyCharacter(index + 1);
             }
         }
@@ -51,15 +60,15 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 return;
 
             ResetMenu(task);
-            for (var index = 0; index < Sync.Length; index++)
+            for (var index = 0; index < Elements.Length; index++)
             {
-                var sync = Sync[index];
+                var sync = Elements[index];
                 sync.ToGame(task, index + 1);
             }
 
             // Check player's own status & others' statuses.
             var ownStatus = (PlayerStatus) task->TaskData->PlayerStatuses[0];
-            if (IsJoinedAndReady(ownStatus) && Sync.All(x => IsJoinedAndReady(x.Status) && task->TaskStatus != CharacterSelectTaskState.LoadingStage))
+            if (IsJoinedAndReady(ownStatus) && Elements.All(x => IsJoinedAndReady(x.Status) && task->TaskStatus != CharacterSelectTaskState.LoadingStage))
                 task->TaskData->AreYouReadyEnabled = true;
             else
                 task->TaskData->AreYouReadyEnabled = false;
@@ -78,5 +87,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
                 task->TaskData->PlayerStatuses[x] = (byte)PlayerStatus.Inactive;
             }
         }
+
+        /// <inheritdoc />
+        public IBitPackedArray<CharaSelectLoop, CharaSelectSync> AsInterface() => this;
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
+using DotNext.Buffers;
 using EnumsNET;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
@@ -97,27 +99,38 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public byte[] Serialize()
         {
-            using var writer = new ExtendedMemoryStream(sizeof(UnreliablePacketHeader));
+            // Rent some bytes.
+            using var rented      = new ArrayRental<byte>(8196);
+            using var writeBuffer = new ArrayRental<byte>(64);
+            var writeBufferSpan = writeBuffer.Span;
+
+            // Serialize the data.
+            using var writer = new ExtendedMemoryStream(rented.Segment.Array, true);
             writer.Write(GetFlags());
             writer.WriteNullable(Random);
             if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
 
             writer.WriteNullable(SetMovementFlags);
-            if (MovementFlags.HasValue) writer.Write(MovementFlags.Value.AsInterface().Serialize());
+            if (MovementFlags.HasValue)
+                writer.Write(MovementFlags.Value.AsInterface().Serialize(writeBufferSpan));
 
             writer.WriteNullable(SetLapCounter);
-            if (LapCounters.HasValue) writer.Write(LapCounters.Value.AsInterface().Serialize());
+            if (LapCounters.HasValue) 
+                writer.Write(LapCounters.Value.AsInterface().Serialize(writeBufferSpan));
 
             writer.WriteNullable(SetAttack);
-            if (Attack.HasValue) writer.Write(Attack.Value.AsInterface().Serialize());
+            if (Attack.HasValue) 
+                writer.Write(Attack.Value.AsInterface().Serialize(writeBufferSpan));
 
             writer.WriteNullable(AntiCheatTriggered);
             writer.WriteNullable(AntiCheatGameData);
             writer.WriteNullable(AntiCheatHeartbeat);
 
-            if (MenuSynchronizationCommand.HasValue) writer.Write(MenuSynchronizationCommand.Value.ToBytes());
-            if (ServerMessage.HasValue) writer.Write(ServerMessage.Value.ToBytes());
-            return writer.ToArray();
+            if (MenuSynchronizationCommand.HasValue) writer.Write(MenuSynchronizationCommand.Value.ToBytes(writeBufferSpan));
+            if (ServerMessage.HasValue) writer.Write(ServerMessage.Value.ToBytes(writeBufferSpan));
+
+            // Dump stream data.
+            return writer.ToArray((int)writer.Position);
         }
 
         /// <summary>

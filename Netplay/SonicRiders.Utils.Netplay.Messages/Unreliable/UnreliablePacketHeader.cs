@@ -67,7 +67,7 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
-        public unsafe byte[] Serialize()
+        public unsafe Span<byte> Serialize(Span<byte> buffer)
         {
             // f: Fields, n: Numbers
             // ffff ffff ffff fnnn
@@ -75,7 +75,7 @@ namespace Riders.Netplay.Messages.Unreliable
             byte numPlayersPacked = (byte)(NumberOfPlayers - 1);
 
             ushort message = (ushort)((ushort)fieldsPacked | (ushort)numPlayersPacked);
-            return Struct.GetBytes(message);
+            return Struct.GetBytes(message, buffer);
         }
 
         /// <summary>

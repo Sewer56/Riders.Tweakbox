@@ -1,8 +1,10 @@
-﻿namespace Riders.Netplay.Messages.Reliable.Structs.Server.Shared
+﻿using System;
+
+namespace Riders.Netplay.Messages.Reliable.Structs.Server.Shared
 {
     public interface IServerMessage
     {
         ServerMessageType GetMessageType();
-        byte[] ToBytes();
+        Span<byte> ToBytes(Span<byte> buffer);
     }
 }

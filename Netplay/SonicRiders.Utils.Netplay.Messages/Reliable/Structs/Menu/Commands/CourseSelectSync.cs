@@ -11,7 +11,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
     public struct CourseSelectSync : IMenuSynchronizationCommand, IEquatable<CourseSelectSync>
     {
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CourseSelectSync;
-        public byte[] ToBytes() => Struct.GetBytes(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => Struct.GetBytes(this, buffer);
 
         /// <summary>
         /// X selection.

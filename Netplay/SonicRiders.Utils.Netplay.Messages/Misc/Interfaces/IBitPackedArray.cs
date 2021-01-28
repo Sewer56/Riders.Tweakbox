@@ -110,31 +110,41 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
         /// <summary>
         /// Serializes the current array.
         /// </summary>
-        public byte[] Serialize()
+        public Span<byte> Serialize(Span<byte> resultBuffer)
         {
             // Setup
-            var buffer    = ArrayPool<byte>.Shared.Rent(SizeOfDataBytes);
-            var memStream = new MemoryStream(buffer);
-            var bitStream = new BitStream(memStream);
-            bitStream.AutoIncreaseStream = true;
+            fixed (byte* bytePtr = resultBuffer)
+            {
+                var memStream = new UnmanagedMemoryStream(bytePtr, resultBuffer.Length, resultBuffer.Length, FileAccess.ReadWrite);
+                var bitStream = new BitStream(memStream);
+                bitStream.AutoIncreaseStream = true;
 
-            // Write the stream
-            bitStream.Write(NumElements - 1, ItemCountNumBits);
-            for (int x = 0; x < NumElements; x++)
-                Elements[x].ToStream(bitStream);
+                // Write the stream
+                bitStream.Write(NumElements - 1, ItemCountNumBits);
+                for (int x = 0; x < NumElements; x++)
+                    Elements[x].ToStream(bitStream);
 
-            // Cleanup
-            memStream.Seek(0, SeekOrigin.Begin);
-            bitStream.CopyStreamTo(memStream);
-            memStream.Seek(0, SeekOrigin.Begin);
+                // Cleanup
+                memStream.Seek(0, SeekOrigin.Begin);
+                bitStream.CopyStreamTo(memStream);
+                memStream.Seek(0, SeekOrigin.Begin);
 
+                var result = resultBuffer.Slice(0, SizeOfDataBytes);
+                memStream.Read(result);
+
+                // Dispose
+                memStream.Dispose();
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Serializes the current array.
+        /// </summary>
+        public byte[] Serialize()
+        {
             var result = new byte[SizeOfDataBytes];
-            memStream.Read(result, 0, SizeOfDataBytes);
-            
-            // Dispose
-            memStream.Dispose();
-            ArrayPool<byte>.Shared.Return(buffer);
-
+            Serialize(result.AsSpan());
             return result;
         }
 

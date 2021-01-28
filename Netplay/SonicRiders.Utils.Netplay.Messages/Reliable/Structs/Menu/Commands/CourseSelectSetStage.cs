@@ -7,7 +7,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
     public struct CourseSelectSetStage : IMenuSynchronizationCommand, IEquatable<CourseSelectSetStage>
     {
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CourseSelectSetStage;
-        public byte[] ToBytes() => Struct.GetBytes(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => Struct.GetBytes(this, buffer);
 
         /// <summary>
         /// The stage ID associated with this structure.

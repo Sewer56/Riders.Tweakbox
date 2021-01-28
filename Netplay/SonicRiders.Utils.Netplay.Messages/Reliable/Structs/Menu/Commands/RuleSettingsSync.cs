@@ -13,7 +13,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
     public struct RuleSettingsSync : IMenuSynchronizationCommand, IEquatable<RuleSettingsSync>
     {
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.RuleSettingsSync;
-        public byte[] ToBytes() => Struct.GetBytes(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => Struct.GetBytes(ref this, buffer);
 
         public byte MenuSelectionX;
         public byte MenuSelectionY;

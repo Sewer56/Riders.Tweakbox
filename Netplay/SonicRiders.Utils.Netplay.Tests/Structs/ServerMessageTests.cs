@@ -13,6 +13,7 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeArrayMessage()
         {
+            var buffer  = new byte[1024];
             var message = new HostSetPlayerData(new []
             {
                 new HostPlayerData() { Name = "Yacker", PlayerIndex = 0 },
@@ -21,9 +22,9 @@ namespace Riders.Netplay.Messages.Tests.Structs
             }, 3);
 
             var serverMsg = new ServerMessage(message);
-            var bytes = serverMsg.ToBytes();
+            var bytes = serverMsg.ToBytes(buffer);
 
-            using var memoryStream = new MemoryStream(bytes);
+            using var memoryStream = new MemoryStream(bytes.ToArray());
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);
             var command = ServerMessage.FromBytes(streamReader);
 
@@ -38,11 +39,12 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeStandardMessage()
         {
+            var buffer = new byte[1024];
             var message = new SetAntiCheat() { Cheats = CheatKind.RngManipulation };
             var serverMsg = new ServerMessage(message);
-            var bytes = serverMsg.ToBytes();
+            var bytes = serverMsg.ToBytes(buffer);
 
-            using var memoryStream = new MemoryStream(bytes);
+            using var memoryStream = new MemoryStream(bytes.ToArray());
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);
             var command = ServerMessage.FromBytes(streamReader);
 

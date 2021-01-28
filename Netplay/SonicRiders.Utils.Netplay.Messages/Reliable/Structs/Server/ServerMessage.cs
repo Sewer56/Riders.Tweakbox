@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Buffers;
+using System.IO;
+using DotNext.Buffers;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
@@ -25,12 +28,18 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
         /// <summary>
         /// Converts the synchronization command to a set of bytes.
         /// </summary>
-        public byte[] ToBytes()
+        /// <param name="buffer">The buffer to write the bytes to.</param>
+        /// <returns>A sliced version of the buffer.</returns>
+        public unsafe Span<byte> ToBytes(Span<byte> buffer)
         {
-            using var extendedMemoryStream = new ExtendedMemoryStream();
-            extendedMemoryStream.Write(MessageKind);
-            extendedMemoryStream.Write(Message.ToBytes());
-            return extendedMemoryStream.ToArray();
+            using var rental = new ArrayRental<byte>(256);
+            fixed (byte* bytePtr = buffer)
+            {
+                using var unmanagedStream = new UnmanagedMemoryStream(bytePtr, buffer.Length, buffer.Length, FileAccess.Write);
+                unmanagedStream.Write(MessageKind);
+                unmanagedStream.Write(Message.ToBytes(rental.Span));
+                return buffer.Slice(0, (int)unmanagedStream.Position);
+            }
         }
 
         /// <param name="reader">The stream reader for the current packet.</param>

@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using System;
+using MessagePack;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
@@ -30,7 +31,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages
             Index = index;
         }
 
-        public byte[] ToBytes() => MessagePackSerializer.Serialize(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => MessagePackSerializer.Serialize(this);
         public static HostSetPlayerData FromBytes(BufferedStreamReader reader) => Utilities.DeserializeMessagePack<HostSetPlayerData>(reader);
     }
 }

@@ -12,11 +12,12 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeStandardMessage()
         {
+            var buffer  = new byte[1024];
             var message = new CharaSelectLoop(0, 5, PlayerStatus.GearSelect);
             var menuMsg = new MenuSynchronizationCommand(message);
-            var bytes   = menuMsg.ToBytes();
+            var bytes   = menuMsg.ToBytes(buffer);
 
-            using var memoryStream = new MemoryStream(bytes);
+            using var memoryStream = new MemoryStream(bytes.ToArray());
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);
             var command = MenuSynchronizationCommand.FromBytes(streamReader);
 
@@ -31,6 +32,7 @@ namespace Riders.Netplay.Messages.Tests.Structs
         [Fact]
         public void SerializeMessagePack()
         {
+            var buffer = new byte[1024];
             var message = new CharaSelectSync(new CharaSelectLoop[4]
             {
                 new CharaSelectLoop(0, 1, PlayerStatus.Active),
@@ -40,9 +42,9 @@ namespace Riders.Netplay.Messages.Tests.Structs
             });
 
             var menuMsg = new MenuSynchronizationCommand(message);
-            var bytes = menuMsg.ToBytes();
+            var bytes = menuMsg.ToBytes(buffer);
 
-            using var memoryStream = new MemoryStream(bytes);
+            using var memoryStream = new MemoryStream(bytes.ToArray());
             using var streamReader = new BufferedStreamReader(memoryStream, bytes.Length);
             var command = MenuSynchronizationCommand.FromBytes(streamReader);
 

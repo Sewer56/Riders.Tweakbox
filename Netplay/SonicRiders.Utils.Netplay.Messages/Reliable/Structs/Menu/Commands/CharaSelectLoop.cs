@@ -1,5 +1,10 @@
-﻿using MessagePack;
+﻿using System;
+using BitStreams;
+using MessagePack;
 using Reloaded.Memory;
+using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.Interfaces;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -14,28 +19,28 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
     /// Client -> Host
     /// </summary>
     [Equals(DoNotAddEqualityOperators = true)]
-    [MessagePackObject()]
-    public struct CharaSelectLoop : IMenuSynchronizationCommand
+    public struct CharaSelectLoop : IMenuSynchronizationCommand, IBitPackable<CharaSelectLoop>
     {
+        private const int SizeOfCharacterBits = 5;
+        private const int SizeOfBoardBits     = 6;
+        private const int SizeOfStatusBits    = 3;
+
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CharaSelectLoop;
-        public byte[] ToBytes() => Struct.GetBytes(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => Struct.GetBytes(this, buffer);
 
         /// <summary>
         /// The character selected by the current player.
         /// </summary>
-        [Key(0)]
         public byte Character;
 
         /// <summary>
         /// Current board selected by the player.
         /// </summary>
-        [Key(1)]
         public byte Board;
 
         /// <summary>
         /// Current status of the player.
         /// </summary>
-        [Key(2)]
         public PlayerStatus Status;
 
         public CharaSelectLoop(byte character, byte board, PlayerStatus status)
@@ -129,6 +134,28 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
 
             // Super Sonic is not available in the menu.
             return (byte) (character - 1);
+        }
+
+        /// <inheritdoc />
+        public int GetSizeOfEntry() => SizeOfCharacterBits + SizeOfBoardBits + SizeOfStatusBits;
+
+        /// <inheritdoc />
+        public CharaSelectLoop FromStream(BitStream stream)
+        {
+            return new CharaSelectLoop
+            {
+                Character = stream.Read<byte>(SizeOfCharacterBits),
+                Board = stream.Read<byte>(SizeOfBoardBits),
+                Status = stream.Read<PlayerStatus>(SizeOfStatusBits)
+            };
+        }
+
+        /// <inheritdoc />
+        public void ToStream(BitStream stream)
+        {
+            stream.Write(Character, SizeOfCharacterBits);
+            stream.Write(Board, SizeOfBoardBits); 
+            stream.Write(Status, SizeOfStatusBits);
         }
     }
 }

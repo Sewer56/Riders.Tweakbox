@@ -1,4 +1,5 @@
-﻿using Reloaded.Memory;
+﻿using System;
+using Reloaded.Memory;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
@@ -16,7 +17,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         }
 
         public Shared.MenuSynchronizationCommand GetCommandKind() => Shared.MenuSynchronizationCommand.CharaselectExit;
-        public byte[] ToBytes() => Struct.GetBytes(this);
+        public Span<byte> ToBytes(Span<byte> buffer) => Struct.GetBytes(this, buffer);
     }
 
     public enum ExitKind

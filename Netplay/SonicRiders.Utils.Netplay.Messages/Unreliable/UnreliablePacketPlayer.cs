@@ -132,39 +132,47 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Serializes the current packet.
         /// </summary>
-        public unsafe byte[] Serialize(HasData data = HasData.All)
+        public unsafe Span<byte> Serialize(Span<byte> buffer, HasData data = HasData.All)
         {
-            using var memStream = new MemoryStream(sizeof(UnreliablePacketPlayer));
-            var bitStream       = new BitStream(memStream);
-            bitStream.AutoIncreaseStream = true;
-
-            if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteNullable(Position);
-            if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteNullable(_rotationX);
-            if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteNullable(Velocity);
-            if (data.HasAllFlags(HasData.HasTurnAndLean))
+            fixed (byte* bytePtr = buffer)
             {
-                bitStream.WriteNullable(_turnAmount);
-                bitStream.WriteNullable(_leanAmount);
-            }
+                using var memStream = new UnmanagedMemoryStream(bytePtr, buffer.Length, buffer.Length, FileAccess.ReadWrite);
+                var bitStream = new BitStream(memStream);
+                bitStream.AutoIncreaseStream = true;
 
-            if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteNullable(ControlFlags, ControlFlagsBits);
-            if (data.HasAllFlags(HasData.HasRings)) bitStream.WriteNullable((byte?) Rings, RingsBits);
-            if (data.HasAllFlags(HasData.HasState))
-            {
-                bitStream.WriteNullable((byte?)State, StateBits);
-                bitStream.WriteNullable((byte?)LastState, StateBits);
-            }
-            if (data.HasAllFlags(HasData.HasAir)) bitStream.WriteNullable(Air, AirBits);
-            if (data.HasAllFlags(HasData.HasAnimation))
-            {
-                bitStream.WriteNullable(Animation, AnimationBits);
-                bitStream.WriteNullable(LastAnimation, AnimationBits);
-            }
+                if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteNullable(Position);
+                if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteNullable(_rotationX);
+                if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteNullable(Velocity);
+                if (data.HasAllFlags(HasData.HasTurnAndLean))
+                {
+                    bitStream.WriteNullable(_turnAmount);
+                    bitStream.WriteNullable(_leanAmount);
+                }
 
-            // Write final byte and copy back to original stream.
-            memStream.Seek(0, SeekOrigin.Begin);
-            bitStream.CopyStreamTo(memStream);
-            return memStream.ToArray();
+                if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteNullable(ControlFlags, ControlFlagsBits);
+                if (data.HasAllFlags(HasData.HasRings)) bitStream.WriteNullable((byte?)Rings, RingsBits);
+                if (data.HasAllFlags(HasData.HasState))
+                {
+                    bitStream.WriteNullable((byte?)State, StateBits);
+                    bitStream.WriteNullable((byte?)LastState, StateBits);
+                }
+                if (data.HasAllFlags(HasData.HasAir)) bitStream.WriteNullable(Air, AirBits);
+                if (data.HasAllFlags(HasData.HasAnimation))
+                {
+                    bitStream.WriteNullable(Animation, AnimationBits);
+                    bitStream.WriteNullable(LastAnimation, AnimationBits);
+                }
+
+                // Calculate number of bytes serialized.
+                var bitStreamPos = bitStream.GetStream().Position;
+                var extraByte    = bitStream.BitPosition != 0 ? 1 : 0;
+                var numBytesSerialized = bitStreamPos + extraByte;
+                
+                // Write final byte and copy back to original stream.
+                memStream.Seek(0, SeekOrigin.Begin);
+                bitStream.CopyStreamTo(memStream);
+                return buffer.Slice(0, (int) numBytesSerialized);
+            }
         }
 
         /// <summary>

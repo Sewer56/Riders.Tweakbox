@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Unreliable;
@@ -27,15 +28,14 @@ namespace Riders.Netplay.Messages.Tests
             _testOutputHelper.WriteLine($"Transmission Upload Costs:");
 
             // Players
-            for (int x = 2; x <= 8; x++)
+            for (int x = 2; x <= 32; x++)
             {
                 var flagsPacked     = new MovementFlagsPacked().AsInterface().Create(new MovementFlagsMsg[x]);
                 var flagsPackedSize = flagsPacked.AsInterface().SizeOfDataBytes;
                 var numPeers        = x - 1;
                 _testOutputHelper.WriteLine("----------");
-                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Min): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
-                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Avg): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
-                _testOutputHelper.WriteLine($"Lobby ({x} Players) (Max): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
+                _testOutputHelper.WriteLine($"Size of Flags: {flagsPackedSize} bytes");
+                _testOutputHelper.WriteLine($"Lobby ({x} Players): {ToKBitsInSecond(headerSize + flagsPackedSize) * numPeers}Kbit/s");
             }
         }
 
@@ -51,7 +51,7 @@ namespace Riders.Netplay.Messages.Tests
             {
                 var header           = new UnreliablePacketHeader(players, x);
                 var fields           = header.Fields;
-                playerPacketSizes.Add(player.Serialize(fields).Length);
+                playerPacketSizes.Add(player.Serialize(new byte[1024], fields).Length);
             }
 
             var minPlayer = playerPacketSizes.Min();
@@ -60,7 +60,7 @@ namespace Riders.Netplay.Messages.Tests
 
             // 28 = IP + UDP
             // 1  = LiteNetLib
-            var headerSize    = 28 + 1 + new UnreliablePacketHeader().Serialize().Length;
+            var headerSize    = 28 + 1 + new UnreliablePacketHeader().Serialize(new byte[1024]).Length;
 
             _testOutputHelper.WriteLine($"Message Sizes:");
             _testOutputHelper.WriteLine($"Packet Overhead: {headerSize} bytes");

@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
+using DotNext.Buffers;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Unreliable;
 using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
 
@@ -79,13 +82,18 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public byte[] Serialize()
         {
-            using var writer = new ExtendedMemoryStream(1280);
-            writer.Write(Header.Serialize());
+            // Rent some bytes.
+            using var rented      = new ArrayRental<byte>(1280);
+            using var writeBuffer = new ArrayRental<byte>(64);
+            var writeBufferSpan = writeBuffer.Span;
+
+            using var writer = new ExtendedMemoryStream(rented.Segment.Array);
+            writer.Write(Header.Serialize(writeBufferSpan));
 
             foreach (var player in Players)
-                writer.Write(player.Serialize(Header.Fields));
+                writer.Write(player.Serialize(writeBufferSpan, Header.Fields));
 
-            return writer.ToArray();
+            return writer.ToArray((int)writer.Position);
         }
 
         /// <summary>

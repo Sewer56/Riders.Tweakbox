@@ -40,6 +40,22 @@ namespace Riders.Netplay.Messages.Misc
         }
 
         /// <summary>
+        /// Converts a given stream to an array provided a number of bytes.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="numBytes">The number of bytes.</param>
+        /// <param name="offset">Offset relative to the seek origin.</param>
+        /// <param name="origin">The seek origin.</param>
+        /// <returns></returns>
+        public static byte[] ToArray(this Stream writer, int numBytes, int offset = 0, SeekOrigin origin = SeekOrigin.Begin)
+        {
+            var result = new byte[numBytes];
+            writer.Seek(offset, origin);
+            writer.Read(result);
+            return result;
+        }
+
+        /// <summary>
         /// Writes a struct value to a <see cref="BitStream"/>.
         /// </summary>
         /// <param name="stream">The stream.</param>
