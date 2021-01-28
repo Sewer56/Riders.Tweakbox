@@ -48,23 +48,14 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
             var message = new ServerMessage();
             message.MessageKind = reader.Read<ServerMessageType>();
 
-            switch (message.MessageKind)
+            message.Message = message.MessageKind switch
             {
-                case ServerMessageType.ClientSetPlayerData:
-                    message.Message = ClientSetPlayerData.FromBytes(reader);
-                    break;
-                case ServerMessageType.HostSetPlayerData:
-                    message.Message = HostSetPlayerData.FromBytes(reader);
-                    break;
-                case ServerMessageType.HasSetAntiCheatTypes:
-                    message.Message = reader.Read<SetAntiCheat>();
-                    break;
-                case ServerMessageType.HostUpdateClientPing:
-                    message.Message = HostUpdateLatency.FromBytes(reader);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                ServerMessageType.ClientSetPlayerData   => ClientSetPlayerData.FromBytes(reader),
+                ServerMessageType.HostSetPlayerData     => HostSetPlayerData.FromBytes(reader),
+                ServerMessageType.HasSetAntiCheatTypes  => reader.Read<SetAntiCheat>(),
+                ServerMessageType.HostUpdateClientPing  => HostUpdateLatency.FromBytes(reader),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
             return message;
         }
