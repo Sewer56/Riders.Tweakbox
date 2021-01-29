@@ -268,7 +268,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         }
 
         #region Results Screen Activation Handling
-        private byte OnGoalRaceFinishTask(IHook<Functions.DefaultTaskFnWithReturn> hook)
+        private byte OnGoalRaceFinishTask(IHook<Functions.CdeclReturnByteFn> hook)
         {
             _isTaskEnabled = true;
             _goalRaceFinishTaskPtr = *CurrentTask;
@@ -287,7 +287,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
         }
 
-        private int RemoveAllTasks(IHook<Functions.DefaultReturnFn> hook)
+        private int RemoveAllTasks(IHook<Functions.CdeclReturnIntFn> hook)
         {
             Log.WriteLine($"[{nameof(RaceLapSync)}] Kill All Tasks", LogCategory.LapSync);
             _isTaskEnabled = false;

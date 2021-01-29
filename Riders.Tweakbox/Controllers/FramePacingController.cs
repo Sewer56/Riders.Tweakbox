@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Windows;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
@@ -10,15 +13,17 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
-using Sewer56.SonicRiders.Functions;
 using SharpDX.Direct3D9;
 using Microsoft.Windows.Sdk;
+using static Sewer56.SonicRiders.Functions.Functions;
+using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 
 namespace Riders.Tweakbox.Controllers
 {
     public unsafe class FramePacingController : IController
     {
         private const float CpuSampleIntervalMs = (float)((1000 / 60.0f) * 10);
+        private static FramePacingController _controller;
 
         /// <summary>
         /// Amount of time spinning after sleep.
@@ -48,7 +53,7 @@ namespace Riders.Tweakbox.Controllers
         // Hooks
         private IHook<TimeBeginPeriod> _beginPeriodHook;
         private IHook<TimeEndPeriod> _endPeriodHook;
-        private IHook<Functions.DefaultFn> _endFrameHook;
+        private IHook<ReturnVoidFnPtr> _endFrameHook;
 
         public FramePacingController()
         {
@@ -64,8 +69,10 @@ namespace Riders.Tweakbox.Controllers
             Native.NtQueryTimerResolution(out int maximumResolution, out int _, out int currentResolution);
             Native.NtSetTimerResolution(maximumResolution, true, out currentResolution);
 
-            _endFrameHook = Functions.EndFrame.Hook(EndFrameImpl).Activate();
+            // Test
+            _endFrameHook = EndFrame.HookAs<ReturnVoidFnPtr>(typeof(FramePacingController), nameof(EndFrameImplStatic)).Activate();
             _fps          = new FramePacer { FPSLimit = 60 };
+            _controller = this;
         }
 
         /// <inheritdoc />
@@ -89,8 +96,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public void ResetSpeedup() => _resetSpeedup = true;
 
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+        private static void EndFrameImplStatic() => _controller.EndFrameImpl();
+
         /// <summary>
-        /// Custom frame pacing implementation,
+        /// Custom frame pacing implementation
         /// </summary>
         private void EndFrameImpl()
         {
@@ -123,7 +133,7 @@ namespace Riders.Tweakbox.Controllers
                 return;
             }
 
-            _endFrameHook.OriginalFunction();
+            _endFrameHook.OriginalFunction.Value.Invoke();
         }
 
         /* Parameter: uMilliseconds */

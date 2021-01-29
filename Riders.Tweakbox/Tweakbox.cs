@@ -36,7 +36,7 @@ namespace Riders.Tweakbox
         public bool IsReady { get; private set; } = false;
         public MenuBar MenuBar { get; private set; }
         public List<IController> Controllers { get; private set; } = new List<IController>();
-        public IHook<Functions.GetInputsFn> BlockInputsHook { get; private set; }
+        public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
 
         /* Creation & Disposal */
         private Tweakbox(){}

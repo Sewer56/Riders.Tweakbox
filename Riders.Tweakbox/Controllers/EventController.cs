@@ -173,24 +173,24 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// The task used to render the race finish sequence after the final player crosses the finish line.
         /// </summary>
-        public event DefaultTaskFnWithReturnFn GoalRaceFinishTask;
+        public event CdeclReturnByteFnFn GoalRaceFinishTask;
 
         /// <summary>
         /// Executed when all tasks are about to be removed from the heap.
         /// </summary>
-        public event DefaultReturnFn RemoveAllTasks;
+        public event CdeclReturnIntFn RemoveAllTasks;
 
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
-        private IHook<Functions.SetSpawnLocationsStartOfRaceFn> _setSpawnLocationsStartOfRaceHook;
+        private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
         private IHook<Functions.SetNewPlayerStateFn> _setNewPlayerStateHook;
         private IHook<Functions.SetRenderItemPickupTaskFn> _setRenderItemPickupTaskHook;
         private IHook<Functions.SetGoalRaceFinishTaskFn> _setGoalRaceFinishTaskHook;
         private IHook<Functions.UpdateLapCounterFn> _updateLapCounterHook;
-        private IHook<Functions.DefaultTaskFnWithReturn> _goalRaceFinishTaskHook;
-        private IHook<Functions.DefaultReturnFn> _removeAllTasksHook;
+        private IHook<Functions.CdeclReturnByteFn> _goalRaceFinishTaskHook;
+        private IHook<Functions.CdeclReturnIntFn> _removeAllTasksHook;
 
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
@@ -209,7 +209,7 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _alwaysSeedRngOnIntroSkipHook;
         private IAsmHook _onCheckIfGiveAiRandomItemsHook;
         private Patch  _randItemPickupPatch;
-        private IReverseWrapper<Functions.DefaultReturnFn> _randItemPickupWrapper;
+        private IReverseWrapper<Functions.CdeclReturnIntFn> _randItemPickupWrapper;
         private Random _random = new Random();
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
@@ -289,7 +289,7 @@ namespace Riders.Tweakbox.Controllers
                 $"{utilities.AssembleAbsoluteCall(() => OnSetupRace?.Invoke((Task<TitleSequence, TitleSequenceTaskState>*) (*State.CurrentTask)), out _)}"
             }, 0x0046C139, AsmHookBehaviour.ExecuteFirst).Activate();
 
-            _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.DefaultReturnFn>(ItemPickupRandImpl);
+            _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.CdeclReturnIntFn>(ItemPickupRandImpl);
             _randItemPickupPatch = new Patch((IntPtr)0x004C714C, AsmHelpers.AssembleRelativeCall(0x004C714C, (long)_randItemPickupWrapper.WrapperPointer)).ChangePermission().Enable();
 
             var ifGiveAiRandomItems = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x004C721F, false) };
@@ -472,8 +472,8 @@ namespace Riders.Tweakbox.Controllers
         public unsafe delegate Task* SetRenderItemPickupTaskHandlerFn(Player* player, byte a2, ushort a3, IHook<Functions.SetRenderItemPickupTaskFn> hook);
         public unsafe delegate int SetGoalRaceFinishTaskHandlerFn(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player);
         public unsafe delegate int UpdateLapCounterHandlerFn(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2);
-        public delegate byte DefaultTaskFnWithReturnFn(IHook<Functions.DefaultTaskFnWithReturn> hook);
-        public delegate int DefaultReturnFn(IHook<Functions.DefaultReturnFn> hook);
+        public delegate byte CdeclReturnByteFnFn(IHook<Functions.CdeclReturnByteFn> hook);
+        public delegate int CdeclReturnIntFn(IHook<Functions.CdeclReturnIntFn> hook);
 
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
     }

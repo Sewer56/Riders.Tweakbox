@@ -21,6 +21,7 @@ using SharpDX.Direct3D9;
 using static Sewer56.SonicRiders.API.Misc;
 using Microsoft.Windows.Sdk;
 using static Riders.Tweakbox.Misc.Native;
+using static Sewer56.SonicRiders.Functions.Functions;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -52,8 +53,8 @@ namespace Riders.Tweakbox.Controllers
 
         // Hooks
         private IHook<DX9Hook.CreateDevice> _createDeviceHook;
-        private IHook<Functions.RenderTexture2DFnPtr> _renderTexture2dHook;
-        private IHook<Functions.RenderPlayerIndicatorFnPtr> _renderPlayerIndicatorHook;
+        private IHook<RenderTexture2DFnPtr> _renderTexture2dHook;
+        private IHook<RenderPlayerIndicatorFnPtr> _renderPlayerIndicatorHook;
 
         // Utilities
         private AspectConverter _aspectConverter = new AspectConverter(4 / 3f);
@@ -61,21 +62,17 @@ namespace Riders.Tweakbox.Controllers
 
         public GraphicsController()
         {
-            _controller = this;
+            _controller        = this;
             _createDeviceHook  = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
 
             Reset     = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateWrapperFunction<DX9Hook.Reset>((int)IDirect3DDevice9.Reset);
             ResetHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateFunctionHook<DX9Hook.Reset>((int)IDirect3DDevice9.Reset, ResetImpl);
 
-            var renderTexture2dPtr = (delegate* unmanaged[Stdcall]<int, Vector3*, int, float, int>)&RenderTexture2DPtr;
-            _renderTexture2dHook = Functions.RenderTexture2DPtr.Hook(new Functions.RenderTexture2DFnPtr() { Value = renderTexture2dPtr }).Activate();
-
-            var renderPlayerIndicatorPtr = (delegate* unmanaged[Stdcall]<int, int, int, int, int, int, int, int, int, int, int>)&RenderPlayerIndicatorPtr;
-            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicatorPtr.Hook(new Functions.RenderPlayerIndicatorFnPtr() { Value = renderPlayerIndicatorPtr }).Activate();
+            _renderTexture2dHook       = Functions.RenderTexture2D.HookAs<RenderTexture2DFnPtr>(typeof(GraphicsController), nameof(RenderTexture2DPtr)).Activate();
+            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicator.HookAs<RenderPlayerIndicatorFnPtr>(typeof(GraphicsController), nameof(RenderPlayerIndicatorPtr)).Activate();
 
             // Patch window style if borderless is set
             _config.ConfigUpdated += OnConfigUpdated;
-            
         }
 
         /// <inheritdoc />

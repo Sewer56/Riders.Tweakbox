@@ -26,7 +26,7 @@ namespace Riders.Tweakbox.Controllers
 
         // Hooks
         private IAsmHook _bootToMenu;
-        private IHook<Functions.DefaultReturnFn> _readConfigHook;
+        private IHook<Functions.CdeclReturnIntFn> _readConfigHook;
 
         public FixesController()
         {
