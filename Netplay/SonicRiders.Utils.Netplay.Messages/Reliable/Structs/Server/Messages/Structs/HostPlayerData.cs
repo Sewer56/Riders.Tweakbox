@@ -3,7 +3,7 @@
 namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
 {
     [Equals(DoNotAddEqualityOperators = true)]
-    [MessagePackObject()]
+    [MessagePackObject]
     public class HostPlayerData
     {
         [Key(0)]
@@ -17,7 +17,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
 
         /// <summary>
         /// Index of the individual player.
-        /// This corresponds to the indices in <see cref="UnreliablePacket"/> and <see cref="BoostTornadoAttackPacked"/>.
+        /// This corresponds to the indices in <see cref="UnreliablePacket"/>.
         /// Ignore if received from client.
         /// </summary>
         [Key(2)]
@@ -30,6 +30,12 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
         public int Latency = 999;
 
         /// <summary>
+        /// Number of local players assigned to this machine.
+        /// </summary>
+        [Key(4)]
+        public int NumPlayers = 1;
+
+        /// <summary>
         /// Copies data submitted by the client.
         /// </summary>
         public void UpdateFromClient(HostPlayerData data)
@@ -37,6 +43,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs
             this.Name = data.Name;
             this.ClientType = data.ClientType;
             this.Latency = data.Latency;
+            this.NumPlayers = data.NumPlayers;
         }
     }
 }
