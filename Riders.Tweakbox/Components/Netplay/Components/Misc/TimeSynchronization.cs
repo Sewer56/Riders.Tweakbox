@@ -30,7 +30,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Manager = socket.Manager;
             socket.Listener.NtpResponseEvent += OnNtpResponse;
             CreateNtpRequest(null);
-            _synchronizeTimer = new Timer(CreateNtpRequest, null, NtpSyncEventPeriod, NtpSyncEventPeriod);
+            _synchronizeTimer = new Timer(CreateNtpRequest, null, 0, NtpSyncEventPeriod);
         }
 
         /// <inheritdoc />
