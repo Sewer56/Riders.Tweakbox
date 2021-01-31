@@ -1,10 +1,12 @@
 using System;
 using System.IO;
 using System.Numerics;
-using BitStreams;
 using EnumsNET;
+using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.BitStream;
+using Sewer56.BitStream;
 using Sewer56.NumberUtilities;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.SonicRiders.API;
@@ -136,42 +138,33 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             fixed (byte* bytePtr = buffer)
             {
-                using var memStream = new UnmanagedMemoryStream(bytePtr, buffer.Length, buffer.Length, FileAccess.ReadWrite);
-                var bitStream = new BitStream(memStream);
-                bitStream.AutoIncreaseStream = true;
-
-                if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteNullable(Position);
-                if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteNullable(_rotationX);
-                if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteNullable(Velocity);
+                var stream    = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(bytePtr, buffer.Length));
+                var bitStream = new BitStream<FixedPointerByteStream>(stream);
+                
+                if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteGeneric(Position.Value);
+                if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteGeneric(_rotationX.Value);
+                if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteGeneric(Velocity.Value);
                 if (data.HasAllFlags(HasData.HasTurnAndLean))
                 {
-                    bitStream.WriteNullable(_turnAmount);
-                    bitStream.WriteNullable(_leanAmount);
+                    bitStream.WriteGeneric(_turnAmount.Value);
+                    bitStream.WriteGeneric(_leanAmount.Value);
                 }
 
-                if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteNullable(ControlFlags, ControlFlagsBits);
-                if (data.HasAllFlags(HasData.HasRings)) bitStream.WriteNullable((byte?)Rings, RingsBits);
+                if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteGeneric((int) ControlFlags, ControlFlagsBits);
+                if (data.HasAllFlags(HasData.HasRings)) bitStream.Write<byte>(Rings.Value, RingsBits);
                 if (data.HasAllFlags(HasData.HasState))
                 {
-                    bitStream.WriteNullable((byte?)State, StateBits);
-                    bitStream.WriteNullable((byte?)LastState, StateBits);
+                    bitStream.Write(State.Value, StateBits);
+                    bitStream.Write(LastState.Value, StateBits);
                 }
-                if (data.HasAllFlags(HasData.HasAir)) bitStream.WriteNullable(Air, AirBits);
+                if (data.HasAllFlags(HasData.HasAir)) bitStream.Write<uint>(Air.Value, AirBits);
                 if (data.HasAllFlags(HasData.HasAnimation))
                 {
-                    bitStream.WriteNullable(Animation, AnimationBits);
-                    bitStream.WriteNullable(LastAnimation, AnimationBits);
+                    bitStream.Write(Animation.Value, AnimationBits);
+                    bitStream.Write(LastAnimation.Value, AnimationBits);
                 }
 
-                // Calculate number of bytes serialized.
-                var bitStreamPos = bitStream.GetStream().Position;
-                var extraByte    = bitStream.BitPosition != 0 ? 1 : 0;
-                var numBytesSerialized = bitStreamPos + extraByte;
-                
-                // Write final byte and copy back to original stream.
-                memStream.Seek(0, SeekOrigin.Begin);
-                bitStream.CopyStreamTo(memStream);
-                return buffer.Slice(0, (int) numBytesSerialized);
+                return buffer.Slice(0, (int) bitStream.NextByteIndex);
             }
         }
 
@@ -181,17 +174,15 @@ namespace Riders.Netplay.Messages.Unreliable
         public static unsafe UnreliablePacketPlayer Deserialize(BufferedStreamReader reader, HasData fields)
         {
             var player      = new UnreliablePacketPlayer();
-            var stream      = reader.BaseStream();
-            var originalPos = reader.Position();
-            stream.Position = originalPos;
-            var bitStream   = new BitStream(stream);
+            var stream      = new BufferedStreamReaderByteStream(reader);
+            var bitStream   = new BitStream<BufferedStreamReaderByteStream>(stream, (int)(reader.Position() * 8));
             
-            bitStream.ReadIfHasFlags(ref player.Position, fields, HasData.HasPosition);
-            bitStream.ReadIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
-            bitStream.ReadIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
-            bitStream.ReadIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
-            bitStream.ReadIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
-            bitStream.ReadIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags, ControlFlagsBits);
+            bitStream.ReadStructIfHasFlags(ref player.Position, fields, HasData.HasPosition);
+            bitStream.ReadStructIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
+            bitStream.ReadStructIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
+            bitStream.ReadStructIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
+            bitStream.ReadStructIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
+            bitStream.ReadStructIfHasFlags(ref player.ControlFlags, fields, HasData.HasControlFlags, ControlFlagsBits);
 
             bitStream.ReadIfHasFlags(ref player.Rings, fields, HasData.HasRings, RingsBits);
             bitStream.ReadIfHasFlags(ref player.State, fields, HasData.HasState, StateBits);
@@ -201,9 +192,7 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.ReadIfHasFlags(ref player.LastAnimation, fields, HasData.HasAnimation, AnimationBits);
 
             // Seek the BSR
-            var bitStreamPos = bitStream.GetStream().Position;
-            var extraByte    = bitStream.BitPosition != 0 ? 1 : 0;
-            reader.Seek(originalPos + bitStreamPos + extraByte, SeekOrigin.Begin);
+            reader.Seek(bitStream.NextByteIndex, SeekOrigin.Begin);
 
             // TODO: Hack that removes a turbulence related flag in order to prevent crashing in the meantime.
             // Real way to get around this crash is not yet known; albeit the crash happens at 00457EC9

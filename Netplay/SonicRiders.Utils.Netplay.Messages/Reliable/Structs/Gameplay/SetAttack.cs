@@ -1,14 +1,14 @@
 ﻿using System;
-using BitStreams;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.Interfaces;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
     /// <summary>
     /// Informs the host of an individual attack.
     /// </summary>
-    public struct SetAttack : IBitPackable<SetAttack>, IEquatable<SetAttack>
+    public struct SetAttack : Misc.Interfaces.IBitPackable<SetAttack>, IEquatable<SetAttack>
     {
         /// <summary>
         /// True if a value is set, else false.
@@ -36,16 +36,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         public int GetSizeOfEntry() => Constants.PlayerCountBitfield.NumBits + 1;
 
         /// <inheritdoc />
-        public SetAttack FromStream(BitStream stream)
+        public SetAttack FromStream<T>(ref BitStream<T> stream) where T : IByteStream
         {
-            var data   = stream.ReadByte(GetSizeOfEntry());
+            var data = stream.Read<byte>(GetSizeOfEntry());
             bool valid = (data & 1) == 1;
             var target = (byte)(data >> 1);
             return new SetAttack(valid, target);
         }
 
         /// <inheritdoc />
-        public void ToStream(BitStream stream)
+        public void ToStream<T>(ref BitStream<T> stream) where T : IByteStream
         {
             var valid = IsValid ? 1 : 0;
             var targetShift = (Target << 1);

@@ -1,11 +1,8 @@
 ﻿using System;
-using BitStreams;
-using MessagePack;
 using Reloaded.Memory;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks;
@@ -19,7 +16,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
     /// Client -> Host
     /// </summary>
     [Equals(DoNotAddEqualityOperators = true)]
-    public struct CharaSelectLoop : IMenuSynchronizationCommand, IBitPackable<CharaSelectLoop>
+    public struct CharaSelectLoop : IMenuSynchronizationCommand, Misc.Interfaces.IBitPackable<CharaSelectLoop>
     {
         private const int SizeOfCharacterBits = 5;
         private const int SizeOfBoardBits     = 6;
@@ -140,22 +137,22 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu.Commands
         public int GetSizeOfEntry() => SizeOfCharacterBits + SizeOfBoardBits + SizeOfStatusBits;
 
         /// <inheritdoc />
-        public CharaSelectLoop FromStream(BitStream stream)
+        public CharaSelectLoop FromStream<T>(ref BitStream<T> stream) where T : IByteStream
         {
-            return new CharaSelectLoop
+            return new CharaSelectLoop()
             {
                 Character = stream.Read<byte>(SizeOfCharacterBits),
-                Board = stream.Read<byte>(SizeOfBoardBits),
-                Status = stream.Read<PlayerStatus>(SizeOfStatusBits)
+                Board     = stream.Read<byte>(SizeOfBoardBits),
+                Status    = (PlayerStatus) stream.Read<byte>(SizeOfStatusBits)
             };
         }
 
         /// <inheritdoc />
-        public void ToStream(BitStream stream)
+        public void ToStream<T>(ref BitStream<T> stream) where T : IByteStream
         {
             stream.Write(Character, SizeOfCharacterBits);
-            stream.Write(Board, SizeOfBoardBits); 
-            stream.Write(Status, SizeOfStatusBits);
+            stream.Write(Board, SizeOfBoardBits);
+            stream.Write((byte) Status, SizeOfStatusBits);
         }
     }
 }

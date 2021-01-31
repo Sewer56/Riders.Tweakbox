@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using BitStreams;
+using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Misc.BitStream;
+using Sewer56.BitStream;
+using Sewer56.BitStream.ByteStreams;
+using Sewer56.BitStream.Interfaces;
 
 namespace Riders.Netplay.Messages.Misc.Interfaces
 {
@@ -87,23 +91,17 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
             var numBits = parent.ItemCountNumBits;
 
             // Setup the bitstream
-            var stream      = reader.BaseStream();
-            var originalPos = reader.Position();
-            stream.Position = originalPos;
-            var bitStream   = new BitStream(stream);
+            var bitStream   = new BitStream<BufferedStreamReaderByteStream>(new BufferedStreamReaderByteStream(reader), (int)(reader.Position() * 8));
 
             // Read the stream
             parent.NumElements = bitStream.Read<int>(numBits) + 1;
             parent.Elements    = SharedPool.Rent(parent.NumElements);
 
             for (int x = 0; x < parent.NumElements; x++)
-                parent.Elements[x] = child.FromStream(bitStream);
+                parent.Elements[x] = child.FromStream(ref bitStream);
 
             // Finalize the bitstream.
-            var bitStreamPos = bitStream.GetStream().Position;
-            var extraByte = bitStream.BitPosition != 0 ? 1 : 0;
-            reader.Seek(originalPos + bitStreamPos + extraByte, SeekOrigin.Begin);
-
+            reader.Seek(bitStream.NextByteIndex, SeekOrigin.Begin);
             return parent;
         }
 
@@ -115,26 +113,15 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
             // Setup
             fixed (byte* bytePtr = resultBuffer)
             {
-                var memStream = new UnmanagedMemoryStream(bytePtr, resultBuffer.Length, resultBuffer.Length, FileAccess.ReadWrite);
-                var bitStream = new BitStream(memStream);
-                bitStream.AutoIncreaseStream = true;
+                var byteStream = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(bytePtr, resultBuffer.Length));
+                var bitStream  = new BitStream<FixedPointerByteStream>(byteStream);
 
                 // Write the stream
                 bitStream.Write(NumElements - 1, ItemCountNumBits);
                 for (int x = 0; x < NumElements; x++)
-                    Elements[x].ToStream(bitStream);
+                    Elements[x].ToStream(ref bitStream);
 
-                // Cleanup
-                memStream.Seek(0, SeekOrigin.Begin);
-                bitStream.CopyStreamTo(memStream);
-                memStream.Seek(0, SeekOrigin.Begin);
-
-                var result = resultBuffer.Slice(0, SizeOfDataBytes);
-                memStream.Read(result);
-
-                // Dispose
-                memStream.Dispose();
-                return result;
+                return resultBuffer.Slice(0, SizeOfDataBytes);
             }
         }
 

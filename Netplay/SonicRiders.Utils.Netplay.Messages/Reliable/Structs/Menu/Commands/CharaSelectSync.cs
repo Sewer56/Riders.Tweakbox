@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Linq;
-using MessagePack;
-using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
-using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;

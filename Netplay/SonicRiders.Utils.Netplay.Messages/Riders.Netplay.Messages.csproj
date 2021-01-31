@@ -15,12 +15,12 @@
     <PackageReference Include="MessagePackAnalyzer" Version="2.1.115" />
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Memory" Version="4.1.0" />
-    <PackageReference Include="rubendal.BitStream" Version="1.2.0" />
     <PackageReference Include="ToString.Fody" Version="1.11.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Submodules\NumberUtilities\Sewer56.NumberUtilities\Sewer56.NumberUtilities.csproj" />
+    <ProjectReference Include="..\..\Submodules\Sewer56.BitStream\Sewer56.BitStream\Sewer56.BitStream.csproj" />
     <ProjectReference Include="..\..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />
   </ItemGroup>
 

@@ -138,29 +138,32 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public unsafe void Deserialize(Span<byte> data)
         {
-            using var memStream = new MemoryStream(data.ToArray());
-            using var reader = new BufferedStreamReader(memStream, (int)memStream.Length);
-            Flags = reader.Read<HasData>();
-            if (Flags.HasAllFlags(HasData.HasSyncStartReady)) HasSyncStartReady = true;
-            if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
+            fixed (byte* dataPtr = data)
+            {
+                using var memStream = new UnmanagedMemoryStream(dataPtr, data.Length);
+                using var reader = new BufferedStreamReader(memStream, (int)memStream.Length);
+                Flags = reader.Read<HasData>();
+                if (Flags.HasAllFlags(HasData.HasSyncStartReady)) HasSyncStartReady = true;
+                if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
 
-            reader.ReadIfHasFlags(ref Random, Flags, HasData.HasSRand);
-            if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
+                reader.ReadIfHasFlags(ref Random, Flags, HasData.HasSRand);
+                if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
 
-            reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
-            if (Flags.HasAllFlags(HasData.HasMovementFlags)) MovementFlags = new MovementFlagsPacked().AsInterface().Deserialize(reader);
+                reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
+                if (Flags.HasAllFlags(HasData.HasMovementFlags)) MovementFlags = new MovementFlagsPacked().AsInterface().Deserialize(reader);
 
-            reader.ReadIfHasFlags(ref SetLapCounter, Flags, HasData.HasSetLapCounter);
-            if (Flags.HasAllFlags(HasData.HasLapCounters)) LapCounters = new LapCounters().AsInterface().Deserialize(reader);
+                reader.ReadIfHasFlags(ref SetLapCounter, Flags, HasData.HasSetLapCounter);
+                if (Flags.HasAllFlags(HasData.HasLapCounters)) LapCounters = new LapCounters().AsInterface().Deserialize(reader);
 
-            reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
-            if (Flags.HasAllFlags(HasData.HasAttack)) Attack = new AttackPacked().AsInterface().Deserialize(reader);
+                reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
+                if (Flags.HasAllFlags(HasData.HasAttack)) Attack = new AttackPacked().AsInterface().Deserialize(reader);
 
-            reader.ReadIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
-            reader.ReadIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
-            reader.ReadIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
-            if (Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
-            if (Flags.HasAllFlags(HasData.HasServerMessage)) ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
+                reader.ReadIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
+                reader.ReadIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
+                reader.ReadIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
+                if (Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
+                if (Flags.HasAllFlags(HasData.HasServerMessage)) ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
+            }
         }
 
         /// <summary>

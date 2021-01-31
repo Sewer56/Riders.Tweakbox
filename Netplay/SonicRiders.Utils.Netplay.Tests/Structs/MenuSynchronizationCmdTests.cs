@@ -53,7 +53,10 @@ namespace Riders.Netplay.Messages.Tests.Structs
             Assert.IsType<CharaSelectSync>(command.Command);
 
             var messageCopy = (CharaSelectSync)command.Command;
-            Assert.Equal(message, messageCopy);
+            Assert.Equal(message.NumElements, messageCopy.NumElements);
+
+            for (int x = 0; x < message.NumElements; x++)
+                Assert.Equal(message.Elements[x], messageCopy.Elements[x]);
         }
     }
 }
