@@ -24,9 +24,6 @@ namespace Riders.Tweakbox
         private IModLoader _modLoader;
 
         private Tweakbox _tweakbox;
-        #if DEBUG
-        private GCMonitor _gcMonitor;
-        #endif
 
         /// <summary>
         /// Entry point for your mod.
@@ -34,8 +31,7 @@ namespace Riders.Tweakbox
         public async void Start(IModLoaderV1 loader)
         {
             #if DEBUG
-            Debugger.Launch();
-            _gcMonitor = GCMonitor.Instance;
+            //Debugger.Launch();
             #endif
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();

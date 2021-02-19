@@ -1,18 +1,19 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
+using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Misc;
+using StructLinq;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
     public class LatencyUpdate : INetplayComponent
     {
-        private const int UpdateIntervalMs = 1000;
+        private const int UpdateIntervalMs = 3000;
 
         /// <inheritdoc />
         public Socket Socket { get; set; }
@@ -27,24 +28,34 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Socket.Listener.NetworkLatencyUpdateEvent += OnNetworkLatencyUpdate;
 
             if (Socket.GetSocketType() == SocketType.Host)
-            {
                 _synchronizeTimer = new Timer(UpdateClientLatencies, null, 0, UpdateIntervalMs);
-            }
         }
+
+        /// <inheritdoc />
+        public void Dispose() => _synchronizeTimer?.Dispose();
 
         private void UpdateClientLatencies(object? _)
         {
             try
             {
                 var state = (HostState)Socket.State;
-                var clientMap = state.ClientMap;
+
+                // Return if peers don't have any other peers to know latencies of.
+                if (Manager.ConnectedPeerList.Count <= 1)
+                    return;
+
                 for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
                 {
-                    var peer         = Manager.ConnectedPeerList[x];
-                    var hostIndex    = 0;
-                    var excludeIndex = clientMap.GetPlayerData(peer).PlayerIndex;
-                    var latencies    = clientMap.GetPlayerData().Where(x => x.PlayerIndex != excludeIndex && x.PlayerIndex != hostIndex).Select(x => (short) x.Latency);
-                    Socket.Send(peer, new ReliablePacket(new HostUpdateLatency(latencies.ToArray())), DeliveryMethod.ReliableOrdered);
+                    var peer = Manager.ConnectedPeerList[x];
+                    if (!state.ClientMap.TryGetPeer(peer, out var playerData)) 
+                        continue;
+
+                    var excludeIndex = playerData.PlayerIndex;
+                    var latencies    = state.PlayerInfo.ToStructEnumerable()
+                        .Where(x => x.PlayerIndex != excludeIndex, x => x)
+                        .Select(x => (short)x.Latency, x => x).ToArray();
+
+                    Socket.Send(peer, ReliablePacket.Create(new HostUpdateClientLatency(latencies)), DeliveryMethod.ReliableOrdered);
                 }
             }
             catch (Exception e)
@@ -53,9 +64,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
         }
 
-        /// <inheritdoc />
-        public void Dispose() => _synchronizeTimer?.Dispose();
-
         private void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
             if (Socket.GetSocketType() == SocketType.Host)
@@ -63,43 +71,42 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 // Update latency of client.
                 var hostState = (HostState) Socket.State;
                 var data = hostState.ClientMap.GetPlayerData(peer);
-                if (data != null)
-                    data.Latency = latency;
+                data.Latency = latency;
             }
             else
             {
+                // Update ping to host.
                 Socket.State.PlayerInfo[0].Latency = latency;
             }
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> pkt)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (!pkt.TryGetPacket(Socket.State.MaxLatency, out ReliablePacket packet))
+            if (Socket.GetSocketType() == SocketType.Host)
                 return;
 
-            if (Socket.GetSocketType() == SocketType.Host) 
-                return;
-
-            if (!packet.ServerMessage.HasValue)
-                return;
-
-            var serverMessage = packet.ServerMessage.Value;
-            switch (serverMessage.Message)
+            switch (packet.MessageType)
             {
-                // Latency to host handled in socket code!
-                case HostUpdateLatency hostUpdateLatency:
+                case MessageType.HostUpdateClientPing:
+                {
+                    var latencies = packet.GetMessage<HostUpdateClientLatency>();
                     try
                     {
-                        for (int x = 0; x < hostUpdateLatency.Data.Length; x++)
-                            Socket.State.PlayerInfo[x + 1].Latency = hostUpdateLatency.Data[x];
+                        // Fill in from player 2, as player 1 will be host.
+                        for (int x = 0; x < latencies.NumElements; x++)
+                            Socket.State.PlayerInfo[x + 1].Latency = latencies.Data[x];
                     }
                     catch (Exception e)
                     {
                         Log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}", LogCategory.Socket);
                     }
                     break;
+                }
             }
         }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

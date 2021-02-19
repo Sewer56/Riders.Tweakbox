@@ -26,6 +26,11 @@ namespace Riders.Tweakbox.Controllers
         private static FramePacingController _controller;
 
         /// <summary>
+        /// An event executed before the <see cref="EndFrame"/> hook is executed.
+        /// </summary>
+        public event Action OnEndFrame;
+
+        /// <summary>
         /// Amount of time spinning after sleep.
         /// </summary>
         public float TimerGranularity => (float)_fps.TimerGranularity;
@@ -104,6 +109,9 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void EndFrameImpl()
         {
+            // Invoke EndFrame event.
+            OnEndFrame?.Invoke();
+
             // Sample CPU usage.
             if (_cpuLoadSampleWatch.Elapsed.TotalMilliseconds > CpuSampleIntervalMs)
             {

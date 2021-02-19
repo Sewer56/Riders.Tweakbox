@@ -1,17 +1,19 @@
 using System;
-using System.IO;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using EnumsNET;
-using Reloaded.Memory.Pointers;
-using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.BitStream;
+using Riders.Netplay.Messages.Unreliable.Enums;
+using Riders.Netplay.Messages.Unreliable.Structs;
 using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
 using Sewer56.NumberUtilities;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
+using MovementFlags = Riders.Netplay.Messages.Unreliable.Structs.MovementFlags;
 
 namespace Riders.Netplay.Messages.Unreliable
 {
@@ -29,7 +31,7 @@ namespace Riders.Netplay.Messages.Unreliable
         private const int StateBits = 5;
         private const int AirBits   = 18;
         private const int AnimationBits = 7;
-        private const int ControlFlagsBits = 21;
+        private static readonly int ControlFlagsBits = EnumNumBits<MinControlFlags>.Number;
 
         /// <summary>
         /// Position of the player in X,Y,Z coordinates.
@@ -78,7 +80,7 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Flags that control various behaviours.
         /// </summary>
-        public PlayerControlFlags? ControlFlags;
+        public MinControlFlags? ControlFlags;
 
         /// <summary>
         /// Velocity of the player in the X and Y direction.
@@ -116,66 +118,59 @@ namespace Riders.Netplay.Messages.Unreliable
             }
         }
 
+        /// <summary>
+        /// Stores the movement flags related to drift/break/charge jump for the player.
+        /// </summary>
+        public MovementFlags? MovementFlags;
+
+        /// <summary>
+        /// X and Y movement of the analog stick.
+        /// </summary>
+        public AnalogXY? AnalogXY;
+
         private CompressedNumber<float, Float, ushort, UShort>? _rotationX;
         private CompressedNumber<float, Float, ushort, UShort>? _turnAmount;
         private CompressedNumber<float, Float, ushort, UShort>? _leanAmount;
 
-        public UnreliablePacketPlayer(Vector3? position, uint? air, byte? rings, PlayerState? lastState, PlayerState? state, float? rotationXRadians, Vector2? velocity) : this()
-        {
-            Position = position;
-            Air = air;
-            Rings = rings;
-            LastState = (byte?) lastState;
-            State = (byte?) state;
-            Velocity = velocity;
-            RotationX = rotationXRadians;
-        }
-
         /// <summary>
         /// Serializes the current packet.
         /// </summary>
-        public unsafe Span<byte> Serialize(Span<byte> buffer, HasData data = HasData.All)
+        public unsafe void Serialize<TByteSource>(ref BitStream<TByteSource> bitStream, HasData data = HasDataAll) where TByteSource : IByteStream
         {
-            fixed (byte* bytePtr = buffer)
+            if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteGeneric(Position.GetValueOrDefault());
+            if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteGeneric(_rotationX.GetValueOrDefault());
+            if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteGeneric(Velocity.GetValueOrDefault());
+            if (data.HasAllFlags(HasData.HasTurnAndLean))
             {
-                var stream    = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(bytePtr, buffer.Length));
-                var bitStream = new BitStream<FixedPointerByteStream>(stream);
-                
-                if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteGeneric(Position.Value);
-                if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteGeneric(_rotationX.Value);
-                if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteGeneric(Velocity.Value);
-                if (data.HasAllFlags(HasData.HasTurnAndLean))
-                {
-                    bitStream.WriteGeneric(_turnAmount.Value);
-                    bitStream.WriteGeneric(_leanAmount.Value);
-                }
-
-                if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteGeneric((int) ControlFlags, ControlFlagsBits);
-                if (data.HasAllFlags(HasData.HasRings)) bitStream.Write<byte>(Rings.Value, RingsBits);
-                if (data.HasAllFlags(HasData.HasState))
-                {
-                    bitStream.Write(State.Value, StateBits);
-                    bitStream.Write(LastState.Value, StateBits);
-                }
-                if (data.HasAllFlags(HasData.HasAir)) bitStream.Write<uint>(Air.Value, AirBits);
-                if (data.HasAllFlags(HasData.HasAnimation))
-                {
-                    bitStream.Write(Animation.Value, AnimationBits);
-                    bitStream.Write(LastAnimation.Value, AnimationBits);
-                }
-
-                return buffer.Slice(0, (int) bitStream.NextByteIndex);
+                bitStream.WriteGeneric(_turnAmount.GetValueOrDefault());
+                bitStream.WriteGeneric(_leanAmount.GetValueOrDefault());
             }
+
+            if (data.HasAllFlags(HasData.HasControlFlags)) bitStream.WriteGeneric((int)ControlFlags.GetValueOrDefault(), ControlFlagsBits);
+            if (data.HasAllFlags(HasData.HasRings)) bitStream.Write<byte>(Rings.GetValueOrDefault(), RingsBits);
+            if (data.HasAllFlags(HasData.HasState))
+            {
+                bitStream.Write(State.GetValueOrDefault(), StateBits);
+                bitStream.Write(LastState.GetValueOrDefault(), StateBits);
+            }
+
+            if (data.HasAllFlags(HasData.HasAir)) bitStream.Write<uint>(Air.GetValueOrDefault(), AirBits);
+            if (data.HasAllFlags(HasData.HasAnimation))
+            {
+                bitStream.Write(Animation.GetValueOrDefault(), AnimationBits);
+                bitStream.Write(LastAnimation.GetValueOrDefault(), AnimationBits);
+            }
+
+            if (data.HasAllFlags(HasData.HasMovementFlags)) MovementFlags.GetValueOrDefault().ToStream(ref bitStream);
+            if (data.HasAllFlags(HasData.HasAnalogInput)) AnalogXY.GetValueOrDefault().ToStream(ref bitStream); 
         }
 
         /// <summary>
         /// Serializes an instance of the packet.
         /// </summary>
-        public static unsafe UnreliablePacketPlayer Deserialize(BufferedStreamReader reader, HasData fields)
+        public static unsafe UnreliablePacketPlayer Deserialize<TByteSource>(ref BitStream<TByteSource> bitStream, HasData fields) where TByteSource : IByteStream
         {
-            var player      = new UnreliablePacketPlayer();
-            var stream      = new BufferedStreamReaderByteStream(reader);
-            var bitStream   = new BitStream<BufferedStreamReaderByteStream>(stream, (int)(reader.Position() * 8));
+            var player = new UnreliablePacketPlayer();
             
             bitStream.ReadStructIfHasFlags(ref player.Position, fields, HasData.HasPosition);
             bitStream.ReadStructIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
@@ -190,13 +185,8 @@ namespace Riders.Netplay.Messages.Unreliable
             bitStream.ReadIfHasFlags(ref player.Air, fields, HasData.HasAir, AirBits);
             bitStream.ReadIfHasFlags(ref player.Animation, fields, HasData.HasAnimation, AnimationBits);
             bitStream.ReadIfHasFlags(ref player.LastAnimation, fields, HasData.HasAnimation, AnimationBits);
-
-            // Seek the BSR
-            reader.Seek(bitStream.NextByteIndex, SeekOrigin.Begin);
-
-            // TODO: Hack that removes a turbulence related flag in order to prevent crashing in the meantime.
-            // Real way to get around this crash is not yet known; albeit the crash happens at 00457EC9
-            player.ControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
+            if (fields.HasAllFlags(HasData.HasMovementFlags)) player.MovementFlags = new MovementFlags().FromStream(ref bitStream);
+            if (fields.HasAllFlags(HasData.HasAnalogInput)) player.AnalogXY = new AnalogXY().FromStream(ref bitStream);
 
             return player;
         }
@@ -205,29 +195,31 @@ namespace Riders.Netplay.Messages.Unreliable
         /// Gets a packet for an individual player given the index of the player.
         /// </summary>
         /// <param name="index">The current player index (0-7).</param>
-        public static UnreliablePacketPlayer FromGame(int index)
+        public static unsafe UnreliablePacketPlayer FromGame(int index)
         {
             ref var player = ref Player.Players[index];
-            var packet = new UnreliablePacketPlayer();
-
-            packet.Position = player.Position;
-            packet.RotationX = player.Rotation.Y;
-            packet.Velocity = new Vector2(player.Speed, player.VSpeed);
-            packet.Rings = (byte?)player.Rings;
-            packet.State = (byte?) player.PlayerState;
-            packet.LastState = (byte?) player.LastPlayerState;
-            packet.Air = (uint?)player.Air;
-            packet.TurningAmount = player.TurningAmount;
-            packet.LeanAmount = player.DriftAngle;
-            packet.ControlFlags = player.PlayerControlFlags;
-            packet.Animation = (byte?) player.Animation;
-            packet.LastAnimation = (byte?) player.LastAnimation;
-
-            return packet;
+            return new UnreliablePacketPlayer
+            {
+                Position = player.Position,
+                RotationX = player.Rotation.Y,
+                Velocity = new Vector2(player.Speed, player.VSpeed),
+                Rings = (byte?) player.Rings,
+                State = (byte?) player.PlayerState,
+                LastState = (byte?) player.LastPlayerState,
+                Air = (uint?) player.Air,
+                TurningAmount = player.TurningAmount,
+                LeanAmount = player.DriftAngle,
+                ControlFlags = player.PlayerControlFlags.Extract(),
+                Animation = (byte?) player.Animation,
+                LastAnimation = (byte?) player.LastAnimation,
+                MovementFlags = new MovementFlags(player.MovementFlags),
+                AnalogXY = Structs.AnalogXY.FromGame((Sewer56.SonicRiders.Structures.Gameplay.Player*) Unsafe.AsPointer(ref player))
+            };
         }
 
         /// <summary>
         /// Applies the current packet data to a specified player index.
+        /// Does not set <see cref="MovementFlags"/> and <see cref="AnalogXY"/>, these have separate caching mechanisms.
         /// </summary>
         /// <param name="index">Individual player index.</param>
         public unsafe void ToGame(in int index)
@@ -247,7 +239,7 @@ namespace Riders.Netplay.Messages.Unreliable
             if (TurningAmount.HasValue) player.TurningAmount = TurningAmount.Value;
             if (LeanAmount.HasValue) player.DriftAngleCopy = LeanAmount.Value;
             if (LeanAmount.HasValue) player.DriftAngle = LeanAmount.Value;
-            if (ControlFlags.HasValue) player.PlayerControlFlags = ControlFlags.Value;
+            if (ControlFlags.HasValue) player.PlayerControlFlags.SetMinFlags(ControlFlags.Value);
             if (State.HasValue)
             {
                 if (!IsCurrentStateBlacklisted(player.LastPlayerState) && IsWhitelisted((PlayerState) LastState.Value))
@@ -278,7 +270,12 @@ namespace Riders.Netplay.Messages.Unreliable
 
             // Game removes floor flag 
             if (player.PlayerState == PlayerState.Running || player.PlayerState == PlayerState.RunningAfterStart)
+            {
                 player.PlayerControlFlags |= PlayerControlFlags.IsFloored;
+            }
+
+            // TODO: The flag below can cause the game to crash for unexpected reasons; we're removing it for now.
+            player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
         }
 
         public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
@@ -369,7 +366,7 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <inheritdoc />
         public bool Equals(UnreliablePacketPlayer other)
         {
-            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && LastAnimation == other.LastAnimation && Animation == other.Animation && Nullable.Equals(Velocity, other.Velocity) && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(_turnAmount, other._turnAmount) && Nullable.Equals(_leanAmount, other._leanAmount);
+            return Nullable.Equals(Position, other.Position) && Air == other.Air && Rings == other.Rings && LastState == other.LastState && State == other.State && LastAnimation == other.LastAnimation && Animation == other.Animation && ControlFlags == other.ControlFlags && Nullable.Equals(Velocity, other.Velocity) && Nullable.Equals(_rotationX, other._rotationX) && Nullable.Equals(_turnAmount, other._turnAmount) && Nullable.Equals(_leanAmount, other._leanAmount);
         }
 
         /// <inheritdoc />
@@ -389,6 +386,7 @@ namespace Riders.Netplay.Messages.Unreliable
             hashCode.Add(State);
             hashCode.Add(LastAnimation);
             hashCode.Add(Animation);
+            hashCode.Add(ControlFlags);
             hashCode.Add(Velocity);
             hashCode.Add(_rotationX);
             hashCode.Add(_turnAmount);

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Tweakbox.Components.Netplay.Components.Misc;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -14,6 +12,8 @@ using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
+using StructLinq;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
@@ -22,6 +22,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public EventController Event { get; set; }
+        public CommonState State { get; private set; }
 
         /// <summary>
         /// True if a skip has been requested by host.
@@ -36,6 +37,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             Socket = socket;
             Event  = @event;
+            State  = Socket.State;
             _framePacingController = IoC.Get<FramePacingController>();
 
             Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
@@ -93,30 +95,40 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> pkt)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (pkt.GetPacketKind() != PacketKind.Reliable)
+            if (packet.MessageType != MessageType.StartSync)
                 return;
 
-            var packet = pkt.As<ReliablePacket>();
-            if (packet.HasSyncStartSkip)
+            var message = packet.GetMessage<StartSync>();
+            switch (message.SyncType)
             {
-                _skipRequested = true;
-                if (Socket.GetSocketType() == SocketType.Host)
-                    Socket.SendToAllExceptAndFlush(pkt.Source, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Received Skip from Client, Rebroadcasting.");
-            }
+                case StartSyncType.Skip:
+                {
+                    _skipRequested = true;
+                    if (Socket.GetSocketType() != SocketType.Host)
+                        return;
 
-            if (packet.HasSyncStartReady)
-            {
-                if (Socket.GetSocketType() == SocketType.Host)
-                {
-                    Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(packet.HasSyncStartReady)} from Client.", LogCategory.Race);
-                    _hostReadyToStartRaceMap[pkt.Source.Id] = true;
+                    // Re-broadcast skip message to clients.
+                    using var reliable = ReliablePacket.Create(new StartSync() { SyncType = StartSyncType.Skip });
+                    Socket.SendToAllExceptAndFlush(source, reliable, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Received Skip from Client, Rebroadcasting.", LogCategory.Race);
+                    break;
                 }
-                else
-                {
+
+                case StartSyncType.Ready when Socket.GetSocketType() == SocketType.Host:
+                    Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(StartSyncType.Ready)} from Client.", LogCategory.Race);
+                    _hostReadyToStartRaceMap[source.Id] = true;
+                    break;
+
+                case StartSyncType.Ready:
                     _clientReadyToStartRace = true;
-                }
+                    break;
+
+                case StartSyncType.Null:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -124,12 +136,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             bool IsGoSignal() => _clientReadyToStartRace;
 
+            // Get packet
+            var message = new StartSync() { SyncType = StartSyncType.Skip };
+
             // Send skip message to host.
             if (!_skipRequested)
-                Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Client] Skipped intro ourselves, sending skip notification to host.", LogCategory.Race);
+                Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Client] Skipped intro ourselves, sending skip notification to host.", LogCategory.Race);
 
             _skipRequested = false;
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Client] Sending {nameof(ReliablePacket.HasSyncStartReady)}.", LogCategory.Race);
+            message.SyncType = StartSyncType.Ready;
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Client] Sending {nameof(StartSyncType.Ready)}.", LogCategory.Race);
 
             if (!Socket.PollUntil(IsGoSignal, Socket.State.HandshakeTimeout))
             {
@@ -145,11 +161,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private bool HostTrySyncRaceSkip()
         {
             var state = (HostState)Socket.State;
-            bool TestAllReady() => _hostReadyToStartRaceMap.All(x => x.Value == true);
+            bool TestAllReady() => _hostReadyToStartRaceMap.ToStructEnumerable().All(x => x.Value == true, x => x);
+
+            // Get packet
+            var message = new StartSync() { SyncType = StartSyncType.Skip };
 
             // Send skip signal to clients if we are initializing the skip.
             if (!_skipRequested)
-                Socket.SendToAllAndFlush(new ReliablePacket() { HasSyncStartSkip = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Broadcasting Skip Signal.", LogCategory.Race);
+                Socket.SendToAllAndFlush(ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Broadcasting Skip Signal.", LogCategory.Race);
 
             _skipRequested = false;
             Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Waiting for ready messages.", LogCategory.Race);
@@ -166,7 +185,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             foreach (var key in _hostReadyToStartRaceMap.Keys)
                 _hostReadyToStartRaceMap[key] = false;
 
-            Socket.SendToAllAndFlush(new ReliablePacket() { HasSyncStartReady = true }, DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Sending {nameof(ReliablePacket.HasSyncStartReady)}.", LogCategory.Race);
+            message.SyncType = StartSyncType.Ready;
+            Socket.SendToAllAndFlush(ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Sending {nameof(StartSyncType.Ready)}.", LogCategory.Race);
             return true;
         }
 
@@ -175,12 +195,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private unsafe void OnIntroCutsceneEnd()
         {
-            // TODO: RaceIntroSync | Spectator
-            for (int x = 1; x < Player.MaxNumberOfPlayers; x++)
+            for (int x = State.NumLocalPlayers; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
                 Player.Players[x].IsAiLogic = PlayerType.CPU;
                 Player.Players[x].IsAiVisual = PlayerType.CPU;
             }
         }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

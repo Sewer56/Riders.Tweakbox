@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -125,6 +126,10 @@ namespace Riders.Tweakbox.Controllers
                 presentParameters.PresentationInterval = PresentInterval.Immediate;
                 presentParameters.FullScreenRefreshRateInHz = 0;
             }
+
+#if DEBUG
+            PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
+#endif
 
             LastPresentParameters = presentParameters;
             var result = _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);

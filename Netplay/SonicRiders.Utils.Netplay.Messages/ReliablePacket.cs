@@ -1,136 +1,82 @@
 ﻿using System;
-using System.Buffers;
-using System.IO;
+using System.Runtime.CompilerServices;
 using DotNext.Buffers;
-using EnumsNET;
-using Reloaded.Memory.Streams;
-using Riders.Netplay.Messages.Misc;
+using Reloaded.Memory.Pointers;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Misc.BitStream;
+using Riders.Netplay.Messages.Reliable;
+using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Shared;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
+using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
-using Riders.Netplay.Messages.Reliable.Structs.Server.Shared;
-using Riders.Netplay.Messages.Unreliable;
-using MenuSynchronizationCommand = Riders.Netplay.Messages.Reliable.Structs.Menu.MenuSynchronizationCommand;
+using Sewer56.BitStream;
 
 namespace Riders.Netplay.Messages
 {
-    public unsafe class ReliablePacket : IPacket<ReliablePacket>, IPacket
+    public unsafe struct ReliablePacket : IPacket
     {
-        public PacketKind GetPacketType() => PacketKind.Reliable;
-
         /// <summary>
         /// Flags attacked to the original packet.
         /// </summary>
-        public HasData Flags { get; private set; }
+        public MessageType MessageType;
 
         /// <summary>
-        /// Random seed and time to resume the game at.
+        /// Union of all messages that can be potentially attached to this packet.
         /// </summary>
-        public SRandSync? Random;
+        public IReliableMessage Message;
 
         /// <summary>
-        /// Gear and physics data.
+        /// Creates a new instance of a reliable packet.
         /// </summary>
-        public GameData? GameData;
-        public bool HasSyncStartReady;
-        public bool HasSyncStartSkip = false;
+        /// <typeparam name="T">Unmanaged type parameter.</typeparam>
+        /// <param name="value">Value to insert into the packet.</param>
+        public static ReliablePacket Create<T>(in T value) where T : struct, IReliableMessage
+        {
+            var packet = new ReliablePacket();
+            packet.SetMessage(value);
+            return packet;
+        }
 
         /// <summary>
-        /// Set if client demands to set boost/tornado/attack for them.
+        /// Returns the message associated with this packet.
         /// </summary>
-        public MovementFlagsMsg? SetMovementFlags;
+        public T GetMessage<T>() where T : struct, IReliableMessage
+        {
+            return (T) Message;
+        }
 
         /// <summary>
-        /// Sets boost/tornado/attack if sent to players.
+        /// Sets the message stored in the current packet.
         /// </summary>
-        public MovementFlagsPacked? MovementFlags;
+        /// <param name="value">The value to assign to this class.</param>
+        /// <returns>Instance of this.</returns>
+        public ReliablePacket SetMessage<T>(in T value) where T : struct, IReliableMessage
+        {
+            Message = value;
+            MessageType = value.GetMessageType();
+            return this;
+        }
 
-        /// <summary>
-        /// Set lap counter if client demands.
-        /// </summary>
-        public LapCounter? SetLapCounter;
-
-        /// <summary>
-        /// Sends an updated copy of all lap counters to the clients.
-        /// </summary>
-        public LapCounters? LapCounters;
-
-        /// <summary>
-        /// Sets an attack to be performed between 2 players.
-        /// </summary>
-        public SetAttack? SetAttack;
-
-        /// <summary>
-        /// Informs people an attack has been performed between players.
-        /// </summary>
-        public AttackPacked? Attack;
-
-        /// <summary>
-        /// Message from host that anti-cheat was triggered.
-        /// </summary>
-        public AntiCheatTriggered? AntiCheatTriggered;
-
-        /// <summary>
-        /// Contains a hash of board data from clients.
-        /// </summary>
-        public DataHash? AntiCheatGameData;
-
-        /// <summary>
-        /// Contains a timestamp sent at regular intervals from clients.
-        /// </summary>
-        public Heartbeat? AntiCheatHeartbeat;
-
-        /// <summary>
-        /// Menu synchronization command.
-        /// </summary>
-        public MenuSynchronizationCommand? MenuSynchronizationCommand;
-
-        /// <summary>
-        /// Server message.
-        /// </summary>
-        public ServerMessage? ServerMessage;
-
-        public ReliablePacket() { }
-        public ReliablePacket(IMenuSynchronizationCommand command) => MenuSynchronizationCommand = new MenuSynchronizationCommand(command);
-        public ReliablePacket(IServerMessage message) => ServerMessage = new ServerMessage(message);
+        /// <inheritdoc />
+        public void Dispose() => Message?.Dispose();
 
         /// <summary>
         /// Converts this message to an set of bytes.
         /// </summary>
-        public byte[] Serialize()
+        public ArrayRental<byte> Serialize(out int numBytes)
         {
             // Rent some bytes.
-            using var rented      = new ArrayRental<byte>(8196);
-            using var writeBuffer = new ArrayRental<byte>(64);
-            var writeBufferSpan = writeBuffer.Span;
+            var rental       = new ArrayRental<byte>(8192);
+            var rentalStream = new RentalByteStream(rental);
+            var bitStream    = new BitStream<RentalByteStream>(rentalStream);
 
             // Serialize the data.
-            using var writer = new ExtendedMemoryStream(rented.Segment.Array, true);
-            writer.Write(GetFlags());
-            writer.WriteNullable(Random);
-            if (GameData.HasValue) writer.Write(GameData.Value.ToCompressedBytes());
+            bitStream.WriteGeneric(MessageType, EnumNumBits<MessageType>.Number);
+            Message.ToStream(ref bitStream);
 
-            writer.WriteNullable(SetMovementFlags);
-            if (MovementFlags.HasValue)
-                writer.Write(MovementFlags.Value.AsInterface().Serialize(writeBufferSpan));
-
-            writer.WriteNullable(SetLapCounter);
-            if (LapCounters.HasValue) 
-                writer.Write(LapCounters.Value.AsInterface().Serialize(writeBufferSpan));
-
-            writer.WriteNullable(SetAttack);
-            if (Attack.HasValue) 
-                writer.Write(Attack.Value.AsInterface().Serialize(writeBufferSpan));
-
-            writer.WriteNullable(AntiCheatTriggered);
-            writer.WriteNullable(AntiCheatGameData);
-            writer.WriteNullable(AntiCheatHeartbeat);
-
-            if (MenuSynchronizationCommand.HasValue) writer.Write(MenuSynchronizationCommand.Value.ToBytes(writeBufferSpan));
-            if (ServerMessage.HasValue) writer.Write(ServerMessage.Value.ToBytes(writeBufferSpan));
-
-            // Dump stream data.
-            return writer.ToArray((int)writer.Position);
+            numBytes = bitStream.NextByteIndex;
+            return rental;
         }
 
         /// <summary>
@@ -140,108 +86,46 @@ namespace Riders.Netplay.Messages
         {
             fixed (byte* dataPtr = data)
             {
-                using var memStream = new UnmanagedMemoryStream(dataPtr, data.Length);
-                using var reader = new BufferedStreamReader(memStream, (int)memStream.Length);
-                Flags = reader.Read<HasData>();
-                if (Flags.HasAllFlags(HasData.HasSyncStartReady)) HasSyncStartReady = true;
-                if (Flags.HasAllFlags(HasData.HasSyncStartSkip)) HasSyncStartSkip = true;
+                var fixedArrayStream = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(dataPtr, data.Length));
+                var bitStream        = new BitStream<FixedPointerByteStream>(fixedArrayStream);
+                MessageType          = bitStream.ReadGeneric<MessageType>(EnumNumBits<MessageType>.Number);
 
-                reader.ReadIfHasFlags(ref Random, Flags, HasData.HasSRand);
-                if (Flags.HasAllFlags(HasData.HasGameData)) GameData = Reliable.Structs.Gameplay.GameData.FromCompressedBytes(reader);
+                switch (MessageType)
+                {
+                    case MessageType.None:               break;
+                    case MessageType.SRand:              Message = new SRandSync(); break;
+                    case MessageType.GameData:           Message = new GameData(); break;
+                    case MessageType.StartSync:          Message = new StartSync(); break;
+                    case MessageType.BoostTornado:       Message = new BoostTornadoPacked(); break;
+                    case MessageType.LapCounters:        Message = new LapCountersPacked(); break;
+                    case MessageType.Attack:             Message = new AttackPacked(); break;
+                    case MessageType.SetAntiCheatTypes:  Message = new SetAntiCheat(); break;
+                    case MessageType.AntiCheatTriggered: Message = new AntiCheatTriggered(); break;
+                    case MessageType.AntiCheatDataHash:  Message = new GameData(); break;
+                    case MessageType.AntiCheatHeartbeat: Message = new AntiCheatHeartbeat(); break;
 
-                reader.ReadIfHasFlags(ref SetMovementFlags, Flags, HasData.HasSetMovementFlags);
-                if (Flags.HasAllFlags(HasData.HasMovementFlags)) MovementFlags = new MovementFlagsPacked().AsInterface().Deserialize(reader);
+                    // Server
+                    case MessageType.ClientSetPlayerData:   Message = new ClientSetPlayerData(); break;
+                    case MessageType.HostSetPlayerData:     Message = new HostSetPlayerData(); break;
+                    case MessageType.HostUpdateClientPing:  Message = new HostUpdateClientLatency(); break;
 
-                reader.ReadIfHasFlags(ref SetLapCounter, Flags, HasData.HasSetLapCounter);
-                if (Flags.HasAllFlags(HasData.HasLapCounters)) LapCounters = new LapCounters().AsInterface().Deserialize(reader);
+                    // Menus
+                    case MessageType.CourseSelectLoop:      Message = new CourseSelectLoop(); break;
+                    case MessageType.CourseSelectSync:      Message = new CourseSelectSync(); break;
+                    case MessageType.CourseSelectSetStage:  Message = new CourseSelectSetStage(); break;
+                    case MessageType.RuleSettingsLoop:      Message = new RuleSettingsLoop(); break;
+                    case MessageType.RuleSettingsSync:      Message = new RuleSettingsSync(); break;
+                    case MessageType.CharaSelectLoop:       Message = new CharaSelectLoop(); break;
+                    case MessageType.CharaSelectSync:       Message = new CharaSelectSync(); break;
+                    case MessageType.CharaSelectExit:       Message = new CharaSelectExit(); break;
 
-                reader.ReadIfHasFlags(ref SetAttack, Flags, HasData.HasSetAttack);
-                if (Flags.HasAllFlags(HasData.HasAttack)) Attack = new AttackPacked().AsInterface().Deserialize(reader);
+                    case MessageType.Disconnect:
+                        break;
+                    default: throw new Exception("Unrecognized Message Type");
+                }
 
-                reader.ReadIfHasFlags(ref AntiCheatTriggered, Flags, HasData.HasAntiCheatTriggered);
-                reader.ReadIfHasFlags(ref AntiCheatGameData, Flags, HasData.HasAntiCheatGameData);
-                reader.ReadIfHasFlags(ref AntiCheatHeartbeat, Flags, HasData.HasAntiCheatHeartbeat);
-                if (Flags.HasAllFlags(HasData.HasMenuSynchronizationCommand)) MenuSynchronizationCommand = Reliable.Structs.Menu.MenuSynchronizationCommand.FromBytes(reader);
-                if (Flags.HasAllFlags(HasData.HasServerMessage)) ServerMessage = Reliable.Structs.Server.ServerMessage.FromBytes(reader);
+                Message.FromStream(ref bitStream);
             }
-        }
-
-        /// <summary>
-        /// Gets the flags based off of hte contents of the current 
-        /// </summary>
-        /// <returns></returns>
-        private HasData GetFlags()
-        {
-            var flags = new HasData();
-            if (Random.HasValue) flags |= HasData.HasSRand;
-            if (GameData.HasValue) flags |= HasData.HasGameData;
-
-            if (HasSyncStartReady) flags |= HasData.HasSyncStartReady;
-            if (HasSyncStartSkip) flags |= HasData.HasSyncStartSkip;
-
-            if (SetAttack.HasValue) flags |= HasData.HasSetAttack;
-            if (Attack.HasValue) flags |= HasData.HasAttack;
-
-            if (SetLapCounter.HasValue) flags |= HasData.HasSetLapCounter;
-            if (LapCounters.HasValue) flags |= HasData.HasLapCounters;
-
-            if (SetMovementFlags.HasValue) flags |= HasData.HasSetMovementFlags;
-            if (MovementFlags.HasValue) flags |= HasData.HasMovementFlags;
-
-            if (AntiCheatTriggered.HasValue) flags |= HasData.HasAntiCheatTriggered;
-            if (AntiCheatGameData.HasValue) flags |= HasData.HasAntiCheatGameData;
-            if (AntiCheatHeartbeat.HasValue) flags |= HasData.HasAntiCheatHeartbeat;
-            if (MenuSynchronizationCommand.HasValue) flags |= HasData.HasMenuSynchronizationCommand;
-            if (ServerMessage.HasValue) flags |= HasData.HasServerMessage;
-
-            return flags;
-        }
-
-        /// <summary>
-        /// Declares whether the packet has a particular component of data.
-        /// </summary>
-        [Flags]
-        public enum HasData : ushort
-        {
-            Null = 0,
-
-            // Randomization & Time Sync
-            HasSRand = 1,  // Host -> Client: RNG Seed and Time to Resume Game synced with external NTP source
-
-            // Integrity Synchronization
-            HasGameData = 1 << 1,           // Host -> Client: Running, Gear Stats, Character Stats (Compressed)
-
-            HasSyncStartReady   = 1 << 2,   // Client -> Host: Ready signal to tell host ready after intro cutscene.
-            Unused              = 1 << 3,   // [Removed, Currently Unused] | Old function: `Host -> Client: Ready signal to tell clients to start race at a given time.`
-            HasSyncStartSkip    = 1 << 4,   // Informs Host/Client to skip the stage intro cutscene.
-
-            HasSetLapCounter    = 1 << 5,  // Client -> Host: Set lap counter for the player.
-            HasLapCounters      = 1 << 6,  // Host -> Client: Set Lap counters for each player.
-
-            // Race Integrity Synchronization
-            HasSetMovementFlags    = 1 << 7,  // Client -> Host: Inform host of boost, tornado.
-            HasMovementFlags       = 1 << 8,  // Host -> Client: Triggers boost, tornado for clients.
-            HasSetAttack           = 1 << 9,  // Client -> Host: Inform host to attack a player.
-            HasAttack              = 1 << 10, // Host -> Client: Inform client of an impending attack.
-
-            // Anti-Cheat
-            HasAntiCheatTriggered   = 1 << 11, // Host -> Client: Anti-cheat has been triggered, let all clients know.
-            HasAntiCheatGameData    = 1 << 12, // Client -> Host: Hash of game data
-            HasAntiCheatHeartbeat   = 1 << 13, // Client -> Host: Timestamp & frames elapsed
-
-            // Menu & Server Synchronization
-            // These messages are fairly infrequent and/or work outside the actual gameplay loop.
-            // We can save a byte during regular gameplay here.
-            HasMenuSynchronizationCommand   = 1 << 14, // [Struct] Menu State Synchronization Command.
-            HasServerMessage                = 1 << 15, // [Struct] General Server Message (Set Name, Try Connect etc.)
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            MovementFlags?.AsInterface().Dispose();
-            Attack?.AsInterface().Dispose();
-            LapCounters?.AsInterface().Dispose();
         }
     }
 }

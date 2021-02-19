@@ -2,7 +2,8 @@
 using System.IO;
 using MessagePack;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers;
 using Sewer56.Imgui.Controls;
@@ -16,18 +17,6 @@ namespace Riders.Tweakbox.Components.Netplay
 
         public Internal Data = Internal.Create();
         
-        /// <summary>
-        /// Turns a player config into user data to send over the web.
-        /// </summary>
-        public HostPlayerData ToHostPlayerData()
-        {
-            return new HostPlayerData()
-            {
-                Name = Data.PlayerName.Text,
-                PlayerIndex = 0
-            };
-        }
-
         /// <inheritdoc />
         public Action ConfigUpdated { get; set; }
 
@@ -50,6 +39,19 @@ namespace Riders.Tweakbox.Components.Netplay
 
         /// <inheritdoc />
         public IConfiguration GetDefault() => new NetplayConfig();
+
+        /// <summary>
+        /// Turns a player config into user data to send over the web.
+        /// </summary>
+        public PlayerData ToPlayerData()
+        {
+            return new PlayerData()
+            {
+                Name = Data.PlayerName.Text,
+                NumPlayers = Data.LocalPlayers,
+                PlayerIndex = 0,
+            };
+        }
 
         [MessagePackObject]
         public struct Internal
@@ -81,6 +83,9 @@ namespace Riders.Tweakbox.Components.Netplay
             [Key(7)]
             public bool ReducedTickRate;
 
+            [Key(8)]
+            public int LocalPlayers;
+
             public static Internal Create()
             {
                 return new Internal
@@ -92,7 +97,8 @@ namespace Riders.Tweakbox.Components.Netplay
                     ClientPort = 42069,
                     ShowPlayers = false,
                     BadInternet = new SimulateBadInternet() { IsEnabled = false },
-                    ReducedTickRate = false
+                    ReducedTickRate = false,
+                    LocalPlayers = 1
                 };
             }
 

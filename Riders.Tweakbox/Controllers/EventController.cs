@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
@@ -7,7 +9,6 @@ using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities;
@@ -22,6 +23,7 @@ using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
+using Void = Reloaded.Hooks.Definitions.Structs.Void;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -180,6 +182,16 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event CdeclReturnIntFn RemoveAllTasks;
 
+        /// <summary>
+        /// Executed when the player physics simulation is to be executed.
+        /// </summary>
+        public event Functions.RunPlayerPhysicsSimulationFn OnRunPlayerPhysicsSimulation;
+
+        /// <summary>
+        /// Executed after the player physics simulation has been executed.
+        /// </summary>
+        public event Functions.RunPlayerPhysicsSimulationFn AfterRunPlayerPhysicsSimulation;
+
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
@@ -191,6 +203,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.UpdateLapCounterFn> _updateLapCounterHook;
         private IHook<Functions.CdeclReturnByteFn> _goalRaceFinishTaskHook;
         private IHook<Functions.CdeclReturnIntFn> _removeAllTasksHook;
+        private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
 
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
@@ -300,6 +313,7 @@ namespace Riders.Tweakbox.Controllers
             _updateLapCounterHook = Functions.UpdateLapCounter.Hook(UpdateLapCounterHook).Activate();
             _goalRaceFinishTaskHook = Functions.GoalRaceFinishTask.Hook(GoalRaceFinishTaskHook).Activate();
             _removeAllTasksHook = Functions.RemoveAllTasks.Hook(RemoveAllTasksHook).Activate();
+            _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulation).Activate();
         }
 
         /// <summary>
@@ -335,6 +349,7 @@ namespace Riders.Tweakbox.Controllers
             _startAttackTaskHook.Disable();
             _goalRaceFinishTaskHook.Disable();
             _removeAllTasksHook.Disable();
+            _runPlayerPhysicsSimulationHook.Disable();
         }
 
         /// <summary>
@@ -370,6 +385,7 @@ namespace Riders.Tweakbox.Controllers
             _startAttackTaskHook.Enable();
             _goalRaceFinishTaskHook.Enable();
             _removeAllTasksHook.Enable();
+            _runPlayerPhysicsSimulationHook.Enable();
         }
 
         /// <summary>
@@ -380,7 +396,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Invokes the update lap counter original function.
         /// </summary>
-        public void InvokeUpdateLapCounterHook(Player* player, int a2) => _updateLapCounterHook.OriginalFunction(player, a2);
+        public void InvokeUpdateLapCounter(Player* player, int a2) => _updateLapCounterHook.OriginalFunction(player, a2);
 
         /// <summary>
         /// Invokes the original function for setting the `GOAL` splash on race finish.
@@ -418,6 +434,13 @@ namespace Riders.Tweakbox.Controllers
             AfterSetMovementFlagsOnInput?.Invoke(player);
 
             return result;
+        }
+
+        private void RunPlayerPhysicsSimulation(void* somephysicsobjectptr, Vector4* vector, int* playerindex)
+        {
+            OnRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
+            _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
+            AfterRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
         }
 
         private int SetSpawnLocationsStartOfRaceHook(int numberOfPlayers)

@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Buffers;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Components;
-using Riders.Tweakbox.Components.Netplay.Components.Misc;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Utilities;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -37,11 +33,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// Provides shared state for the client and host.
         /// </summary>
         public CommonState State;
-
-        /// <summary>
-        /// Contains a queue of all packets received from the clients.
-        /// </summary>
-        public ConcurrentQueue<Packet<NetPeer>> Queue = new ConcurrentQueue<Packet<NetPeer>>();
 
         /// <summary>
         /// Listener to network events.
@@ -78,7 +69,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             _stopWatch.Start();
             Listener = new NetworkEventListener(this);
-            Manager = new NetManager(Listener) { ChannelsCount = 64 };
+            Manager = new NetManager(Listener) { ChannelsCount = 64, AutoRecycle = true };
             ChannelAllocator = new LnlChannelAllocator(Manager.ChannelsCount);
             Controller = controller;
             Manager.EnableStatistics = true;
@@ -115,6 +106,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             IoC.Kernel.Rebind<Socket>().ToConstant(this);
 
+            // Server
+            AddComponent(IoC.Get<Components.Server.ConnectionManager>());
+
             // Menus
             AddComponent(IoC.Get<Components.Menu.CourseSelect>());
             AddComponent(IoC.Get<Components.Menu.CharacterSelect>());
@@ -125,6 +119,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Game.Race>());
             AddComponent(IoC.Get<Components.Game.RaceLapSync>());
             AddComponent(IoC.Get<Components.Game.RaceIntroSync>());
+            AddComponent(IoC.Get<Components.Game.RacePlayerEventSync>());
             AddComponent(IoC.Get<Components.Game.SetupRace>());
 
             // Misc
@@ -164,58 +159,30 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Manager.ManualReceive();
             Manager.ManualUpdate((int) elapsedMilliseconds);
             _stopWatch.Restart();
-            HandlePackets();
         }
 
         /// <summary>
-        /// Dequeues all packets and sends them to the appropriate packet handler.
+        /// Passes an <see cref="ReliablePacket"/> to be handled by all components of the Socket.
         /// </summary>
-        public void HandlePackets()
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer peer)
         {
-            while (Queue.TryDequeue(out var packet))
-            {
-                if (packet.IsDiscard(State.MaxLatency))
-                {
-                    Log.WriteLine($"[Socket] Discarding Unknown Packet Due to Latency", LogCategory.Socket);
-                }
-                else
-                {
-                    HandlePacket(packet);
-                    foreach (var component in Components.Values)
-                        component.HandlePacket(packet);
-                }
-
-                // Dispose of packet contents.
-                packet.Value.Value.Dispose();
-            }
+            foreach (var component in Components.Values)
+                component.HandleReliablePacket(ref packet, peer);
         }
 
         /// <summary>
-        /// Handles an individual packet of data.
+        /// Passes an <see cref="UnreliablePacket"/> to be handled by all components of the Socket.
         /// </summary>
-        /// <param name="packet">The packet in question.</param>
-        public abstract void HandlePacket(Packet<NetPeer> packet);
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer peer)
+        {
+            foreach (var component in Components.Values)
+                component.HandleUnreliablePacket(ref packet, peer);
+        }
 
         /// <summary>
         /// Gets the type of socket (Host/Client/Spectator) etc.
         /// </summary>
         public abstract SocketType GetSocketType();
-
-        /// <summary>
-        /// New remote peer connected to host, or client connected to remote host
-        /// </summary>
-        /// <param name="peer">Connected peer object</param>
-        public abstract void OnPeerConnected(NetPeer peer);
-
-        /// <summary>Peer disconnected</summary>
-        /// <param name="peer">disconnected peer</param>
-        /// <param name="disconnectInfo">additional info about reason, errorCode or data received with disconnect message</param>
-        public abstract void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo);
-
-        /// <summary>On peer connection requested</summary>
-        /// <param name="request">Request information (EndPoint, internal id, additional data)</param>
-        /// <returns>Ignored, just there to reduce code count.</returns>
-        public abstract bool OnConnectionRequest(ConnectionRequest request);
 
         /// <summary>
         /// Executed at the end of each game frame.
@@ -231,12 +198,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="exception">The peer to not send data to.</param>
         /// <param name="packet">The packet to be transferred.</param>
         /// <param name="method">The channel to send the data in.</param>
-        /// <param name="text">The text to print to the console.</param>
+        /// <param name="text">The text to log.</param>
+        /// <param name="logCategory">Category under which the text should be logged.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendToAllExceptAndFlush(NetPeer exception, ReliablePacket packet, DeliveryMethod method, string text, byte channelIndex = 0)
+        public void SendToAllExceptAndFlush<T>(NetPeer exception, in T packet, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0) where T : IPacket
         {
-            Trace.WriteLine(text);
-            SendToAllExceptAndFlush(exception, packet.Serialize(), method, channelIndex);
+            using var serialized = packet.Serialize(out int numBytes);
+            Log.WriteLine(text, logCategory);
+            SendToAllExceptAndFlush(exception, serialized.Segment.Array, 0, numBytes, method, channelIndex);
         }
 
         /// <summary>
@@ -246,16 +215,22 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="packet">The packet to be transferred.</param>
         /// <param name="method">The channel to send the data in.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendToAllExceptAndFlush(NetPeer exception, IPacket packet, DeliveryMethod method, byte channelIndex = 0) => SendToAllExceptAndFlush(exception, packet.Serialize(), method, channelIndex);
+        public void SendToAllExceptAndFlush<T>(NetPeer exception, in T packet, DeliveryMethod method, byte channelIndex = 0) where T : IPacket
+        {
+            using var serialized = packet.Serialize(out int numBytes);
+            SendToAllExceptAndFlush(exception, serialized.Segment.Array, 0, numBytes, method, channelIndex);
+        }
 
         /// <summary>
         /// Sends data to all peers except a certain peer.
         /// </summary>
         /// <param name="exception">The peer to not send data to.</param>
         /// <param name="data">The data to send.</param>
+        /// <param name="start">Index of the first element of the array.</param>
+        /// <param name="length">Length of the supplied array.</param>
         /// <param name="method">The channel to send the data in.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendToAllExceptAndFlush(NetPeer exception, byte[] data, DeliveryMethod method, byte channelIndex = 0)
+        public void SendToAllExceptAndFlush(NetPeer exception, byte[] data, int start, int length, DeliveryMethod method, byte channelIndex = 0)
         {
             for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
             {
@@ -263,7 +238,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 if (exception != null && peer.Id == exception.Id)
                     continue;
 
-                peer.Send(data, channelIndex, method);
+                peer.Send(data, start, length, channelIndex, method);
             }
 
             Update();
@@ -276,9 +251,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void Send(NetPeer peer, IPacket message, DeliveryMethod method, byte channelIndex = 0)
+        public void Send<T>(NetPeer peer, in T message, DeliveryMethod method, byte channelIndex = 0) where T : IPacket
         {
-            peer?.Send(message.Serialize(), channelIndex, method);
+            using var serialized = message.Serialize(out int numBytes);
+            peer?.Send(serialized.Segment.Array, 0, numBytes, channelIndex, method);
         }
 
         /// <summary>
@@ -288,7 +264,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, byte channelIndex = 0)
+        public void SendAndFlush<T>(NetPeer peer, in T message, DeliveryMethod method, byte channelIndex = 0) where T : IPacket
         {
             Send(peer, message, method, channelIndex);
             Update();
@@ -303,7 +279,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to log.</param>
         /// <param name="logCategory">Category under which the text should be logged.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendAndFlush(NetPeer peer, IPacket message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0)
+        public void SendAndFlush<T>(NetPeer peer, in T message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0) where T : IPacket
         {
             Log.WriteLine(text, logCategory);
             SendAndFlush(peer, message, method, channelIndex);
@@ -315,9 +291,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="message">The message.</param>
         /// <param name="method">The delivery method.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, byte channelIndex = 0)
+        public void SendToAllAndFlush<T>(in T message, DeliveryMethod method, byte channelIndex = 0) where T : IPacket
         {
-            Manager.SendToAll(message.Serialize(), channelIndex, method);
+            using var serialized = message.Serialize(out int numBytes);
+            Manager.SendToAll(serialized.Segment.Array, 0, numBytes, channelIndex, method);
             Update();
         }
 
@@ -329,79 +306,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <param name="text">The text to log.</param>
         /// <param name="logCategory">Category under which the text should be logged.</param>
         /// <param name="channelIndex">Index of the channel to send the message on.</param>
-        public void SendToAllAndFlush(IPacket message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0)
+        public void SendToAllAndFlush<T>(in T message, DeliveryMethod method, string text, LogCategory logCategory, byte channelIndex = 0) where T : IPacket
         {
             Log.WriteLine(text, logCategory);
             SendToAllAndFlush(message, method, channelIndex);
-        }
-
-        /// <summary>
-        /// Waits for a message with a specified predicate
-        /// </summary>
-        /// <param name="peer">The peer to test.</param>
-        /// <param name="predicate">Return true if packet you have waited for has returned, else false.</param>
-        /// <param name="timeout">Timeout in milliseconds.</param>
-        /// <param name="sleepTime">Minimum between checks of condition.</param>
-        /// <param name="token">Allows for task cancellation if necessary.</param>
-        /// <returns>True if the message has been received, otherwise false.</returns>
-        public bool TryWaitForMessage(NetPeer peer, Func<Packet<NetPeer>, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
-        {
-            bool received = false;
-            Listener.OnQueuePacket += TestPacket;
-            var result = ActionWrappers.TryWaitUntil(HasReceived, timeout, sleepTime, token);
-            Listener.OnQueuePacket -= TestPacket;
-            return result;
-
-            // Message Test
-            bool HasReceived()
-            {
-                Update();
-                return received == true;
-            }
-
-            void TestPacket(Packet<NetPeer> packet)
-            {
-                if (packet.Source.Id != peer.Id)
-                    return;
-
-                if (predicate(packet))
-                    received = true;
-            }
-        }
-
-        /// <summary>
-        /// Waits for a message from all given peers with a specified predicate.
-        /// </summary>
-        /// <param name="peers">The peers to wait for.</param>
-        /// <param name="predicate">Return true if packet you have waited for has returned, else false.</param>
-        /// <param name="timeout">Timeout in milliseconds.</param>
-        /// <param name="sleepTime">Minimum between checks of condition.</param>
-        /// <param name="token">Allows for task cancellation if necessary.</param>
-        /// <returns>True if the message has been received, otherwise false.</returns>
-        public bool TryWaitForMessages(NetPeer[] peers, Func<Packet<NetPeer>, bool> predicate, int timeout = 1000, int sleepTime = 1, CancellationToken token = default)
-        {
-            bool[] received = new bool[peers.Length];
-            Listener.OnQueuePacket += TestPacket;
-            var result = ActionWrappers.TryWaitUntil(HasReceivedAll, timeout, sleepTime, token);
-            Listener.OnQueuePacket -= TestPacket;
-            return result;
-
-            // Message Test
-            bool HasReceivedAll()
-            {
-                Update();
-                return received.All(x => x == true);
-            }
-
-            void TestPacket(Packet<NetPeer> packet)
-            {
-                var index = peers.IndexOf(x => x.Id == packet.Source.Id);
-                if (index == -1)
-                    return;
-
-                if (predicate(packet))
-                    received[index] = true;
-            }
         }
 
         /// <summary>
@@ -415,6 +323,23 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public bool PollUntil(Func<bool> function, int timeout, int sleepTime = 1, CancellationToken token = default)
         {
             return ActionWrappers.TryWaitUntil(() =>
+            {
+                Update();
+                return function();
+            }, timeout, sleepTime, token);
+        }
+
+        /// <summary>
+        /// Waits until a given condition is met.
+        /// </summary>
+        /// <param name="function">Waits until this condition returns true or the timeout expires.</param>
+        /// <param name="timeout">The timeout in milliseconds.</param>
+        /// <param name="sleepTime">Amount of sleep per iteration/attempt.</param>
+        /// <param name="token">Token that allows for cancellation of the task.</param>
+        /// <returns>True if the condition is triggered, else false.</returns>
+        public Task<bool> PollUntilAsync(Func<bool> function, int timeout, int sleepTime = 1, CancellationToken token = default)
+        {
+            return ActionWrappers.TryWaitUntilAsync(() =>
             {
                 Update();
                 return function();

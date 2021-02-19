@@ -1,10 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections.Generic;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Helpers;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
+using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Tweakbox.Components.Netplay.Helpers;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
@@ -12,6 +11,7 @@ using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 {
@@ -23,13 +23,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         public MenuChangedManualEvents Delta { get; set; } = new MenuChangedManualEvents();
 
         /// <summary> Sync data for course select. </summary>
-        private Volatile<Timestamped<CourseSelectSync>> _sync = new Volatile<Timestamped<CourseSelectSync>>(new Timestamped<CourseSelectSync>());
+        private Timestamped<CourseSelectSync> _sync;
 
         /// <summary> [Host Only] Changes in course select since the last time they were sent to the clients. </summary>
-        private ConcurrentQueue<Timestamped<CourseSelectLoop>> _loopQueue => _queue.Get<Timestamped<CourseSelectLoop>>();
+        private readonly Queue<Timestamped<CourseSelectLoop>> _loopQueue = new Queue<Timestamped<CourseSelectLoop>>(Constants.MaxNumberOfPlayers * 4);
         private Timestamped<bool> _receivedSetStageFlag = false;
-
-        private MessageQueue _queue = new MessageQueue();
 
         public CourseSelect(Socket owner, EventController @event)
         {
@@ -58,7 +56,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 Delta.Set(task);
                 var sync    = CourseSelectSync.FromGame(task).Merge(GetLoop());
-                _sync       = new Volatile<Timestamped<CourseSelectSync>>(sync);
+                _sync       = new Timestamped<CourseSelectSync>(sync);
                 Synchronize(task);
             }
             else
@@ -79,9 +77,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 var level = (byte) *Sewer56.SonicRiders.API.State.Level;
                 if (Socket.GetSocketType() == SocketType.Host)
-                    Socket.SendToAllAndFlush(new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Host] Sending Stage Set Flag", LogCategory.Menu);
+                    Socket.SendToAllAndFlush(ReliablePacket.Create(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Host] Sending Stage Set Flag", LogCategory.Menu);
                 else
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Client] Sending Stage Set Flag", LogCategory.Menu);
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new CourseSelectSetStage(level)), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)} / Client] Sending Stage Set Flag", LogCategory.Menu);
             }
 
             _receivedSetStageFlag = false;
@@ -90,40 +88,38 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         private void CourseSelectUpdated(CourseSelectLoop loop, Task<Sewer56.SonicRiders.Structures.Tasks.CourseSelect, CourseSelectTaskState>* task)
         {
             if (Socket.GetSocketType() == SocketType.Host)
-                Socket.SendToAllAndFlush(new ReliablePacket(CourseSelectSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
+            {
+                using var message = CourseSelectSync.FromGame(task);
+                Socket.SendToAllAndFlush(ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered);
+            }
             else
             {
                 loop.Undo(task);
-                if (Socket.GetSocketType() == SocketType.Client) // Spectator gets no input.
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
+                if (Socket.State.NumLocalPlayers > 0)
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(loop), DeliveryMethod.ReliableOrdered);
             }
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (!packet.TryGetPacket<ReliablePacket>(Socket.State.MaxLatency, out var reliable)) 
-                return;
-
-            var command = reliable.MenuSynchronizationCommand;
-            if (!command.HasValue)
-                return;
-
-            switch (command.Value.Command)
+            switch (packet.MessageType)
             {
-                case CourseSelectLoop courseSelectLoop:
-                    _loopQueue.Enqueue(courseSelectLoop);
+                case MessageType.CourseSelectLoop:
+                    _loopQueue.Enqueue(packet.GetMessage<CourseSelectLoop>());
                     break;
-                case CourseSelectSetStage courseSelectSetStage:
-                    Log.WriteLine($"[{nameof(CourseSelect)}] Received Stage Set Flag", LogCategory.Menu);
-                    *Sewer56.SonicRiders.API.State.Level = (Levels) courseSelectSetStage.StageId;
+
+                case MessageType.CourseSelectSetStage:
+                    var value = packet.GetMessage<CourseSelectSetStage>();
+                    *Sewer56.SonicRiders.API.State.Level = (Levels)value.StageId;
                     _receivedSetStageFlag = true;
                     if (Socket.GetSocketType() == SocketType.Host)
-                        Socket.SendToAllExceptAndFlush(packet.Source, new ReliablePacket(courseSelectSetStage), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)}] Is Host, Rebroadcasting Stage Set Flag");
-                    
+                        Socket.SendToAllExceptAndFlush(source, ReliablePacket.Create(value), DeliveryMethod.ReliableOrdered, $"[{nameof(CourseSelect)}] Is Host, Rebroadcasting Stage Set Flag", LogCategory.Menu);
+
                     break;
-                case CourseSelectSync courseSelectSync:
-                    _sync = new Volatile<Timestamped<CourseSelectSync>>(courseSelectSync);
+
+                case MessageType.CourseSelectSync:
+                    _sync = packet.GetMessage<CourseSelectSync>();
                     break;
             }
         }
@@ -133,12 +129,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         /// </summary>
         private unsafe void Synchronize(Task<Sewer56.SonicRiders.Structures.Tasks.CourseSelect, CourseSelectTaskState>* task)
         {
-            if (!_sync.HasValue)
-                return;
-
-            var sync = _sync.Get();
-            if (!sync.IsDiscard(Socket.State.MaxLatency))
-                sync.Value.ToGame(task);
+            if (!_sync.IsDiscard(Socket.State.MaxLatency))
+                _sync.Value.ToGame(task);
         }
 
         /// <summary>
@@ -157,5 +149,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 
             return loop;
         }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

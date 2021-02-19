@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using Riders.Netplay.Messages.Unreliable;
-using Sewer56.SonicRiders.Structures.Enums;
+using Riders.Netplay.Messages.Unreliable.Enums;
+using Riders.Netplay.Messages.Unreliable.Structs;
 
 namespace Riders.Netplay.Messages.Tests
 {
@@ -26,9 +25,15 @@ namespace Riders.Netplay.Messages.Tests
             result.Velocity = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
             result.TurningAmount = (float?)random.NextDouble();
             result.LeanAmount = (float?)random.NextDouble();
-            result.ControlFlags = (PlayerControlFlags?)random.Next(0, 0xFFFFFF);
+            result.ControlFlags = (MinControlFlags?)random.Next(0, (int) MinControlFlags.NoHoverAndTrail);
             result.Animation = (byte?)random.Next(0, 99);
             result.LastAnimation = (byte?)random.Next(0, 99);
+            result.AnalogXY = new AnalogXY()
+            {
+                X = (sbyte) random.Next(-100, 100),
+                Y = (sbyte) random.Next(-100, 100)
+            };
+            result.MovementFlags = new MovementFlags((Reliable.Structs.Gameplay.Shared.MovementFlags)random.Next(0, (int)Reliable.Structs.Gameplay.Shared.MovementFlags.AttachToRail));
 
             return result;
         }

@@ -11,13 +11,19 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public Socket Socket { get; set; }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void Dispose()
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
         {
             throw new NotImplementedException();
         }

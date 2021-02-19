@@ -104,6 +104,7 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 data.PlayerName.Render(nameof(data.PlayerName));
                 Reflection.MakeControl(ref data.ShowPlayers, "Show Player Overlay");
+                Reflection.MakeControl(ref data.LocalPlayers, "Number of Players");
 
                 ImGui.TreePop();
             }

@@ -43,7 +43,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 *State.NumberOfRacers = (byte)Socket.State.GetPlayerCount();
 
             if (Socket.TryGetComponent(out CharacterSelect charSelect))
-                charSelect.LastSync.ToGameOnlyCharacter();
+                charSelect.LastSync.ToGameOnlyCharacter(Socket.State.NumLocalPlayers);
 
             if (Socket.TryGetComponent(out Attack attack))
                 attack.Reset();
@@ -51,11 +51,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.TryGetComponent(out Race race))
                 race.Reset();
 
+            if (Socket.TryGetComponent(out RacePlayerEventSync raceEvent))
+                raceEvent.Reset();
+
             if (Socket.TryGetComponent(out RaceLapSync lap))
                 lap.Reset();
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet) { }
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) { }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

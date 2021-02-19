@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.IO;
-using Reloaded.Memory.Pointers;
-using Reloaded.Memory.Streams;
-using Riders.Netplay.Messages.Misc.BitStream;
 using Sewer56.BitStream;
-using Sewer56.BitStream.ByteStreams;
 using Sewer56.BitStream.Interfaces;
 
 namespace Riders.Netplay.Messages.Misc.Interfaces
@@ -15,9 +10,9 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
     /// </summary>
     public unsafe interface IBitPackedArray<T, TParent> : IDisposable
                                                           where T : unmanaged, IBitPackable<T>
-                                                          where TParent : IBitPackedArray<T, TParent>, new()
+                                                          where TParent : struct, IBitPackedArray<T, TParent>
     {
-        public static ArrayPool<T> SharedPool        = ArrayPool<T>.Shared;
+        public static ArrayPool<T> SharedPool = ArrayPool<T>.Shared;
 
         /// <summary>
         /// The data to be packed/unpacked.
@@ -36,62 +31,47 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
         public bool IsPooled { get; set; }
 
         /// <summary>
-        /// Gets the expected size of header and all entries in bytes once serialized.
-        /// </summary>
-        public int SizeOfDataBytes => (Utilities.RoundUp(ItemCountNumBits + (SizeOfEntryBits * NumElements), 8) / 8);
-
-        /// <summary>
-        /// Disposes of the array.
-        /// </summary>
-        void IDisposable.Dispose()
-        {
-            if (IsPooled)
-                SharedPool.Return(Elements);
-        }
-
-        /// <summary>
         /// Number of bits allocated for the number of items in the array.
         /// </summary>
         public int ItemCountNumBits => Constants.PlayerCountBitfield.NumBits;
 
         /// <summary>
-        /// Creates a new instance of the structure.
+        /// Disposes of the array.
         /// </summary>
-        public IBitPackedArray<T, TParent> AsInterface();
+        public static void Dispose(ref TParent type)
+        {
+            if (type.IsPooled)
+            {
+                SharedPool.Return(type.Elements);
+                type.Elements = null;
+            }
+        }
+
+        /// <summary>
+        /// Replaces the internal array with a new set of elements.
+        /// </summary>
+        public void Set(T[] elements, int numElements = -1);
 
         /// <summary>
         /// Creates an instance of the parent using the specified elements.
         /// Note: Array must at least contain 1 element.
         /// </summary>
-        public TParent Create(T[] elements)
-        {
-#if DEBUG
-            // Restricted to debug because exceptions prevent inlining.
-            if (elements.Length == 0)
-                throw new Exception("Array has zero elements.");
-#endif
+        public TParent Create(T[] elements);
 
-            return new TParent
-            {
-                IsPooled = false,
-                Elements = elements,
-                NumElements = elements.Length
-            };
-        }
+        /// <summary>
+        /// Creates a pooled instance of the parent using the specified elements.
+        /// Note: Array must at least contain 1 element.
+        /// </summary>
+        public TParent CreatePooled(int numElements);
 
         /// <summary>
         /// Deserializes the serialized packed array.
         /// </summary>
-        /// <param name="reader">Stream reader.</param>
-        /// <returns></returns>
-        public TParent Deserialize(BufferedStreamReader reader)
+        public static TParent FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
         {
             var parent  = new TParent {IsPooled = true};
             var child   = new T();
             var numBits = parent.ItemCountNumBits;
-
-            // Setup the bitstream
-            var bitStream   = new BitStream<BufferedStreamReaderByteStream>(new BufferedStreamReaderByteStream(reader), (int)(reader.Position() * 8));
 
             // Read the stream
             parent.NumElements = bitStream.Read<int>(numBits) + 1;
@@ -100,44 +80,18 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
             for (int x = 0; x < parent.NumElements; x++)
                 parent.Elements[x] = child.FromStream(ref bitStream);
 
-            // Finalize the bitstream.
-            reader.Seek(bitStream.NextByteIndex, SeekOrigin.Begin);
             return parent;
         }
 
         /// <summary>
         /// Serializes the current array.
         /// </summary>
-        public Span<byte> Serialize(Span<byte> resultBuffer)
+        public static void ToStream<TByteSource>(in TParent parent, ref BitStream<TByteSource> bitStream) where TByteSource : IByteStream
         {
-            // Setup
-            fixed (byte* bytePtr = resultBuffer)
-            {
-                var byteStream = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(bytePtr, resultBuffer.Length));
-                var bitStream  = new BitStream<FixedPointerByteStream>(byteStream);
-
-                // Write the stream
-                bitStream.Write(NumElements - 1, ItemCountNumBits);
-                for (int x = 0; x < NumElements; x++)
-                    Elements[x].ToStream(ref bitStream);
-
-                return resultBuffer.Slice(0, SizeOfDataBytes);
-            }
+            // Write the stream
+            bitStream.Write(parent.NumElements - 1, parent.ItemCountNumBits);
+            for (int x = 0; x < parent.NumElements; x++)
+                parent.Elements[x].ToStream(ref bitStream);
         }
-
-        /// <summary>
-        /// Serializes the current array.
-        /// </summary>
-        public byte[] Serialize()
-        {
-            var result = new byte[SizeOfDataBytes];
-            Serialize(result.AsSpan());
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the size of an individual entry.
-        /// </summary>
-        private int SizeOfEntryBits => new T().GetSizeOfEntry();
     }
 }

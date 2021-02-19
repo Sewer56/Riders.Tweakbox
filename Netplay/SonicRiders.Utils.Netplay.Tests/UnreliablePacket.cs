@@ -1,87 +1,61 @@
-﻿using System.Linq;
-using System.Numerics;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Unreliable;
-using Sewer56.SonicRiders.Structures.Enums;
+﻿using Riders.Netplay.Messages.Misc;
 using Xunit;
-using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
+using Xunit.Abstractions;
 
 namespace Riders.Netplay.Messages.Tests
 {
     public class UnreliablePacket
     {
-        [Fact]
-        public void SerializeUnreliablePacketTwoPlayers()
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public UnreliablePacket(ITestOutputHelper testOutputHelper)
         {
-            var random0 = Utilities.GetRandomPlayer();
-            var random1 = Utilities.GetRandomPlayer();
-            var unreliablePacket = new Messages.UnreliablePacket(new[] { random0, random1 });
-
-            var bytes = unreliablePacket.Serialize();
-            var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
-
-            Assert.Equal(unreliablePacket.Header, deserialized.Header);
-            Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
-            Assert.Equal(unreliablePacket.Players[1], deserialized.Players[1]);
+            _testOutputHelper = testOutputHelper;
         }
 
         [Fact]
-        public void SerializeUnreliablePacketFiveSeconds()
+        public void TwoPlayers()
         {
-            for (int x = 0; x < 300; x++)
-            {
-                var random0 = Utilities.GetRandomPlayer();
-                var unreliablePacket = new Messages.UnreliablePacket(new[] { random0 });
+            using var unreliablePacket = new Messages.UnreliablePacket(2);
+            unreliablePacket.Players[0] = Utilities.GetRandomPlayer();
+            unreliablePacket.Players[1] = Utilities.GetRandomPlayer();
 
-                var bytes = unreliablePacket.Serialize();
-                var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
+            // Serialize
+            using var bytes = unreliablePacket.Serialize(out int numBytes);
+            
+            // Deserialize.
+            using var newPacket = new Messages.UnreliablePacket(Constants.MaxNumberOfPlayers);
+            newPacket.Deserialize(bytes.Span.Slice(0, numBytes));
 
-                Assert.Equal(unreliablePacket.Header, deserialized.Header);
-                Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
-            }
+            Assert.Equal(unreliablePacket.Header, newPacket.Header);
+            Assert.Equal(unreliablePacket.Players[0], newPacket.Players[0]);
+            Assert.Equal(unreliablePacket.Players[1], newPacket.Players[1]);
         }
 
         [Fact]
-        public void SerializeUnreliablePacketManyPlayers()
+        public void ManyPlayers()
         {
-            for (int x = 0; x < 60; x++)
+            for (int numFrame = 0; numFrame < 60; numFrame++)
             {
-                for (int y = 1; y < Constants.MaxNumberOfPlayers; y++)
+                for (int maxPlayers = 1; maxPlayers < Constants.MaxNumberOfPlayers; maxPlayers++)
                 {
-                    var randomPlayers = Enumerable.Range(0, y).Select(x => Utilities.GetRandomPlayer()).ToArray();
-                    var unreliablePacket = new Messages.UnreliablePacket(randomPlayers);
+                    using var unreliablePacket = new Messages.UnreliablePacket(maxPlayers);
+                    for (int z = 0; z < maxPlayers; z++)
+                        unreliablePacket.Players[z] = Utilities.GetRandomPlayer();
 
-                    var bytes = unreliablePacket.Serialize();
-                    var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
+                    // Serialize
+                    using var bytes = unreliablePacket.Serialize(out int numBytes);
+                    _testOutputHelper.WriteLine($"Players: {maxPlayers} Bytes: {numBytes}");
 
-                    Assert.Equal(unreliablePacket.Header, deserialized.Header);
-                    for (int z = 0; z < y; z++)
-                    {
-                        Assert.Equal(unreliablePacket.Players[z], deserialized.Players[z]);
-                    }
+                    // Deserialize.
+                    using var newPacket = new Messages.UnreliablePacket(Constants.MaxNumberOfPlayers);
+                    newPacket.Deserialize(bytes.Span.Slice(0, numBytes));
+
+                    Assert.Equal(unreliablePacket.Header, newPacket.Header);
+                    for (int z = 0; z < maxPlayers; z++)
+                        Assert.Equal(unreliablePacket.Players[z], newPacket.Players[z]);
                 }
             }
         }
-
-        [Fact]
-        public void SerializeUnreliablePacketPartialData()
-        {
-            var position  = new Vector3(-49.85133362f, -41.55332947f, 167.2761993f);
-            var rotation  = 0.03664770722f;
-            var velocityX = 0.7286906838f;
-            var velocityY = 0.123456789f;
-            var hasFlags  = HasData.HasPosition | HasData.HasRotation | HasData.HasVelocity;
-
-            var player = new UnreliablePacketPlayer(position, null, null, null, null, rotation, new Vector2(velocityX, velocityY));
-            var unreliablePacket = new Messages.UnreliablePacket(new[] { player }, hasFlags);
-
-            var bytes = unreliablePacket.Serialize();
-            var deserialized = IPacket<Messages.UnreliablePacket>.FromSpan(bytes);
-
-            Assert.Equal(unreliablePacket.Header, deserialized.Header);
-            Assert.Equal(unreliablePacket.Players[0], deserialized.Players[0]);
-        }
-
-
     }
 }

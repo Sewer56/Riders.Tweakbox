@@ -29,12 +29,23 @@
         }
         
         /// <summary>
-        /// Gets the value, returning true if it has been used before, else false.
+        /// Gets the value, setting the used flag to true.
         /// </summary>
         public T UseValue()
         {
             IsUsed = true;
             return Value;
+        }
+
+        /// <summary>
+        /// Gets the value, setting the used flag to true.
+        /// </summary>
+        public T UseAndClearValue()
+        {
+            var result = Value;
+            IsUsed = true;
+            Value = default;
+            return result;
         }
 
         public static implicit operator Used<T>(T d) => new Used<T>(d);

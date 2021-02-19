@@ -23,6 +23,11 @@ namespace Riders.Netplay.Messages.Helpers
         }
 
         /// <summary>
+        /// Refreshes the timestamp associated with this struct to current time.
+        /// </summary>
+        public void Refresh() => TimeStamp = DateTime.UtcNow;
+
+        /// <summary>
         /// Sets the packet time to the unix epoch time such that it's discarded for being too old.
         /// </summary>
         public void Discard() => TimeStamp = DateTime.UnixEpoch;

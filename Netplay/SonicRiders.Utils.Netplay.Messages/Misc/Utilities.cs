@@ -5,37 +5,12 @@ using MessagePack;
 using Reloaded.Memory.Streams;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
+using SharpDX.Text;
 
 namespace Riders.Netplay.Messages.Misc
 {
     public static class Utilities
     {
-        /// <summary>
-        /// Converts a given stream to an array provided a number of bytes.
-        /// </summary>
-        /// <param name="writer"></param>
-        /// <param name="numBytes">The number of bytes.</param>
-        /// <param name="offset">Offset relative to the seek origin.</param>
-        /// <param name="origin">The seek origin.</param>
-        /// <returns></returns>
-        public static byte[] ToArray(this Stream writer, int numBytes, int offset = 0, SeekOrigin origin = SeekOrigin.Begin)
-        {
-            var result = new byte[numBytes];
-            writer.Seek(offset, origin);
-            writer.Read(result);
-            return result;
-        }
-
-        /// <summary>
-        /// Writes a <see cref="Nullable"/> value to a <see cref="ExtendedMemoryStream"/>.
-        /// If a value exists, it is written, else nothing is done.
-        /// </summary>
-        public static void WriteNullable<T>(this ExtendedMemoryStream stream, T? nullable) where T : unmanaged
-        {
-            if (nullable.HasValue)
-                stream.Write(nullable.Value);
-        }
-
         /// <summary>
         /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
         /// </summary>
@@ -154,6 +129,19 @@ namespace Riders.Netplay.Messages.Misc
                 return number;
 
             return number + multiple - remainder;
+        }
+
+        /// <summary>
+        /// Gets the minimum number of bits necessary to represent this number.
+        /// </summary>
+        /// <param name="value">The number.</param>
+        public static int GetMinimumNumberOfBits(int value)
+        {
+            int bits = 0;
+            while ((value >>= 1) != 0)
+                bits++;
+
+            return bits + 1;
         }
     }
 }
