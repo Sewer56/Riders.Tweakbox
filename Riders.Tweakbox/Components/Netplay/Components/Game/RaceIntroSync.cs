@@ -200,6 +200,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 Player.Players[x].IsAiLogic = PlayerType.CPU;
                 Player.Players[x].IsAiVisual = PlayerType.CPU;
             }
+
+            // Show visual elements for all players shown on screen.
+            for (int x = 0; x < *Sewer56.SonicRiders.API.State.NumberOfCameras; x++)
+            {
+                Player.Players[x].IsAiVisual = PlayerType.Human;
+            }
         }
 
         /// <inheritdoc />
