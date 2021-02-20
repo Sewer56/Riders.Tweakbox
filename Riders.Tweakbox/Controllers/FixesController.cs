@@ -29,13 +29,21 @@ namespace Riders.Tweakbox.Controllers
         // Hooks
         private IAsmHook _bootToMenu;
         private IHook<Functions.CdeclReturnIntFn> _readConfigHook;
+        private IHook<Functions.CdeclReturnIntFn> _loadWorldAssetsHook;
+        private IAsmHook _initializeObjectLayoutHook;
 
         public FixesController()
         {
+            var utilities = SDK.ReloadedHooks.Utilities;
+
             // Now for our hooks.
             _readConfigHook = Functions.ReadConfigFile.Hook(ReadConfigFile).Activate();
-            _config.ConfigUpdated += OnConfigUpdated;
+            _loadWorldAssetsHook = Functions.LoadWorldAssets.Hook(LoadWorldAssetsHook).Activate();
 
+            var checkIfLoadSinglePlayerLayout = new[] { $"use32\n{utilities.AssembleAbsoluteCall(CheckIfLoadSinglePlayerObjectLayout, out _, new []{ "mov eax, 1" }, null, null, "je")}" };
+            _initializeObjectLayoutHook = SDK.ReloadedHooks.CreateAsmHook(checkIfLoadSinglePlayerLayout, 0x004196E0, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+
+            _config.ConfigUpdated += OnConfigUpdated;
             _event.OnCheckIfQtePressLeft += EventOnOnCheckIfQtePressLeft;
             _event.OnCheckIfQtePressRight += EventOnOnCheckIfQtePressRight;
         }
@@ -45,12 +53,16 @@ namespace Riders.Tweakbox.Controllers
         {
             _bootToMenu?.Disable();
             _readConfigHook?.Disable();
+            _loadWorldAssetsHook?.Disable();
+            _initializeObjectLayoutHook?.Disable();
         }
 
         public void Enable()
         {
             _bootToMenu?.Enable();
             _readConfigHook?.Enable();
+            _loadWorldAssetsHook?.Enable();
+            _initializeObjectLayoutHook?.Enable();
         }
 
         // Hook Implementation
@@ -96,5 +108,21 @@ namespace Riders.Tweakbox.Controllers
                 _bootToMenu = SDK.ReloadedHooks.CreateAsmHook(bootToMain, 0x0046AEE9, AsmHookBehaviour.ExecuteFirst).Activate();
             }
         }
+
+        private int LoadWorldAssetsHook()
+        {
+            var forceSinglePlayer = _config.Data.SinglePlayerStageData;
+            int originalNumCameras = *State.NumberOfCameras;
+
+            if (forceSinglePlayer)
+                *State.NumberOfCameras = 1;
+
+            var result = _loadWorldAssetsHook.OriginalFunction();
+
+            *State.NumberOfCameras = originalNumCameras;
+            return result;
+        }
+
+        private Enum<AsmFunctionResult> CheckIfLoadSinglePlayerObjectLayout() => _config.Data.SinglePlayerStageData;
     }
 }

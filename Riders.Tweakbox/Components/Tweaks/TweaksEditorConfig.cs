@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MessagePack;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc;
@@ -154,6 +154,7 @@ namespace Riders.Tweakbox.Components.Tweaks
             public bool Blur;
             public bool WidescreenHack;
             public bool Borderless;
+            public bool SinglePlayerStageData;
 
             internal static Internal GetDefault() => new Internal
             {
@@ -169,7 +170,8 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Fullscreen = false,
                 Blur = false,
                 WidescreenHack = false,
-                Borderless = false
+                Borderless = false,
+                SinglePlayerStageData = true
             };
 
             public void Sanitize()

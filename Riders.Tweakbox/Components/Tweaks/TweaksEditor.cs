@@ -43,6 +43,8 @@ namespace Riders.Tweakbox.Components.Tweaks
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
+                ImGui.Checkbox("Single Player Stage Data", ref Config.Data.SinglePlayerStageData);
+                Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Graphics", 0))
