@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MessagePack;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc;
@@ -43,6 +43,7 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             // ResetDevice();
             ChangeBorderless(Data.Borderless);
+            ConfigUpdated?.Invoke();
         }
 
         public unsafe void ChangeBorderless(bool borderless)
