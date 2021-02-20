@@ -21,6 +21,9 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         private static FixedArrayPtr<CharacterTypeStats> _typeStats => new FixedArrayPtr<CharacterTypeStats>(0x005BD4D8, 3);
         private static PhysicsEditorConfig _default = PhysicsEditorConfig.FromGame();
 
+        /// <inheritdoc />
+        public Action ConfigUpdated { get; set; }
+
         /// <summary>
         /// Internal data of the physics editor.
         /// </summary>
@@ -43,11 +46,9 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             };
         }
 
-        /// <inheritdoc />
-        public Action ConfigUpdated { get; set; }
-
+        public IConfiguration GetCurrent() => FromGame();
+        public IConfiguration GetDefault() => _default;
         public unsafe byte[] ToBytes() => Data.ToBytes();
-
         public unsafe Span<byte> FromBytes(Span<byte> bytes)
         {
             Data.FromBytes(bytes, out int bytesRead);
@@ -61,9 +62,6 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             *Player.RunPhysics2 = Data.RunningPhysics2;
             Player.TypeStats.CopyFrom(Data.CharacterTypeStats, Data.CharacterTypeStats.Length);
         }
-
-        public IConfiguration GetCurrent() => FromGame();
-        public IConfiguration GetDefault() => _default;
 
         /* Internal representation of this config. */
         public struct Internal
