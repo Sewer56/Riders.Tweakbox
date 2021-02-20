@@ -181,6 +181,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                         var excludeIndices = Extensions.GetExcludeIndices((HostState) State, peer, excludeIndexBuffer);
                         using var rental = Extensions.GetItemsWithoutIndices(players.Span, excludeIndices);
 
+                        if (rental.Length <= 0)
+                            continue;
+
                         // Construct packet.
                         packet.SetHeader(Socket.Config.Data.ReducedTickRate
                             ? new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter)

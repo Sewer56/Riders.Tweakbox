@@ -196,6 +196,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 var excludeIndices = Extensions.GetExcludeIndices((HostState)State, peer, excludeIndexBuffer);
                 using var rental   = Extensions.GetItemsWithoutIndices(_lapSync.AsSpan(0, State.GetPlayerCount()), excludeIndices);
 
+                if (rental.Length <= 0)
+                    continue;
+
                 // Transmit Packet Information
                 using var counters = new LapCountersPacked();
                 counters.Set(rental.Segment.Array, rental.Length);
@@ -220,8 +223,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 for (int y = 0; y < laps; y++)
                 {
                     Log.WriteLine($"[{nameof(RaceLapSync)}] Sync: Set Lap for {x} | Lap {lap.Counter} | Timer {lap.Timer}", LogCategory.LapSync);
-                    Event.InvokeUpdateLapCounter(player, *(int*)0x017E3E2C);
+                    
+                    // Copy stage timer (lap increment will use this value for lap time math!)
+                    var stageTimerBackup = *StageTimer;
 
+                    *StageTimer = lap.Timer;
+                    Event.InvokeUpdateLapCounter(player, *(int*)0x017E3E2C);
+                    *StageTimer = stageTimerBackup;
+
+                    // Restore old timer.
                     player->FinishTime = lap.Timer;
                     if (player->LapCounter > CurrentRaceSettings->Laps)
                     {

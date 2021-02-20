@@ -125,7 +125,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Removes gap in internal player indexes.
+        /// Removes gaps in internal player indexes.
         /// </summary>
         private void CompactPlayerIndices()
         {
@@ -134,8 +134,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
             foreach (var sort in sorted)
             {
-                sort.Value.PlayerIndex = currentIndex;
-                currentIndex += sort.Value.NumPlayers;
+                if (sort.Value.NumPlayers < 1)
+                {
+                    sort.Value.PlayerIndex = -1;
+                }
+                else
+                {
+                    sort.Value.PlayerIndex = currentIndex;
+                    currentIndex += sort.Value.NumPlayers;
+                }
             }
         }
     }

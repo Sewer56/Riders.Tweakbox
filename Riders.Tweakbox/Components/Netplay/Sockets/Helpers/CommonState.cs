@@ -1,6 +1,7 @@
 ﻿using System;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
 using System.Linq;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using StructLinq;
 
@@ -121,14 +122,20 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             // Compare against highest player index.
             if (PlayerInfo.Length > 0)
             {
-                var highestRemoteIndex = PlayerInfo.ToStructEnumerable().Select(x => x.PlayerIndex + x.NumPlayers).Max();
-                var highestLocalIndex = SelfInfo.PlayerIndex + SelfInfo.NumPlayers;
-                    
-                return playerIndex < Math.Max(highestLocalIndex, highestRemoteIndex);
+                if (IsSpectator(playerIndex))
+                    return false;
+
+                if (IsRemote(playerIndex))
+                    return true;
             }
 
             return IsLocal(playerIndex);
         }
+
+        /// <summary>
+        /// True if the player is a spectator, else false.
+        /// </summary>
+        public bool IsSpectator(int playerIndex) => playerIndex == Constants.MaxNumberOfClients - 1;
 
         /// <summary>
         /// Determines if the player is a local player (on this machine).
@@ -137,6 +144,24 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public bool IsLocal(int playerIndex)
         {
             return playerIndex < NumLocalPlayers;
+        }
+
+        /// <summary>
+        /// True if the player is a remote human player.
+        /// </summary>
+        public bool IsRemote(int playerIndex)
+        {
+            for (int x = 0; x < PlayerInfo.Length; x++)
+            {
+                var player = PlayerInfo[x];
+                var minIndex = GetLocalPlayerIndex(player.PlayerIndex);
+                var maxIndex = minIndex + player.NumPlayers;
+
+                if (playerIndex >= minIndex && playerIndex < maxIndex)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

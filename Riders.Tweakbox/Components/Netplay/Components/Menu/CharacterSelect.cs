@@ -111,6 +111,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                         var excludeIndices = playerData.GetExcludeIndices(excludeIndexBuffer);
 
                         using var rental   = Extensions.GetItemsWithoutIndices(_sync.Value.Elements.AsSpan(0, State.GetPlayerCount()), excludeIndices);
+                        if (rental.Length <= 0)
+                            continue;
+
                         using var message  = new CharaSelectSync();
                         message.Set(rental.Segment.Array, rental.Length);
 

@@ -16,7 +16,7 @@ namespace Riders.Netplay.Messages.Misc
         public const int MaxNumberOfLocalPlayers = 4;
 
         /// <summary>
-        /// The maximum number of clients that can connect to a server.
+        /// The maximum number of clients that can connect to a server (indexed from 1.
         /// </summary>
         public static int MaxNumberOfClients => MaxNumberOfClientsBitField.MaxValue + 1;
 
