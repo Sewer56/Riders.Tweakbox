@@ -136,8 +136,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <param name="playerIndex">The index of the player.</param>
         public bool IsLocal(int playerIndex)
         {
-            var maxIndex = NumLocalPlayers - 1;
-            return playerIndex >= 0 && playerIndex <= maxIndex;
+            return playerIndex < NumLocalPlayers;
         }
     }
 }
