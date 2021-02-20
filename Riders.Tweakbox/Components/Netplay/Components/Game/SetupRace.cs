@@ -40,7 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
         {
             if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *State.NumberOfRacers = (byte)Socket.State.GetPlayerCount();
+                *State.NumberOfRacers = Socket.State.GetPlayerCount();
 
             if (Socket.TryGetComponent(out CharacterSelect charSelect))
                 charSelect.LastSync.ToGameOnlyCharacter(Socket.State.NumLocalPlayers);
@@ -65,6 +65,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 case 2: *State.NumberOfCameras = 2; break;
                 case > 2: *State.NumberOfCameras = 4; break;
             }
+
+            *State.NumberOfHumanRacers = totalPlayers;
         }
 
         /// <inheritdoc />
