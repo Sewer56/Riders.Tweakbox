@@ -1,7 +1,8 @@
 ﻿using System;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
+using Riders.Tweakbox.Misc;
+using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 {
@@ -27,16 +28,32 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (deliveryMethod == DeliveryMethod.Sequenced || deliveryMethod == DeliveryMethod.Unreliable)
             {
                 var packet = new UnreliablePacket(Constants.MaxNumberOfPlayers);
-                packet.Deserialize(rawBytes);
-                Socket.HandleUnreliablePacket(ref packet, peer);
-                packet.Dispose();
+                try
+                {
+                    packet.Deserialize(rawBytes);
+                    Socket.HandleUnreliablePacket(ref packet, peer);
+                }
+                catch (Exception e)
+                {
+                    packet.Dispose();
+                    Log.WriteLine($"Exception Processing Unreliable Packet: {e.Message}");
+                    throw;
+                }
             }
             else
             {
                 var packet = new ReliablePacket();
-                packet.Deserialize(rawBytes);
-                Socket.HandleReliablePacket(ref packet, peer);
-                packet.Dispose();
+                try
+                {
+                    packet.Deserialize(rawBytes);
+                    Socket.HandleReliablePacket(ref packet, peer);
+                }
+                catch (Exception e)
+                {
+                    packet.Dispose();
+                    Log.WriteLine($"Exception Processing Reliable Packet: {e.Message}");
+                    throw;
+                }
             }
         }
     }

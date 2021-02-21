@@ -79,6 +79,19 @@ namespace Riders.Netplay.Messages
         }
 
         /// <summary>
+        /// Clones the contents of the current packet.
+        /// Cloned packet will need separate disposal from original packet.
+        /// </summary>
+        public UnreliablePacket Clone()
+        {
+            var copy = new UnreliablePacket(Header.NumberOfPlayers) { Header = Header };
+            for (int x = 0; x < copy.Header.NumberOfPlayers; x++)
+                copy.Players[x] = Players[x];
+
+            return copy;
+        }
+
+        /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
         /// <param name="numBytes">Number of bytes serialized in the returned byte stream.</param>
