@@ -243,12 +243,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                 element.Board = (byte) randomGear;
                 element.Status = PlayerStatus.Ready;
                 element.ToGame(_lastTaskPtr, x);
-
-                // Set as human to correctly setup cameras.
-                Player.Players[x].IsAiLogic = PlayerType.Human;
             }
 
             _lastTaskPtr->TaskData->CurrentlyActivePlayerCount = (byte) State.NumLocalPlayers;
+            if (State.NumLocalPlayers > 1)
+                *Sewer56.SonicRiders.API.State.HasMoreThanOneCamera = 1;
         }
 
         /// <inheritdoc />

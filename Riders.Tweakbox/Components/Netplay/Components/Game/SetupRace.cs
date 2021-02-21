@@ -57,16 +57,25 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.TryGetComponent(out RaceLapSync lap))
                 lap.Reset();
 
-            // Calculate Number of Cameras
-            var totalPlayers = Socket.State.NumLocalPlayers;
-            switch (totalPlayers)
+            // Calculate Number of Cameras depending on Local Players
+            var totalPlayers = Socket.State.GetPlayerCount();
+            var numCameras   = Socket.Config.Data.MaxNumberOfCameras.Value;
+            if (numCameras > 0)
             {
-                case 1: *State.NumberOfCameras = 1; break;
-                case 2: *State.NumberOfCameras = 2; break;
-                case > 2: *State.NumberOfCameras = 4; break;
+                while (numCameras > totalPlayers)
+                    numCameras--;
+            }
+            else
+            {
+                // 1 Camera or Local Num of Players
+                numCameras = Math.Max(1, Socket.State.NumLocalPlayers);
             }
 
-            *State.NumberOfHumanRacers = totalPlayers;
+            *State.NumberOfCameras = numCameras;
+            if (numCameras > 1)
+                *State.HasMoreThanOneCamera = 1;
+            else
+                *State.HasMoreThanOneCamera = 0;
         }
 
         /// <inheritdoc />

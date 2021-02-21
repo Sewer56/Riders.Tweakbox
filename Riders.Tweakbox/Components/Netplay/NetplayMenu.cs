@@ -78,6 +78,9 @@ namespace Riders.Tweakbox.Components.Netplay
                 data.PlayerName.Render(nameof(data.PlayerName));
                 Reflection.MakeControl(ref data.ShowPlayers.Value, "Show Player Overlay");
                 ImGui.DragInt("Number of Players", ref data.LocalPlayers.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ImGui.DragInt("Max Number of Cameras", ref data.MaxNumberOfCameras.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                Tooltip.TextOnHover("Default: 1 (Automatic)\n" +
+                                    "Overrides the number of cameras, allowing for split-screen while in online multiplayer.");
 
                 ImGui.TreePop();
             }

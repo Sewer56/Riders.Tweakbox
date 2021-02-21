@@ -88,6 +88,9 @@ namespace Riders.Tweakbox.Components.Netplay
             [Key(8)]
             public Definitions.Nullable<int> LocalPlayers;
 
+            [Key(9)]
+            public Definitions.Nullable<int> MaxNumberOfCameras;
+
             public static Internal Create()
             {
                 var value = new Internal();
@@ -105,6 +108,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 ShowPlayers.SetIfNull(false);
                 ReducedTickRate.SetIfNull(false);
                 LocalPlayers.SetIfNull(1);
+                MaxNumberOfCameras.SetIfNull(0);
             }
 
             [MessagePackObject]
