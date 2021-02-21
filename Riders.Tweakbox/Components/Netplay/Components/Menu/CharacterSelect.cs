@@ -245,7 +245,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                 element.ToGame(_lastTaskPtr, x);
             }
 
-            _lastTaskPtr->TaskData->CurrentlyActivePlayerCount = (byte) State.NumLocalPlayers;
             if (State.NumLocalPlayers > 1)
                 *Sewer56.SonicRiders.API.State.HasMoreThanOneCamera = 1;
         }
