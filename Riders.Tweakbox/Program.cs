@@ -65,14 +65,6 @@ namespace Riders.Tweakbox
         /* Automatically called by the mod loader when the mod is about to be unloaded. */
         public Action Disposing { get; }
 
-        /* Contains the Types you would like to share with other mods.
-           If you do not want to share any types, please remove this method and the
-           IExports interface.
-        
-           Inter Mod Communication: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/InterModCommunication.md
-        */
-        public Type[] GetTypes() => new Type[0];
-
         /* This is a dummy for R2R (ReadyToRun) deployment.
            For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
         */
