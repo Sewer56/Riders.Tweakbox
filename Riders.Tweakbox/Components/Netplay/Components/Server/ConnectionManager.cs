@@ -52,7 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
         private async void OnHostPeerConnected(NetPeer peer)
         {
-            bool HasReceivedPlayerData() => HostState.ClientMap.TryGetPeer(peer, out _);
+            bool HasReceivedPlayerData() => HostState.ClientMap.TryGetPlayerData(peer, out _);
 
             Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
 

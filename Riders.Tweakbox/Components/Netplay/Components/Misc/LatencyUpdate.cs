@@ -47,7 +47,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
                 {
                     var peer = Manager.ConnectedPeerList[x];
-                    if (!state.ClientMap.TryGetPeer(peer, out var playerData)) 
+                    if (!state.ClientMap.TryGetPlayerData(peer, out var playerData)) 
                         continue;
 
                     var excludeIndex = playerData.PlayerIndex;

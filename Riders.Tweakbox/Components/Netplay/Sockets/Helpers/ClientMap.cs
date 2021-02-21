@@ -30,11 +30,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public PlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
 
         /// <summary>
-        /// Tries to get the dta for an individual peer.
+        /// Tries to get the data for an individual peer.
         /// </summary>
         /// <param name="peer">The peer.</param>
         /// <param name="data">The data.</param>
-        public bool TryGetPeer(NetPeer peer, out PlayerData data) => _dictionary.TryGetValue(peer.Id, out data);
+        public bool TryGetPlayerData(NetPeer peer, out PlayerData data) => _dictionary.TryGetValue(peer.Id, out data);
 
         /// <summary>
         /// Sets the player data for a peer.
