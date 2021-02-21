@@ -66,17 +66,24 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
         private void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
-            if (Socket.GetSocketType() == SocketType.Host)
+            try
             {
-                // Update latency of client.
-                var hostState = (HostState) Socket.State;
-                var data = hostState.ClientMap.GetPlayerData(peer);
-                data.Latency = latency;
+                if (Socket.GetSocketType() == SocketType.Host)
+                {
+                    // Update latency of client.
+                    var hostState = (HostState) Socket.State;
+                    var data = hostState.ClientMap.GetPlayerData(peer);
+                    data.Latency = latency;
+                }
+                else
+                {
+                    // Update ping to host.
+                    Socket.State.PlayerInfo[0].Latency = latency;
+                }
             }
-            else
+            catch (Exception e)
             {
-                // Update ping to host.
-                Socket.State.PlayerInfo[0].Latency = latency;
+                Log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}", LogCategory.Socket);
             }
         }
 
