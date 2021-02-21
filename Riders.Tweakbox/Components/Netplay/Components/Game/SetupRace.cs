@@ -76,6 +76,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 *State.HasMoreThanOneCamera = 1;
             else
                 *State.HasMoreThanOneCamera = 0;
+
+            *State.NumberOfHumanRacers = totalPlayers;
         }
 
         /// <inheritdoc />
