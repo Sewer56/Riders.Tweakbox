@@ -58,7 +58,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 lap.Reset();
 
             // Calculate Number of Cameras
-            var totalPlayers = Socket.State.GetPlayerCount();
+            var totalPlayers = Socket.State.NumLocalPlayers;
             switch (totalPlayers)
             {
                 case 1: *State.NumberOfCameras = 1; break;

@@ -61,7 +61,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// </summary>
         /// <param name="task">The individual character select task.</param>
         /// <param name="numLocalPlayers">Number of local players playing on this PC.</param>
-        public unsafe void ToGame(Task<CharacterSelect, CharacterSelectTaskState>* task, int numLocalPlayers)
+        /// <param name="totalNumPlayers">Total number of players in this game.</param>
+        public unsafe void ToGame(Task<CharacterSelect, CharacterSelectTaskState>* task, int numLocalPlayers, int totalNumPlayers)
         {
             if (task == null) 
                 return;
@@ -74,7 +75,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             }
 
             // Check player's own status & others' statuses.
-            task->TaskData->AreYouReadyEnabled = (AllJoinedAndReady() && task->TaskStatus != CharacterSelectTaskState.LoadingStage);
+            task->TaskData->AreYouReadyEnabled = (AllJoinedAndReady(totalNumPlayers) && task->TaskStatus != CharacterSelectTaskState.LoadingStage);
         }
 
         /// <summary>
@@ -92,9 +93,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <summary>
         /// True if all players are joined and ready, else false.
         /// </summary>
-        private bool AllJoinedAndReady()
+        private bool AllJoinedAndReady(int totalNumPlayers)
         {
-            for (int x = 0; x < NumElements; x++)
+            for (int x = 0; x < totalNumPlayers; x++)
             {
                 var element = Elements[x];
                 if (!IsJoinedAndReady(element.Status))
@@ -103,7 +104,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
 
             return true;
 
-            bool IsJoinedAndReady(PlayerStatus status) => status > PlayerStatus.SetReady || status == PlayerStatus.Inactive;
+            bool IsJoinedAndReady(PlayerStatus status) => status > PlayerStatus.SetReady;
         }
 
         /// <inheritdoc />

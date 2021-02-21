@@ -1,4 +1,5 @@
 ﻿using System;
+using EnumsNET;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Helpers;
@@ -11,8 +12,11 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
+using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.Structs;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
 using Extensions = Riders.Tweakbox.Components.Netplay.Helpers.Extensions;
 
@@ -32,6 +36,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         private TimeStamp[] _stamps = new TimeStamp[Constants.MaxNumberOfPlayers];
         private ExitKind _exit = ExitKind.Null;
         private readonly byte _sequencedChannel;
+        private Task<Sewer56.SonicRiders.Structures.Tasks.CharacterSelect, CharacterSelectTaskState>* _lastTaskPtr;
 
         public CharacterSelect(Socket socket, EventController @event)
         {
@@ -65,6 +70,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 
         private void DoExitCharaSelect(ExitKind kind)
         {
+            // Check if we initialized exit ourselves.
             if (_exit != kind)
             {
                 if (Socket.GetSocketType() == SocketType.Host)
@@ -73,11 +79,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new CharaSelectExit(kind)), DeliveryMethod.ReliableOrdered, $"[{nameof(CharacterSelect)} / Client] Sending Start/Exit flag to Host", LogCategory.Menu);
             }
 
+            // Fill in empty player slots with random gear/character.
+            if (kind == ExitKind.Start)
+                SetRandomForUnjoinedPlayers();
+
             _exit = ExitKind.Null;
         }
 
         private unsafe void OnCharaSelect(Task<Sewer56.SonicRiders.Structures.Tasks.CharacterSelect, CharacterSelectTaskState>* task)
         {
+            _lastTaskPtr = task;
+
             // Update local player info.
             for (int x = 0; x < State.NumLocalPlayers; x++)
                 _sync.Value.Elements[x] = CharaSelectLoop.FromGame(task, x);
@@ -198,7 +210,39 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                 return;
 
             LastSync = _sync.Value;
-            _sync.Value.ToGame(task, State.NumLocalPlayers);
+            _sync.Value.ToGame(task, State.NumLocalPlayers, State.GetPlayerCount());
+        }
+
+        private void SetRandomForUnjoinedPlayers()
+        {
+            var random = new Random();
+            Log.WriteLine($"[{nameof(CharacterSelect)}] Setting Random for Unjoined Players");
+            for (int x = 0; x < State.NumLocalPlayers; x++)
+            {
+                ref var element = ref _sync.Value.Elements[x];
+                if (element.Status != PlayerStatus.Inactive)
+                    continue;
+
+                var randomCharacter = random.Next(0, (int) Characters.E10000R);
+                int randomGear;
+                var gearPtr = (Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear*) Player.Gears.Pointer;
+                do
+                {
+                    randomGear = random.Next(0, (int)ExtremeGear.Cannonball);
+                }
+                while (!gearPtr[randomGear].WhoCanSelect.HasAllFlags((CharactersFlags)(1 << randomCharacter)));
+
+                // Copy Element Data to Game
+                element.Character = (byte) randomCharacter;
+                element.Board = (byte) randomGear;
+                element.Status = PlayerStatus.Ready;
+                element.ToGame(_lastTaskPtr, x);
+
+                // Set as human to correctly setup cameras.
+                Player.Players[x].IsAiLogic = PlayerType.Human;
+            }
+
+            _lastTaskPtr->TaskData->CurrentlyActivePlayerCount = (byte) State.NumLocalPlayers;
         }
 
         /// <inheritdoc />

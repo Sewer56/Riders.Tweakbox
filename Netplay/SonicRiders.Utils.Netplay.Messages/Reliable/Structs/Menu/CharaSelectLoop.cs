@@ -108,9 +108,14 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
                 switch (Status)
                 {
                     case PlayerStatus.Inactive:
+                        task->TaskData->OpenPlayerSlots[index] = 0xFF;
+                        task->TaskData->PlayerStatuses[index] = (byte)Status;
+                        break;
+
                     case PlayerStatus.Active:
                     case PlayerStatus.GearSelect:
                     case PlayerStatus.GearDescription:
+                        task->TaskData->OpenPlayerSlots[index] = (byte) index;
                         task->TaskData->PlayerStatuses[index] = (byte) Status;
                         break;
                     // Set to an invalid state.
@@ -119,11 +124,10 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
                     // to implement code to render the model.
                     case PlayerStatus.SetReady:
                     case PlayerStatus.Ready:
+                        task->TaskData->OpenPlayerSlots[index] = (byte)index;
                         task->TaskData->PlayerStatuses[index] = 6;
                         break;
                 }
-
-                task->TaskData->PlayerMenuSelections[index] = CharacterToSelection(Character);
             }
         }
 
