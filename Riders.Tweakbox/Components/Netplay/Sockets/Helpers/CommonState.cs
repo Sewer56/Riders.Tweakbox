@@ -1,7 +1,4 @@
-﻿using System;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Shared;
-using System.Linq;
-using Riders.Netplay.Messages.Misc;
+﻿using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using StructLinq;
 

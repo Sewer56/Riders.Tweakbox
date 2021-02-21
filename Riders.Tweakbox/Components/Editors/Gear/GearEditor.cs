@@ -1,9 +1,7 @@
-﻿using System;
-using DearImguiSharp;
+﻿using DearImguiSharp;
 using EnumsNET;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;

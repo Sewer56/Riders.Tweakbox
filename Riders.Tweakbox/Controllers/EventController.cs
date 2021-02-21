@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
-using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;

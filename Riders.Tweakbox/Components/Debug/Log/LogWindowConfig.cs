@@ -1,6 +1,5 @@
 ﻿using System;
 using MessagePack;
-using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;

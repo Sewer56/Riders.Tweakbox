@@ -5,11 +5,12 @@ using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Microsoft.Windows.Sdk;
-using Riders.Netplay.Messages.Misc.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers;
 using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;
+
+// ReSharper disable once RedundantUsingDirective
+using Microsoft.Windows.Sdk;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {

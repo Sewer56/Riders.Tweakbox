@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Windows;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
@@ -14,9 +11,11 @@ using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using SharpDX.Direct3D9;
-using Microsoft.Windows.Sdk;
 using static Sewer56.SonicRiders.Functions.Functions;
 using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
+
+// ReSharper disable once RedundantUsingDirective
+using Microsoft.Windows.Sdk;
 
 namespace Riders.Tweakbox.Controllers
 {

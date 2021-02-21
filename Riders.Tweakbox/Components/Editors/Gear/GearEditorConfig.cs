@@ -1,12 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using K4os.Compression.LZ4;
-using K4os.Compression.LZ4.Streams;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Definitions.Interfaces;
-using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 

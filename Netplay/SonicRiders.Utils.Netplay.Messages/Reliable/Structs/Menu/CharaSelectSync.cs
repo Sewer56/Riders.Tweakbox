@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Riders.Netplay.Messages.Misc.Interfaces;
+﻿using Riders.Netplay.Messages.Misc.Interfaces;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Structures.Tasks;

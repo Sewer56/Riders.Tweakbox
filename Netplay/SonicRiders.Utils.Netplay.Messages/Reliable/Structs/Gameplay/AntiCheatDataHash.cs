@@ -1,6 +1,4 @@
-﻿using DotNext.Buffers;
-using K4os.Hash.xxHash;
-using Reloaded.Memory.Streams;
+﻿using K4os.Hash.xxHash;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 

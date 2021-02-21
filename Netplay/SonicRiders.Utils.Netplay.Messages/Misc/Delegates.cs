@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Riders.Netplay.Messages.Misc
+﻿namespace Riders.Netplay.Messages.Misc
 {
     public static class Delegates
     {

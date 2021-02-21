@@ -1,7 +1,6 @@
 ﻿using System;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers

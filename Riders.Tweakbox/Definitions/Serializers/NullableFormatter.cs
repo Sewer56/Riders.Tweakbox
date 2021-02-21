@@ -1,10 +1,5 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using MessagePack;
+﻿using MessagePack;
 using MessagePack.Formatters;
-using Reloaded.Memory;
-using Sewer56.Imgui.Controls;
-using StructLinq.Utils;
 
 namespace Riders.Tweakbox.Definitions.Serializers
 {

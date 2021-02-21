@@ -3,7 +3,6 @@ using System.Linq;
 using DotNext;
 using EnumsNET;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Reliable.Structs;
 
 namespace Riders.Netplay.Messages.Helpers
 {

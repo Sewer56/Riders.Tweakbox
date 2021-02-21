@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using EnumsNET;
 using Reloaded.Hooks.Definitions;
@@ -12,7 +11,6 @@ using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
-using Microsoft.Windows.Sdk;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 

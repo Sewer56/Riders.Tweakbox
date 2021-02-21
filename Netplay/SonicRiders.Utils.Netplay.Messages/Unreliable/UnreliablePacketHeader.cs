@@ -1,7 +1,6 @@
 ﻿using System;
 using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.BitStream;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 

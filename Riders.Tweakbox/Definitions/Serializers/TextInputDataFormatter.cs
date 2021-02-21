@@ -1,5 +1,4 @@
-﻿using System;
-using MessagePack;
+﻿using MessagePack;
 using MessagePack.Formatters;
 using Sewer56.Imgui.Controls;
 

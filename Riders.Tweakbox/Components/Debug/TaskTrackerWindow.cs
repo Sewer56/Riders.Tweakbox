@@ -1,8 +1,6 @@
 ﻿using DearImguiSharp;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Debug
 {

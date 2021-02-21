@@ -3,7 +3,6 @@ using DotNext.Buffers;
 using LiteNetLib;
 using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 

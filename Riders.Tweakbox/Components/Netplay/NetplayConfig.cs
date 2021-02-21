@@ -1,7 +1,6 @@
 ﻿using System;
 using MessagePack;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Misc.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers;

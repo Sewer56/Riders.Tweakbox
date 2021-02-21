@@ -1,5 +1,4 @@
-﻿using System;
-using Sewer56.BitStream;
+﻿using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
 

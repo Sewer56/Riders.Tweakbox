@@ -5,7 +5,6 @@ using MessagePack;
 using Reloaded.Memory.Streams;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
-using SharpDX.Text;
 
 namespace Riders.Netplay.Messages.Misc
 {
