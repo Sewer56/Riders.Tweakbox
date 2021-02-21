@@ -37,22 +37,22 @@ namespace Riders.Tweakbox.Components.Tweaks
             
             if (ImGui.CollapsingHeaderTreeNodeFlags("Startup", 0))
             {
-                ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu);
+                ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu.Value);
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
-                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
-                ImGui.Checkbox("Single Player Stage Data", ref Config.Data.SinglePlayerStageData);
+                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE.Value);
+                ImGui.Checkbox("Single Player Stage Data", ref Config.Data.SinglePlayerStageData.Value);
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Graphics", 0))
             {
                 ImGui.Text("Live Settings");
-                Reflection.MakeControl(ref Config.Data.Blur, "Blur");
-                Reflection.MakeControl(ref Config.Data.Borderless, "Borderless Windowed");
-                Reflection.MakeControl(ref Config.Data.WidescreenHack, "Widescreen Hack");
+                Reflection.MakeControl(ref Config.Data.Blur.Value, "Blur");
+                Reflection.MakeControl(ref Config.Data.Borderless.Value, "Borderless Windowed");
+                Reflection.MakeControl(ref Config.Data.WidescreenHack.Value, "Widescreen Hack");
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen. Work in progress on adding more HUD elements.");
 
                 if (ImGui.ButtonEx("Apply", Constants.ButtonSize, 0))
@@ -65,33 +65,33 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ImGui.Separator();
                 ImGui.Text("Startup Settings");
 
-                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
-                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
-                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
+                Reflection.MakeControl(ref Config.Data.ResolutionX.Value, "Resolution X");
+                Reflection.MakeControl(ref Config.Data.ResolutionY.Value, "Resolution Y");
+                Reflection.MakeControl(ref Config.Data.Fullscreen.Value, "Fullscreen");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))
             {
                 ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
-                ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
+                ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags.Value);
                 Tooltip.TextOnHover("Applies on boot.");
 
-                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync);
+                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync.Value);
                 Tooltip.TextOnHover("Applies on boot.");
 
-                if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing))
+                if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing.Value))
                     _pacingController.ResetSpeedup();
 
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
                 if (Config.Data.FramePacing)
                 {
-                    ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup);
+                    ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup.Value);
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
                     ImGui.Text($"CPU Load {_pacingController.CpuUsage:00.00}%");
                     ImGui.Text($"Windows Timer Granularity: {_pacingController.TimerGranularity}ms");
-                    Reflection.MakeControl(ref Config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
+                    Reflection.MakeControl(ref Config.Data.DisableYieldThreshold.Value, "CPU Spin Disable Thread Yield Threshold");
                     Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }
 
