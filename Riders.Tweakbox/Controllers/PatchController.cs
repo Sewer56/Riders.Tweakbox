@@ -21,6 +21,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public Patch DisableRacePositionOverwrite = new Patch((IntPtr)0x4B40E6, new byte[] { 0xEB, 0x44 });
 
+        /// <summary>
+        /// Allows the player to un-select their ready choice after the "are you ready" dialog has been shown.
+        /// </summary>
+        public Patch AlwaysAllowUnReadyInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
+
         public PatchController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
@@ -42,6 +47,7 @@ namespace Riders.Tweakbox.Controllers
         {
             InjectRunTimerPostRace.Disable();
             DisableRacePositionOverwrite.Disable();
+            AlwaysAllowUnReadyInCharacterSelect.Disable();
         }
 
         /// <inheritdoc />
@@ -49,6 +55,7 @@ namespace Riders.Tweakbox.Controllers
         {
             InjectRunTimerPostRace.Enable();
             DisableRacePositionOverwrite.Enable();
+            AlwaysAllowUnReadyInCharacterSelect.Enable();
         }
     }
 }

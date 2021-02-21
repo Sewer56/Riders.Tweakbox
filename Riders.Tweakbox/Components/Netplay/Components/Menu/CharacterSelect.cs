@@ -50,6 +50,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event.OnExitCharaSelect         += MenuOnExitCharaSelect;
             Event.OnCheckIfStartRace        += MenuCheckIfStartRace;
             Event.OnStartRace               += MenuOnMenuStartRace;
+
+            var controller = IoC.Get<PatchController>();
+            controller.AlwaysAllowUnReadyInCharacterSelect.Enable();
         }
 
         /// <inheritdoc />
@@ -61,6 +64,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event.OnExitCharaSelect         -= MenuOnExitCharaSelect;
             Event.OnCheckIfStartRace        -= MenuCheckIfStartRace;
             Event.OnStartRace               -= MenuOnMenuStartRace;
+
+            var controller = IoC.Get<PatchController>();
+            controller.AlwaysAllowUnReadyInCharacterSelect.Disable();
         }
 
         private void MenuOnMenuStartRace() => DoExitCharaSelect(ExitKind.Start);
