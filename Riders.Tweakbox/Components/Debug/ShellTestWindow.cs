@@ -21,7 +21,7 @@ namespace Riders.Tweakbox.Components.Debug
                     Shell.AddDialog(TestDialogId, TestDialog);
 
                 if (ImGui.Button("Shell Dialog Text", Constants.DefaultVector2))
-                    Shell.AddDialog(TestDialogId, "Arg is cute");
+                    Shell.AddDialog(TestDialogId, "Test Dialog Text");
 
                 if (ImGui.Button("Shell Window Auto", Constants.DefaultVector2))
                     Shell.AddWindow(TestWindowId, TestDialog);
@@ -32,7 +32,7 @@ namespace Riders.Tweakbox.Components.Debug
 
         private void TestDialog(ref bool isOpened)
         {
-            ImGui.Text("Protag is Pepega");
+            ImGui.Text("Test Dialog");
         }
 
         private bool TestManualDialog()
@@ -40,7 +40,7 @@ namespace Riders.Tweakbox.Components.Debug
             bool isOpened = true;
             ImGui.OpenPopup(TestDialogId);
             if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize)) 
-                ImGui.Text("Protag is Pepega");
+                ImGui.Text("Test Manual Dialog");
 
             ImGui.EndPopup();
             ImGui.CloseCurrentPopup();

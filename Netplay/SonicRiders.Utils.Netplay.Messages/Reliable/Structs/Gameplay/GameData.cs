@@ -1,20 +1,24 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.Linq;
+using DotNext.Buffers;
 using K4os.Compression.LZ4;
 using Reloaded.Memory;
-using Reloaded.Memory.Streams;
-using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.BitStream;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
 {
-    public struct GameData
+    [Equals(DoNotAddEqualityOperators = true)]
+    public unsafe struct GameData : IReliableMessage
     {
         public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears) +
-                                                Struct.GetSize<RunningPhysics>() + Struct.GetSize<RunningPhysics2>() + Struct.GetSize<RaceSettings>();
+                                                sizeof(RunningPhysics) + sizeof(RunningPhysics2) + sizeof(RaceSettings);
+
+        public static readonly int NumGears = Player.NumberOfGears;
+
 
         /// <summary>
         /// Extreme gears of the host player.
@@ -36,6 +40,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// </summary>
         public RaceSettings RaceSettings;
 
+        /// <inheritdoc />
+        public void Dispose() { }
+
         /// <summary>
         /// Writes the contents of this packet to the game memory.
         /// </summary>
@@ -43,7 +50,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         {
             *Player.RunPhysics  = RunningPhysics1;
             *Player.RunPhysics2 = RunningPhysics2;
-            Player.Gears.CopyFrom(Gears, Gears.Length);
+            Player.Gears.CopyFrom(Gears, NumGears);
             *State.CurrentRaceSettings = RaceSettings;
         }
 
@@ -60,47 +67,85 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             return data;
         }
 
-        public static GameData FromCompressedBytes(BufferedStreamReader reader) => FromUncompressedBytes(LZ4.DecompressLZ4Stream(new byte[StructSize], reader));
-        public static GameData FromUncompressedBytes(byte[] data)
-        {
-            using (var memoryStream = new MemoryStream(data))
-            using (var gameDataStream = new BufferedStreamReader(memoryStream, memoryStream.Capacity))
-            {
-                var gameData = new GameData();
-                gameData.Gears = new ExtremeGear[Player.NumberOfGears];
-                for (int x = 0; x < gameData.Gears.Length; x++)
-                    gameData.Gears[x] = gameDataStream.Read<ExtremeGear>();
-
-                gameData.RunningPhysics1 = gameDataStream.Read<RunningPhysics>();
-                gameData.RunningPhysics2 = gameDataStream.Read<RunningPhysics2>();
-                gameData.RaceSettings = gameDataStream.Read<RaceSettings>();
-                return gameData;
-            }
-        }
-
-        public byte[] ToCompressedBytes(LZ4Level level = LZ4Level.L10_OPT) => LZ4.CompressLZ4Stream(ToUncompressedBytes(), level);
-        public byte[] ToUncompressedBytes()
-        {
-            using var memStream = new ExtendedMemoryStream();
-            
-            memStream.Write(StructArray.GetBytes(Gears));
-            memStream.Write(RunningPhysics1);
-            memStream.Write(RunningPhysics2);
-            memStream.Write(RaceSettings);
-            return memStream.ToArray();
-        }
-
         /// <summary>
-        /// Internal use only.
+        /// Returns a rented byte array corresponding to this structure.
         /// </summary>
-        public static unsafe byte[] Random()
+        public ArrayRental<byte> ToCompressedBytes(out int bytesWritten)
         {
-            var data = new byte[StructSize];
-            var random = new Random();
-            for (int x = 0; x < data.Length; x++) 
-                data[x] = (byte) random.Next();
+            var rental          = new ArrayRental<byte>(LZ4Codec.MaximumOutputSize(StructSize));
+            var rentalStream    = new RentalByteStream(rental);
+            var bitStream       = new BitStream<RentalByteStream>(rentalStream);
+            ToStream(ref bitStream);
 
-            return data;
+            bytesWritten = bitStream.NextByteIndex;
+            return rental;
+        }
+
+        /// <inheritdoc />
+        public readonly MessageType GetMessageType() => MessageType.GameData;
+
+        /// <inheritdoc />
+        public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+        {
+            // Get data lengths
+            var numCompressedBytes   = bitStream.Read<int>();
+            var numDecompressedBytes = bitStream.Read<int>();
+
+            // Decompress.
+            using var compressedRental   = new ArrayRental<byte>(numCompressedBytes);
+            using var uncompressedRental = new ArrayRental<byte>(numDecompressedBytes);
+            var compressedSpan   = compressedRental.Span.Slice(0, numCompressedBytes);
+            var decompressedSpan = uncompressedRental.Span.Slice(0, numDecompressedBytes);
+
+            bitStream.Read(compressedSpan);
+            LZ4Codec.Decode(compressedSpan, decompressedSpan);
+
+            // Read
+            FromBytes(uncompressedRental);
+        }
+
+        /// <inheritdoc />
+        public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+        {
+            // Compress
+            using var uncompressedBytes = ToBytes(out int numUncompressedBytes);
+            using var compressedBytes   = new ArrayRental<byte>(LZ4Codec.MaximumOutputSize(numUncompressedBytes));
+            int numCompressedBytes      = LZ4Codec.Encode(uncompressedBytes.Span.Slice(0, numUncompressedBytes), compressedBytes.Span, LZ4Level.L12_MAX);
+
+            // Write compressed & decompressed data lengths.
+            bitStream.Write<int>(numCompressedBytes);
+            bitStream.Write<int>(numUncompressedBytes);
+
+            // Write compressed.
+            bitStream.Write(compressedBytes.Span.Slice(0, numCompressedBytes));
+        }
+
+        private void FromBytes(ArrayRental<byte> rental)
+        {
+            var stream = new RentalByteStream(rental);
+            var bitStream = new BitStream<RentalByteStream>(stream);
+
+            Gears = new ExtremeGear[NumGears];
+            RunningPhysics1 = bitStream.ReadGeneric<RunningPhysics>();
+            RunningPhysics2 = bitStream.ReadGeneric<RunningPhysics2>();
+            RaceSettings = bitStream.ReadGeneric<RaceSettings>();
+            for (int x = 0; x < NumGears; x++)
+                Gears[x] = bitStream.ReadGeneric<ExtremeGear>();
+        }
+
+        private ArrayRental<byte> ToBytes(out int bytesWritten)
+        {
+            var rental    = new ArrayRental<byte>(StructSize);
+            var bitStream = new BitStream<RentalByteStream>(new RentalByteStream(rental));
+
+            bitStream.WriteGeneric(RunningPhysics1);
+            bitStream.WriteGeneric(RunningPhysics2);
+            bitStream.WriteGeneric(RaceSettings);
+            for (int x = 0; x < NumGears; x++) 
+                bitStream.WriteGeneric(Gears[x]);
+
+            bytesWritten = bitStream.NextByteIndex;
+            return rental;
         }
     }
 }

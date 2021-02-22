@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DearImguiSharp;
-using Sewer56.Imgui.Shell.Interfaces;
+﻿using DearImguiSharp;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
 

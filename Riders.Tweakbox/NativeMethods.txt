@@ -3,6 +3,7 @@ GetClientRect
 SetWindowLong
 GetWindowLong
 MoveWindow
+SetWindowText
 
 GetMonitorInfo
 MonitorFromWindow

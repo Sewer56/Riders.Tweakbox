@@ -40,10 +40,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
         {
             if (task->TaskData->RaceMode != RaceMode.TagMode)
-                *State.NumberOfRacers = (byte)Socket.State.GetPlayerCount();
+                *State.NumberOfRacers = Socket.State.GetPlayerCount();
 
             if (Socket.TryGetComponent(out CharacterSelect charSelect))
-                charSelect.LastSync.ToGameOnlyCharacter();
+                charSelect.LastSync.ToGameOnlyCharacter(Socket.State.NumLocalPlayers);
 
             if (Socket.TryGetComponent(out Attack attack))
                 attack.Reset();
@@ -51,11 +51,42 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.TryGetComponent(out Race race))
                 race.Reset();
 
+            if (Socket.TryGetComponent(out RacePlayerEventSync raceEvent))
+                raceEvent.Reset();
+
             if (Socket.TryGetComponent(out RaceLapSync lap))
                 lap.Reset();
+
+            // Reset number of frames.
+            Socket.State.FrameCounter = 0;
+
+            // Calculate Number of Cameras depending on Local Players
+            var totalPlayers = Socket.State.GetPlayerCount();
+            var numCameras   = Socket.Config.Data.MaxNumberOfCameras.Value;
+            if (numCameras > 0)
+            {
+                while (numCameras > totalPlayers)
+                    numCameras--;
+            }
+            else
+            {
+                // 1 Camera or Local Num of Players
+                numCameras = Math.Max(1, Socket.State.NumLocalPlayers);
+            }
+
+            *State.NumberOfCameras = numCameras;
+            if (numCameras > 1)
+                *State.HasMoreThanOneCamera = 1;
+            else
+                *State.HasMoreThanOneCamera = 0;
+
+            *State.NumberOfHumanRacers = totalPlayers;
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet) { }
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) { }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

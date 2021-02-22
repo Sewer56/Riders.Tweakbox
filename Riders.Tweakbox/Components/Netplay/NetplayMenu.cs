@@ -66,19 +66,31 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Text($"IP + UDP Overhead");
             ImGui.Text($"Upload: {socket.Bandwidth.KBytesPacketOverheadSent * 8:####0.0}kbps");
             ImGui.Text($"Download: {socket.Bandwidth.KBytesPacketOverheadReceived * 8:####0.0}kbps");
-
         }
 
         private void RenderDisconnectedWindow()
         {
             ProfileSelector.Render();
             ref var data = ref Config.Data;
+
+            if (ImGui.TreeNodeStr("Player Settings"))
+            {
+                data.PlayerName.Render(nameof(data.PlayerName));
+                Reflection.MakeControl(ref data.ShowPlayers.Value, "Show Player Overlay");
+                ImGui.DragInt("Number of Players", ref data.LocalPlayers.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ImGui.DragInt("Max Number of Cameras", ref data.MaxNumberOfCameras.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                Tooltip.TextOnHover("Default: 1 (Automatic)\n" +
+                                    "Overrides the number of cameras, allowing for split-screen while in online multiplayer.");
+
+                ImGui.TreePop();
+            }
+
             if (ImGui.TreeNodeStr("Join a Server"))
             {
                 data.ClientIP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, data.ClientIP.FilterIPAddress);
                 data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                Reflection.MakeControl(ref data.ClientPort, "Port");
-
+                ImGui.DragInt("Port", ref data.ClientPort.Value, 1.0f, 0, ushort.MaxValue, null);
+                
                 if (ImGui.Button("Connect", Constants.DefaultVector2))
                     Connect();
 
@@ -88,22 +100,14 @@ namespace Riders.Tweakbox.Components.Netplay
             if (ImGui.TreeNodeStr("Host"))
             {
                 data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                Reflection.MakeControl(ref data.HostPort, "Port");
+                ImGui.DragInt("Port", ref data.HostPort.Value, 1.0f, 0, ushort.MaxValue, null);
 
-                ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref data.ReducedTickRate);
+                ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref data.ReducedTickRate.Value);
                 Tooltip.TextOnHover("Reduces the send-rate of non-essential elements such as players' amount of air, rings, flags and other misc. stuff.\n" +
                                     "Saves around 200Kbit/s upload. Use only if hosting 8 player lobby and your upload speed is below 1 Mbit/s.");
 
                 if (ImGui.Button("Host", Constants.DefaultVector2))
                     HostServer();
-
-                ImGui.TreePop();
-            }
-
-            if (ImGui.TreeNodeStr("Player Settings"))
-            {
-                data.PlayerName.Render(nameof(data.PlayerName));
-                Reflection.MakeControl(ref data.ShowPlayers, "Show Player Overlay");
 
                 ImGui.TreePop();
             }

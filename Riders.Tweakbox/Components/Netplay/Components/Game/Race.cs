@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Linq;
+using System.Numerics;
+using DotNext.Buffers;
 using LiteNetLib;
-using Reloaded.Memory;
-using Reloaded.Memory.Sources;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
-using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Unreliable;
+using Riders.Netplay.Messages.Unreliable.Structs;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -15,9 +13,8 @@ using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Structures.Gameplay;
-using Sewer56.SonicRiders.Structures.Tasks.Base;
-using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
+using Extensions = Riders.Tweakbox.Components.Netplay.Helpers.Extensions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
@@ -25,38 +22,53 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
     {
         /// <inheritdoc />
         public Socket Socket { get; set; }
+
         public EventController Event { get; set; }
         public CommonState State { get; set; }
+        public FramePacingController PacingController { get; set; }
 
         /// <summary>
         /// Sync data for races.
         /// </summary>
-        private Volatile<Timestamped<UnreliablePacketPlayer>>[] _raceSync = new Volatile<Timestamped<UnreliablePacketPlayer>>[Constants.MaxNumberOfPlayers];
+        private Volatile<UnreliablePacketPlayer>[] _raceSync = new Volatile<UnreliablePacketPlayer>[Constants.MaxNumberOfPlayers];
 
         /// <summary>
         /// Contains movement flags for each client.
         /// </summary>
-        private Timestamped<Used<MovementFlagsMsg>>[] _movementFlags = new Timestamped<Used<MovementFlagsMsg>>[Constants.MaxNumberOfPlayers + 1];
+        private Timestamped<Used<MovementFlags>>[] _movementFlags = new Timestamped<Used<MovementFlags>>[Constants.MaxNumberOfPlayers + 1];
 
-        private DeliveryMethod _movementFlagsDeliveryMethod = DeliveryMethod.ReliableOrdered;
-        private DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Sequenced;
+        /// <summary>
+        /// Contains inputs for each client.
+        /// </summary>
+        private Timestamped<AnalogXY>[] _analogXY = new Timestamped<AnalogXY>[Constants.MaxNumberOfPlayers + 1];
+
+        /// <summary>
+        /// Jitter buffers for smoothing out incoming packets.
+        /// There is a buffer per client 
+        /// </summary>
+        private JitterBuffer<UnreliablePacket>[] _jitterBuffers = new JitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
+
+        private const DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Unreliable;
         private readonly byte _raceChannel;
-        
+
         public Race(Socket socket, EventController @event)
         {
             Socket = socket;
             Event = @event;
             State = socket.State;
+            PacingController = IoC.GetConstant<FramePacingController>();
 
             _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(_raceDeliveryMethod);
             Event.OnSetSpawnLocationsStartOfRace += SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace += SwapSpawns;
+            Event.AfterRunPlayerPhysicsSimulation += OnAfterPhysicsSimulation;
 
-            Event.OnRace += OnRace;
-            Event.AfterRace += AfterRace;
+            Event.OnSetMovementFlagsOnInput += OnSetMovementFlagsOnInput;
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                _jitterBuffers[x] = new JitterBuffer<UnreliablePacket>(1);
 
             Reset();
         }
@@ -67,179 +79,158 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Socket.ChannelAllocator.ReleaseChannel(_raceDeliveryMethod, _raceChannel);
             Event.OnSetSpawnLocationsStartOfRace -= SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace -= SwapSpawns;
+            Event.AfterRunPlayerPhysicsSimulation -= OnAfterPhysicsSimulation;
 
-            Event.OnRace -= OnRace;
-            Event.AfterRace -= AfterRace;
+            Event.OnSetMovementFlagsOnInput -= OnSetMovementFlagsOnInput;
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput -= IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator -= IsHuman;
         }
 
-
         public void Reset()
         {
-            Array.Fill(_raceSync, new Volatile<Timestamped<UnreliablePacketPlayer>>());
-            Array.Fill(_movementFlags, new Timestamped<Used<MovementFlagsMsg>>());
+            Array.Fill(_raceSync, new Volatile<UnreliablePacketPlayer>());
+            Array.Fill(_movementFlags, new Timestamped<Used<MovementFlags>>());
+            Array.Fill(_analogXY, new Timestamped<AnalogXY>());
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                _jitterBuffers[x].Clear();
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
         {
-            if (packet.GetPacketKind() == PacketKind.Unreliable)
-                HandleUnreliablePacket(packet.Source, packet.As<UnreliablePacket>());
+            // Index of first player to fill.
+            int playerIndex = Socket.GetSocketType() switch
+            {
+                SocketType.Host => ((HostState)State).ClientMap.GetPlayerData(source).PlayerIndex,
+                SocketType.Client => State.NumLocalPlayers,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-            else if (packet.GetPacketKind() == PacketKind.Reliable)
-                HandleReliablePacket(packet.Source, packet.As<ReliablePacket>());
+            _jitterBuffers[playerIndex].TryEnqueue(packet.Clone());
         }
 
-        private void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
+        private void DequeueFromJitterBuffers()
         {
-            if (Socket.GetSocketType() == SocketType.Host)
-            {
-                if (packet.SetMovementFlags.HasValue)
-                {
-                    var hostState = (HostState) State;
-                    var playerIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-
-                    // Replace if used, or merge.
-                    ReplaceOrSetCurrentFlags(packet.SetMovementFlags.Value, playerIndex);
-                }
-            }
-            else
-            {
-                // TODO: Spectator Support
-                if (packet.MovementFlags.HasValue)
-                {
-                    var packedFlags = packet.MovementFlags.Value.AsInterface();
-                    for (int x = 0; x < MovementFlagsPacked.NumberOfEntries; x++)
-                    {
-                        // Fill in from player 2.
-                        ReplaceOrSetCurrentFlags(packedFlags.GetData(x), x + 1);
-                    }
-                }
-            }
-
-            // Local Function
-            void ReplaceOrSetCurrentFlags(MovementFlagsMsg movementFlags, int playerIndex)
-            {
-                ref var currentFlags = ref _movementFlags[playerIndex];
-                if (currentFlags.IsDiscard(State.MaxLatency) || currentFlags.Value.IsUsed)
-                    currentFlags = new Timestamped<Used<MovementFlagsMsg>>(movementFlags);
-                else
-                    currentFlags.Value.Value.Merge(movementFlags);
-            }
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                DequeueFromJitterBuffer(_jitterBuffers[x], x);
         }
 
-        private void HandleUnreliablePacket(NetPeer peer, UnreliablePacket packet)
+        private void DequeueFromJitterBuffer(JitterBuffer<UnreliablePacket> jitterBuffer, int playerIndex)
         {
-            if (Socket.GetSocketType() == SocketType.Host)
+            if (jitterBuffer.TryDequeue(out var packet))
             {
-                // TODO: Maybe support for multiple local players in the future.
                 try
                 {
-                    var hostState = (HostState)State;
-                    var playerIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var player = packet.Players[0];
-                    _raceSync[playerIndex] = new Volatile<Timestamped<UnreliablePacketPlayer>>(player);
-                }
-                catch (Exception e)
-                {
-                    Log.WriteLine($"[{nameof(Race)}] Warning: Failed to update Race Sync", LogCategory.Race);
-                }
-            }
-            else
-            {
-                var players = packet.Players;
+                    var players = packet.Players;
+                    var numPlayers = packet.Header.NumberOfPlayers;
 
-                // Fill in from player 2.
-                for (int x = 0; x < players.Length; x++)
-                    _raceSync[x + 1] = new Volatile<Timestamped<UnreliablePacketPlayer>>(players[x]);
-            }
-        }
-
-        private void OnRace(Task<byte, RaceTaskState>* task)
-        {
-            Socket.Update();
-            ApplyRaceSync();
-        }
-
-        private void AfterRace(Task<byte, RaceTaskState>* task)
-        {
-            if (Socket.GetSocketType() == SocketType.Host)
-            {
-                _raceSync[0] = new Timestamped<UnreliablePacketPlayer>(UnreliablePacketPlayer.FromGame(0));
-
-                // Populate data for non-expired packets.
-                var players = new UnreliablePacketPlayer[State.GetPlayerCount()];
-                Array.Fill(players, new UnreliablePacketPlayer());
-                for (int x = 0; x < players.Length; x++)
-                {
-                    var sync = _raceSync[x];
-                    if (!sync.HasValue)
+                    for (int x = 0; x < numPlayers; x++)
                     {
-                        players[x] = UnreliablePacketPlayer.FromGame(x);
-                        continue;
+                        _raceSync[playerIndex + x] = players[x];
+                        if (players[x].AnalogXY.HasValue)
+                            _analogXY[playerIndex + x] = players[x].AnalogXY.Value;
+
+                        Extensions.ReplaceOrSetCurrentCachedItem(players[x].MovementFlags, _movementFlags, playerIndex + x, State.MaxLatency);
                     }
-
-                    var syncStamped = sync.GetNonvolatile();
-                    if (!syncStamped.IsDiscard(State.MaxLatency))
-                        players[x] = syncStamped;
-                    else
-                        players[x] = UnreliablePacketPlayer.FromGame(x);
                 }
-
-                // Broadcast data to all clients.
-                var hostState = (HostState)State;
-                for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
+                catch (Exception ex)
                 {
-                    var peer = Socket.Manager.ConnectedPeerList[x];
-                    var excludeIndex = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                    var packet = Socket.Config.Data.ReducedTickRate 
-                        ? new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray(), State.FrameCounter) 
-                        : new UnreliablePacket(players.Where((loop, x) => x != excludeIndex).ToArray());
-
-                    Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
+                    Log.WriteLine($"[{nameof(Race)}] Warning: Failed to Dequeue from Jitter Buffer | {ex.Message}", LogCategory.Race);
                 }
+                finally
+                {
+                    packet.Dispose();
+                }
+            }
+        }
 
-                Socket.Update();
-            }
-            else
-            {
-                var packet = new UnreliablePacket(UnreliablePacketPlayer.FromGame(0));
-                Socket.SendAndFlush(Socket.Manager.FirstPeer, packet, _raceDeliveryMethod, _raceChannel);
-            }
+        private Player* OnSetMovementFlagsOnInput(Player* player)
+        {
+            // This is necessary so the game applies the up/down/left/right
+            // flags accordingly which are necessary for drifting to function.
+            ApplyAnalogStick(player);
+            return player;
         }
 
         private Player* OnAfterSetMovementFlagsOnInput(Player* player)
         {
             ApplyMovementFlags(player);
+            return player;
+        }
 
-            if (Socket.GetSocketType() == SocketType.Host)
+        private void OnAfterPhysicsSimulation(void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex)
+        {
+            // Only execute after last player! (Once Per Frame!)
+            if (*(byte*)playerIndex != *Sewer56.SonicRiders.API.State.NumberOfRacers - 1)
+                return;
+
+            Socket.Update();
+            DequeueFromJitterBuffers(); 
+            ApplyRaceSync();
+
+            // Get Packet from the pool.
+            using var packet = new UnreliablePacket(Constants.MaxNumberOfPlayers);
+
+            // Update local player data.
+            for (int x = 0; x < State.NumLocalPlayers; x++)
+                _raceSync[x] = UnreliablePacketPlayer.FromGame(x);
+
+            switch (Socket.GetSocketType())
             {
-                var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-                if (index == 0)
+                case SocketType.Host:
                 {
-                    var hostState = (HostState) State;
-                    _movementFlags[0] = new Timestamped<Used<MovementFlagsMsg>>(new MovementFlagsMsg(player));
-                    for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
+                    // Populate data for non-expired packets.
+                    // TODO: 32-Player Support | Fix Called Function (UnreliablePacketPlayer.FromGame)
+                    using var players = new ArrayRental<UnreliablePacketPlayer>(State.GetPlayerCount());
+                    for (int x = 0; x < players.Length; x++)
                     {
-                        var peer          = Socket.Manager.ConnectedPeerList[x];
-                        var excludeIndex  = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                        var movementFlags = _movementFlags.Where((timestamped, x) => x != excludeIndex).ToArray();
-                        Socket.Send(peer, new ReliablePacket() { MovementFlags = new MovementFlagsPacked().AsInterface().SetData(movementFlags.Select(x => x.Value.Value), 0) }, _movementFlagsDeliveryMethod);
+                        ref var sync = ref _raceSync[x];
+                        if (!sync.HasValue)
+                        {
+                            players[x] = UnreliablePacketPlayer.FromGame(x);
+                            continue;
+                        }
+
+                        players[x] = sync.Get();
                     }
+
+                    // Broadcast data to all clients.
+                    Span<byte> excludeIndexBuffer = stackalloc byte[Constants.MaxNumberOfLocalPlayers]; // Player indices to exclude.
+
+                    for (var peerId = 0; peerId < Socket.Manager.ConnectedPeerList.Count; peerId++)
+                    {
+                        var peer = Socket.Manager.ConnectedPeerList[peerId];
+                        var excludeIndices = Extensions.GetExcludeIndices((HostState) State, peer, excludeIndexBuffer);
+                        using var rental = Extensions.GetItemsWithoutIndices(players.Span, excludeIndices);
+
+                        if (rental.Length <= 0)
+                            continue;
+
+                        // Construct packet.
+                        packet.SetHeader(Socket.Config.Data.ReducedTickRate
+                            ? new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter, State.FrameCounter)
+                            : new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter));
+
+                        for (int x = 0; x < rental.Length; x++)
+                            packet.Players[x] = rental[x];
+
+                        Socket.Send(peer, packet, _raceDeliveryMethod, _raceChannel);
+                    }
+
+                    break;
                 }
 
-                return player;
-            }
-            else
-            {
-                var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-                if (index == 0)
-                    Socket.Send(Socket.Manager.FirstPeer, new ReliablePacket() { SetMovementFlags = new MovementFlagsMsg(player) }, _movementFlagsDeliveryMethod);
+                case SocketType.Client when State.NumLocalPlayers > 0:
+                    packet.SetHeader(new UnreliablePacketHeader((byte)State.NumLocalPlayers, State.FrameCounter));
+                    for (int x = 0; x < State.NumLocalPlayers; x++)
+                        packet.Players[x] = UnreliablePacketPlayer.FromGame(x);
 
-                return player;
+                    Socket.Send(Socket.Manager.FirstPeer, packet, _raceDeliveryMethod, _raceChannel);
+                    break;
             }
+
+            Socket.Update();
         }
 
         /// <summary>
@@ -248,24 +239,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private void ApplyRaceSync()
         {
             // Apply data of all players.
-            // TODO: Update for spectator.
-            for (int x = 1; x < _raceSync.Length; x++)
+            for (int x = State.NumLocalPlayers; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
-                var sync = _raceSync[x];
-                if (!sync.HasValue) 
+                ref var sync = ref _raceSync[x];
+                if (!sync.HasValue)
                     continue;
 
-                var syncStamped = Socket.GetSocketType() == SocketType.Host ? sync.GetNonvolatile() : sync.Get();
-                if (syncStamped.IsDiscard(State.MaxLatency))
-                    continue;
-
-                if (syncStamped.Value.IsDefault())
-                {
-                    Log.WriteLine("Discarding Race Packet due to Default Comparison", LogCategory.Race);
-                    continue;
-                }
-
-                syncStamped.Value.ToGame(x);
+                if (Socket.GetSocketType() == SocketType.Client)
+                    sync.Get().ToGame(x);
+                else
+                    sync.GetNonvolatile().ToGame(x);
             }
         }
 
@@ -273,7 +256,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private void SwapSpawns(int numOfPlayers) => Sewer56.SonicRiders.API.Misc.SwapSpawnPositions(0, State.SelfInfo.PlayerIndex);
 
         /// <summary>
-        /// Handles all Boost/Tornado/Attack tasks received from the clients.
+        /// Handles all movement flags to be applied to the client.
         /// </summary>
         private unsafe Player* ApplyMovementFlags(Player* player)
         {
@@ -281,16 +264,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             {
                 var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
 
-                // TODO: Handle Spectator
-                if (index == 0)
+                if (State.IsLocal(index))
                     return player;
 
-                ref var flags = ref _movementFlags[index];
-                if (flags.IsDiscard(State.MaxLatency))
-                    return player;
-
-                var flagData = flags.Value.UseValue();
-                flagData.ToGame(player);
+                ref var flags    = ref _movementFlags[index];
+                if (!flags.IsDiscard(State.MaxLatency))
+                    flags.Value.UseValue().ToGame(player);
             }
             catch (Exception e)
             {
@@ -299,5 +278,32 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             return player;
         }
+
+        /// <summary>
+        /// Handles all analog stick inputs passed to the client.
+        /// </summary>
+        private unsafe Player* ApplyAnalogStick(Player* player)
+        {
+            try
+            {
+                var index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+
+                if (State.IsLocal(index))
+                    return player;
+
+                ref var analogXY = ref _analogXY[index];
+                if (!analogXY.IsDiscard(State.MaxLatency))
+                    analogXY.Value.ToGame(player);
+            }
+            catch (Exception e)
+            {
+                Log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}", LogCategory.Race);
+            }
+
+            return player;
+        }
+
+        /// <inheritdoc />
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) { }
     }
 }

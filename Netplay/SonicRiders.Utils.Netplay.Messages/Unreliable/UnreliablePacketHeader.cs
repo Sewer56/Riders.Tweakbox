@@ -1,7 +1,9 @@
 ﻿using System;
-using EnumsNET;
-using Reloaded.Memory;
-using Reloaded.Memory.Streams;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Misc;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
+using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Netplay.Messages.Unreliable
 {
@@ -11,18 +13,12 @@ namespace Riders.Netplay.Messages.Unreliable
     [Equals(DoNotAddEqualityOperators = true)]
     public struct UnreliablePacketHeader
     {
-        private const short NumPlayersMask = 0x0007;
-
-        /*
-           // Header (2 bytes)
-           Data Bitfields    = 13 bits
-           Number of Players = 3 bits 
-        */
+        public static readonly BitField SequenceNumberBitfield = new BitField(7);
 
         /// <summary>
-        /// Declares the fields present in the packet to be serialized/deserialized.
+        /// Sequence number assigned to this packet.
         /// </summary>
-        public HasData Fields { get; private set; }
+        public int SequenceNumber { get; private set; }
 
         /// <summary>
         /// The number of player entries stored in this unreliable message.
@@ -30,24 +26,34 @@ namespace Riders.Netplay.Messages.Unreliable
         public byte NumberOfPlayers { get; private set; }
 
         /// <summary>
+        /// Declares the fields present in the packet to be serialized/deserialized.
+        /// </summary>
+        public HasData Fields { get; private set; }
+
+        /// <summary>
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
-        /// <param name="players">List of players to include in the packet.</param>
-        public UnreliablePacketHeader(UnreliablePacketPlayer[] players)
+        /// <param name="numPlayers">Number of players in this message.</param>
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber)
         {
-            if (players.Length < 1 || players.Length > 8)
-                throw new Exception("Number of players must be in the range 1-8.");
+#if DEBUG
+            if (numPlayers < 1 || numPlayers > Constants.MaxNumberOfPlayers)
+                throw new Exception($"Number of players must be in the range 1-{Constants.MaxNumberOfPlayers}.");
+#endif
 
-            NumberOfPlayers = (byte)players.Length;
-            Fields = HasData.All;
+            NumberOfPlayers = numPlayers;
+            Fields = HasDataAll;
+            SequenceNumber = (int) (sequenceNumber % (SequenceNumberBitfield.MaxValue + 1));
         }
 
         /// <summary>
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
-        /// <param name="players">List of players to include in the packet.</param>
+        /// <param name="numPlayers">Number of players in this message.</param>
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
         /// <param name="data">The data to include in the packet.</param>
-        public UnreliablePacketHeader(UnreliablePacketPlayer[] players, HasData data = HasData.All) : this(players)
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber, HasData data = HasDataAll) : this(numPlayers, sequenceNumber)
         {
             Fields = data;
         }
@@ -55,9 +61,10 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
-        /// <param name="players">List of players to include in the packet.</param>
+        /// <param name="numPlayers">Number of players in this message.</param>
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
         /// <param name="frameCounter">The current frame counter used to determine if data should be sent or not.</param>
-        public UnreliablePacketHeader(UnreliablePacketPlayer[] players, int frameCounter) : this(players)
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber, int frameCounter) : this(numPlayers, sequenceNumber)
         {
             Fields = GetData(frameCounter);
         }
@@ -65,32 +72,23 @@ namespace Riders.Netplay.Messages.Unreliable
         /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
-        public unsafe byte[] Serialize()
+        public unsafe void Serialize<TByteStream>(ref BitStream<TByteStream> stream) where TByteStream : IByteStream
         {
-            // f: Fields, n: Numbers
-            // ffff ffff ffff fnnn
-            ushort fieldsPacked = (ushort)((ushort)Fields << 3);
-            byte numPlayersPacked = (byte)(NumberOfPlayers - 1);
-
-            ushort message = (ushort)((ushort)fieldsPacked | (ushort)numPlayersPacked);
-            return Struct.GetBytes(message);
+            stream.Write(SequenceNumber, SequenceNumberBitfield.NumBits);
+            stream.Write(NumberOfPlayers - 1, Constants.PlayerCountBitfield.NumBits);
+            stream.WriteGeneric(Fields, EnumNumBits<HasData>.Number);
         }
 
         /// <summary>
         /// Serializes an instance of the packet.
         /// </summary>
-        public static UnreliablePacketHeader Deserialize(BufferedStreamReader reader)
+        public static UnreliablePacketHeader Deserialize<TByteStream>(ref BitStream<TByteStream> stream) where TByteStream : IByteStream
         {
-            // f: Fields, n: Numbers
-            // ffff ffff ffff fnnn
-            reader.Read(out ushort message);
-            byte numberOfPlayers = (byte)((byte)(message & NumPlayersMask) + 1);
-            var fields = message >> 3;
-
             return new UnreliablePacketHeader
             {
-                NumberOfPlayers = numberOfPlayers,
-                Fields = (HasData)fields
+                SequenceNumber = stream.Read<byte>(SequenceNumberBitfield.NumBits),
+                NumberOfPlayers = (byte)(stream.Read<byte>(Constants.PlayerCountBitfield.NumBits) + 1),
+                Fields = stream.ReadGeneric<HasData>(EnumNumBits<HasData>.Number)
             };
         }
 
@@ -109,24 +107,18 @@ namespace Riders.Netplay.Messages.Unreliable
             if (type == HasData.HasState)
                 return false;
 
-            switch (type)
+            return type switch
             {
-                case HasData.HasRings:
-                    return ShouldISendFrequency(frameCounter, 6);
+                HasData.HasRings => ShouldISendFrequency(frameCounter, 6),
+                HasData.HasAir => ShouldISendFrequency(frameCounter, 12),
+                HasData.HasTurnAndLean => ShouldISendFrequency(frameCounter, 3),
+                HasData.HasMovementFlags => ShouldISendFrequency(frameCounter, 3),
+                HasData.HasAnalogInput => ShouldISendFrequency(frameCounter, 3),
 
-                case HasData.HasAir:
-                    return ShouldISendFrequency(frameCounter, 12);
-
-                case HasData.HasTurnAndLean:
-                    return ShouldISendFrequency(frameCounter, 3);
-
-                case HasData.HasControlFlags:
-                    return ShouldISendFrequency(frameCounter, 3);
-            }
-
-            // Used to have settings here, removed for now.
-            // Will be implemented if we ever need to reduce bandwidth usage.
-            return true;
+                // Used to have settings here, removed for now.
+                // Will be implemented if we ever need to reduce bandwidth usage.
+                _ => true
+            };
         }
 
         /// <summary>
@@ -146,10 +138,8 @@ namespace Riders.Netplay.Messages.Unreliable
             if (ShouldISend(frameCounter, HasData.HasTurnAndLean)) hasData |= HasData.HasTurnAndLean;
             if (ShouldISend(frameCounter, HasData.HasControlFlags)) hasData |= HasData.HasControlFlags;
             if (ShouldISend(frameCounter, HasData.HasAnimation)) hasData |= HasData.HasAnimation;
-            if (ShouldISend(frameCounter, HasData.HasUnused5)) hasData |= HasData.HasUnused5;
-            if (ShouldISend(frameCounter, HasData.HasUnused6)) hasData |= HasData.HasUnused6;
-            if (ShouldISend(frameCounter, HasData.HasUnused7)) hasData |= HasData.HasUnused7;
-            if (ShouldISend(frameCounter, HasData.HasUnused8)) hasData |= HasData.HasUnused8;
+            if (ShouldISend(frameCounter, HasData.HasMovementFlags)) hasData |= HasData.HasMovementFlags;
+            if (ShouldISend(frameCounter, HasData.HasAnalogInput)) hasData |= HasData.HasAnalogInput;
 
             return hasData;
         }
@@ -158,12 +148,11 @@ namespace Riders.Netplay.Messages.Unreliable
         /// Declares whether the packet has a particular component of data.
         /// </summary>
         [Flags]
-        public enum HasData : ushort
+        public enum HasData : int
         {
-            All                = HasPosition | HasRotation | HasVelocity | HasRings | HasState | HasAir | HasTurnAndLean | HasControlFlags | HasAnimation | HasUnused5 | HasUnused6 | HasUnused7 | HasUnused8,
             Null               = 0,
-            
-            HasPosition        = 1, 
+
+            HasPosition        = 1 << 0, 
             HasRotation        = 1 << 1, 
             HasVelocity        = 1 << 2, 
             HasRings           = 1 << 3, 
@@ -172,11 +161,16 @@ namespace Riders.Netplay.Messages.Unreliable
             HasTurnAndLean     = 1 << 6, 
             HasControlFlags    = 1 << 7, 
             HasAnimation       = 1 << 8, 
-            HasUnused5      = 1 << 9, 
-            HasUnused6         = 1 << 10, 
-            HasUnused7         = 1 << 11,
-            HasUnused8         = 1 << 12,
-            // Last 3 bytes occupied by player count.
+            HasMovementFlags   = 1 << 9,
+            HasAnalogInput     = 1 << 10,
         }
+
+        /// <summary>
+        /// All items of <see cref="HasData"/> enum.
+        /// Please DO NOT put me inside <see cref="HasData"/> as it breaks the code that auto-determines number of bits. 
+        /// </summary>
+        public const HasData HasDataAll = HasData.HasPosition | HasData.HasRotation | HasData.HasVelocity | HasData.HasRings | HasData.HasState | 
+                                          HasData.HasAir | HasData.HasTurnAndLean | HasData.HasControlFlags | HasData.HasAnimation | HasData.HasMovementFlags |
+                                          HasData.HasAnalogInput;
     }
 }

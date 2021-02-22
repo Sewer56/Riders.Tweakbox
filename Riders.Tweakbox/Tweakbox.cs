@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
-using Ninject;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Components.Debug;
@@ -13,7 +12,6 @@ using Riders.Tweakbox.Components.Editors.Gear;
 using Riders.Tweakbox.Components.Editors.Physics;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.Tweaks;
-using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -36,7 +34,7 @@ namespace Riders.Tweakbox
         public bool IsReady { get; private set; } = false;
         public MenuBar MenuBar { get; private set; }
         public List<IController> Controllers { get; private set; } = new List<IController>();
-        public IHook<Functions.GetInputsFn> BlockInputsHook { get; private set; }
+        public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
 
         /* Creation & Disposal */
         private Tweakbox(){}

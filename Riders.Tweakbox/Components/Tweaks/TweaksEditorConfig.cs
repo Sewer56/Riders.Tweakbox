@@ -5,26 +5,31 @@ using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Microsoft.Windows.Sdk;
+using Riders.Tweakbox.Definitions.Serializers;
 using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;
+
+// ReSharper disable once RedundantUsingDirective
+using Microsoft.Windows.Sdk;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
     public class TweaksEditorConfig : IConfiguration
     {
-        public Internal Data = Internal.GetDefault();
-        
+        private static IFormatterResolver MsgPackResolver = MessagePack.Resolvers.CompositeResolver.Create(NullableResolver.Instance, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        private static MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard.WithResolver(MsgPackResolver);
+
         // Serialization
+        public Internal Data = Internal.GetDefault();
 
         /// <inheritdoc />
         public Action ConfigUpdated { get; set; }
 
-        public byte[] ToBytes() => MessagePackSerializer.Serialize(Data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+        public byte[] ToBytes() => MessagePackSerializer.Serialize(Data, SerializerOptions);
         public Span<byte> FromBytes(Span<byte> bytes)
         {
-            Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int bytesRead, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            Data.Sanitize();
+            Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int bytesRead, SerializerOptions);
+            Data.Initialize();
             ConfigUpdated?.Invoke();
             return bytes.Slice(bytesRead);
         }
@@ -43,6 +48,7 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             // ResetDevice();
             ChangeBorderless(Data.Borderless);
+            ConfigUpdated?.Invoke();
         }
 
         public unsafe void ChangeBorderless(bool borderless)
@@ -140,44 +146,44 @@ namespace Riders.Tweakbox.Components.Tweaks
         #region Internal
         public struct Internal
         {
-            public bool BootToMenu;
-            public bool FramePacing;
-            public bool FramePacingSpeedup; // Speed up game to compensate for lag.
-            public float DisableYieldThreshold;
-            public bool D3DDeviceFlags;
-            public bool DisableVSync;
-            public bool AutoQTE;
-            public int ResolutionX;
-            public int ResolutionY;
-            public bool Fullscreen;
-            public bool Blur;
-            public bool WidescreenHack;
-            public bool Borderless;
+            public Definitions.Nullable<bool> BootToMenu;
+            public Definitions.Nullable<bool> FramePacing;
+            public Definitions.Nullable<bool> FramePacingSpeedup; // Speed up game to compensate for lag.
+            public Definitions.Nullable<float> DisableYieldThreshold;
+            public Definitions.Nullable<bool> D3DDeviceFlags;
+            public Definitions.Nullable<bool> DisableVSync;
+            public Definitions.Nullable<bool> AutoQTE;
+            public Definitions.Nullable<int> ResolutionX;
+            public Definitions.Nullable<int> ResolutionY;
+            public Definitions.Nullable<bool> Fullscreen;
+            public Definitions.Nullable<bool> Blur;
+            public Definitions.Nullable<bool> WidescreenHack;
+            public Definitions.Nullable<bool> Borderless;
+            public Definitions.Nullable<bool> SinglePlayerStageData;
 
-            internal static Internal GetDefault() => new Internal
+            internal static Internal GetDefault()
             {
-                BootToMenu = true,
-                FramePacingSpeedup = true,
-                FramePacing = true,
-                DisableYieldThreshold = 80,
-                D3DDeviceFlags = true,
-                DisableVSync = true,
-                AutoQTE = true,
-                ResolutionX = 1280,
-                ResolutionY = 720,
-                Fullscreen = false,
-                Blur = false,
-                WidescreenHack = false,
-                Borderless = false
-            };
+                var result = new Internal();
+                result.Initialize();
+                return result;
+            }
 
-            public void Sanitize()
+            public void Initialize()
             {
-                if (ResolutionX <= 0 || ResolutionY <= 0)
-                {
-                    ResolutionX = 1024;
-                    ResolutionY = 768;
-                }
+                BootToMenu.SetIfNull(true);
+                FramePacingSpeedup.SetIfNull(true);
+                FramePacing.SetIfNull(true);
+                DisableYieldThreshold.SetIfNull(80);
+                D3DDeviceFlags.SetIfNull(true);
+                DisableVSync.SetIfNull(true);
+                AutoQTE.SetIfNull(true);
+                ResolutionX.SetIfNull(1280);
+                ResolutionY.SetIfNull(720);
+                Fullscreen.SetIfNull(false);
+                Blur.SetIfNull(false);
+                WidescreenHack.SetIfNull(false);
+                Borderless.SetIfNull(false);
+                SinglePlayerStageData.SetIfNull(true);
             }
         }
         #endregion

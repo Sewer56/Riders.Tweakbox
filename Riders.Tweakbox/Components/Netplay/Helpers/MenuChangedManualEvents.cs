@@ -1,4 +1,4 @@
-﻿using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
+﻿using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;

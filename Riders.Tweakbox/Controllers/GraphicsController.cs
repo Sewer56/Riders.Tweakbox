@@ -1,11 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
-using Reloaded.Hooks.Definitions.X86;
-using Reloaded.Memory.Kernel32;
-using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -13,14 +11,16 @@ using Riders.Tweakbox.Misc.Graphics;
 using Sewer56.NumberUtilities.Matrices;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.NumberUtilities.Vectors;
-using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX.Direct3D9;
 using static Sewer56.SonicRiders.API.Misc;
-using Microsoft.Windows.Sdk;
 using static Riders.Tweakbox.Misc.Native;
+using static Sewer56.SonicRiders.Functions.Functions;
+
+// ReSharper disable once RedundantUsingDirective
+using Microsoft.Windows.Sdk;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -52,8 +52,8 @@ namespace Riders.Tweakbox.Controllers
 
         // Hooks
         private IHook<DX9Hook.CreateDevice> _createDeviceHook;
-        private IHook<Functions.RenderTexture2DFnPtr> _renderTexture2dHook;
-        private IHook<Functions.RenderPlayerIndicatorFnPtr> _renderPlayerIndicatorHook;
+        private IHook<RenderTexture2DFnPtr> _renderTexture2dHook;
+        private IHook<RenderPlayerIndicatorFnPtr> _renderPlayerIndicatorHook;
 
         // Utilities
         private AspectConverter _aspectConverter = new AspectConverter(4 / 3f);
@@ -61,21 +61,17 @@ namespace Riders.Tweakbox.Controllers
 
         public GraphicsController()
         {
-            _controller = this;
+            _controller        = this;
             _createDeviceHook  = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
 
             Reset     = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateWrapperFunction<DX9Hook.Reset>((int)IDirect3DDevice9.Reset);
             ResetHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateFunctionHook<DX9Hook.Reset>((int)IDirect3DDevice9.Reset, ResetImpl);
 
-            var renderTexture2dPtr = (delegate* unmanaged[Stdcall]<int, Vector3*, int, float, int>)&RenderTexture2DPtr;
-            _renderTexture2dHook = Functions.RenderTexture2DPtr.Hook(new Functions.RenderTexture2DFnPtr() { Value = renderTexture2dPtr }).Activate();
-
-            var renderPlayerIndicatorPtr = (delegate* unmanaged[Stdcall]<int, int, int, int, int, int, int, int, int, int, int>)&RenderPlayerIndicatorPtr;
-            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicatorPtr.Hook(new Functions.RenderPlayerIndicatorFnPtr() { Value = renderPlayerIndicatorPtr }).Activate();
+            _renderTexture2dHook       = Functions.RenderTexture2D.HookAs<RenderTexture2DFnPtr>(typeof(GraphicsController), nameof(RenderTexture2DPtr)).Activate();
+            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicator.HookAs<RenderPlayerIndicatorFnPtr>(typeof(GraphicsController), nameof(RenderPlayerIndicatorPtr)).Activate();
 
             // Patch window style if borderless is set
             _config.ConfigUpdated += OnConfigUpdated;
-            
         }
 
         /// <inheritdoc />
@@ -101,6 +97,19 @@ namespace Riders.Tweakbox.Controllers
                 _config.RemoveBorder(ref style);
             else
                 _config.AddBorder(ref style);
+
+            // Enable/Disable Widescreen Hooks
+            if (_config.Data.WidescreenHack)
+            {
+                _renderTexture2dHook.Enable();
+                _renderPlayerIndicatorHook.Enable();
+            }
+            else
+            {
+                _renderTexture2dHook.Disable();
+                _renderPlayerIndicatorHook.Disable();
+                *AspectRatio2dResolutionX = _originalAspectRatio2dResX;
+            }
         }
 
         // Hook Implementation
@@ -129,6 +138,10 @@ namespace Riders.Tweakbox.Controllers
                 presentParameters.FullScreenRefreshRateInHz = 0;
             }
 
+#if DEBUG
+            PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
+#endif
+
             LastPresentParameters = presentParameters;
             var result = _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
             Dx9Device = (IntPtr)(*ppReturnedDeviceInterface);
@@ -140,18 +153,15 @@ namespace Riders.Tweakbox.Controllers
 
         private int RenderPlayerIndicator(int a1, int a2, int a3, int a4, int horizontalOffset, int a6, int a7, int a8, int a9, int a10)
         {
-            if (_config.Data.WidescreenHack)
-            {
-                var actualAspect = *ResolutionX / (float)*ResolutionY;
-                var relativeAspect = (AspectConverter.GetRelativeAspect(actualAspect));
+            var actualAspect = *ResolutionX / (float)*ResolutionY;
+            var relativeAspect = (AspectConverter.GetRelativeAspect(actualAspect));
 
-                // Get new screen width.
-                var maximumX = AspectConverter.GameCanvasWidth * relativeAspect;
-                var borderLeft = (_aspectConverter.GetBorderWidthX(actualAspect, AspectConverter.GameCanvasHeight) / 2);
+            // Get new screen width.
+            var maximumX = AspectConverter.GameCanvasWidth * relativeAspect;
+            var borderLeft = (_aspectConverter.GetBorderWidthX(actualAspect, AspectConverter.GameCanvasHeight) / 2);
 
-                // Scale to new size of screen and offset (our RenderTexture2D Hook will re-add this offset!) 
-                horizontalOffset = (int)(((horizontalOffset / AspectConverter.GameCanvasWidth) * maximumX) - borderLeft);
-            }
+            // Scale to new size of screen and offset (our RenderTexture2D Hook will re-add this offset!) 
+            horizontalOffset = (int)(((horizontalOffset / AspectConverter.GameCanvasWidth) * maximumX) - borderLeft);
 
             return _renderPlayerIndicatorHook.OriginalFunction.Value.Invoke(a1, a2, a3, a4, horizontalOffset, a6, a7, a8, a9, a10);
         }
@@ -163,85 +173,78 @@ namespace Riders.Tweakbox.Controllers
         {
             float Project(float original, float leftBorderOffset) => (leftBorderOffset + original);
 
-            if (_config.Data.WidescreenHack)
+            // Update horizontal aspect.
+            var currentAspectRatio = (float)*ResolutionX / *ResolutionY;
+            *AspectRatio2dResolutionX = AspectConverter.GameCanvasWidth * (currentAspectRatio / (AspectConverter.OriginalGameAspect));
+
+            // Get offset to shift vertices by.
+            var actualAspect = *ResolutionX / (float)*ResolutionY;
+            var leftBorderOffset = (_aspectConverter.GetBorderWidthX(actualAspect, *ResolutionY) / 2);
+
+            // Try hack drawn 2d elements
+            // Reimplemented based on inspecting RenderHud2dTextureInternal (0x004419D0) in disassembly.
+            var vertexIsVector3 = (int*)0x17E51F8;
+            if (*vertexIsVector3 == 1)
             {
-                // Update horizontal aspect.
-                var currentAspectRatio = (float)*ResolutionX / *ResolutionY;
-                *AspectRatio2dResolutionX = AspectConverter.GameCanvasWidth * (currentAspectRatio / (AspectConverter.OriginalGameAspect));
-
-                // Get offset to shift vertices by.
-                var actualAspect = *ResolutionX / (float)*ResolutionY;
-                var leftBorderOffset = (_aspectConverter.GetBorderWidthX(actualAspect, *ResolutionY) / 2);
-
-                // Try hack drawn 2d elements
-                // Reimplemented based on inspecting RenderHud2dTextureInternal (0x004419D0) in disassembly.
-                var vertexIsVector3 = (int*)0x17E51F8;
-                if (*vertexIsVector3 == 1)
+                if (numVertices >= 4)
                 {
-                    if (numVertices >= 4)
+                    int numMatrices = ((numVertices - 4) >> 2) + 1;
+                    var matrix = (Matrix4x3<float, Float>*)vertices;
+                    int totalMatVertices = numMatrices * 4;
+
+                    for (int x = 0; x < numMatrices; x++)
                     {
-                        int numMatrices = ((numVertices - 4) >> 2) + 1;
-                        var matrix = (Matrix4x3<float, Float>*)vertices;
-                        int totalMatVertices = numMatrices * 4;
+                        matrix->X.X = Project(matrix->X.X, leftBorderOffset);
+                        matrix->Y.X = Project(matrix->Y.X, leftBorderOffset);
+                        matrix->Z.X = Project(matrix->Z.X, leftBorderOffset);
+                        matrix->W.X = Project(matrix->W.X, leftBorderOffset);
 
-                        for (int x = 0; x < numMatrices; x++)
-                        {
-                            matrix->X.X = Project(matrix->X.X, leftBorderOffset);
-                            matrix->Y.X = Project(matrix->Y.X, leftBorderOffset);
-                            matrix->Z.X = Project(matrix->Z.X, leftBorderOffset);
-                            matrix->W.X = Project(matrix->W.X, leftBorderOffset);
-
-                            matrix += 1; // Go to next matrix.
-                        }
-
-                        var extraVertices = numVertices - totalMatVertices;
-                        var vertex = (Vector5<float, Float>*)matrix;
-                        for (int x = 0; x < extraVertices; x++)
-                        {
-                            vertex->X = Project(vertex->X, leftBorderOffset);
-                            vertex += 1;
-                        }
+                        matrix += 1; // Go to next matrix.
                     }
-                }
-                else
-                {
-                    if (numVertices >= 4)
+
+                    var extraVertices = numVertices - totalMatVertices;
+                    var vertex = (Vector5<float, Float>*)matrix;
+                    for (int x = 0; x < extraVertices; x++)
                     {
-                        int numMatrices = ((numVertices - 4) >> 2) + 1;
-                        var matrix = (Matrix4x5<float, Float>*)vertices;
-                        int totalMatVertices = numMatrices * 4;
-
-                        /*
-                            The format of this matrix is strange
-                            X X X X
-                            Y Y Y Y
-                            ? ? ? ?
-                            ? ? ? ?
-                            ? ? ? ?
-                        */
-
-                        for (int x = 0; x < numMatrices; x++)
-                        {
-                            matrix->X.X = Project(matrix->X.X, leftBorderOffset);
-                            matrix->Y.X = Project(matrix->Y.X, leftBorderOffset);
-                            matrix->Z.X = Project(matrix->Z.X, leftBorderOffset);
-                            matrix->W.X = Project(matrix->W.X, leftBorderOffset);
-                            matrix += 1; // Go to next matrix.
-                        }
-
-                        var extraVertices = numVertices - totalMatVertices;
-                        var vertex = (Vector5<float, Float>*)matrix;
-                        for (int x = 0; x < extraVertices; x++)
-                        {
-                            vertex->X = Project(vertex->X, leftBorderOffset);
-                            vertex += 1;
-                        }
+                        vertex->X = Project(vertex->X, leftBorderOffset);
+                        vertex += 1;
                     }
                 }
             }
             else
             {
-                *AspectRatio2dResolutionX = _originalAspectRatio2dResX;
+                if (numVertices >= 4)
+                {
+                    int numMatrices = ((numVertices - 4) >> 2) + 1;
+                    var matrix = (Matrix4x5<float, Float>*)vertices;
+                    int totalMatVertices = numMatrices * 4;
+
+                    /*
+                        The format of this matrix is strange
+                        X X X X
+                        Y Y Y Y
+                        ? ? ? ?
+                        ? ? ? ?
+                        ? ? ? ?
+                    */
+
+                    for (int x = 0; x < numMatrices; x++)
+                    {
+                        matrix->X.X = Project(matrix->X.X, leftBorderOffset);
+                        matrix->Y.X = Project(matrix->Y.X, leftBorderOffset);
+                        matrix->Z.X = Project(matrix->Z.X, leftBorderOffset);
+                        matrix->W.X = Project(matrix->W.X, leftBorderOffset);
+                        matrix += 1; // Go to next matrix.
+                    }
+
+                    var extraVertices = numVertices - totalMatVertices;
+                    var vertex = (Vector5<float, Float>*)matrix;
+                    for (int x = 0; x < extraVertices; x++)
+                    {
+                        vertex->X = Project(vertex->X, leftBorderOffset);
+                        vertex += 1;
+                    }
+                }
             }
 
             return _renderTexture2dHook.OriginalFunction.Value.Invoke(isQuad, vertices, numVertices, opacity);

@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
 using LiteNetLib;
-using LiteNetLib.Utils;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
-using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
@@ -15,63 +11,47 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
     /// </summary>
     public class TimeSynchronization : INetplayComponent
     {
-        private const string NtpServer = "time.facebook.com";
-        private const int NtpSyncEventPeriod = 16000;
-
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public NetManager Manager { get; set; }
-        private Timer _synchronizeTimer { get; set; }
-        private TimeSpan _correctionOffset = TimeSpan.Zero;
 
         public TimeSynchronization(Socket socket)
         {
             Socket = socket;
             Manager = socket.Manager;
-            socket.Listener.NtpResponseEvent += OnNtpResponse;
-            CreateNtpRequest(null);
-            _synchronizeTimer = new Timer(CreateNtpRequest, null, NtpSyncEventPeriod, NtpSyncEventPeriod);
         }
 
         /// <inheritdoc />
-        public void Dispose()
-        {
-            Socket.Listener.NtpResponseEvent -= OnNtpResponse;
-            _synchronizeTimer.Dispose();
-        }
+        public void Dispose() { }
 
         /// <summary>
+        /// [For Client]
         /// Converts local time to server time.
         /// </summary>
-        public DateTime ToServerTime(DateTime time) => time + _correctionOffset;
-
-        /// <summary>
-        /// Converts server time to server time.
-        /// </summary>
-        public DateTime ToLocalTime(DateTime time) => time - _correctionOffset;
-
-        private void OnNtpResponse(NtpPacket packet)
+        public DateTime ToServerTime(DateTime time)
         {
-            if (packet != null)
-            {
-                Log.WriteLine($"[{nameof(TimeSynchronization)}] NTP Time Synchronized, Offset: {packet.CorrectionOffset.TotalMilliseconds}ms", LogCategory.Ntp);
-                _correctionOffset = packet.CorrectionOffset;
-            }
+            if (Socket.GetSocketType() == SocketType.Host)
+                return time;
+            
+            return time + TimeSpan.FromTicks(Manager.FirstPeer.RemoteTimeDelta);
         }
 
-        private void CreateNtpRequest(object? state)
+        /// <summary>
+        /// [For Client]
+        /// Converts server time to local time.
+        /// </summary>
+        public DateTime ToLocalTime(DateTime time)
         {
-            if (Manager.PendingNtpRequests > 0) 
-                return;
+            if (Socket.GetSocketType() == SocketType.Host)
+                return time;
 
-            if (Debugger.IsAttached) 
-                return;
-
-            Log.WriteLine($"[{nameof(TimeSynchronization)}] Queuing NTP Synchronization", LogCategory.Ntp);
-            Manager.CreateNtpRequest(NtpServer);
+            return time - TimeSpan.FromTicks(Manager.FirstPeer.RemoteTimeDelta);
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet) { }
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) { }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

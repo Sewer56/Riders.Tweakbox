@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.Hooks.Utilities", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteNetLib", "Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj", "{7EB42C29-642F-4D49-9668-09D1F2D8515A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.BitStream", "Submodules\Sewer56.BitStream\Sewer56.BitStream\Sewer56.BitStream.csproj", "{0B7E0B21-C01F-416D-9909-B674FD4631BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,6 +79,7 @@ Global
 		{C5577FB0-4C96-4EBA-974F-349C7636F532} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
 		{FE39E8DA-3BBE-4AE0-AE09-C764DC9E7859} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
+		{0B7E0B21-C01F-416D-9909-B674FD4631BE} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}

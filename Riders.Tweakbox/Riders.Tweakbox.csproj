@@ -32,10 +32,11 @@
     </PackageReference>
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.5" />
-    <PackageReference Include="Reloaded.Memory" Version="3.1.1" />
+    <PackageReference Include="Reloaded.Memory" Version="4.1.0" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.8.0" />
-    <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.5.2" />
+    <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.6.0" />
     <PackageReference Include="Reloaded.WPF.Animations" Version="1.2.2" />
+    <PackageReference Include="StructLinq" Version="0.25.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Netplay\Components\Server\" />
     <Folder Include="Misc\Graphics\" />
   </ItemGroup>
 

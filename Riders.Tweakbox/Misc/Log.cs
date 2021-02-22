@@ -15,7 +15,7 @@ namespace Riders.Tweakbox.Misc
         Race    = 1 << 2,
         Menu    = 1 << 3,
         Random  = 1 << 4,
-        Ntp     = 1 << 5,
+        PlayerEvent = 1 << 5,
         Socket  = 1 << 6,
         RandomSeed = 1 << 7,
         LapSync = 1 << 8
@@ -31,7 +31,7 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
                                                      LogCategory.Race | LogCategory.Menu |
-                                                     LogCategory.Ntp | LogCategory.Socket |
+                                                     LogCategory.PlayerEvent | LogCategory.Socket |
                                                      LogCategory.Random;
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         /// <param name="text">The text to write.</param>
         /// <param name="category">Category of the text.</param>
-        public static void WriteLine(string text, LogCategory category)
+        public static void WriteLine(string text, LogCategory category = LogCategory.Default)
         {
             if (IsEnabled(category))
                 Trace.WriteLine(text);
@@ -60,7 +60,7 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         /// <param name="text">The text to write.</param>
         /// <param name="category">Category of the text.</param>
-        public static void Write(string text, LogCategory category)
+        public static void Write(string text, LogCategory category = LogCategory.Default)
         {
             if (IsEnabled(category))
                 Trace.Write(text);

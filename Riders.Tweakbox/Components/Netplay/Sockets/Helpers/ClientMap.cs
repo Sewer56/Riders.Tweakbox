@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LiteNetLib;
-using Riders.Netplay.Messages.Reliable.Structs.Server.Messages;
-using Riders.Netplay.Messages.Reliable.Structs.Server.Messages.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
+using StructLinq;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
@@ -12,49 +13,66 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     /// </summary>
     public class ClientMap
     {
-        private Dictionary<int, HostPlayerData> _dictionary = new Dictionary<int, HostPlayerData>();
+        private Dictionary<int, PlayerData> _dictionary = new Dictionary<int, PlayerData>();
 
         /// <summary>
-        /// True if there are empty slots available, else false.
+        /// Initializes a client map given information about the host, then other players.
         /// </summary>
-        public bool HasEmptySlots() => GetEmptySlot() != -1;
+        /// <param name="selfData">Data about the host.</param>
+        public ClientMap(PlayerData selfData)
+        {
+            _dictionary[-1] = selfData;
+        }
 
         /// <summary>
         /// Gets the player data for a peer.
         /// </summary>
-        public HostPlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
+        public PlayerData GetPlayerData(NetPeer peer) => _dictionary.ContainsKey(peer.Id) ? _dictionary[peer.Id] : null;
 
         /// <summary>
-        /// Adds a peer ID to the dictionary.
+        /// Tries to get the data for an individual peer.
         /// </summary>
-        /// <returns>The slot of the peer. This is -1 if there are no slots available.</returns>
-        public int AddPeer(NetPeer peer)
-        {
-            int emptySlot = GetEmptySlot();
-            if (emptySlot != -1)
-                _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", ClientType = ClientKind.Client, PlayerIndex = emptySlot };
-            else
-                _dictionary[peer.Id] = new HostPlayerData() { Name = "Unknown", ClientType = ClientKind.Spectator, PlayerIndex = emptySlot };
-            
-            return emptySlot;
-        }
+        /// <param name="peer">The peer.</param>
+        /// <param name="data">The data.</param>
+        public bool TryGetPlayerData(NetPeer peer, out PlayerData data) => _dictionary.TryGetValue(peer.Id, out data);
 
         /// <summary>
         /// Sets the player data for a peer.
         /// </summary>
-        public void AddOrUpdatePlayerData(NetPeer peer, HostPlayerData data)
+        public bool TryAddOrUpdatePeer(NetPeer peer, PlayerData data, out string failureReason)
         {
+            failureReason = null;
+
+            // Compact internal client map.
+            CompactPlayerIndices();
+
+            // Add if doesn't exist.
             if (!_dictionary.ContainsKey(peer.Id))
-                AddPeer(peer);
+            {
+                // Get new slot for player.
+                int emptySlot = GetNextPlayerSlot();
+                if (emptySlot == -1 && data.NumPlayers > 0)
+                {
+                    failureReason = "All client slots are used up.";
+                    return false;
+                }
+
+                _dictionary[peer.Id] = new PlayerData() { PlayerIndex = emptySlot };
+            }
+
+            // Check if there are enough remaining players.
+            var remainingPlayers = GetRemainingNumPlayers();
+            if (data.NumPlayers > remainingPlayers)
+            {
+                RemovePeer(peer);
+                failureReason = "Not enough player slots.";
+                return false;
+            } 
 
             _dictionary[peer.Id].UpdateFromClient(data);
+            return true;
         }
 
-        /// <summary>
-        /// Gets the player data for all peers.
-        /// </summary>
-        public HostPlayerData[] GetPlayerData() => _dictionary.Values.ToArray();
-        
         /// <summary>
         /// Removes a given peer from the player map.
         /// </summary>
@@ -62,44 +80,70 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public void RemovePeer(NetPeer peer)
         {
             if (_dictionary.ContainsKey(peer.Id))
-            {
                 _dictionary.Remove(peer.Id);
-            }
         }
 
         /// <summary>
         /// Converts the current dictionary to a message to send to the players.
         /// </summary>
-        public HostSetPlayerData ToMessage(NetPeer excludePeer, HostPlayerData hostInfo)
+        public HostSetPlayerData ToMessage(NetPeer excludePeer)
         {
             var excludeIndex = GetPlayerData(excludePeer).PlayerIndex;
-            return ToMessage(excludeIndex, hostInfo);
+            return ToMessage(excludeIndex);
         }
 
         /// <summary>
         /// Converts the current dictionary to a message to send to the players.
         /// </summary>
-        public HostSetPlayerData ToMessage(int excludeIndex, HostPlayerData hostInfo)
+        public HostSetPlayerData ToMessage(int excludeIndex)
         {
-            var values = new List<HostPlayerData>();
-            values.Add(hostInfo);
+            var values = new List<PlayerData>();
             values.AddRange(_dictionary.Values.ToArray());
-            return new HostSetPlayerData(values.Where(x => x.PlayerIndex != excludeIndex).ToArray(), excludeIndex);
+            return new HostSetPlayerData(values.ToStructEnumerable().Where(x => x.PlayerIndex != excludeIndex, x => x).ToArray(), excludeIndex);
+        }
+
+        /// <summary>
+        /// Gets the remaining available number of player slots.
+        /// </summary>
+        private int GetRemainingNumPlayers()
+        {
+            var numPlayers = _dictionary.Values.Sum(x => x.NumPlayers);
+            return Constants.MaxRidersNumberOfPlayers - numPlayers;
         }
 
         /// <summary>
         /// Gets the first available empty slot, otherwise -1 if doesn't exist.
         /// </summary>
-        private int GetEmptySlot()
+        private int GetNextPlayerSlot()
         {
             // Index 0 reserved for host.
-            for (int x = 1; x < Constants.MaxNumberOfPlayers; x++)
-            {
-                if (!_dictionary.Values.Any(y => y.PlayerIndex == x))
-                    return x;
-            }
+            var numPlayers = _dictionary.Values.Sum(x => x.NumPlayers);
+            if (numPlayers < Constants.MaxRidersNumberOfPlayers)
+                return numPlayers;
 
             return -1;
+        }
+
+        /// <summary>
+        /// Removes gaps in internal player indexes.
+        /// </summary>
+        private void CompactPlayerIndices()
+        {
+            var sorted       = _dictionary.OrderBy(x => x.Value.PlayerIndex);
+            int currentIndex = 0;
+
+            foreach (var sort in sorted)
+            {
+                if (sort.Value.NumPlayers < 1)
+                {
+                    sort.Value.PlayerIndex = -1;
+                }
+                else
+                {
+                    sort.Value.PlayerIndex = currentIndex;
+                    currentIndex += sort.Value.NumPlayers;
+                }
+            }
         }
     }
 }

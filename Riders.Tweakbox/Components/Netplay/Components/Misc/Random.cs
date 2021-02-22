@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using System.Runtime;
+using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
-using Sewer56.SonicRiders.Functions;
+using Functions = Sewer56.SonicRiders.Functions.Functions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
@@ -28,6 +26,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private System.Random _itemPickupRandom;
         private byte _randomChannel;
         private DeliveryMethod _randomDeliveryMethod = DeliveryMethod.ReliableOrdered;
+
+        private SRandSync? _currentSync;
 
         public Random(Socket socket, EventController @event)
         {
@@ -113,8 +113,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
             // Local function(s)
-            bool IsEveryoneReady() => _syncReady.All(x => x.Value == true);
-
             hook.OriginalFunction(seed);
             if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
@@ -123,42 +121,25 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                 return;
             }
 
+            // Disable skip flags for everyone.
+            foreach (var key in _syncReady.Keys)
+                _syncReady[key] = false;
+
             // Seed a new random value for item pickups.
             Log.WriteLine($"[{nameof(Random)} / Host] Seeding: {(int)seed}", LogCategory.Random);
             _itemPickupRandom = new System.Random((int) seed);
 
             // TODO: Handle error when time component is not available.
             var startTime = DateTime.UtcNow.AddMilliseconds(Socket.State.MaxLatency);
-            Socket.TryGetComponent(out TimeSynchronization time);
-            var serverStartTime = time.ToServerTime(startTime);
-            Socket.SendToAllAndFlush(new ReliablePacket() { Random = new SRandSync(serverStartTime, (int)seed) }, _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
-
-            // Disable skip flags for everyone.
-            foreach (var key in _syncReady.Keys)
-                _syncReady[key] = false;
-
+            Socket.SendToAllAndFlush(ReliablePacket.Create(new SRandSync(startTime, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
             Socket.WaitWithSpin(startTime, $"[{nameof(Random)} / Host] SRand Synchronized.", LogCategory.Random, 32);
+            ResetRaceComponent();
         }
 
         private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
-            SRandSync srand = default;
-            bool HandleSeedPacket(Packet<NetPeer> packet)
-            {
-                if (packet.Value.Value.GetPacketType() != PacketKind.Reliable)
-                    return false;
-
-                var reliable = packet.As<ReliablePacket>();
-                if (!reliable.Random.HasValue)
-                    return false;
-
-                Log.WriteLine($"[{nameof(Random)} / Client] Received Random Seed, Seeding {reliable.Random.Value.Seed}", LogCategory.Random);
-                srand = reliable.Random.Value;
-                return true;
-            }
-
-            Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { Random = new SRandSync(default, (int)seed) }, _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
-            if (!Socket.TryWaitForMessage(Socket.Manager.FirstPeer, HandleSeedPacket, Socket.State.HandshakeTimeout))
+            Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new SRandSync(default, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
+            if (!Socket.PollUntil(SyncAvailable, Socket.State.HandshakeTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
                 hook.OriginalFunction(seed);
@@ -167,6 +148,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
 
             // TODO: Handle error when time component is not available.
+            var srand = _currentSync.Value;
+            _currentSync = null;
+
             Log.WriteLine($"[{nameof(Random)} / Client] Seeding: {srand.Seed}", LogCategory.Random);
             Event.InvokeSeedRandom(srand.Seed);
             _itemPickupRandom = new System.Random(srand.Seed);
@@ -174,26 +158,56 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Socket.TryGetComponent(out TimeSynchronization time);
             var localTime = time.ToLocalTime(srand.StartTime);
             Socket.WaitWithSpin(localTime, $"[{nameof(Random)} / Client] SRand Synchronized.", LogCategory.Random, 32);
+            ResetRaceComponent();
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (packet.GetPacketKind() == PacketKind.Reliable)
-                HandleReliablePacket(packet.Source, packet.As<ReliablePacket>());
-        }
+            if (packet.MessageType != MessageType.SRand)
+                return;
 
-        private void HandleReliablePacket(NetPeer peer, ReliablePacket packet)
-        {
             if (Socket.GetSocketType() == SocketType.Host)
             {
-                if (packet.Random.HasValue)
-                {
-                    // Packet contents ignored, it's just reuse to save on enum bit space.
-                    Log.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.", LogCategory.Random);
-                    _syncReady[peer.Id] = true;
-                }
+                // Packet contents ignored.
+                Log.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.", LogCategory.Random);
+                _syncReady[source.Id] = true;
+            }
+            else
+            {
+                _currentSync = packet.GetMessage<SRandSync>();
             }
         }
+
+        /// <summary>
+        /// Returns true if everyone is ready to start the race, else false.
+        /// </summary>
+        private bool IsEveryoneReady()
+        {
+            foreach (var value in _syncReady.Values)
+            {
+                if (!value)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// True if a sync message has been received, else false.
+        /// </summary>
+        private bool SyncAvailable() => _currentSync.HasValue;
+
+        private void ResetRaceComponent()
+        {
+            if (Socket.TryGetComponent(out Race race))
+            {
+                race.Reset();
+                Socket.State.FrameCounter = 0;
+            }
+        }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

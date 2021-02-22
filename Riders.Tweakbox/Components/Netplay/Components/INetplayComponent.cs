@@ -18,6 +18,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components
         /// <summary>
         /// Handles a packet with a given type parameters.
         /// </summary>
-        void HandlePacket(Packet<NetPeer> packet);
+        void HandleReliablePacket(ref ReliablePacket packet, NetPeer source);
+
+        /// <summary>
+        /// Handles a packet with a given type parameters.
+        /// </summary>
+        void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source);
     }
 }

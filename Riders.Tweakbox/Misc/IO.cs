@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using K4os.Compression.LZ4;
+﻿using System.IO;
 
 namespace Riders.Tweakbox.Misc
 {

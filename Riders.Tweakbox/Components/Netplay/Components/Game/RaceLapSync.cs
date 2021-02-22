@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Netplay.Messages.Unreliable;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Hooks.Utilities;
-using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -23,6 +17,7 @@ using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using static Sewer56.SonicRiders.API.Player;
 using static Sewer56.SonicRiders.API.State;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
+using Extensions = Riders.Tweakbox.Components.Netplay.Helpers.Extensions;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
 {
@@ -46,13 +41,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
               Neither can its number addition behaviour.
 
             Current Solution:
-                - Apply on Receive
-                - If Lap Counter function is executed for non-P1 within a short time period after, subtract the counter so the function can then re-add.
+                - Ignore lap increment for non-local player.
+                - Apply on Receive and call lap increment ourselves.
         */
-
-        public const int StopwatchLapDiscardPeriod = 100;
-        private static Patch _disableRacePositionOverwrite = new Patch((IntPtr) 0x4B40E6, new byte[] { 0xEB, 0x44 });
-        private static IAsmHook _injectRunTimerPostRace;
 
         /// <inheritdoc />
         public Socket Socket            { get; set; }
@@ -60,14 +51,19 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public CommonState State        { get; set; }
 
         /// <summary>
+        /// Set to true if currently applying an updated lap counter.
+        /// Prevents increment lap function from running outside our control.
+        /// </summary>
+        private bool _isSyncingLapCounter = false;
+
+        /// <summary>
         /// [Host] Contains lap data for all the players.
         /// </summary>
-        private Timestamped<LapCounter>[] _lapSync = new Timestamped<LapCounter>[Constants.MaxNumberOfPlayers];
+        private LapCounter[] _lapSync = new LapCounter[Constants.MaxNumberOfPlayers];
         private DeliveryMethod _lapDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
         private void* _goalRaceFinishTaskPtr;
-        private bool  _isTaskEnabled;
-        private Stopwatch _applyTimeWatch;
+        private bool  _isRaceFinishTaskEnabled;
 
         public RaceLapSync(Socket socket, EventController @event)
         {
@@ -75,47 +71,33 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event  = @event;
             State  = socket.State;
 
-            Event.SetGoalRaceFinishTask += OnSetGoalRaceFinishTask;
-            Event.UpdateLapCounter      += OnUpdateLapCounterTask;
-            Event.GoalRaceFinishTask    += OnGoalRaceFinishTask;
+            Event.SetGoalRaceFinishTask += SetGoalRaceFinishTask;
+            Event.UpdateLapCounter      += UpdateLapCounterTask;
+            Event.GoalRaceFinishTask    += GoalRaceFinishTask;
 
             Sewer56.SonicRiders.API.Event.OnKillTask += OnKillTask;
             Event.AfterRace      += CheckIfAllFinishedRace;
             Event.RemoveAllTasks += RemoveAllTasks;
-            _applyTimeWatch = Stopwatch.StartNew();
-            _disableRacePositionOverwrite.Enable();
 
-            if (_injectRunTimerPostRace == null)
-            {
-                var utilities = SDK.ReloadedHooks.Utilities;
-                var runTimerPostRace = new string[]
-                {
-                    "use32",
-                    "lea eax, dword [ebp+8]",
-                    "push 0x00692AE0",
-                    "push eax",
-                    $"{utilities.GetAbsoluteCallMnemonics((IntPtr) 0x00414F00, false)}",
-                    "add esp, 8"
-                };
-
-                _injectRunTimerPostRace = SDK.ReloadedHooks.CreateAsmHook(runTimerPostRace, 0x004166EB).Activate();
-            }
-
-            _injectRunTimerPostRace.Enable();
+            var controller = IoC.Get<PatchController>();
+            controller.InjectRunTimerPostRace.Enable();
+            controller.DisableRacePositionOverwrite.Enable();
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            Event.SetGoalRaceFinishTask -= OnSetGoalRaceFinishTask;
-            Event.UpdateLapCounter      -= OnUpdateLapCounterTask;
-            Event.GoalRaceFinishTask    -= OnGoalRaceFinishTask;
+            Event.SetGoalRaceFinishTask -= SetGoalRaceFinishTask;
+            Event.UpdateLapCounter      -= UpdateLapCounterTask;
+            Event.GoalRaceFinishTask    -= GoalRaceFinishTask;
 
             Sewer56.SonicRiders.API.Event.OnKillTask -= OnKillTask;
             Event.AfterRace -= CheckIfAllFinishedRace;
             Event.RemoveAllTasks -= RemoveAllTasks;
-            _disableRacePositionOverwrite.Disable();
-            _injectRunTimerPostRace.Disable();
+
+            var controller = IoC.Get<PatchController>();
+            controller.InjectRunTimerPostRace.Disable();
+            controller.DisableRacePositionOverwrite.Disable();
         }
 
         public void Reset()
@@ -124,97 +106,103 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         }
 
         /* Implementation */
-        private unsafe int OnSetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player)
+        private unsafe int SetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player)
         {
             // Suppress task creation; we will decide ourselves when it's time.
-            var playerIndex = GetPlayerIndex(player);
-
-            Log.WriteLine($"[{nameof(RaceLapSync)}] OnSetGoalRaceFinishTask P{playerIndex}", LogCategory.LapSync);
-            if (player->LapCounter > CurrentRaceSettings->Laps)
-                return 0;
-
-            return hook.OriginalFunction(player);
+            Log.WriteLine($"[{nameof(RaceLapSync)}] OnSetGoalRaceFinishTask P{GetPlayerIndex(player)}", LogCategory.LapSync);
+            return 0;
         }
 
-        private int OnUpdateLapCounterTask(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2)
+        private int UpdateLapCounterTask(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2)
         {
+            // Cancel update counter if we're not the one instigating it.
+            if (_isSyncingLapCounter)
+                return 0;
+
+            // Discard non-local players.
+            // We will invoke underlying function manually when needed.
             var playerIndex = GetPlayerIndex(player);
-            Log.WriteLine($"[{nameof(RaceLapSync)}] OnUpdateLapCounterTask P{playerIndex}", LogCategory.LapSync);
-            if (playerIndex != 0 && _applyTimeWatch.Elapsed.TotalMilliseconds < StopwatchLapDiscardPeriod)
-            {
-                Log.WriteLine($"[{nameof(RaceLapSync)}] Decrement P{playerIndex}", LogCategory.LapSync);
-                player->LapCounter -= 1;
-            }
+            if (!State.IsLocal(playerIndex))
+                return 0;
 
             var result = hook.OriginalFunction(player, a2);
-            if (playerIndex != 0) 
-                return result;
 
-            if (Socket.GetSocketType() == SocketType.Host)
+            // Update lap counters for local clients.
+            _lapSync[playerIndex] = new LapCounter(player);
+            Log.WriteLine($"[{nameof(RaceLapSync)}] Set: {playerIndex} | Lap {_lapSync[playerIndex].Counter} Timer {_lapSync[playerIndex].Timer}", LogCategory.LapSync);
+
+            switch (Socket.GetSocketType())
             {
-                // Update own lap counter.
-                _lapSync[0] = new Timestamped<LapCounter>(new LapCounter(player->LapCounter));
-                HostSendLapCounters();
-            }
-            else
-            {
-                // Send updated lap counter to host.
-                Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket() { SetLapCounter = new LapCounter(player->LapCounter) }, _lapDeliveryMethod);
+                case SocketType.Host:
+                    HostSendLapCounters(null);
+                    break;
+
+                case SocketType.Client when State.NumLocalPlayers > 0:
+                {
+                    // Send counters of local players.
+                    using var counters = new LapCountersPacked();
+                    counters.ToPooled(State.NumLocalPlayers);
+                    counters.Set(_lapSync, State.NumLocalPlayers);
+
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(counters), _lapDeliveryMethod);
+                    break;
+                }
             }
 
             return result;
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (packet.GetPacketKind() == PacketKind.Reliable)
-                HandleReliablePacket(packet.Source, packet.As<ReliablePacket>());
-        }
+            // Check message type.
+            if (packet.MessageType != MessageType.LapCounters)
+                return;
 
-        private void HandleReliablePacket(NetPeer packetSource, ReliablePacket packet)
-        {
-            switch (Socket.GetSocketType())
+            // Get message.
+            var lapCounters = packet.GetMessage<LapCountersPacked>();
+
+            // Index of first player to fill.
+            int playerIndex = Socket.GetSocketType() switch
             {
-                case SocketType.Host:
+                SocketType.Host => ((HostState)State).ClientMap.GetPlayerData(source).PlayerIndex,
+                SocketType.Client => State.NumLocalPlayers,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-                    if (!packet.SetLapCounter.HasValue)
-                        return;
+            var counters = lapCounters.Elements;
+            var numCounters = lapCounters.NumElements;
 
-                    var state = (HostState)State;
-                    var lapCounter = packet.SetLapCounter.Value;
-                    var playerIndex = state.ClientMap.GetPlayerData(packetSource).PlayerIndex;
-                    _lapSync[playerIndex] = new Timestamped<LapCounter>(lapCounter);
+            for (int x = 0; x < numCounters; x++)
+                _lapSync[playerIndex + x] = counters[x];
 
-                    HostSendLapCounters();
-                    ApplyLapSync();
-                    break;
-                case SocketType.Client:
+            if (Socket.GetSocketType() == SocketType.Host)
+                HostSendLapCounters(source);
 
-                    if (!packet.LapCounters.HasValue)
-                        return;
-
-                    var counters = packet.LapCounters.Value.AsInterface();
-                    for (int x = 1; x < _lapSync.Length; x++)
-                        _lapSync[x] = new Timestamped<LapCounter>(counters.GetData(x - 1));
-
-                    ApplyLapSync();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            ApplyLapSync();
         }
 
-        private void HostSendLapCounters()
+        private void HostSendLapCounters(NetPeer excludePeer)
         {
             // Upload new lap counters to everyone.
-            var hostState = (HostState)State;
+            Span<byte> excludeIndexBuffer = stackalloc byte[Constants.MaxNumberOfLocalPlayers]; // Player indices to exclude.
+
             for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
             {
-                var peer            = Socket.Manager.ConnectedPeerList[x];
-                var excludeIndex    = hostState.ClientMap.GetPlayerData(peer).PlayerIndex;
-                var laps            = _lapSync.Where((loop, y) => y != excludeIndex).Select(y => y.Value);
-                Socket.Send(peer, new ReliablePacket() { LapCounters = new LapCounters().AsInterface().SetData(laps) }, _lapDeliveryMethod);
+                var peer = Socket.Manager.ConnectedPeerList[x];
+                if (peer == excludePeer)
+                    continue;
+
+                var excludeIndices = Extensions.GetExcludeIndices((HostState)State, peer, excludeIndexBuffer);
+                using var rental   = Extensions.GetItemsWithoutIndices(_lapSync.AsSpan(0, State.GetPlayerCount()), excludeIndices);
+
+                if (rental.Length <= 0)
+                    continue;
+
+                // Transmit Packet Information
+                using var counters = new LapCountersPacked();
+                counters.Set(rental.Segment.Array, rental.Length);
+                Socket.Send(peer, ReliablePacket.Create(counters), _lapDeliveryMethod);
             }
 
             Socket.Update();
@@ -222,47 +210,48 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private void ApplyLapSync()
         {
-            for (int x = 1; x < _lapSync.Length; x++)
+            _isSyncingLapCounter = true;
+
+            // Apply sync for non-local players.
+            for (int x = State.NumLocalPlayers; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
-                var timestampedSync = _lapSync[x];
-                if (timestampedSync.IsDiscard(State.MaxLatency))
-                    continue;
-
+                ref var lap = ref _lapSync[x];
                 var player = &Players.Pointer[x];
-                var counter = timestampedSync.Value.Counter;
-
-                if (counter <= player->LapCounter) 
-                    continue;
 
                 // Call the update lap function to increment the value, bypassing our hook code.
-                var laps = counter - player->LapCounter;
+                var laps = lap.Counter - player->LapCounter;
                 for (int y = 0; y < laps; y++)
                 {
-                    Log.WriteLine($"[{nameof(RaceLapSync)}] Sync: Increment Lap for {x}", LogCategory.LapSync);
-                    Event.InvokeUpdateLapCounterHook(player, *(int*)0x017E3E2C);
+                    Log.WriteLine($"[{nameof(RaceLapSync)}] Sync: Set Lap for {x} | Lap {lap.Counter} | Timer {lap.Timer}", LogCategory.LapSync);
                     
-                    // The code to set the finish time is omitted if this packet is processed before the player touches the line.
-                    // In which case you get an autogenerated time in the results screen.
-                    // As such, just in case, we set the time ourselves.
+                    // Copy stage timer (lap increment will use this value for lap time math!)
+                    var stageTimerBackup = *StageTimer;
+
+                    *StageTimer = lap.Timer;
+                    Event.InvokeUpdateLapCounter(player, *(int*)0x017E3E2C);
+                    *StageTimer = stageTimerBackup;
+
+                    // Restore old timer.
+                    player->FinishTime = lap.Timer;
                     if (player->LapCounter > CurrentRaceSettings->Laps)
                     {
-                        player->FinishTime = *StageTimer;
-
                         // Just in case so end of race placements don't screw up.
                         // This is the same way in which the game handles it.
                         player->CheckpointProgression += 10000 >> player->RacePosition;
                     }
                 }
+
+                player->LapCounter = lap.Counter;
             }
 
             Log.WriteLine($"[{nameof(RaceLapSync)}] Applied Sync", LogCategory.LapSync);
-            _applyTimeWatch.Restart();
+            _isSyncingLapCounter = false;
         }
 
         #region Results Screen Activation Handling
-        private byte OnGoalRaceFinishTask(IHook<Functions.DefaultTaskFnWithReturn> hook)
+        private byte GoalRaceFinishTask(IHook<Functions.CdeclReturnByteFn> hook)
         {
-            _isTaskEnabled = true;
+            _isRaceFinishTaskEnabled = true;
             _goalRaceFinishTaskPtr = *CurrentTask;
 
             return hook.OriginalFunction();
@@ -270,19 +259,19 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private void OnKillTask()
         {
-            if (*CurrentTask == _goalRaceFinishTaskPtr)
-            {
-                Log.WriteLine($"[{nameof(RaceLapSync)}] Kill Results Task", LogCategory.LapSync);
-                _isTaskEnabled = false;
-                _goalRaceFinishTaskPtr = (void*)-1;
-                Reset();
-            }
+            if (*CurrentTask != _goalRaceFinishTaskPtr) 
+                return;
+
+            Log.WriteLine($"[{nameof(RaceLapSync)}] Kill Results Task", LogCategory.LapSync);
+            _isRaceFinishTaskEnabled = false;
+            _goalRaceFinishTaskPtr = (void*)-1;
+            Reset();
         }
 
-        private int RemoveAllTasks(IHook<Functions.DefaultReturnFn> hook)
+        private int RemoveAllTasks(IHook<Functions.CdeclReturnIntFn> hook)
         {
             Log.WriteLine($"[{nameof(RaceLapSync)}] Kill All Tasks", LogCategory.LapSync);
-            _isTaskEnabled = false;
+            _isRaceFinishTaskEnabled = false;
             _goalRaceFinishTaskPtr = (void*)-1;
             Reset();
 
@@ -291,31 +280,35 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private void CheckIfAllFinishedRace(Task<byte, RaceTaskState>* task)
         {
-            if (!_isTaskEnabled)
+            if (_isRaceFinishTaskEnabled) 
+                return;
+
+            // Set goal race finish task if all players finished racing.
+            bool allFinished = true;
+            for (int x = 0; x < Constants.MaxRidersNumberOfPlayers; x++)
             {
-                // Set goal race finish task if all players finished racing.
-                bool allFinished = true;
-                for (int x = 0; x < Constants.MaxNumberOfPlayers; x++)
-                {
-                    if (!State.IsHuman(x))
-                        continue;
+                if (!State.IsHuman(x))
+                    continue;
 
-                    ref var player = ref Players[x];
-                    if (player.LapCounter > CurrentRaceSettings->Laps)
-                        continue;
+                ref var player = ref Players[x];
+                if (player.LapCounter > CurrentRaceSettings->Laps)
+                    continue;
 
-                    allFinished = false;
-                    break;
-                }
+                allFinished = false;
+                break;
+            }
 
-                // TODO: Local Multiplayer support.
-                if (allFinished)
-                {
-                    Log.WriteLine($"[{nameof(RaceLapSync)}] Trigger GoalRaceFinishTask", LogCategory.LapSync);
-                    Event.InvokeSetGoalRaceFinishTask(Players.Pointer);
-                }
+            // TODO: Local Multiplayer support.
+            if (allFinished)
+            {
+                Log.WriteLine($"[{nameof(RaceLapSync)}] Trigger GoalRaceFinishTask", LogCategory.LapSync);
+                Reset();
+                Event.InvokeSetGoalRaceFinishTask(Players.Pointer);
             }
         }
         #endregion
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DearImguiSharp;
 using Sewer56.Imgui.Misc;
-using Sewer56.Imgui.Shell.Interfaces;
 
 namespace Riders.Tweakbox.Components.Debug
 {

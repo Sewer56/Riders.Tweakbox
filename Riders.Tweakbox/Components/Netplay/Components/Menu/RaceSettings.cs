@@ -1,9 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections.Generic;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
-using Riders.Netplay.Messages.Queue;
-using Riders.Netplay.Messages.Reliable.Structs.Menu.Commands;
+using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Tweakbox.Components.Netplay.Helpers;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
@@ -21,11 +22,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         public MenuChangedManualEvents Delta { get; set; } = new MenuChangedManualEvents();
 
         /// <summary> Sync data for course select. </summary>
-        private Volatile<Timestamped<RuleSettingsSync>> _sync = new Volatile<Timestamped<RuleSettingsSync>>(new Timestamped<RuleSettingsSync>());
+        private Timestamped<RuleSettingsSync> _sync;
 
         /// <summary> [Host Only] Changes in rule settings since the last time they were sent to the clients. </summary>
-        private ConcurrentQueue<Timestamped<RuleSettingsLoop>> _loop => _queue.Get<Timestamped<RuleSettingsLoop>>();
-        private MessageQueue _queue = new MessageQueue();
+        private Queue<Timestamped<RuleSettingsLoop>> _loop = new Queue<Timestamped<RuleSettingsLoop>>(Constants.MaxNumberOfPlayers * 4);
 
         public RaceSettings(Socket socket, EventController @event)
         {
@@ -51,7 +51,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             {
                 Delta.Set(task);
                 var sync = RuleSettingsSync.FromGame(task).Merge(GetLoop());
-                _sync = new Volatile<Timestamped<RuleSettingsSync>>(sync);
+                _sync = new Timestamped<RuleSettingsSync>(sync);
                 SyncRuleSettings(task);
             }
             else
@@ -64,32 +64,29 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         private unsafe void OnRuleSettingsUpdated(RuleSettingsLoop loop, Task<RaceRules, RaceRulesTaskState>* task)
         {
             if (Socket.GetSocketType() == SocketType.Host)
-                Socket.SendToAllAndFlush(new ReliablePacket(RuleSettingsSync.FromGame(task)), DeliveryMethod.ReliableOrdered);
+            {
+                using var message = RuleSettingsSync.FromGame(task);
+                Socket.SendToAllAndFlush(ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered);
+            }
             else
             {
                 loop.Undo(task);
-                if (Socket.GetSocketType() == SocketType.Client) // Spectator gets no input.
-                    Socket.SendAndFlush(Socket.Manager.FirstPeer, new ReliablePacket(loop), DeliveryMethod.ReliableOrdered);
+                if (Socket.State.NumLocalPlayers > 0)
+                    Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(loop), DeliveryMethod.ReliableOrdered);
             }
         }
 
         /// <inheritdoc />
-        public void HandlePacket(Packet<NetPeer> packet)
+        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (!packet.TryGetPacket<ReliablePacket>(Socket.State.MaxLatency, out var reliable))
-                return;
-
-            var command = reliable.MenuSynchronizationCommand;
-            if (!command.HasValue)
-                return;
-
-            switch (command.Value.Command)
+            switch (packet.MessageType)
             {
-                case RuleSettingsLoop ruleSettingsLoop:
-                    _loop.Enqueue(ruleSettingsLoop);
+                case MessageType.RuleSettingsLoop:
+                    _loop.Enqueue(packet.GetMessage<RuleSettingsLoop>());
                     break;
-                case RuleSettingsSync ruleSettingsSync:
-                    _sync = new Volatile<Timestamped<RuleSettingsSync>>(ruleSettingsSync);
+
+                case MessageType.RuleSettingsSync:
+                    _sync = packet.GetMessage<RuleSettingsSync>();
                     break;
             }
         }
@@ -116,12 +113,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         /// </summary>
         private unsafe void SyncRuleSettings(Task<RaceRules, RaceRulesTaskState>* task)
         {
-            if (!_sync.HasValue)
-                return;
-
-            var sync = _sync.Get();
-            if (!sync.IsDiscard(Socket.State.MaxLatency))
-                sync.Value.ToGame(task);
+            if (!_sync.IsDiscard(Socket.State.MaxLatency))
+                _sync.Value.ToGame(task);
         }
+
+        /// <inheritdoc />
+        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
     }
 }

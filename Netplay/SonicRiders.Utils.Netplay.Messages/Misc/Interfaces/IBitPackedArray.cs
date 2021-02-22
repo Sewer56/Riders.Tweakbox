@@ -1,132 +1,97 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using BitStreams;
+﻿using System;
+using System.Buffers;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
 
 namespace Riders.Netplay.Messages.Misc.Interfaces
 {
     /// <summary>
     /// Specifies an interface that allows for bit packing of arrays of unmanaged structs smaller than a byte.
     /// </summary>
-    public unsafe interface IBitPackedArray<T, TParent> where T : unmanaged, IBitPackable<T>
-                                                        where TParent : unmanaged, IBitPackedArray<T, TParent>
+    public unsafe interface IBitPackedArray<T, TParent> : IDisposable
+                                                          where T : unmanaged, IBitPackable<T>
+                                                          where TParent : struct, IBitPackedArray<T, TParent>
     {
-        /// <summary>
-        /// Creates a new instance of the structure.
-        /// </summary>
-        public IBitPackedArray<T, TParent> AsInterface();
+        public static ArrayPool<T> SharedPool = ArrayPool<T>.Shared;
 
         /// <summary>
-        /// Gets the size of the fixed buffer in bytes.
+        /// The data to be packed/unpacked.
         /// </summary>
-        int GetBufferSize();
+        public T[] Elements { get; set; }
 
         /// <summary>
-        /// Returns the address of the internal fixed buffer.
+        /// The number of elements in the <see cref="Elements"/> array.
         /// </summary>
-        ref byte GetFixedBuffer();
+        public int NumElements { get; set; }
 
         /// <summary>
-        /// Retrieves the offset of an individual item with a specific index.
+        /// True if memory for the elements is borrowed from the <see cref="System.Buffers.ArrayPool{T}"/>, else false.
+        /// Internal use only.
         /// </summary>
-        int GetOffset(int index) => new T().GetSizeOfEntry() * index;
+        public bool IsPooled { get; set; }
 
         /// <summary>
-        /// Gets the data for an individual item.
+        /// Number of bits allocated for the number of items in the array.
         /// </summary>
-        /// <param name="index">Index of data to retrieve.</param>
-        public T GetData(int index)
+        public int ItemCountNumBits => Constants.PlayerCountBitfield.NumBits;
+
+        /// <summary>
+        /// Disposes of the array.
+        /// </summary>
+        public static void Dispose(ref TParent type)
         {
-            var initialOffset = GetOffset(index);
-            fixed (byte* buffer = &GetFixedBuffer())
+            if (type.IsPooled)
             {
-                using var memStream = new UnmanagedMemoryStream((byte*)buffer, GetBufferSize());
-                var bitStream = new BitStream(memStream);
-
-                bitStream.Seek(0, initialOffset);
-                return new T().FromStream(bitStream);
+                SharedPool.Return(type.Elements);
+                type.Elements = null;
             }
         }
 
         /// <summary>
-        /// Sets the data of an individual item.
+        /// Replaces the internal array with a new set of elements.
         /// </summary>
-        /// <param name="data">The data to set.</param>
-        /// <param name="index">Index of data to set.</param>
-        public TParent SetData(T data, int index)
+        public void Set(T[] elements, int numElements = -1);
+
+        /// <summary>
+        /// Creates an instance of the parent using the specified elements.
+        /// Note: Array must at least contain 1 element.
+        /// </summary>
+        public TParent Create(T[] elements);
+
+        /// <summary>
+        /// Creates a pooled instance of the parent using the specified elements.
+        /// Note: Array must at least contain 1 element.
+        /// </summary>
+        public TParent CreatePooled(int numElements);
+
+        /// <summary>
+        /// Deserializes the serialized packed array.
+        /// </summary>
+        public static TParent FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
         {
-            var initialOffset   = GetOffset(index);
-            fixed (byte* buffer = &GetFixedBuffer())
-            {
-                // Copy original stream.
-                using var memStream = new UnmanagedMemoryStream(buffer, GetBufferSize(), GetBufferSize(), FileAccess.ReadWrite);
-                var bitStream = new BitStream(memStream);
+            var parent  = new TParent {IsPooled = true};
+            var child   = new T();
+            var numBits = parent.ItemCountNumBits;
 
-                // Get to and write player data.
-                bitStream.Seek(0, initialOffset);
-                data.ToStream(bitStream);
+            // Read the stream
+            parent.NumElements = bitStream.Read<int>(numBits) + 1;
+            parent.Elements    = SharedPool.Rent(parent.NumElements);
 
-                // Copy back to original stream.
-                memStream.Seek(0, SeekOrigin.Begin);
-                bitStream.CopyStreamTo(memStream);
-            }
+            for (int x = 0; x < parent.NumElements; x++)
+                parent.Elements[x] = child.FromStream(ref bitStream);
 
-            return (TParent) this;
+            return parent;
         }
 
         /// <summary>
-        /// Sets a collection of items.
+        /// Serializes the current array.
         /// </summary>
-        /// <param name="data">The data to set.</param>
-        /// <param name="offset">Index of first entry to set.</param>
-        public TParent SetData(IEnumerable<T> data, int offset = 0)
+        public static void ToStream<TByteSource>(in TParent parent, ref BitStream<TByteSource> bitStream) where TByteSource : IByteStream
         {
-            using var enumerator = data.GetEnumerator();
-            int x = 0;
-            while (enumerator.MoveNext())
-            {
-                SetData(enumerator.Current, x + offset);
-                x += 1;
-            }
-
-            return (TParent)this;
-        }
-
-        /// <summary>
-        /// Sets a collection of items.
-        /// </summary>
-        /// <param name="data">The data to set.</param>
-        /// <param name="offset">Index of first entry to set.</param>
-        public TParent SetData(T[] data, int offset = 0)
-        {
-            for (int x = 0; x < data.Length; x++)
-                SetData(data[x], x + offset);
-
-            return (TParent)this;
-        }
-
-        /// <summary>
-        /// Converts the internal contents to an array.
-        /// </summary>
-        /// <param name="buffer">The buffer to place the items in.</param>
-        /// <param name="numStructs">Number of structures to unpack.</param>
-        /// <param name="offset">Offset of the first item to get.</param>
-        /// <param name="targetOffset">Offset to start putting items into the provided array.</param>
-        public void ToArray(T[] buffer, int numStructs, int offset = 0, int targetOffset = 0)
-        {
-            for (int x = 0; x < numStructs; x++)
-                buffer[x + targetOffset] = GetData(x + offset);
-        }
-
-        /// <summary>
-        /// Creates a packed struct given an input array.
-        /// </summary>
-        /// <param name="flags">The flags to create the struct from.</param>
-        /// <param name="offset">Offset of first item inside the result struct.</param>
-        public static TParent FromArray(T[] flags, int offset = 0)
-        {
-            var packed = new TParent();
-            packed.SetData(flags, offset);
-            return packed;
+            // Write the stream
+            bitStream.Write(parent.NumElements - 1, parent.ItemCountNumBits);
+            for (int x = 0; x < parent.NumElements; x++)
+                parent.Elements[x].ToStream(ref bitStream);
         }
     }
 }

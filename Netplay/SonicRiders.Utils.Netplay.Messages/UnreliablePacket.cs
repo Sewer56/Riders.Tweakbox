@@ -1,21 +1,24 @@
 ﻿using System;
-using System.IO;
-using Reloaded.Memory.Streams;
+using System.Buffers;
+using DotNext.Buffers;
+using Reloaded.Memory.Pointers;
+using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.BitStream;
+using Riders.Netplay.Messages.Misc.Interfaces;
 using Riders.Netplay.Messages.Unreliable;
+using Sewer56.BitStream;
 using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
 
 namespace Riders.Netplay.Messages
 {
-    public struct UnreliablePacket : IPacket<UnreliablePacket>, IPacket 
+    [Equals(DoNotAddEqualityOperators = true)]
+    public struct UnreliablePacket : ISequenced, IPacket
     {
-        public PacketKind GetPacketType() => PacketKind.Unreliable;
+        private static readonly ArrayPool<UnreliablePacketPlayer> _pool = ArrayPool<UnreliablePacketPlayer>.Shared;
 
         /*
             // Packet Format (Some Features Currently Unimplemented)
-            // 30Hz indicates, send every 2nd frame. 
-            // 10Hz indicates, send every 6th frame. etc.
-            // See structs inside this struct for definitions.
-
+        
             // Data:
             // -> Header       (2 bytes)
             // -> Player Data  (All Optional)
@@ -24,7 +27,7 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Declares the fields present in the packet to be serialized/deserialized.
         /// </summary>
-        public UnreliablePacketHeader Header { get; private set; }
+        public UnreliablePacketHeader Header;
 
         /// <summary>
         /// Contains all of the player data present in this structure.
@@ -34,15 +37,13 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Constructs a packet to be sent over the unreliable channel.
         /// </summary>
-        /// <param name="players">
-        ///     The individual player data associated with this packet to be sent.
-        ///     Should be of length 1 - 8.
-        /// </param>
+        /// <param name="numPlayers">The number of players in this message.</param>
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
         /// <param name="data">The data to include in the player packets.</param>
-        public UnreliablePacket(UnreliablePacketPlayer[] players, HasData data = HasData.All)
+        public UnreliablePacket(int numPlayers, int sequenceNumber = 0, HasData data = HasDataAll)
         {
-            Header = new UnreliablePacketHeader(players, data);
-            Players = players;
+            Header = new UnreliablePacketHeader((byte) numPlayers, sequenceNumber, data);
+            Players = _pool.Rent(Constants.MaxNumberOfPlayers);
         }
 
         /// <summary>
@@ -50,15 +51,13 @@ namespace Riders.Netplay.Messages
         /// This overload uses a frame counter to determine what should be sent
         /// and should be used when upload bandwidth is constrained (Bad Internet + 7/8 player game)
         /// </summary>
-        /// <param name="players">
-        ///     The individual player data associated with this packet to be sent.
-        ///     Should be of length 1 - 8.
-        /// </param>
+        /// <param name="numPlayers">The number of players in this message.</param>
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
         /// <param name="frameCounter">The current frame counter.</param>
-        public UnreliablePacket(UnreliablePacketPlayer[] players, int frameCounter)
+        public UnreliablePacket(int numPlayers, int sequenceNumber, int frameCounter)
         {
-            Header = new UnreliablePacketHeader(players, frameCounter);
-            Players = players;
+            Header = new UnreliablePacketHeader((byte)numPlayers, sequenceNumber, frameCounter);
+            Players = _pool.Rent(Constants.MaxNumberOfPlayers);
         }
 
         /// <summary>
@@ -68,24 +67,50 @@ namespace Riders.Netplay.Messages
         ///     The individual player data associated with this packet to be sent.
         /// </param>
         /// <param name="data">The data to include in the player packets.</param>
-        public UnreliablePacket(UnreliablePacketPlayer player, HasData data = HasData.All)
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
+        public UnreliablePacket(UnreliablePacketPlayer player, int sequenceNumber = 0, HasData data = HasDataAll)
         {
-            Players = new[] {player};
-            Header = new UnreliablePacketHeader(Players, data);
+            Header  = new UnreliablePacketHeader((byte) 1, sequenceNumber, data);
+            Players = _pool.Rent(Constants.MaxNumberOfPlayers);
+            Players[0] = player;
+        }
+
+        public void Dispose()
+        {
+            if (Players != null)
+                _pool.Return(Players);
+        }
+
+        /// <summary>
+        /// Clones the contents of the current packet.
+        /// Cloned packet will need separate disposal from original packet.
+        /// </summary>
+        public UnreliablePacket Clone()
+        {
+            var copy = new UnreliablePacket(Header.NumberOfPlayers, Header.SequenceNumber, Header.Fields) { Header = Header };
+            for (int x = 0; x < copy.Header.NumberOfPlayers; x++)
+                copy.Players[x] = Players[x];
+
+            return copy;
         }
 
         /// <summary>
         /// Serializes the current instance of the packet.
         /// </summary>
-        public byte[] Serialize()
+        /// <param name="numBytes">Number of bytes serialized in the returned byte stream.</param>
+        public ArrayRental<byte> Serialize(out int numBytes)
         {
-            using var writer = new ExtendedMemoryStream(1024);
-            writer.Write(Header.Serialize());
+            // Rent some bytes.
+            var rental       = new ArrayRental<byte>(2048);
+            var rentalStream = new RentalByteStream(rental);
+            var bitStream    = new BitStream<RentalByteStream>(rentalStream);
 
-            foreach (var player in Players)
-                writer.Write(player.Serialize(Header.Fields));
+            Header.Serialize(ref bitStream);
+            for (int x = 0; x < Header.NumberOfPlayers; x++)
+                Players[x].Serialize(ref bitStream, Header.Fields);
 
-            return writer.ToArray();
+            numBytes = bitStream.NextByteIndex;
+            return rental;
         }
 
         /// <summary>
@@ -95,18 +120,24 @@ namespace Riders.Netplay.Messages
         {
             fixed (byte* dataPtr = data)
             {
-                using var unmanagedMemoryStream = new UnmanagedMemoryStream(dataPtr, data.Length);
-                using var bufferedStreamReader  = new BufferedStreamReader(unmanagedMemoryStream, 512);
+                var stream    = new FixedPointerByteStream(new RefFixedArrayPtr<byte>(dataPtr, data.Length));
+                var bitStream = new BitStream<FixedPointerByteStream>(stream);
 
-                var header  = UnreliablePacketHeader.Deserialize(bufferedStreamReader);
-                var players = new UnreliablePacketPlayer[header.NumberOfPlayers];
-
-                for (int x = 0; x < header.NumberOfPlayers; x++)
-                    players[x] = UnreliablePacketPlayer.Deserialize(bufferedStreamReader, header.Fields);
-
-                Header = header;
-                Players = players;
+                Header  = UnreliablePacketHeader.Deserialize(ref bitStream);
+                for (int x = 0; x < Header.NumberOfPlayers; x++)
+                    Players[x] = UnreliablePacketPlayer.Deserialize(ref bitStream, Header.Fields);
             }
         }
+
+        /// <summary>
+        /// Updates the value of the <see cref="Header"/>
+        /// </summary>
+        public void SetHeader(UnreliablePacketHeader value) => Header = value;
+
+        /// <inheritdoc />
+        public int MaxValue => SequenceNumberBitfield.MaxValue;
+
+        /// <inheritdoc />
+        public int SequenceNo => Header.SequenceNumber;
     }
 }
