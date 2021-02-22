@@ -187,7 +187,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Executed at the end of each game frame.
         /// </summary>
-        public virtual void OnFrame()
+        public void OnFrame()
         {
             State.FrameCounter += 1;
         }

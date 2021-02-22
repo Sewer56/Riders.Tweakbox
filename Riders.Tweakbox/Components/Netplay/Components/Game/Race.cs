@@ -32,23 +32,23 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private Volatile<UnreliablePacketPlayer>[] _raceSync = new Volatile<UnreliablePacketPlayer>[Constants.MaxNumberOfPlayers];
 
-        // TODO: Move MovementFlags sync to separate module.
-        //       Use Boost and Tornado as only states, put rest in UnreliableMessage
-        
-        // TODO: Client-side jitter buffer.
-        //       For host, always send latest state; client will jitter buffer on their end.
-
         /// <summary>
         /// Contains movement flags for each client.
         /// </summary>
-        private Timestamped<MovementFlags>[] _movementFlags = new Timestamped<MovementFlags>[Constants.MaxNumberOfPlayers + 1];
+        private Timestamped<Used<MovementFlags>>[] _movementFlags = new Timestamped<Used<MovementFlags>>[Constants.MaxNumberOfPlayers + 1];
 
         /// <summary>
         /// Contains inputs for each client.
         /// </summary>
         private Timestamped<AnalogXY>[] _analogXY = new Timestamped<AnalogXY>[Constants.MaxNumberOfPlayers + 1];
 
-        private const DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Sequenced;
+        /// <summary>
+        /// Jitter buffers for smoothing out incoming packets.
+        /// There is a buffer per client 
+        /// </summary>
+        private JitterBuffer<UnreliablePacket>[] _jitterBuffers = new JitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
+
+        private const DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Unreliable;
         private readonly byte _raceChannel;
 
         public Race(Socket socket, EventController @event)
@@ -67,6 +67,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                _jitterBuffers[x] = new JitterBuffer<UnreliablePacket>(1);
 
             Reset();
         }
@@ -88,38 +90,58 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public void Reset()
         {
             Array.Fill(_raceSync, new Volatile<UnreliablePacketPlayer>());
-            Array.Fill(_movementFlags, new Timestamped<MovementFlags>());
+            Array.Fill(_movementFlags, new Timestamped<Used<MovementFlags>>());
             Array.Fill(_analogXY, new Timestamped<AnalogXY>());
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                _jitterBuffers[x].Clear();
         }
 
         /// <inheritdoc />
         public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
         {
-            try
+            // Index of first player to fill.
+            int playerIndex = Socket.GetSocketType() switch
             {
-                // Index of first player to fill.
-                int playerIndex = Socket.GetSocketType() switch
-                {
-                    SocketType.Host => ((HostState)State).ClientMap.GetPlayerData(source).PlayerIndex,
-                    SocketType.Client => State.NumLocalPlayers,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                SocketType.Host => ((HostState)State).ClientMap.GetPlayerData(source).PlayerIndex,
+                SocketType.Client => State.NumLocalPlayers,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-                var players = packet.Players;
-                var numPlayers = packet.Header.NumberOfPlayers;
+            _jitterBuffers[playerIndex].TryEnqueue(packet.Clone());
+        }
 
-                for (int x = 0; x < numPlayers; x++)
+        private void DequeueFromJitterBuffers()
+        {
+            for (int x = 0; x < _jitterBuffers.Length; x++)
+                DequeueFromJitterBuffer(_jitterBuffers[x], x);
+        }
+
+        private void DequeueFromJitterBuffer(JitterBuffer<UnreliablePacket> jitterBuffer, int playerIndex)
+        {
+            if (jitterBuffer.TryDequeue(out var packet))
+            {
+                try
                 {
-                    _raceSync[playerIndex + x] = players[x];
-                    if (players[x].AnalogXY.HasValue)
-                        _analogXY[playerIndex + x] = players[x].AnalogXY.Value;
-                    
-                    Extensions.ReplaceOrSetCurrentCachedItem(players[x].MovementFlags, _movementFlags, playerIndex + x, State.MaxLatency);
+                    var players = packet.Players;
+                    var numPlayers = packet.Header.NumberOfPlayers;
+
+                    for (int x = 0; x < numPlayers; x++)
+                    {
+                        _raceSync[playerIndex + x] = players[x];
+                        if (players[x].AnalogXY.HasValue)
+                            _analogXY[playerIndex + x] = players[x].AnalogXY.Value;
+
+                        Extensions.ReplaceOrSetCurrentCachedItem(players[x].MovementFlags, _movementFlags, playerIndex + x, State.MaxLatency);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Log.WriteLine($"[{nameof(Race)}] Warning: Failed to update Race Sync | {ex.Message}", LogCategory.Race);
+                catch (Exception ex)
+                {
+                    Log.WriteLine($"[{nameof(Race)}] Warning: Failed to Dequeue from Jitter Buffer | {ex.Message}", LogCategory.Race);
+                }
+                finally
+                {
+                    packet.Dispose();
+                }
             }
         }
 
@@ -139,11 +161,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private void OnAfterPhysicsSimulation(void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex)
         {
-            // Only execute after last player!
+            // Only execute after last player! (Once Per Frame!)
             if (*(byte*)playerIndex != *Sewer56.SonicRiders.API.State.NumberOfRacers - 1)
                 return;
 
             Socket.Update();
+            DequeueFromJitterBuffers(); 
             ApplyRaceSync();
 
             // Get Packet from the pool.
@@ -186,8 +209,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                         // Construct packet.
                         packet.SetHeader(Socket.Config.Data.ReducedTickRate
-                            ? new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter)
-                            : new UnreliablePacketHeader((byte) rental.Length));
+                            ? new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter, State.FrameCounter)
+                            : new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter));
 
                         for (int x = 0; x < rental.Length; x++)
                             packet.Players[x] = rental[x];
@@ -199,7 +222,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 }
 
                 case SocketType.Client when State.NumLocalPlayers > 0:
-                    packet.SetHeader(new UnreliablePacketHeader((byte)State.NumLocalPlayers));
+                    packet.SetHeader(new UnreliablePacketHeader((byte)State.NumLocalPlayers, State.FrameCounter));
                     for (int x = 0; x < State.NumLocalPlayers; x++)
                         packet.Players[x] = UnreliablePacketPlayer.FromGame(x);
 
@@ -246,7 +269,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                 ref var flags    = ref _movementFlags[index];
                 if (!flags.IsDiscard(State.MaxLatency))
-                    flags.Value.ToGame(player);
+                    flags.Value.UseValue().ToGame(player);
             }
             catch (Exception e)
             {

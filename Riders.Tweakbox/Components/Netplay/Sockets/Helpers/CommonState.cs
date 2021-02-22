@@ -24,6 +24,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
         /// <summary>
         /// Current frame counter for the client/server.
+        /// Can be reset by modules or other code as needed.
         /// </summary>
         public int FrameCounter;
 

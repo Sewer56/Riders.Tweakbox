@@ -16,7 +16,7 @@ namespace Riders.Netplay.Messages.Tests
         [Fact]
         public void TwoPlayers()
         {
-            using var unreliablePacket = new Messages.UnreliablePacket(2);
+            using var unreliablePacket = new Messages.UnreliablePacket(2, 18);
             unreliablePacket.Players[0] = Utilities.GetRandomPlayer();
             unreliablePacket.Players[1] = Utilities.GetRandomPlayer();
 
@@ -39,7 +39,7 @@ namespace Riders.Netplay.Messages.Tests
             {
                 for (int maxPlayers = 1; maxPlayers < Constants.MaxNumberOfPlayers; maxPlayers++)
                 {
-                    using var unreliablePacket = new Messages.UnreliablePacket(maxPlayers);
+                    using var unreliablePacket = new Messages.UnreliablePacket(maxPlayers, numFrame);
                     for (int z = 0; z < maxPlayers; z++)
                         unreliablePacket.Players[z] = Utilities.GetRandomPlayer();
 

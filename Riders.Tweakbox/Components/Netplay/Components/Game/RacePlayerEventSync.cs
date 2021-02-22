@@ -29,7 +29,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// <summary>
         /// Contains available events for each player.
         /// </summary>
-        private Timestamped<BoostTornado>[] _events = new Timestamped<BoostTornado>[Constants.MaxNumberOfPlayers + 1];
+        private BoostTornado[] _events = new BoostTornado[Constants.MaxNumberOfPlayers + 1];
 
         private const DeliveryMethod _eventDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
@@ -77,7 +77,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
                     // Get all attacks sans those made by players and their local players;
                     // then check if there are any attacks they should be made aware of.
-                    using var events = Extensions.GetItemsWithoutIndices(_events.AsSpan(0, State.GetPlayerCount()), excludeIndices, State.MaxLatency);
+                    using var events = Extensions.GetItemsWithoutIndices(_events.AsSpan(0, State.GetPlayerCount()), excludeIndices);
                     var eventsArr = events.Segment.Array;
                     if (!eventsArr.ToStructEnumerable().Any(x => x.HasValue(), x => x))
                         continue;
@@ -91,7 +91,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 Log.WriteLine($"[{nameof(RacePlayerEventSync)} / Host] Player Event Matrix Sent", LogCategory.PlayerEvent);
                 Socket.Update();
             }
-            else if (Socket.GetSocketType() == SocketType.Client && State.IsLocal(playerIndex) && _events[playerIndex].Value.HasValue())
+            else if (Socket.GetSocketType() == SocketType.Client && State.IsLocal(playerIndex) && _events[playerIndex].HasValue())
             {
                 // Send value update notification to host.
                 using var packed = new BoostTornadoPacked().CreatePooled(State.NumLocalPlayers);
@@ -127,7 +127,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 var numElements = message.NumElements;
 
                 for (int x = 0; x < numElements; x++)
-                    Extensions.ReplaceOrSetCurrentCachedItem(elements[x], _events, playerIndex + x, State.MaxLatency);
+                    _events[playerIndex + x].Merge(elements[x]);
             }
             catch (Exception ex)
             {
@@ -147,9 +147,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (State.IsLocal(index))
                     return player;
 
-                ref var flags = ref _events[index];
-                if (!flags.IsDiscard(State.MaxLatency) && flags.Value.HasValue())
-                    flags.Value.ToGameAndReset(player);
+                _events[index].ToGameAndReset(player);
             }
             catch (Exception e)
             {
@@ -166,8 +164,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             for (int x = 0; x < _events.Length; x++)
             {
-                var attack = _events[x];
-                if (!attack.IsDiscard(State.MaxLatency) && attack.Value.HasValue())
+                if (_events[x].HasValue())
                     return true;
             }
 

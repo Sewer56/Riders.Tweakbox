@@ -31,7 +31,7 @@ namespace Riders.Netplay.Messages.Tests
                 // 600 frame interval.
                 for (int x = 0; x < 600; x++)
                 {
-                    using var packet = new Messages.UnreliablePacket(numPlayers, x);
+                    using var packet = new Messages.UnreliablePacket(numPlayers, x, x);
                     for (int playerNo = 0; playerNo < numPlayers; playerNo++)
                         packet.Players[playerNo] = players[playerNo];
 

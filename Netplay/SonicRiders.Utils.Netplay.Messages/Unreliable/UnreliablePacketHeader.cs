@@ -3,18 +3,22 @@ using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Misc;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
+using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Netplay.Messages.Unreliable
 {
     /// <summary>
     /// Represents the header for an unreliable packet.
     /// </summary>
+    [Equals(DoNotAddEqualityOperators = true)]
     public struct UnreliablePacketHeader
     {
+        public static readonly BitField SequenceNumberBitfield = new BitField(7);
+
         /// <summary>
-        /// Declares the fields present in the packet to be serialized/deserialized.
+        /// Sequence number assigned to this packet.
         /// </summary>
-        public HasData Fields { get; private set; }
+        public int SequenceNumber { get; private set; }
 
         /// <summary>
         /// The number of player entries stored in this unreliable message.
@@ -22,10 +26,16 @@ namespace Riders.Netplay.Messages.Unreliable
         public byte NumberOfPlayers { get; private set; }
 
         /// <summary>
+        /// Declares the fields present in the packet to be serialized/deserialized.
+        /// </summary>
+        public HasData Fields { get; private set; }
+
+        /// <summary>
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
         /// <param name="numPlayers">Number of players in this message.</param>
-        public UnreliablePacketHeader(byte numPlayers)
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber)
         {
 #if DEBUG
             if (numPlayers < 1 || numPlayers > Constants.MaxNumberOfPlayers)
@@ -34,14 +44,16 @@ namespace Riders.Netplay.Messages.Unreliable
 
             NumberOfPlayers = numPlayers;
             Fields = HasDataAll;
+            SequenceNumber = (int) (sequenceNumber % (SequenceNumberBitfield.MaxValue + 1));
         }
 
         /// <summary>
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
         /// <param name="numPlayers">Number of players in this message.</param>
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
         /// <param name="data">The data to include in the packet.</param>
-        public UnreliablePacketHeader(byte numPlayers, HasData data = HasDataAll) : this(numPlayers)
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber, HasData data = HasDataAll) : this(numPlayers, sequenceNumber)
         {
             Fields = data;
         }
@@ -50,8 +62,9 @@ namespace Riders.Netplay.Messages.Unreliable
         /// Creates a packet header given a list of players to include in the packet.
         /// </summary>
         /// <param name="numPlayers">Number of players in this message.</param>
+        /// <param name="sequenceNumber">Individual sequence number assigned to this packet.</param>
         /// <param name="frameCounter">The current frame counter used to determine if data should be sent or not.</param>
-        public UnreliablePacketHeader(byte numPlayers, int frameCounter) : this(numPlayers)
+        public UnreliablePacketHeader(byte numPlayers, int sequenceNumber, int frameCounter) : this(numPlayers, sequenceNumber)
         {
             Fields = GetData(frameCounter);
         }
@@ -61,6 +74,7 @@ namespace Riders.Netplay.Messages.Unreliable
         /// </summary>
         public unsafe void Serialize<TByteStream>(ref BitStream<TByteStream> stream) where TByteStream : IByteStream
         {
+            stream.Write(SequenceNumber, SequenceNumberBitfield.NumBits);
             stream.Write(NumberOfPlayers - 1, Constants.PlayerCountBitfield.NumBits);
             stream.WriteGeneric(Fields, EnumNumBits<HasData>.Number);
         }
@@ -72,6 +86,7 @@ namespace Riders.Netplay.Messages.Unreliable
         {
             return new UnreliablePacketHeader
             {
+                SequenceNumber = stream.Read<byte>(SequenceNumberBitfield.NumBits),
                 NumberOfPlayers = (byte)(stream.Read<byte>(Constants.PlayerCountBitfield.NumBits) + 1),
                 Fields = stream.ReadGeneric<HasData>(EnumNumBits<HasData>.Number)
             };

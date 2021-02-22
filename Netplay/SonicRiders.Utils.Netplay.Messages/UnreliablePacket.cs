@@ -4,15 +4,17 @@ using DotNext.Buffers;
 using Reloaded.Memory.Pointers;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Misc.BitStream;
+using Riders.Netplay.Messages.Misc.Interfaces;
 using Riders.Netplay.Messages.Unreliable;
 using Sewer56.BitStream;
 using static Riders.Netplay.Messages.Unreliable.UnreliablePacketHeader;
 
 namespace Riders.Netplay.Messages
 {
-    public struct UnreliablePacket : IPacket
+    [Equals(DoNotAddEqualityOperators = true)]
+    public struct UnreliablePacket : ISequenced, IPacket
     {
-        private static ArrayPool<UnreliablePacketPlayer> _pool = ArrayPool<UnreliablePacketPlayer>.Shared;
+        private static readonly ArrayPool<UnreliablePacketPlayer> _pool = ArrayPool<UnreliablePacketPlayer>.Shared;
 
         /*
             // Packet Format (Some Features Currently Unimplemented)
@@ -36,10 +38,11 @@ namespace Riders.Netplay.Messages
         /// Constructs a packet to be sent over the unreliable channel.
         /// </summary>
         /// <param name="numPlayers">The number of players in this message.</param>
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
         /// <param name="data">The data to include in the player packets.</param>
-        public UnreliablePacket(int numPlayers, HasData data = HasDataAll)
+        public UnreliablePacket(int numPlayers, int sequenceNumber = 0, HasData data = HasDataAll)
         {
-            Header = new UnreliablePacketHeader((byte) numPlayers, data);
+            Header = new UnreliablePacketHeader((byte) numPlayers, sequenceNumber, data);
             Players = _pool.Rent(Constants.MaxNumberOfPlayers);
         }
 
@@ -49,10 +52,11 @@ namespace Riders.Netplay.Messages
         /// and should be used when upload bandwidth is constrained (Bad Internet + 7/8 player game)
         /// </summary>
         /// <param name="numPlayers">The number of players in this message.</param>
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
         /// <param name="frameCounter">The current frame counter.</param>
-        public UnreliablePacket(int numPlayers, int frameCounter)
+        public UnreliablePacket(int numPlayers, int sequenceNumber, int frameCounter)
         {
-            Header = new UnreliablePacketHeader((byte)numPlayers, frameCounter);
+            Header = new UnreliablePacketHeader((byte)numPlayers, sequenceNumber, frameCounter);
             Players = _pool.Rent(Constants.MaxNumberOfPlayers);
         }
 
@@ -63,19 +67,18 @@ namespace Riders.Netplay.Messages
         ///     The individual player data associated with this packet to be sent.
         /// </param>
         /// <param name="data">The data to include in the player packets.</param>
-        public UnreliablePacket(UnreliablePacketPlayer player, HasData data = HasDataAll)
+        /// <param name="sequenceNumber">Sequence number assigned to this packet.</param>
+        public UnreliablePacket(UnreliablePacketPlayer player, int sequenceNumber = 0, HasData data = HasDataAll)
         {
-            Header  = new UnreliablePacketHeader((byte) 1, data);
+            Header  = new UnreliablePacketHeader((byte) 1, sequenceNumber, data);
             Players = _pool.Rent(Constants.MaxNumberOfPlayers);
             Players[0] = player;
         }
 
-        /// <summary>
-        /// Nothing to dispose.
-        /// </summary>
         public void Dispose()
         {
-            _pool.Return(Players);
+            if (Players != null)
+                _pool.Return(Players);
         }
 
         /// <summary>
@@ -84,7 +87,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         public UnreliablePacket Clone()
         {
-            var copy = new UnreliablePacket(Header.NumberOfPlayers) { Header = Header };
+            var copy = new UnreliablePacket(Header.NumberOfPlayers, Header.SequenceNumber, Header.Fields) { Header = Header };
             for (int x = 0; x < copy.Header.NumberOfPlayers; x++)
                 copy.Players[x] = Players[x];
 
@@ -130,5 +133,11 @@ namespace Riders.Netplay.Messages
         /// Updates the value of the <see cref="Header"/>
         /// </summary>
         public void SetHeader(UnreliablePacketHeader value) => Header = value;
+
+        /// <inheritdoc />
+        public int MaxValue => SequenceNumberBitfield.MaxValue;
+
+        /// <inheritdoc />
+        public int SequenceNo => Header.SequenceNumber;
     }
 }

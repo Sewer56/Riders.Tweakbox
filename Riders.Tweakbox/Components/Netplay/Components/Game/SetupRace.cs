@@ -57,6 +57,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.TryGetComponent(out RaceLapSync lap))
                 lap.Reset();
 
+            // Reset number of frames.
+            Socket.State.FrameCounter = 0;
+
             // Calculate Number of Cameras depending on Local Players
             var totalPlayers = Socket.State.GetPlayerCount();
             var numCameras   = Socket.Config.Data.MaxNumberOfCameras.Value;

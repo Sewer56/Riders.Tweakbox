@@ -78,27 +78,6 @@ namespace Riders.Tweakbox.Components.Netplay.Helpers
         }
 
         /// <summary>
-        /// Returns a disposable slice of all items except those in the provided indices.
-        /// </summary>
-        /// <param name="source">The source array from which to make the slice.</param>
-        /// <param name="discardTimeout">Timeout before the item should not be considered anymore.</param>
-        public static ArrayRental<T> GetNonExpiredItems<T>(Span<Timestamped<T>> source, int discardTimeout)
-        {
-            var rental = new ArrayRental<T>(source.Length);
-            int insertIndex = 0;
-            for (int x = 0; x < source.Length; x++)
-            {
-                if (source[x].IsDiscard(discardTimeout))
-                    continue;
-
-                rental[insertIndex] = source[x].Value;
-                insertIndex += 1;
-            }
-
-            return rental;
-        }
-
-        /// <summary>
         /// Merges an existing merge-able item if it has not been used or discarded, else replaces it.
         /// </summary>
         /// <param name="item">The item.</param>
@@ -112,9 +91,14 @@ namespace Riders.Tweakbox.Components.Netplay.Helpers
 
             ref var currentFlags = ref cache[playerIndex];
             if (currentFlags.IsDiscard(discardTimeout) || currentFlags.Value.IsUsed)
+            {
                 currentFlags = new Timestamped<Used<T>>(item.Value);
+            }
             else
+            {
+                currentFlags.Refresh();
                 currentFlags.Value.Value.Merge(item.Value);
+            }
         }
 
         /// <summary>
@@ -133,7 +117,10 @@ namespace Riders.Tweakbox.Components.Netplay.Helpers
             if (currentFlags.IsDiscard(discardTimeout))
                 currentFlags = new Timestamped<T>(item.Value);
             else
+            {
+                currentFlags.Refresh();
                 currentFlags.Value.Merge(item.Value);
+            }
         }
 
         /// <summary>

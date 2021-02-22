@@ -34,8 +34,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void OnEndScene()
         {
-            Socket?.Update();
-            Socket?.OnFrame();
+            if (Socket != null)
+            {
+                Socket.Update();
+                Socket.OnFrame();
+            }
         }
     }
 }

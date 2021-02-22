@@ -8,6 +8,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Riders.Netplay.Messages.Reliable.Structs;
+using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
@@ -132,6 +133,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             var startTime = DateTime.UtcNow.AddMilliseconds(Socket.State.MaxLatency);
             Socket.SendToAllAndFlush(ReliablePacket.Create(new SRandSync(startTime, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
             Socket.WaitWithSpin(startTime, $"[{nameof(Random)} / Host] SRand Synchronized.", LogCategory.Random, 32);
+            ResetRaceComponent();
         }
 
         private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
@@ -156,6 +158,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Socket.TryGetComponent(out TimeSynchronization time);
             var localTime = time.ToLocalTime(srand.StartTime);
             Socket.WaitWithSpin(localTime, $"[{nameof(Random)} / Client] SRand Synchronized.", LogCategory.Random, 32);
+            ResetRaceComponent();
         }
 
         /// <inheritdoc />
@@ -194,6 +197,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         /// True if a sync message has been received, else false.
         /// </summary>
         private bool SyncAvailable() => _currentSync.HasValue;
+
+        private void ResetRaceComponent()
+        {
+            if (Socket.TryGetComponent(out Race race))
+            {
+                race.Reset();
+                Socket.State.FrameCounter = 0;
+            }
+        }
 
         /// <inheritdoc />
         public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
