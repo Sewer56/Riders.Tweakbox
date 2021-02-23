@@ -13,7 +13,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public Client(NetplayConfig config, NetplayController controller) : base(controller, config)
         {
-            Log.WriteLine($"[Client] Joining Server on {config.Data.ClientIP.Text}:{config.Data.ClientPort} with password {config.Data.Password.Text}", LogCategory.Socket);
+            Log.WriteLine($"[Client] Joining Server on {config.Data.ClientIP.Text}:{config.Data.ClientPort.Value} with password {config.Data.Password.Text}", LogCategory.Socket);
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
