@@ -16,11 +16,10 @@ namespace Riders.Tweakbox.Components.Debug.Log
         public LogCategory Data = Misc.Log.DefaultCategories;
 
         /// <inheritdoc />
-        public Span<byte> FromBytes(Span<byte> bytes)
+        public void FromBytes(Span<byte> bytes)
         {
             Data = Utilities.DeserializeMessagePack<LogCategory>(bytes, out int bytesRead, MessagePack.Resolvers.ContractlessStandardResolver.Options);
             ConfigUpdated?.Invoke();
-            return bytes.Slice(bytesRead);
         }
 
         /// <inheritdoc />

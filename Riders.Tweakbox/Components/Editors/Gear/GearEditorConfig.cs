@@ -41,14 +41,13 @@ namespace Riders.Tweakbox.Components.Editors.Gear
         public Action ConfigUpdated { get; set; }
         public byte[] ToBytes() => LZ4.CompressLZ4Stream(StructArray.GetBytes(Gears), LZ4Level.L12_MAX);
 
-        public Span<byte> FromBytes(Span<byte> bytes)
+        public void FromBytes(Span<byte> bytes)
         {
             var outputArray  = new byte[StructArray.GetSize<ExtremeGear>(Player.NumberOfGears)];
             var decompressed = LZ4.DecompressLZ4Stream(outputArray, bytes, out int bytesRead);
 
             StructArray.FromArray(decompressed, out Gears, true, Player.NumberOfGears);
             ConfigUpdated?.Invoke();
-            return bytes.Slice((int)bytesRead);
         }
 
         public IConfiguration GetCurrent() => FromGame();

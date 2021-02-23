@@ -2,7 +2,7 @@
 using MessagePack.Formatters;
 using Sewer56.Imgui.Controls;
 
-namespace Riders.Tweakbox.Definitions.Serializers
+namespace Riders.Tweakbox.Definitions.Serializers.MessagePack
 {
     public class TextInputDataFormatter : IMessagePackFormatter<TextInputData>
     {
@@ -15,7 +15,7 @@ namespace Riders.Tweakbox.Definitions.Serializers
         /// <inheritdoc />
         public TextInputData Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            return new TextInputData(reader.ReadString(), 64);
+            return new TextInputData(reader.ReadString(), 128);
         }
     }
 }

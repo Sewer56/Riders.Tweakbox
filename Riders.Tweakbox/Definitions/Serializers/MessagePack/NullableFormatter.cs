@@ -1,7 +1,7 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
 
-namespace Riders.Tweakbox.Definitions.Serializers
+namespace Riders.Tweakbox.Definitions.Serializers.MessagePack
 {
     public unsafe class NullableFormatter<T> : IMessagePackFormatter<Nullable<T>> where T : unmanaged
     {

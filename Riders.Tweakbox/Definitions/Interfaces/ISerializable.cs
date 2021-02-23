@@ -24,6 +24,6 @@ namespace Riders.Tweakbox.Definitions.Interfaces
         /// </summary>
         /// <param name="bytes">The bytes.</param>
         /// <returns>Source span advanced by the number of bytes read.</returns>
-        Span<byte> FromBytes(Span<byte> bytes);
+        void FromBytes(Span<byte> bytes);
     }
 }

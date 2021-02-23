@@ -27,15 +27,18 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         public HostState HostState => (HostState) State;
         public NetManager Manager { get; set; }
         public EventController Event { get; set; }
-        public NetplayConfig Config { get; set; }
+        public NetplayConfig.HostSettings HostSettings { get; set; }
+        public NetplayConfig.ClientSettings ClientSettings { get; set; }
 
         public ConnectionManager(Socket socket, EventController @event)
         {
             Socket = socket;
             Event = @event;
-            Config = Socket.Config;
             Manager = Socket.Manager;
             State = Socket.State;
+
+            HostSettings = Socket.Config.Data.HostSettings;
+            ClientSettings = Socket.Config.Data.ClientSettings;
 
             Socket.Listener.PeerConnectedEvent += OnPeerConnected;
             Socket.Listener.PeerDisconnectedEvent += OnPeerDisconnected;
@@ -114,7 +117,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             else
             {
                 Log.WriteLine($"[Host] Accepting if Password Matches", LogCategory.Socket);
-                request.AcceptIfKey(Config.Data.Password.Text);
+                request.AcceptIfKey(HostSettings.SocketSettings.Password.Text);
             }
         }
 
@@ -190,7 +193,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             if (Socket.GetSocketType() == SocketType.Host)
                 OnHostConnectionRequest(request);
             else
-                request.AcceptIfKey(Config.Data.Password.Text);
+                request.AcceptIfKey(ClientSettings.SocketSettings.Password.Text);
         }
 
         private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)

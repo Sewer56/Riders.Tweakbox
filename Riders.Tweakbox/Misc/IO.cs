@@ -5,8 +5,11 @@ namespace Riders.Tweakbox.Misc
     public class IO
     {
         // Extension used to store config files and pattern to find them.
-        public static readonly string ConfigExtension = ".tweakbox";
-        public static readonly string ConfigSearchPattern = $"*.tweakbox";
+        public const string JsonConfigExtension = ".json";
+        public const string JsonSearchPattern = "*.json";
+
+        public const string ConfigExtension = ".tweakbox";
+        public const string ConfigSearchPattern = "*.tweakbox";
 
         // Configuration Directories.
         public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
@@ -39,6 +42,6 @@ namespace Riders.Tweakbox.Misc
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
         public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
         public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, ConfigSearchPattern);
-        public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, ConfigSearchPattern);
+        public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
     }
 }

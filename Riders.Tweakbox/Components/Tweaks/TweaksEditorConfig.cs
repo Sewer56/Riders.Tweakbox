@@ -11,6 +11,7 @@ using Task = System.Threading.Tasks.Task;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
+using Riders.Tweakbox.Definitions.Serializers.MessagePack;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
@@ -26,12 +27,11 @@ namespace Riders.Tweakbox.Components.Tweaks
         public Action ConfigUpdated { get; set; }
 
         public byte[] ToBytes() => MessagePackSerializer.Serialize(Data, SerializerOptions);
-        public Span<byte> FromBytes(Span<byte> bytes)
+        public void FromBytes(Span<byte> bytes)
         {
             Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int bytesRead, SerializerOptions);
             Data.Initialize();
             ConfigUpdated?.Invoke();
-            return bytes.Slice(bytesRead);
         }
 
         // Apply

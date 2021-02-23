@@ -17,7 +17,7 @@ namespace Riders.Tweakbox.Components.Netplay
         public override string Name { get; set; } = "Netplay Menu";
         
         /// <inheritdoc />
-        public NetplayMenu(IO io) : base(io, io.NetplayConfigFolder, io.GetNetplayConfigFiles)
+        public NetplayMenu(IO io) : base(io, io.NetplayConfigFolder, io.GetNetplayConfigFiles, IO.JsonConfigExtension)
         {
 
         }
@@ -75,10 +75,11 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Player Settings"))
             {
-                data.PlayerName.Render(nameof(data.PlayerName));
-                Reflection.MakeControl(ref data.ShowPlayers.Value, "Show Player Overlay");
-                ImGui.DragInt("Number of Players", ref data.LocalPlayers.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
-                ImGui.DragInt("Max Number of Cameras", ref data.MaxNumberOfCameras.Value, 1.0f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ref var playerSettings = ref data.PlayerSettings;
+                playerSettings.PlayerName.Render(nameof(playerSettings.PlayerName));
+
+                ImGui.DragInt("Number of Players", ref playerSettings.LocalPlayers, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ImGui.DragInt("Max Number of Cameras", ref playerSettings.MaxNumberOfCameras, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
                 Tooltip.TextOnHover("Default: 1 (Automatic)\n" +
                                     "Overrides the number of cameras, allowing for split-screen while in online multiplayer.");
 
@@ -87,9 +88,11 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Join a Server"))
             {
-                data.ClientIP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, data.ClientIP.FilterIPAddress);
-                data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                ImGui.DragInt("Port", ref data.ClientPort.Value, 1.0f, 0, ushort.MaxValue, null);
+                ref var clientData = ref data.ClientSettings;
+
+                clientData.IP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, clientData.IP.FilterIPAddress);
+                clientData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                ImGui.DragInt("Port", ref clientData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null);
                 
                 if (ImGui.Button("Connect", Constants.DefaultVector2))
                     Connect();
@@ -99,12 +102,14 @@ namespace Riders.Tweakbox.Components.Netplay
 
             if (ImGui.TreeNodeStr("Host"))
             {
-                data.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                ImGui.DragInt("Port", ref data.HostPort.Value, 1.0f, 0, ushort.MaxValue, null);
+                ref var hostData = ref data.HostSettings;
 
-                ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref data.ReducedTickRate.Value);
-                Tooltip.TextOnHover("Reduces the send-rate of non-essential elements such as players' amount of air, rings, flags and other misc. stuff.\n" +
-                                    "Saves around 200Kbit/s upload. Use only if hosting 8 player lobby and your upload speed is below 1 Mbit/s.");
+                hostData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                ImGui.DragInt("Port", ref hostData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null);
+
+                ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref hostData.ReducedTickRate);
+                Tooltip.TextOnHover("Only use when hosting 8 player lobby and upload speed is less than 1Mbit/s.\n" +
+                                    "Reduces the send-rate of non-essential elements such as players' amount of air, rings, flags and other misc. content.");
 
                 if (ImGui.Button("Host", Constants.DefaultVector2))
                     HostServer();
@@ -112,23 +117,34 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
+            if (ImGui.TreeNodeStr("NAT Punch/Traversal Server"))
+            {
+                ref var punchingServer = ref data.PunchingServer;
+                Reflection.MakeControl(ref punchingServer.IsEnabled, "Enabled");
+                if (punchingServer.IsEnabled)
+                {
+                    punchingServer.Host.Render("Host Server");
+                    ImGui.DragInt("Port", ref punchingServer.Port, 0.1f, 0, ushort.MaxValue, null);
+                }
+
+                ImGui.TreePop();
+            }
+
 #if DEBUG
             if (ImGui.TreeNodeStr("Debug"))
             {
-                Reflection.MakeControl(ref data.BadInternet.IsEnabled, "Simulate Bad Internet");
-                if (data.BadInternet.IsEnabled)
+                var badInternet = data.BadInternet;
+                Reflection.MakeControl(ref badInternet.IsEnabled, "Simulate Bad Internet");
+                if (badInternet.IsEnabled)
                 {
-                    Reflection.MakeControl(ref data.BadInternet.MinLatency, "Min Latency");
-                    Reflection.MakeControl(ref data.BadInternet.MaxLatency, "Max Latency");
-                    Reflection.MakeControl(ref data.BadInternet.PacketLoss, "Packet Loss Percent");
+                    Reflection.MakeControl(ref badInternet.MinLatency, "Min Latency");
+                    Reflection.MakeControl(ref badInternet.MaxLatency, "Max Latency");
+                    Reflection.MakeControl(ref badInternet.PacketLoss, "Packet Loss Percent");
                 }
             }
 #endif
 
             ImGui.Spacing();
-
-            if (data.ShowPlayers)
-                RenderPlayerMenu();
         }
 
         private void HostServer()
@@ -153,11 +169,6 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
             }
-        }
-
-        public void RenderPlayerMenu()
-        {
-
         }
     }
 }

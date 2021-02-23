@@ -29,10 +29,10 @@ namespace Riders.Tweakbox.Components
         protected IO Io;
         protected ProfileSelector ProfileSelector;
 
-        protected ComponentBase(IO io, string configFolder, Func<string[]> getConfigFiles)
+        protected ComponentBase(IO io, string configFolder, Func<string[]> getConfigFiles, string configExtension = IO.ConfigExtension)
         {
             Io = io;
-            ProfileSelector = new ProfileSelector(configFolder, IO.ConfigExtension, Config.GetDefault().ToBytes(), getConfigFiles, LoadConfig, GetCurrentConfigBytes);
+            ProfileSelector = new ProfileSelector(configFolder, configExtension, Config.GetDefault().ToBytes(), getConfigFiles, LoadConfig, GetCurrentConfigBytes);
             if (File.Exists(ProfileSelector.CurrentConfiguration))
                 LoadConfig(File.ReadAllBytes(ProfileSelector.CurrentConfiguration));
         }

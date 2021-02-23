@@ -25,7 +25,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteNetLib", "Submodules\Li
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.BitStream", "Submodules\Sewer56.BitStream\Sewer56.BitStream\Sewer56.BitStream.csproj", "{0B7E0B21-C01F-416D-9909-B674FD4631BE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLAPI.Puncher.Client", "Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj", "{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Submodules\MLAPI.Puncher\MLAPI.Puncher.Shared\MLAPI.Puncher.Shared.projitems*{0bae16eb-23b6-4047-aed5-9dcf10dc7a6e}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -67,6 +72,10 @@ Global
 		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +89,7 @@ Global
 		{FE39E8DA-3BBE-4AE0-AE09-C764DC9E7859} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{0B7E0B21-C01F-416D-9909-B674FD4631BE} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
+		{0BAE16EB-23B6-4047-AED5-9DCF10DC7A6E} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}

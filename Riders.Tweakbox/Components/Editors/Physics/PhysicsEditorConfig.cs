@@ -44,11 +44,10 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         public IConfiguration GetCurrent() => FromGame();
         public IConfiguration GetDefault() => _default;
         public unsafe byte[] ToBytes() => Data.ToBytes();
-        public unsafe Span<byte> FromBytes(Span<byte> bytes)
+        public unsafe void FromBytes(Span<byte> bytes)
         {
             Data.FromBytes(bytes, out int bytesRead);
             ConfigUpdated?.Invoke();
-            return bytes.Slice(bytesRead);
         }
 
         public void Apply()

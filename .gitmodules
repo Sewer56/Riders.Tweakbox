@@ -10,3 +10,6 @@
 [submodule "Submodules/Sewer56.BitStream"]
 	path = Submodules/Sewer56.BitStream
 	url = https://github.com/Sewer56/Sewer56.BitStream.git
+[submodule "Submodules/MLAPI.Puncher"]
+	path = Submodules/MLAPI.Puncher
+	url = https://github.com/Sewer56/MLAPI.Puncher.git

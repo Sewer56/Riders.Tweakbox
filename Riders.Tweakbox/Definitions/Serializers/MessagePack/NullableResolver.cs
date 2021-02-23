@@ -2,7 +2,7 @@
 using MessagePack;
 using MessagePack.Formatters;
 
-namespace Riders.Tweakbox.Definitions.Serializers
+namespace Riders.Tweakbox.Definitions.Serializers.MessagePack
 {
     public class NullableResolver : IFormatterResolver
     {

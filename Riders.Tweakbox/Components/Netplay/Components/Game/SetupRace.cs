@@ -62,7 +62,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             // Calculate Number of Cameras depending on Local Players
             var totalPlayers = Socket.State.GetPlayerCount();
-            var numCameras   = Socket.Config.Data.MaxNumberOfCameras.Value;
+            var numCameras   = Socket.Config.Data.PlayerSettings.MaxNumberOfCameras;
             if (numCameras > 0)
             {
                 while (numCameras > totalPlayers)

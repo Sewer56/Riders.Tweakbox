@@ -26,6 +26,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public EventController Event { get; set; }
         public CommonState State { get; set; }
         public FramePacingController PacingController { get; set; }
+        public NetplayConfig.HostSettings HostSettings { get; set; }
 
         /// <summary>
         /// Sync data for races.
@@ -50,12 +51,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private const DeliveryMethod _raceDeliveryMethod = DeliveryMethod.Unreliable;
         private readonly byte _raceChannel;
+        private bool _reducedTickRate;
 
         public Race(Socket socket, EventController @event)
         {
             Socket = socket;
             Event = @event;
             State = socket.State;
+            HostSettings = Socket.Config.Data.HostSettings;
             PacingController = IoC.GetConstant<FramePacingController>();
 
             _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(_raceDeliveryMethod);
@@ -208,7 +211,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                             continue;
 
                         // Construct packet.
-                        packet.SetHeader(Socket.Config.Data.ReducedTickRate
+                        packet.SetHeader(HostSettings.ReducedTickRate
                             ? new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter, State.FrameCounter)
                             : new UnreliablePacketHeader((byte) rental.Length, State.FrameCounter));
 
