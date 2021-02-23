@@ -21,6 +21,7 @@ using static Sewer56.SonicRiders.Functions.Functions;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
+using SharpDX;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -29,19 +30,19 @@ namespace Riders.Tweakbox.Controllers
         private static GraphicsController _controller;
 
         /// <summary>
-        /// Pointer to the latest created DirectX 9 device.
+        /// The D3D9 Instance.
         /// </summary>
-        public IntPtr Dx9Device { get; private set; }
+        public Direct3D D3d { get; private set; }
 
         /// <summary>
-        /// Allows you to call the Direct3D Reset function.
+        /// The D3D9 Instance.
         /// </summary>
-        public DX9Hook.Reset Reset { get; private set; }
+        public Direct3DEx D3dEx { get; private set; }
 
         /// <summary>
-        /// Intercepts the Direct3D Reset function.
+        /// The D3D9 Device.
         /// </summary>
-        public IHook<DX9Hook.Reset> ResetHook { get; private set; }
+        public DeviceEx D3dDeviceEx { get; private set; }
 
         /// <summary>
         /// Presentation parameters passed to Direct3D on last device reset.
@@ -63,9 +64,6 @@ namespace Riders.Tweakbox.Controllers
         {
             _controller        = this;
             _createDeviceHook  = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
-
-            Reset     = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateWrapperFunction<DX9Hook.Reset>((int)IDirect3DDevice9.Reset);
-            ResetHook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.DeviceVTable.CreateFunctionHook<DX9Hook.Reset>((int)IDirect3DDevice9.Reset, ResetImpl);
 
             _renderTexture2dHook       = Functions.RenderTexture2D.HookAs<RenderTexture2DFnPtr>(typeof(GraphicsController), nameof(RenderTexture2DPtr)).Activate();
             _renderPlayerIndicatorHook = Functions.RenderPlayerIndicator.HookAs<RenderPlayerIndicatorFnPtr>(typeof(GraphicsController), nameof(RenderPlayerIndicatorPtr)).Activate();
@@ -112,14 +110,6 @@ namespace Riders.Tweakbox.Controllers
             }
         }
 
-        // Hook Implementation
-        private IntPtr ResetImpl(IntPtr device, ref PresentParameters presentParameters)
-        {
-            Log.WriteLine($"Reset! Device: {device}, Local Device {Dx9Device}", LogCategory.Default);
-            LastPresentParameters = presentParameters;
-            return ResetHook.OriginalFunction(device, ref presentParameters);
-        }
-
         private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType deviceType, IntPtr hFocusWindow, CreateFlags behaviorFlags, ref PresentParameters presentParameters, int** ppReturnedDeviceInterface)
         {
             if (_config.Data.D3DDeviceFlags)
@@ -141,11 +131,35 @@ namespace Riders.Tweakbox.Controllers
 #if DEBUG
             PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
 #endif
-
             LastPresentParameters = presentParameters;
-            var result = _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
-            Dx9Device = (IntPtr)(*ppReturnedDeviceInterface);
-            return result;
+            try
+            {
+                D3d = new Direct3D(direct3dpointer);
+                if (presentParameters.Windowed)
+                {
+                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters);
+                }
+                else
+                {
+                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters, new DisplayModeEx()
+                    {
+                        Format = presentParameters.BackBufferFormat,
+                        Height = presentParameters.BackBufferHeight,
+                        Width = presentParameters.BackBufferWidth,
+                        RefreshRate = presentParameters.FullScreenRefreshRateInHz,
+                        ScanLineOrdering = ScanlineOrdering.Progressive,
+                    });
+                }
+                
+                *ppReturnedDeviceInterface = (int*)D3dDeviceEx.NativePointer;
+            }
+            catch (SharpDXException ex)
+            {
+                Log.WriteLine($"Failed To Initialize Direct3DEx Device: HRESULT | {ex.HResult}, Descriptor | {ex.Descriptor}");
+                return (IntPtr) ex.HResult;
+            }
+
+            return IntPtr.Zero;
         }
 
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]

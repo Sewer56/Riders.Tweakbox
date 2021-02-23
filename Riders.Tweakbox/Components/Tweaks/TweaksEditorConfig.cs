@@ -46,7 +46,7 @@ namespace Riders.Tweakbox.Components.Tweaks
             *Sewer56.SonicRiders.API.Misc.Fullscreen = Data.Fullscreen;
             *Sewer56.SonicRiders.API.Misc.Blur = Data.Blur;
 
-            // ResetDevice();
+            //ResetDevice();
             ChangeBorderless(Data.Borderless);
             ConfigUpdated?.Invoke();
         }
@@ -88,6 +88,7 @@ namespace Riders.Tweakbox.Components.Tweaks
 
         public unsafe void ResetDevice()
         {
+            // Currently Unused
             // Reset Game Window
             var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
             if (handle != IntPtr.Zero)
@@ -100,8 +101,8 @@ namespace Riders.Tweakbox.Components.Tweaks
                 var controller = IoC.Get<GraphicsController>();
                 var presentParametersCopy = controller.LastPresentParameters;
                 presentParametersCopy.BackBufferHeight = Data.ResolutionY;
-                presentParametersCopy.BackBufferWidth = Data.ResolutionX;
-                controller.Reset(controller.Dx9Device, ref presentParametersCopy);
+                presentParametersCopy.BackBufferWidth  = Data.ResolutionX;
+                controller.D3dDeviceEx.ResetEx(ref presentParametersCopy);
             }
         }
 
