@@ -51,8 +51,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event.OnCheckIfStartRace        += MenuCheckIfStartRace;
             Event.OnStartRace               += MenuOnMenuStartRace;
 
-            var controller = IoC.Get<PatchController>();
-            controller.AlwaysAllowUnReadyInCharacterSelect.Enable();
+            var patchController = IoC.Get<PatchController>();
+            patchController.AlwaysAllowUnReadyInCharacterSelect.Enable();
+
+            var eventController = IoC.Get<EventController>();
+            eventController.OnCheckIfRandomizePlayer += OnCheckIfRandomizePlayer;
         }
 
         /// <inheritdoc />
@@ -67,6 +70,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 
             var controller = IoC.Get<PatchController>();
             controller.AlwaysAllowUnReadyInCharacterSelect.Disable();
+
+            var eventController = IoC.Get<EventController>();
+            eventController.OnCheckIfRandomizePlayer -= OnCheckIfRandomizePlayer;
         }
 
         private void MenuOnMenuStartRace() => DoExitCharaSelect(ExitKind.Start);
@@ -244,6 +250,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                 element.Status = PlayerStatus.Ready;
                 element.ToGame(_lastTaskPtr, x);
             }
+        }
+
+        private Enum<AsmFunctionResult> OnCheckIfRandomizePlayer(Sewer56.SonicRiders.Structures.Gameplay.Player* player)
+        {
+            // This works in tandem with SetRandomForUnjoinedPlayers, ensuring local players don't get overwritten.
+            var playerIndex = Player.GetPlayerIndex(player);
+            if (State.IsLocal(playerIndex))
+                return false;
+
+            return AsmFunctionResult.Indeterminate;
         }
 
         /// <inheritdoc />

@@ -189,6 +189,12 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event Functions.RunPlayerPhysicsSimulationFn AfterRunPlayerPhysicsSimulation;
 
+        /// <summary>
+        /// Checks if a specific player should be randomized inside character select after pressing start/enter and
+        /// before loading the race.
+        /// </summary>
+        public event PlayerAsmFunc OnCheckIfRandomizePlayer;
+
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
@@ -218,12 +224,13 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIfQtePressRightHook;
         private IAsmHook _alwaysSeedRngOnIntroSkipHook;
         private IAsmHook _onCheckIfGiveAiRandomItemsHook;
+        private IAsmHook _checkIfRandomizePlayerHook;
         private Patch  _randItemPickupPatch;
         private IReverseWrapper<Functions.CdeclReturnIntFn> _randItemPickupWrapper;
         private Random _random = new Random();
 
-        private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer;
-        
+        private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
+
         public EventController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
@@ -261,7 +268,6 @@ namespace Riders.Tweakbox.Controllers
             _skipIntroCameraHook = hooks.CreateAsmHook(onSkipIntroAsm, 0x00416001, AsmHookBehaviour.ExecuteFirst).Activate();
             _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
 
-            _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
             var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
             var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
             _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -311,6 +317,19 @@ namespace Riders.Tweakbox.Controllers
             _goalRaceFinishTaskHook = Functions.GoalRaceFinishTask.Hook(GoalRaceFinishTaskHook).Activate();
             _removeAllTasksHook = Functions.RemoveAllTasks.Hook(RemoveAllTasksHook).Activate();
             _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulation).Activate();
+
+            var ifNotRandomizePlayer = new[] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004639DC, Environment.Is64BitProcess)}"};
+            var ifRandomizePlayer = new [] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004638E0, Environment.Is64BitProcess)}" };
+            var onCheckIfRandomizePlayer = new[]
+            { 
+                "use32",
+                "push eax",
+                "lea eax, dword [edi - 0xBA]",
+                $"mov [{(int)_tempPlayerPointer.Pointer}], eax",
+                "pop eax",
+                $"{utilities.AssembleAbsoluteCall(OnCheckIfRandomizePlayerHook, out _, ifRandomizePlayer, ifNotRandomizePlayer, null, "je")}"
+            };
+            _checkIfRandomizePlayerHook = hooks.CreateAsmHook(onCheckIfRandomizePlayer, 0x004638D1, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -347,6 +366,7 @@ namespace Riders.Tweakbox.Controllers
             _goalRaceFinishTaskHook.Disable();
             _removeAllTasksHook.Disable();
             _runPlayerPhysicsSimulationHook.Disable();
+            _checkIfRandomizePlayerHook.Disable();
         }
 
         /// <summary>
@@ -383,6 +403,7 @@ namespace Riders.Tweakbox.Controllers
             _goalRaceFinishTaskHook.Enable();
             _removeAllTasksHook.Enable();
             _runPlayerPhysicsSimulationHook.Enable();
+            _checkIfRandomizePlayerHook.Enable();
         }
 
         /// <summary>
@@ -480,6 +501,8 @@ namespace Riders.Tweakbox.Controllers
         private int SetGoalRaceFinishTaskHook(Player* player) => SetGoalRaceFinishTask?.Invoke(_setGoalRaceFinishTaskHook, player) ?? _setGoalRaceFinishTaskHook.OriginalFunction(player);
         private byte GoalRaceFinishTaskHook() => GoalRaceFinishTask?.Invoke(_goalRaceFinishTaskHook) ?? _goalRaceFinishTaskHook.OriginalFunction();
         private int RemoveAllTasksHook() => RemoveAllTasks?.Invoke(_removeAllTasksHook) ?? _removeAllTasksHook.OriginalFunction();
+
+        private Enum<AsmFunctionResult> OnCheckIfRandomizePlayerHook() => OnCheckIfRandomizePlayer?.Invoke(Sewer56.SonicRiders.API.Player.Players.Pointer) ?? AsmFunctionResult.Indeterminate;
 
         [Function(CallingConventions.Cdecl)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
