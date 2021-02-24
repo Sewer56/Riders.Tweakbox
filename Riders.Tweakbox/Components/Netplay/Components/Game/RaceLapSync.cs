@@ -285,7 +285,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             // Set goal race finish task if all players finished racing.
             bool allFinished = true;
-            for (int x = 0; x < Constants.MaxRidersNumberOfPlayers; x++)
+            var numPlayer = State.GetPlayerCount();
+            for (int x = 0; x < numPlayer; x++)
             {
                 if (!State.IsHuman(x))
                     continue;
