@@ -165,6 +165,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         private void OnAfterPhysicsSimulation(void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex)
         {
             // Only execute after last player! (Once Per Frame!)
+            if (playerIndex == (int*)0)
+                return;
+
             if (*(byte*)playerIndex != *Sewer56.SonicRiders.API.State.NumberOfRacers - 1)
                 return;
 
