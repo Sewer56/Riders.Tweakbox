@@ -11,6 +11,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
     {
         public const int FlagNumBits = 1;
         public const int DeltaNumBits = 2;
+        public const int FullRangeDeltaNumBits = 8;
 
         public sbyte DeltaMenuSelectionX;
         public sbyte DeltaMenuSelectionY;
@@ -31,9 +32,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <inheritdoc />
         public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
         {
-            bitStream.WriteSigned(DeltaMenuSelectionX, DeltaNumBits);
-            bitStream.WriteSigned(DeltaMenuSelectionY, DeltaNumBits);
-            bitStream.WriteSigned(DeltaLapCounter, DeltaNumBits);
+            bitStream.WriteSigned(DeltaMenuSelectionX, FullRangeDeltaNumBits);
+            bitStream.WriteSigned(DeltaMenuSelectionY, FullRangeDeltaNumBits);
+            bitStream.WriteSigned(DeltaLapCounter, FullRangeDeltaNumBits);
             bitStream.WriteSigned(DeltaAnnouncer, DeltaNumBits);
             bitStream.WriteSigned(DeltaLevel, DeltaNumBits);
             bitStream.WriteSigned(DeltaItem, DeltaNumBits);
@@ -45,9 +46,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <inheritdoc />
         public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
         {
-            DeltaMenuSelectionX = bitStream.ReadSigned<sbyte>(DeltaNumBits);
-            DeltaMenuSelectionY = bitStream.ReadSigned<sbyte>(DeltaNumBits);
-            DeltaLapCounter = bitStream.ReadSigned<sbyte>(DeltaNumBits);
+            DeltaMenuSelectionX = bitStream.ReadSigned<sbyte>(FullRangeDeltaNumBits);
+            DeltaMenuSelectionY = bitStream.ReadSigned<sbyte>(FullRangeDeltaNumBits);
+            DeltaLapCounter = bitStream.ReadSigned<sbyte>(FullRangeDeltaNumBits);
             DeltaAnnouncer = bitStream.ReadSigned<sbyte>(DeltaNumBits);
             DeltaLevel = bitStream.ReadSigned<sbyte>(DeltaNumBits);
             DeltaItem = bitStream.ReadSigned<sbyte>(DeltaNumBits);
