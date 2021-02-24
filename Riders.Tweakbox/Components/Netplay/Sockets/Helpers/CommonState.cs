@@ -106,7 +106,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             // an offset from our first remote player (at index NumLocalPlayers).
 
             // If player is after our index, shift for the spaces we occupied.
-            if (playerIndex > selfIndex + NumLocalPlayers)
+            if (playerIndex >= selfIndex + NumLocalPlayers)
                 playerIndex -= NumLocalPlayers;
 
             return NumLocalPlayers + playerIndex;
