@@ -89,16 +89,21 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
         private void OnClientPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            if (disconnectInfo.Reason != DisconnectReason.DisconnectPeerCalled) 
-                return;
+            try
+            {
+                if (disconnectInfo.Reason != DisconnectReason.DisconnectPeerCalled) 
+                    return;
 
-            var reader   = disconnectInfo.AdditionalData;
-            var rawBytes = reader.RawData.AsSpan(reader.UserDataOffset, reader.UserDataSize);
-            using var reliable = new ReliablePacket();
-            reliable.Deserialize(rawBytes);
-            Shell.AddDialog("Disconnected from Host", reliable.GetMessage<Disconnect>().Reason);
-
-            Socket.Dispose();
+                var reader   = disconnectInfo.AdditionalData;
+                var rawBytes = reader.RawData.AsSpan(reader.UserDataOffset, reader.UserDataSize);
+                using var reliable = new ReliablePacket();
+                reliable.Deserialize(rawBytes);
+                Shell.AddDialog("Disconnected from Host", reliable.GetMessage<Disconnect>().Reason);
+            }
+            finally
+            {
+                Socket.Dispose();
+            }
         }
 
         private void OnHostConnectionRequest(ConnectionRequest request)
