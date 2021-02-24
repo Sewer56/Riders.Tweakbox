@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
+using LiteNetLib;
 using MLAPI.Puncher.Client;
+using MLAPI.Puncher.Shared;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -57,10 +59,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 Log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host.Text}:{punchServerSettings.Port}", LogCategory.Socket);
                 host.NatPunchClient = new PuncherClient(punchServerSettings.Host.Text, (ushort) punchServerSettings.Port);
-
+                
                 Log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches...", LogCategory.Socket);
-                host.NatPunchClient.OnConnectorPunchSuccessful += OnPunchSuccessful;
-                host.NatPunchClient.ListenForPunches(new IPEndPoint(IPAddress.Any, 0));
+                host.NatPunchClient.OnConnectorPunchSuccessful += endpoint => { Log.WriteLine($"[{nameof(Host)}] Successful NAT Punch from Client: {endpoint}", LogCategory.Socket); };
+                host.NatPunchClient.ListenForPunches(new IPEndPoint(IPAddress.Any, host.Manager.LocalPort));
             }
             catch (Exception e)
             {
@@ -68,8 +70,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 host.NatPunchClient.Dispose();
             }
         }
-
-        private void OnPunchSuccessful(IPEndPoint endpoint) => Log.WriteLine($"[{nameof(Host)}] Successful NAT Punch from Client: {endpoint}", LogCategory.Socket);
 
         /// <inheritdoc />
         public override void Dispose()

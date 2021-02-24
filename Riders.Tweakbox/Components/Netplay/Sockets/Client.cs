@@ -33,8 +33,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 
                 if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP.Text), out IPEndPoint connectResult))
                 {
-                    Log.WriteLine($"[{nameof(Client)}] NAT Punch Success!", LogCategory.Socket);
-                    ConnectToIp(connectResult.Address.ToString(), connectResult.Port, socketSettings.Password.Text);
+                    Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);
+                    Manager.Connect(connectResult, socketSettings.Password.Text);
                 }
                 else
                 {
@@ -52,7 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         private void ConnectToIp(string ip, int port, string password)
         {
-            Log.WriteLine($"[{nameof(Host)}] Connecting via Direct IP: {ip}:{port}", LogCategory.Socket);
+            Log.WriteLine($"[{nameof(Client)}] Connecting via Direct IP: {ip}:{port}", LogCategory.Socket);
             Manager.Connect(ip, port, password);
         }
     }

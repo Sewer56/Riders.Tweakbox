@@ -69,7 +69,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         {
             _stopWatch.Start();
             Listener = new NetworkEventListener(this);
-            Manager = new NetManager(Listener) { ChannelsCount = 64, AutoRecycle = true };
+            Manager = new NetManager(Listener) { ChannelsCount = 64, AutoRecycle = true, ReuseAddress = true };
             ChannelAllocator = new LnlChannelAllocator(Manager.ChannelsCount);
             Controller = controller;
             Manager.EnableStatistics = true;
