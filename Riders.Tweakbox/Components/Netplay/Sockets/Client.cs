@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using MLAPI.Puncher.Client;
+using MLAPI.Puncher.LiteNetLib;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -30,7 +31,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host.Text}:{punchSettings.Port}", LogCategory.Socket);
                 using PuncherClient connectPeer = new PuncherClient(punchSettings.Host.Text, (ushort) punchSettings.Port);
-                
+                connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
+
                 if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP.Text), out IPEndPoint connectResult))
                 {
                     Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);

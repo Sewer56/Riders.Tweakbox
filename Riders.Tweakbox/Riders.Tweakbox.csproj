@@ -40,6 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Netplay\MLAPI.Puncher.LiteNetLib\MLAPI.Puncher.LiteNetLib.csproj" />
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />

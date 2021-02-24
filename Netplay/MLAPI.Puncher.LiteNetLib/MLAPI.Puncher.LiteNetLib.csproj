@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
+    <ProjectReference Include="..\..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Shared\MLAPI.Puncher.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

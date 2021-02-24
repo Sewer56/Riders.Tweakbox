@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading;
 using LiteNetLib;
 using MLAPI.Puncher.Client;
+using MLAPI.Puncher.LiteNetLib;
 using MLAPI.Puncher.Shared;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -59,8 +60,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             {
                 Log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host.Text}:{punchServerSettings.Port}", LogCategory.Socket);
                 host.NatPunchClient = new PuncherClient(punchServerSettings.Host.Text, (ushort) punchServerSettings.Port);
-                
-                Log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches...", LogCategory.Socket);
+                host.NatPunchClient.Transport = new LiteNetLibUdpTransport(Manager, Listener);
+
+                Log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches... Port: {host.Manager.LocalPort}", LogCategory.Socket);
                 host.NatPunchClient.OnConnectorPunchSuccessful += endpoint => { Log.WriteLine($"[{nameof(Host)}] Successful NAT Punch from Client: {endpoint}", LogCategory.Socket); };
                 host.NatPunchClient.ListenForPunches(new IPEndPoint(IPAddress.Any, host.Manager.LocalPort));
             }
