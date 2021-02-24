@@ -179,6 +179,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (Socket.GetSocketType() == SocketType.Host)
                 HostSendLapCounters(source);
 
+            Log.WriteLine($"[{nameof(RaceLapSync)}] Applying Sync on Receive", LogCategory.LapSync);
             ApplyLapSync();
         }
 
@@ -244,7 +245,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 player->LapCounter = lap.Counter;
             }
 
-            Log.WriteLine($"[{nameof(RaceLapSync)}] Applied Sync", LogCategory.LapSync);
             _isSyncingLapCounter = false;
         }
 
@@ -282,6 +282,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             if (_isRaceFinishTaskEnabled) 
                 return;
+
+            // Update Lap Sync
+            ApplyLapSync();
 
             // Set goal race finish task if all players finished racing.
             bool allFinished = true;
