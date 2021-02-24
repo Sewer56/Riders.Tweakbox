@@ -13,6 +13,8 @@ namespace Riders.Tweakbox.Components.Tweaks
         public override string Name { get; set; } = "Various Fixes";
 
         private FramePacingController _pacingController = IoC.Get<FramePacingController>();
+        private PatchController _patchController = IoC.Get<PatchController>();
+
         public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles)
         {
 
@@ -43,8 +45,13 @@ namespace Riders.Tweakbox.Components.Tweaks
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE.Value);
-                ImGui.Checkbox("Single Player Stage Data", ref Config.Data.SinglePlayerStageData.Value);
+                ImGui.Checkbox("Force Single Player Stage Data", ref Config.Data.SinglePlayerStageData.Value);
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
+
+                if (ImGui.Checkbox("Force Single Player Models", ref Config.Data.SinglePlayerModels.Value))
+                    _patchController.AlwaysLoadSinglePlayerCharacterModels.Set(Config.Data.SinglePlayerModels.Value);
+
+                Tooltip.TextOnHover("Forces the game to load high quality single player models for all characters.");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Graphics", 0))

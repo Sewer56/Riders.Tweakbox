@@ -161,6 +161,7 @@ namespace Riders.Tweakbox.Components.Tweaks
             public Definitions.Nullable<bool> WidescreenHack;
             public Definitions.Nullable<bool> Borderless;
             public Definitions.Nullable<bool> SinglePlayerStageData;
+            public Definitions.Nullable<bool> SinglePlayerModels;
 
             internal static Internal GetDefault()
             {
@@ -185,6 +186,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 WidescreenHack.SetIfNull(false);
                 Borderless.SetIfNull(false);
                 SinglePlayerStageData.SetIfNull(true);
+                SinglePlayerModels.SetIfNull(true);
             }
         }
         #endregion

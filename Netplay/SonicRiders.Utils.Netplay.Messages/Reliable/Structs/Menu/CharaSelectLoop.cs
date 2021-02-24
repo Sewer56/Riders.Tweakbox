@@ -81,8 +81,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             player.ExtremeGear = (ExtremeGear)Board;
             player.CharacterForCamera = player.Character;
 
-            player.IsAiLogic  = PlayerType.Human;
-            player.IsAiVisual = PlayerType.Human; // This is necessary for Super Sonic
+            player.IsAiLogic  = PlayerType.CPU;
+            player.IsAiVisual = PlayerType.CPU; 
             
             // Replace character with SS if necessary.
             if (player.ExtremeGear == ExtremeGear.ChaosEmerald)

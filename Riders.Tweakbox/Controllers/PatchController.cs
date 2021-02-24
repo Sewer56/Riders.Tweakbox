@@ -1,5 +1,6 @@
 ﻿using System;
 using Reloaded.Hooks.Definitions;
+using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
@@ -26,6 +27,14 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public Patch AlwaysAllowUnReadyInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
 
+        /// <summary>
+        /// Loads single player character models regardless of whether the character is an AI or split screen is used.
+        /// </summary>
+        public Patch AlwaysLoadSinglePlayerCharacterModels = new Patch((IntPtr)0x00408E87, new byte[] { 0xEB, 0x0B });
+
+        // Settings
+        private TweaksEditorConfig _config = IoC.Get<TweaksEditorConfig>();
+
         public PatchController()
         {
             var utilities = SDK.ReloadedHooks.Utilities;
@@ -40,11 +49,13 @@ namespace Riders.Tweakbox.Controllers
             };
 
             InjectRunTimerPostRace = SDK.ReloadedHooks.CreateAsmHook(runTimerPostRace, 0x004166EB).Activate();
+            _config.ConfigUpdated += OnConfigUpdated;
         }
 
         /// <inheritdoc />
         public void Disable()
         {
+            AlwaysLoadSinglePlayerCharacterModels.Disable();
             InjectRunTimerPostRace.Disable();
             DisableRacePositionOverwrite.Disable();
             AlwaysAllowUnReadyInCharacterSelect.Disable();
@@ -53,9 +64,15 @@ namespace Riders.Tweakbox.Controllers
         /// <inheritdoc />
         public void Enable()
         {
+            AlwaysLoadSinglePlayerCharacterModels.Enable();
             InjectRunTimerPostRace.Enable();
             DisableRacePositionOverwrite.Enable();
             AlwaysAllowUnReadyInCharacterSelect.Enable();
+        }
+
+        private void OnConfigUpdated()
+        {
+            AlwaysLoadSinglePlayerCharacterModels.Set(_config.Data.SinglePlayerStageData);
         }
     }
 }

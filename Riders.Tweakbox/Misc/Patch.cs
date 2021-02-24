@@ -30,6 +30,20 @@ namespace Riders.Tweakbox.Misc
         }
 
         /// <summary>
+        /// Enables or disables the patch.
+        /// </summary>
+        /// <param name="enable">True to enable, false to disable.</param>
+        public unsafe Patch Set(bool enable)
+        {
+            if (enable)
+                Enable();
+            else
+                Disable();
+
+            return this;
+        }
+
+        /// <summary>
         /// Applies the patch without changing permissions.
         /// </summary>
         public unsafe Patch Enable()
