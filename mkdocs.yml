@@ -1,0 +1,30 @@
+site_name: Riders.Tweakbox Documentation
+site_url: http://sewer56.dev/Riders.Tweakbox/
+
+repo_name: Reloaded-Project/Riders.Tweakbox
+repo_url: https://github.com/Reloaded-Project/Riders.Tweakbox
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Sewer56
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/TheSewer56
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+theme:
+  name: material
+  palette:
+    primary: red
+    accent: red
+    scheme: slate
+    
+pages:
+  - Home: index.md
+  - Features: features.md
+  - Installation: installation.md
+  - Reporting Issues: reporting-issues.md
+  - Building: building.md

@@ -1,0 +1,48 @@
+version: CI-{build}
+skip_non_tags: true
+image: Visual Studio 2019
+init:
+- ps: |-
+    # Install the Tools
+    & choco upgrade chocolatey
+    & choco install reloaded-ii-tools --version=1.0.0 -y
+    
+    # Update Build Version
+    if ($env:APPVEYOR_REPO_TAG -eq "true")
+    {
+        Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME"
+    }
+build_script:
+- ps: |-
+    # Build the Changelog
+    if ($env:APPVEYOR_REPO_TAG -eq "true")
+    {
+        $env:CHANGELOG_PATH = "CHANGELOG.MD"
+        & npm install -g auto-changelog
+        & auto-changelog --sort-commits date --hide-credit --template keepachangelog --commit-limit false --starting-version $env:APPVEYOR_REPO_TAG_NAME -o $env:CHANGELOG_PATH 
+        $env:CHANGELOG_TEXT = Get-Content -Path $env:CHANGELOG_PATH -Raw
+    }
+    # Build The Mod(s)
+    & ./Publish.ps1
+    # Create NuGet Packages
+    $publishDirectory = "./Publish"
+    $allZips = Get-ChildItem $publishDirectory -Filter *.zip
+    foreach ($publishFile in $allZips) 
+    {
+        $nupkgName = [System.IO.Path]::ChangeExtension($publishFile.FullName, ".nupkg")
+        $fullZipPath = $publishFile.FullName
+        NuGetConverter.exe "$fullZipPath" "$nupkgName"
+    }
+artifacts:
+- path: ./Publish/*.zip
+  name: Compiled Mod(s)
+- path: ./Publish/*.nupkg
+  name: Compiled NuGet Packages
+deploy:
+- provider: GitHub
+  description: $(CHANGELOG_TEXT)
+  auth_token:
+    secure: 8Lqo9jP/L0PP7rNCr/FOdV8fc13U3U4kmDY5n9RMajb70SnIjujZz9J4tSGb9rAk
+  force_update: true
+  on:
+    APPVEYOR_REPO_TAG: true

@@ -1,15 +1,15 @@
 <div align="center">
 	<h1>Tweakbox for Sonic Riders</h1>
-	<img src="./Images/SRPC_Logo_Ver1.png" Width="400" /><br/>
+	<img src="./docs/Images/SRPC_Logo_Ver1.png" Width="400" /><br/>
 	<strong>⛸ Catch me if you can 🛹</strong>
     <p>All in one mod for Sonic Riders PC. Also known as the "Netplay Mod".</p>
 </div>
 
 # Note
 
-This project is a "work in progress"; while it is usable/playable. 
+This project is a "work in progress"; while it is usable/playable, I have high personal quality standards and don't yet consider this project "ready for public consumption" at this moment in time. Tread at your own risk.
 
-I have high personal quality standards and don't yet consider this project "ready for public consumption" at this moment in time. Tread at your own risk.
+For more information, [please visit the documentation](http://sewer56.dev/Riders.Tweakbox/), it's cool.
 
 # Features
 
@@ -20,7 +20,7 @@ I have high personal quality standards and don't yet consider this project "read
 
 ## 🌍 Netplay / Online Multiplayer
 
-<img src="./Images/SingleScreen.png" />
+<img src="./docs/Images/SingleScreen.png" />
 
 At the current moment in time, Netplay works in the following manner:
 - Host enters Free Race/Grand Prix/Tag/Battle Mode.
