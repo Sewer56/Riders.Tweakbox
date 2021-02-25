@@ -32,8 +32,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host.Text}:{punchSettings.Port}", LogCategory.Socket);
                 using PuncherClient connectPeer = new PuncherClient(punchSettings.Host.Text, (ushort) punchSettings.Port);
                 connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
-                connectPeer.ServerRegisterResponseTimeout = 32000;
-                connectPeer.PunchResponseTimeout = 32000;
+                connectPeer.ServerRegisterResponseTimeout = punchSettings.ServerTimeout;
+                connectPeer.PunchResponseTimeout = punchSettings.PunchTimeout;
 
                 if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP.Text), out IPEndPoint connectResult))
                 {

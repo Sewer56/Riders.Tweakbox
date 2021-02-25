@@ -79,9 +79,16 @@ namespace Riders.Tweakbox.Components.Netplay
                 playerSettings.PlayerName.Render(nameof(playerSettings.PlayerName));
 
                 ImGui.DragInt("Number of Players", ref playerSettings.LocalPlayers, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                Tooltip.TextOnHover("Default: 1\n" +
+                                    "Number of local players playing online.\n" +
+                                    "Setting this value to 0 makes you a spectator.");
+
                 ImGui.DragInt("Max Number of Cameras", ref playerSettings.MaxNumberOfCameras, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
-                Tooltip.TextOnHover("Default: 1 (Automatic)\n" +
-                                    "Overrides the number of cameras, allowing for split-screen while in online multiplayer.");
+                Tooltip.TextOnHover("Overrides the number of cameras, allowing you to spectate other players while in online multiplayer.\n" +
+                                    "0 = Automatic\n" +
+                                    "1 = Single Screen\n" +
+                                    "2 = Split-Screen\n" +
+                                    "3-4 = 4-way Split Screen.");
 
                 ImGui.TreePop();
             }
@@ -121,10 +128,18 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 ref var punchingServer = ref data.PunchingServer;
                 Reflection.MakeControl(ref punchingServer.IsEnabled, "Enabled");
+                Tooltip.TextOnHover("Uses a third party server to try to bypass your router's firewall to establish a connection.\nHighly likely but not guaranteed to work. Use if you are unable or do not know how to port forward.");
+
                 if (punchingServer.IsEnabled)
                 {
                     punchingServer.Host.Render("Host Server");
                     ImGui.DragInt("Port", ref punchingServer.Port, 0.1f, 0, ushort.MaxValue, null);
+                    
+                    ImGui.DragInt("Server Timeout", ref punchingServer.ServerTimeout, 0.1f, 0, ushort.MaxValue, null);
+                    Tooltip.TextOnHover("(Milliseconds) Timeout for connecting to the third party server.");
+
+                    ImGui.DragInt("Punch Timeout", ref punchingServer.PunchTimeout, 0.1f, 0, ushort.MaxValue, null);
+                    Tooltip.TextOnHover("(Milliseconds) Timeout for trying to hole punch past the server firewall.\nIf you have trouble issues connecting, increasing this value might help.");
                 }
 
                 ImGui.TreePop();

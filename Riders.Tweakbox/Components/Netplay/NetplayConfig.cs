@@ -104,6 +104,8 @@ namespace Riders.Tweakbox.Components.Netplay
             public bool IsEnabled = true;
             public int Port = 6776;
             public TextInputData Host = new TextInputData("puncher.sewer56.moe", TextLength);
+            public int ServerTimeout = 8000;
+            public int PunchTimeout = 8000;
         }
 
         public class SimulateBadInternet
