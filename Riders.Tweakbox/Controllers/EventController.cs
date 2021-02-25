@@ -421,6 +421,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public void InvokeSetGoalRaceFinishTask(Player* player) => _setGoalRaceFinishTaskHook.OriginalFunction(player);
 
+        /// <summary>
+        /// Invokes the function that runs the player physics simulation.
+        /// </summary>
+        public void InvokeRunPlayerPhysicsSimulation(void* somephysicsobjectptr, Vector4* vector, int* playerindex) => _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
+
         private double TempNextDouble() => _random.NextDouble() * -600.0;
 
         private int ItemPickupRandImpl() => ItemPickupRandom?.Invoke(_randHook) ?? RandHandler();

@@ -60,6 +60,7 @@ At the current moment in time, Netplay works in the following manner:
 ⚠ Random Number Generator (Desyncs in single-screen mode due to off-screen objects seeding RNG.)\
 ⚠ Separate Item Random Number Generator (Can desync on extremely unstable connections.)\
 
+❌ Movement Extrapolation (Roll-forward/Real-time prediction of player position)\
 ❌ Player Indicators in Split Screen\
 ❌ Player Indicators for 5P/6P/7P/8P\
 ❌ Ramp/Trick Synchronization\
