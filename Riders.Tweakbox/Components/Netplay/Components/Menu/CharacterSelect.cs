@@ -51,9 +51,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event.OnCheckIfStartRace        += MenuCheckIfStartRace;
             Event.OnStartRace               += MenuOnMenuStartRace;
 
-            var patchController = IoC.Get<PatchController>();
-            patchController.AlwaysAllowUnReadyInCharacterSelect.Enable();
-
             var eventController = IoC.Get<EventController>();
             eventController.OnCheckIfRandomizePlayer += OnCheckIfRandomizePlayer;
         }
@@ -67,9 +64,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event.OnExitCharaSelect         -= MenuOnExitCharaSelect;
             Event.OnCheckIfStartRace        -= MenuCheckIfStartRace;
             Event.OnStartRace               -= MenuOnMenuStartRace;
-
-            var controller = IoC.Get<PatchController>();
-            controller.AlwaysAllowUnReadyInCharacterSelect.Disable();
 
             var eventController = IoC.Get<EventController>();
             eventController.OnCheckIfRandomizePlayer -= OnCheckIfRandomizePlayer;

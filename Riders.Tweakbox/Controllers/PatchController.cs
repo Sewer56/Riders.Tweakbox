@@ -23,9 +23,9 @@ namespace Riders.Tweakbox.Controllers
         public Patch DisableRacePositionOverwrite = new Patch((IntPtr)0x4B40E6, new byte[] { 0xEB, 0x44 });
 
         /// <summary>
-        /// Allows the player to un-select their ready choice after the "are you ready" dialog has been shown.
+        /// Allows the player to always start a race in character select.
         /// </summary>
-        public Patch AlwaysAllowUnReadyInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
+        public Patch AlwaysCanStartRaceInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
 
         /// <summary>
         /// Loads single player character models regardless of whether the character is an AI or split screen is used.
@@ -58,7 +58,7 @@ namespace Riders.Tweakbox.Controllers
             AlwaysLoadSinglePlayerCharacterModels.Disable();
             InjectRunTimerPostRace.Disable();
             DisableRacePositionOverwrite.Disable();
-            AlwaysAllowUnReadyInCharacterSelect.Disable();
+            AlwaysCanStartRaceInCharacterSelect.Disable();
         }
 
         /// <inheritdoc />
@@ -67,7 +67,7 @@ namespace Riders.Tweakbox.Controllers
             AlwaysLoadSinglePlayerCharacterModels.Enable();
             InjectRunTimerPostRace.Enable();
             DisableRacePositionOverwrite.Enable();
-            AlwaysAllowUnReadyInCharacterSelect.Enable();
+            AlwaysCanStartRaceInCharacterSelect.Enable();
         }
 
         private void OnConfigUpdated()

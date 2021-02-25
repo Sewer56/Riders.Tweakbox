@@ -75,7 +75,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             }
 
             // Check player's own status & others' statuses.
-            task->TaskData->AreYouReadyEnabled = (AllJoinedAndReady(totalNumPlayers) && task->TaskStatus != CharacterSelectTaskState.LoadingStage);
+            var readyEnabled = task->TaskData->AreYouReadyEnabled;
+            var newReadyEnabled = (AllJoinedAndReady(totalNumPlayers) && task->TaskStatus != CharacterSelectTaskState.LoadingStage);
+            task->TaskData->AreYouReadyEnabled = newReadyEnabled;
+
+            if (readyEnabled && !newReadyEnabled)
+            {
+                // Set state from 5 (ready to start race) to 4 (ready) so that controls aren't blocked.
+                for (int x = 0; x < numLocalPlayers; x++)
+                    task->TaskData->PlayerStatuses[x] = (byte) PlayerStatus.SetReady;
+            }
         }
 
         /// <summary>
