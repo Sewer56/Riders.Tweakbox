@@ -37,7 +37,7 @@ At the current moment in time, Netplay works in the following manner:
 ✔ Multiplayer Online\
 ✔ Custom Jitter Buffer (Reduced Player Stuttering)\
 ✔ NAT Punching (No Port Forwarding Required)\
-❌ Custom Game Modes (Relay, Hide & Seek)
+💢 Custom Game Modes (Relay, Hide & Seek)
 
 ### 💫 Menu Synchronization
 ✔ Stage Select Menu\
@@ -60,25 +60,25 @@ At the current moment in time, Netplay works in the following manner:
 ⚠ Random Number Generator (Desyncs in single-screen mode due to off-screen objects seeding RNG.)\
 ⚠ Separate Item Random Number Generator (Can desync on extremely unstable connections.)\
 
-❌ Movement Extrapolation (Roll-forward/Real-time prediction of player position)\
-❌ Player Indicators in Split Screen\
-❌ Player Indicators for 5P/6P/7P/8P\
-❌ Ramp/Trick Synchronization\
-❌ Lap Timer Synchronization\
-❌ Battle Mode Spawn Synchronization\
-❌ Battle Mode Health Synchronization\
 ❌ Pauseless Pause Menu\
-❌ Post-Race Pause/Results Menu
+❌ Post-Race Pause/Results Menu Synchronization\
+❌ Ramp/Trick Synchronization\
+💢 Player Indicators in Split Screen\
+💢 Player Indicators for 5P/6P/7P/8P\
+💢 Lap Timer Synchronization\
+💢 Battle Mode Spawn Synchronization\
+💢 Battle Mode Health Synchronization\
+💢 Movement Extrapolation (Roll-forward/Real-time prediction of player position)
 
 ### 🛑 Anti-Cheat
 An optional feature for when things become more stable...
 
-❌ Anti Lap Counter Manipulation\
-❌ Anti Ring Counter Manipulation\
-❌ Anti Teleport\
-❌ Anti Gear & Physics Data Manipulation\
-❌ Anti Speed Hack\
-❌ Anti RNG Unrandomizer
+💢 Anti Lap Counter Manipulation\
+💢 Anti Ring Counter Manipulation\
+💢 Anti Teleport\
+💢 Anti Gear & Physics Data Manipulation\
+💢 Anti Speed Hack\
+💢 Anti RNG Unrandomizer
 
 ## Graphics
 ✔ Use Direct3D 9Ex Renderer (better fullscreen, performance gains)\
