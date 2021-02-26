@@ -18,8 +18,10 @@ dotnet clean $solutionName
 dotnet publish $solutionName -c Release -r win-x86 --self-contained false -o "$modOutputPath/x86" /p:PublishReadyToRun=true
 
 # Remove Redundant Files
-Move-Item -Path "$modOutputPath/x86/ModConfig.json" -Destination "$modOutputPath/ModConfig.json"
 Move-Item -Path "$modOutputPath/x86/Preview.png" -Destination "$modOutputPath/Preview.png"
+Move-Item -Path "$modOutputPath/x86/ModConfig.json" -Destination "$modOutputPath/ModConfig.json"
+Move-Item -Path "$modOutputPath/x86/ReloadedGithubUpdater.json" -Destination "$modOutputPath"
+Move-Item -Path "$modOutputPath/x86/Assets" -Destination "$modOutputPath"
 
 # Cleanup Unnecessary Files
 Get-ChildItem $modOutputPath -Include *.exe -Recurse | Remove-Item -Force -Recurse
