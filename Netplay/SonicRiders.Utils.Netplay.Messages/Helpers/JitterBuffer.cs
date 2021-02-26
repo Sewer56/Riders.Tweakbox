@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime;
 using Riders.Netplay.Messages.Misc.Interfaces;
 
 namespace Riders.Netplay.Messages.Helpers
@@ -19,7 +20,7 @@ namespace Riders.Netplay.Messages.Helpers
         /// <summary>
         /// Time spent in the buffer until an item can be dequeued.
         /// </summary>
-        public int NumBufferedPackets { get; private set; }
+        public int NumBufferedPackets { get; set; }
 
         /// <summary>
         /// The current sequence value being handled.
@@ -75,7 +76,7 @@ namespace Riders.Netplay.Messages.Helpers
             _dictionary.Clear();
             IsDeQueueing = false;
         }
-
+        
         /// <summary>
         /// Adds an item to the queue.
         /// </summary>
@@ -92,7 +93,7 @@ namespace Riders.Netplay.Messages.Helpers
 
             // Discard items if behind us in the sliding window.
             if (IsInSlidingWindow(value.SequenceNo, SlidingWindowBeforeStart, SlidingWindowStart))
-               return false;
+                return false;
 
             // Check if items ahead of us are not overwhelming the receiver.
             if (allowPacketDrop && IsInSlidingWindow(value.SequenceNo, SlidingWindowStart, SlidingWindowEnd))
