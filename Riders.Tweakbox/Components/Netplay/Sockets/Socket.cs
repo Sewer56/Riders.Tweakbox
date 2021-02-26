@@ -78,27 +78,6 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
 #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
-
-            var badInternet = config.Data.BadInternet;
-            if (badInternet.IsEnabled)
-            {
-                if (badInternet.PacketLoss > 0 && badInternet.PacketLoss <= 100)
-                {
-                    Manager.SimulatePacketLoss = true;
-                    Manager.SimulationPacketLossChance = badInternet.PacketLoss;
-
-                    Log.WriteLine($"Simulating Packet Loss (bool/Loss): {Manager.SimulatePacketLoss}, {Manager.SimulationPacketLossChance}", LogCategory.Socket);
-                }
-
-                if (badInternet.MinLatency > 0 && badInternet.MaxLatency > badInternet.MinLatency)
-                {
-                    Manager.SimulateLatency = true;
-                    Manager.SimulationMaxLatency = badInternet.MaxLatency;
-                    Manager.SimulationMinLatency = badInternet.MinLatency;
-
-                    Log.WriteLine($"Simulating Latency (bool/Min/Max): {Manager.SimulateLatency}, {Manager.SimulationMinLatency}, {Manager.SimulationMaxLatency}", LogCategory.Socket);
-                }
-            }
 #endif
         }
 

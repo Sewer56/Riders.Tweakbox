@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using DearImguiSharp;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
@@ -54,6 +55,8 @@ namespace Riders.Tweakbox.Components.Netplay
                 RenderBandwidthUsage(client);
                 ImGui.TreePop();
             }
+
+            RenderSimulateBadInternet();
         }
 
         private void RenderBandwidthUsage(Socket socket)
@@ -145,10 +148,17 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
-#if DEBUG
+            RenderSimulateBadInternet();
+            ImGui.Spacing();
+        }
+
+        [Conditional("DEBUG")]
+        private void RenderSimulateBadInternet()
+        {
+            ref var data = ref Config.Data;
+            var badInternet = data.BadInternet;
             if (ImGui.TreeNodeStr("Debug"))
             {
-                var badInternet = data.BadInternet;
                 Reflection.MakeControl(ref badInternet.IsEnabled, "Simulate Bad Internet");
                 if (badInternet.IsEnabled)
                 {
@@ -157,9 +167,29 @@ namespace Riders.Tweakbox.Components.Netplay
                     Reflection.MakeControl(ref badInternet.PacketLoss, "Packet Loss Percent");
                 }
             }
-#endif
 
-            ImGui.Spacing();
+            // Apply bad internet state.
+            if (Controller.Socket == null) 
+                return;
+
+            var manager     = Controller.Socket.Manager;
+            if (!badInternet.IsEnabled)
+            {
+                manager.SimulatePacketLoss = false;
+                manager.SimulateLatency = false;
+                return;
+            }
+
+            manager.SimulatePacketLoss = badInternet.PacketLoss > 0 && badInternet.PacketLoss <= 100;
+            if (manager.SimulatePacketLoss)
+                manager.SimulationPacketLossChance = badInternet.PacketLoss;
+
+            manager.SimulateLatency = badInternet.MinLatency > 0 && badInternet.MaxLatency > badInternet.MinLatency;
+            if (manager.SimulateLatency)
+            {
+                manager.SimulationMaxLatency = badInternet.MaxLatency;
+                manager.SimulationMinLatency = badInternet.MinLatency;
+            }
         }
 
         private void HostServer()
