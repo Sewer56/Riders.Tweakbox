@@ -5,6 +5,11 @@
 
 ------------
 
+## Prerequisites
+- [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II/releases). ([Documentation](https://reloaded-project.github.io/Reloaded-II/))
+- [Uncompressed Game Assets](https://community.pcgamingwiki.com/files/file/2087-uncompressed-sonic-riders-assets/) (Prevent loading screen lockups)
+- Unmodified Game EXE
+
 ## Instructions
 
 - Download `Riders.Tweakbox.zip`.
