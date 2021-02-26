@@ -1,6 +1,9 @@
 version: CI-{build}
-skip_non_tags: true
 image: Visual Studio 2019
+skip_non_tags: true
+clone_script:
+- cmd: git clone --recursive https://github.com/Sewer56/Riders.Tweakbox.git
+
 init:
 - ps: |-
     # Install the Tools
@@ -14,6 +17,8 @@ init:
     }
 build_script:
 - ps: |-
+    cd Riders.Tweakbox
+
     # Build the Changelog
     if ($env:APPVEYOR_REPO_TAG -eq "true")
     {
@@ -33,10 +38,11 @@ build_script:
         $fullZipPath = $publishFile.FullName
         NuGetConverter.exe "$fullZipPath" "$nupkgName"
     }
+
 artifacts:
-- path: ./Publish/*.zip
+- path: ./Riders.Tweakbox/Publish/*.zip
   name: Compiled Mod(s)
-- path: ./Publish/*.nupkg
+- path: ./Riders.Tweakbox/Publish/*.nupkg
   name: Compiled NuGet Packages
 deploy:
 - provider: GitHub

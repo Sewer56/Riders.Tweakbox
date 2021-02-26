@@ -6,7 +6,7 @@
 	url = https://github.com/Sewer56/NumberUtilities.git
 [submodule "Submodules/LiteNetLib"]
 	path = Submodules/LiteNetLib
-	url = https://github.com/RevenantX/LiteNetLib.git
+	url = https://github.com/Sewer56/LiteNetLib.git
 [submodule "Submodules/Sewer56.BitStream"]
 	path = Submodules/Sewer56.BitStream
 	url = https://github.com/Sewer56/Sewer56.BitStream.git
