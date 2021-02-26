@@ -56,5 +56,9 @@
   <ItemGroup>
     <Folder Include="Misc\Graphics\" />
   </ItemGroup>
+	
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	<RemoveDir Directories="$(TWEAKBOX_DIR)/x86" />
+  </Target>
 
 </Project>
