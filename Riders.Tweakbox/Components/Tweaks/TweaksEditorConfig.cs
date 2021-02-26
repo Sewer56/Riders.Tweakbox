@@ -37,6 +37,15 @@ namespace Riders.Tweakbox.Components.Tweaks
         // Apply
         public unsafe void Apply()
         {
+            *Sewer56.SonicRiders.API.Misc.Blur = Data.Blur;
+
+            //ResetDevice();
+            ChangeBorderless(Data.Borderless);
+            ConfigUpdated?.Invoke();
+        }
+
+        public unsafe void ApplyStartup()
+        {
             *Sewer56.SonicRiders.API.Misc.ResolutionX = Data.ResolutionX;
             *Sewer56.SonicRiders.API.Misc.ResolutionY = Data.ResolutionY;
 
@@ -44,11 +53,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 *Sewer56.SonicRiders.API.Misc.MultiSampleType = 0;
 
             *Sewer56.SonicRiders.API.Misc.Fullscreen = Data.Fullscreen;
-            *Sewer56.SonicRiders.API.Misc.Blur = Data.Blur;
-
-            //ResetDevice();
-            ChangeBorderless(Data.Borderless);
-            ConfigUpdated?.Invoke();
+            Apply();
         }
 
         public unsafe void ChangeBorderless(bool borderless)
@@ -70,7 +75,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                     AddBorder(ref flags);
                 
                 PInvoke.SetWindowLong(new HWND(handle), GWL_STYLE, (int) flags);
-                Task.Delay(100).ContinueWith((x) => ResizeWindow(Data.ResolutionX, Data.ResolutionY, handle));
+                Task.Delay(100).ContinueWith((x) => ResizeWindow(*Sewer56.SonicRiders.API.Misc.ResolutionX, *Sewer56.SonicRiders.API.Misc.ResolutionY, handle));
             }
         }
 

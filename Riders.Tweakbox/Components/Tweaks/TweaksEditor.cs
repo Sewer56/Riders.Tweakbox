@@ -56,11 +56,21 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Graphics", 0))
             {
+                ImGui.Text("Startup Settings");
+
+                Reflection.MakeControl(ref Config.Data.ResolutionX.Value, "Resolution X");
+                Reflection.MakeControl(ref Config.Data.ResolutionY.Value, "Resolution Y");
+                Reflection.MakeControl(ref Config.Data.Fullscreen.Value, "Fullscreen");
+
+                ImGui.Text("For these settings to apply, please *save* the default configuration above and restart the game.");
+
+                ImGui.Separator();
                 ImGui.Text("Live Settings");
                 Reflection.MakeControl(ref Config.Data.Blur.Value, "Blur");
                 Reflection.MakeControl(ref Config.Data.Borderless.Value, "Borderless Windowed");
-                Reflection.MakeControl(ref Config.Data.WidescreenHack.Value, "Widescreen Hack");
-                Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen. Work in progress on adding more HUD elements.");
+                Reflection.MakeControl(ref Config.Data.WidescreenHack.Value, "Centered Widescreen Hack");
+                Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen.\n" +
+                                    "Do not combine/use with other widescreen hacks.");
 
                 if (ImGui.ButtonEx("Apply", Constants.ButtonSize, 0))
                     Config.Apply();
@@ -68,13 +78,6 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Tooltip.TextOnHover("Changing resolution mid-game is currently not supported.\n" +
                                     "Need to find every single texture, buffer etc. that needs to be recreated before calling Reset.\n" +
                                     "I need help of a graphics programmer experienced with DX9 for this one.");
-
-                ImGui.Separator();
-                ImGui.Text("Startup Settings");
-
-                Reflection.MakeControl(ref Config.Data.ResolutionX.Value, "Resolution X");
-                Reflection.MakeControl(ref Config.Data.ResolutionY.Value, "Resolution Y");
-                Reflection.MakeControl(ref Config.Data.Fullscreen.Value, "Fullscreen");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))

@@ -69,7 +69,7 @@ namespace Riders.Tweakbox.Controllers
         private int ReadConfigFile()
         {
             var originalResult = _readConfigHook.OriginalFunction();
-            _config.Apply();
+            _config.ApplyStartup();
             return originalResult;
         }
 
