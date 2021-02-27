@@ -87,8 +87,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// </summary>
         public bool TryDequeue(int playerIndex, out T packet)
         {
-            bool dequeue = TryDequeueInternal(out packet);
+            bool dequeue = TryDequeueInternal(out packet, out bool isNowEmpty);
             UpdateBuffer(playerIndex);
+            if (isNowEmpty)
+                SetBufferSize(Buffer.BufferSize + 1);
+
             return dequeue;
         }
 
@@ -146,7 +149,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             }
         }
 
-        private bool TryDequeueInternal(out T packet)
+        private bool TryDequeueInternal(out T packet, out bool isNowEmpty)
         {
             // Do sampling for roll forward buffers.
             for (int x = 0; x < _jitterBufferRollforward.Length; x++)
@@ -156,7 +159,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             }
 
             // Try dequeue.
-            if (Buffer.TryDequeue(out packet))
+            if (Buffer.TryDequeue(out packet, out isNowEmpty))
             {
                 _calculator.Sample();
                 return true;

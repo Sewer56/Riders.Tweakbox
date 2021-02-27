@@ -91,7 +91,7 @@ namespace Riders.Netplay.Messages.Helpers
         }
 
         /// <inheritdoc />
-        public bool TryDequeue(int playerIndex, out T packet) => TryDequeue(out packet);
+        public bool TryDequeue(int playerIndex, out T packet) => TryDequeue(out packet, out _);
 
         /// <summary>
         /// Sets the new number of buffered packets.
@@ -153,13 +153,24 @@ namespace Riders.Netplay.Messages.Helpers
         /// Removes an item from the queue.
         /// </summary>
         /// <param name="value">The item.</param>
-        public bool TryDequeue(out T value)
+        public bool TryDequeue(out T value) => TryDequeue(out value, out _);
+
+        /// <summary>
+        /// Removes an item from the queue.
+        /// </summary>
+        /// <param name="value">The item.</param>
+        /// <param name="isNowEmpty">True if the buffer is now empty if it hasn't previously been.</param>
+        public bool TryDequeue(out T value, out bool isNowEmpty)
         {
+            isNowEmpty = false;
             if (IsDeQueueing)
             {
                 var result = _dictionary.Remove(IncrementSequenceNo(), out value);
                 if (PacketCount <= 0)
+                {
                     IsDeQueueing = false;
+                    isNowEmpty = true;
+                }
 
                 return result;
             }
