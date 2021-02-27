@@ -15,18 +15,24 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     }
 
     /// <summary>
-    /// Basic implementation of an adaptive jitter buffer which scales the internal buffer's number of queued frames as necessary.
+    /// Basic implementation of an adaptive jitter buffer which scales the default buffer's number of queued frames as necessary.
+    /// Advantages:
+    /// - Fast to roll-forward.
+    /// - Potentially better latency.
+    ///
+    /// Disadvantages:
+    /// - Jitter on unexpected ping spike.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class AdaptiveJitterBuffer<T> : IJitterBuffer<T> where T : struct, ISequenced, IDisposable
     {
         /// <summary>
-        /// Jitter buffer for storing current movements
+        /// Underlying basic jitter buffer.
         /// </summary>
         public JitterBuffer<T> Buffer;
 
         /// <summary>
-        /// Jitter buffer for storing current movements
+        /// Calculatoir for the default buffer.
         /// </summary>
         private JitterCalculator _calculator;
 

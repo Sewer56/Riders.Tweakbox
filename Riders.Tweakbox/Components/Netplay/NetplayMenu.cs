@@ -228,10 +228,19 @@ namespace Riders.Tweakbox.Components.Netplay
                     RenderAdaptiveBufferDetails(buffers, socket.State.GetPlayerCount());
                     break;
                 case JitterBufferType.Hybrid:
-
+                    RenderHybridBufferDetails(buffers, socket.State.GetPlayerCount());
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void RenderHybridBufferDetails(IJitterBuffer<UnreliablePacket>[] buffers, int playerCount)
+        {
+            for (int x = 0; x < playerCount; x++)
+            {
+                var buffer = (HybridJitterBuffer<UnreliablePacket>)buffers[x];
+                RenderDefaultBufferInfo(buffer.Buffer, x);
             }
         }
 

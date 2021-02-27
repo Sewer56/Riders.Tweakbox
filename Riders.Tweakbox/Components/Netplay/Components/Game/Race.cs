@@ -53,7 +53,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private const int   MaxRampDownAmount = 10; // Default size of jitter buffer.
         private const int   DefaultBufferSize = 3; // Default size of jitter buffer.
-        private const int   NumJitterValuesSample = 120; // Number of jitter values to sample before update.
+        private const int   NumJitterValuesSample = 180; // Number of jitter values to sample before update.
         private const DeliveryMethod RaceDeliveryMethod = DeliveryMethod.Unreliable;
         
         private readonly byte _raceChannel;
@@ -77,7 +77,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
             for (int x = 0; x < JitterBuffers.Length; x++)
-                JitterBuffers[x] = new AdaptiveJitterBuffer<UnreliablePacket>(DefaultBufferSize, NumJitterValuesSample, MaxRampDownAmount);
+                JitterBuffers[x] = new HybridJitterBuffer<UnreliablePacket>(DefaultBufferSize, NumJitterValuesSample);
 
             Reset();
         }
