@@ -8,14 +8,21 @@
 ## Prerequisites
 - [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II/releases). ([Documentation](https://reloaded-project.github.io/Reloaded-II/))
 - [Uncompressed Game Assets](https://community.pcgamingwiki.com/files/file/2087-uncompressed-sonic-riders-assets/) (Prevent loading screen lockups)
-- Unmodified Game EXE
+- Unmodified Game
+
+## Recommendations 
+- [GameMaster's 16:9 EXE](https://www.wsgf.org/f/u/contrib/dr/658/hacks/riders169.7z) 
+  - Optional: Tweakbox' widescreen hack is incomplete. Resolution can be overwritten inside Tweakbox.
 
 ## Instructions
+This is a Reloaded-II mod.  
+If you are unfamiliar with Reloaded-II, consider looking [here](https://reloaded-project.github.io/Reloaded-II/).
 
 - Download `Riders.Tweakbox.zip`.
 - Navigate to the `Mods` folder inside your Reloaded folder.
 - Create a folder called `riders.utils.tweakbox`.
 - Extract the contents of the zip to the folder you just created.
+- Enable inside the Reloaded-II launcher.
 
 ![](./Images/Installation.png)
 
