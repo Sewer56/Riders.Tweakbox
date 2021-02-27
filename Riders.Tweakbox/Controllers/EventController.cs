@@ -190,10 +190,30 @@ namespace Riders.Tweakbox.Controllers
         public event Functions.RunPlayerPhysicsSimulationFn AfterRunPlayerPhysicsSimulation;
 
         /// <summary>
+        /// Runs the physics simulation for an individual player.
+        /// </summary>
+        public event RunPlayerPhysicsSimulationFn RunPlayerPhysicsSimulation;
+
+        /// <summary>
         /// Checks if a specific player should be randomized inside character select after pressing start/enter and
         /// before loading the race.
         /// </summary>
         public event PlayerAsmFunc OnCheckIfRandomizePlayer;
+
+        /// <summary>
+        /// Executed before the code to run 1 frame of physics simulation.
+        /// </summary>
+        public event Functions.CdeclReturnIntFn OnRunPhysicsSimulation;
+
+        /// <summary>
+        /// Executed after the code to run 1 frame of physics simulation.
+        /// </summary>
+        public event Functions.CdeclReturnIntFn AfterRunPhysicsSimulation;
+
+        /// <summary>
+        /// Replaces the code to run 1 frame of physics simulation.
+        /// </summary>
+        public event CdeclReturnIntFn RunPhysicsSimulation;
 
         private IHook<Functions.SRandFn> _srandHook;
         private IHook<Functions.RandFn>  _randHook;
@@ -207,6 +227,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.CdeclReturnByteFn> _goalRaceFinishTaskHook;
         private IHook<Functions.CdeclReturnIntFn> _removeAllTasksHook;
         private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
+        private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
 
         private IAsmHook _onCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
@@ -316,7 +337,7 @@ namespace Riders.Tweakbox.Controllers
             _updateLapCounterHook = Functions.UpdateLapCounter.Hook(UpdateLapCounterHook).Activate();
             _goalRaceFinishTaskHook = Functions.GoalRaceFinishTask.Hook(GoalRaceFinishTaskHook).Activate();
             _removeAllTasksHook = Functions.RemoveAllTasks.Hook(RemoveAllTasksHook).Activate();
-            _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulation).Activate();
+            _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulationHook).Activate();
 
             var ifNotRandomizePlayer = new[] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004639DC, Environment.Is64BitProcess)}"};
             var ifRandomizePlayer = new [] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004638E0, Environment.Is64BitProcess)}" };
@@ -330,6 +351,7 @@ namespace Riders.Tweakbox.Controllers
                 $"{utilities.AssembleAbsoluteCall(OnCheckIfRandomizePlayerHook, out _, ifRandomizePlayer, ifNotRandomizePlayer, null, "je")}"
             };
             _checkIfRandomizePlayerHook = hooks.CreateAsmHook(onCheckIfRandomizePlayer, 0x004638D1, AsmHookBehaviour.ExecuteFirst).Activate();
+            _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
         }
 
         /// <summary>
@@ -367,6 +389,7 @@ namespace Riders.Tweakbox.Controllers
             _removeAllTasksHook.Disable();
             _runPlayerPhysicsSimulationHook.Disable();
             _checkIfRandomizePlayerHook.Disable();
+            _runPhysicsSimulationHook.Disable();
         }
 
         /// <summary>
@@ -404,6 +427,7 @@ namespace Riders.Tweakbox.Controllers
             _removeAllTasksHook.Enable();
             _runPlayerPhysicsSimulationHook.Enable();
             _checkIfRandomizePlayerHook.Enable();
+            _runPhysicsSimulationHook.Enable();
         }
 
         /// <summary>
@@ -459,11 +483,12 @@ namespace Riders.Tweakbox.Controllers
             return result;
         }
 
-        private void RunPlayerPhysicsSimulation(void* somephysicsobjectptr, Vector4* vector, int* playerindex)
+        private int RunPlayerPhysicsSimulationHook(void* somephysicsobjectptr, Vector4* vector, int* playerindex)
         {
             OnRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
-            _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
+            var result = RunPlayerPhysicsSimulation?.Invoke(_runPlayerPhysicsSimulationHook, (Void*)somephysicsobjectptr, vector, playerindex) ?? _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
             AfterRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
+            return result;
         }
 
         private int SetSpawnLocationsStartOfRaceHook(int numberOfPlayers)
@@ -483,6 +508,14 @@ namespace Riders.Tweakbox.Controllers
             OnStartAttackTask?.Invoke(playerOne, playerTwo, a3);
             var result = _startAttackTaskHook.OriginalFunction(playerOne, playerTwo, a3);
             AfterStartAttackTask?.Invoke(playerOne, playerTwo, a3);
+            return result;
+        }
+
+        private int RunPhysicsSimulationHook()
+        {
+            OnRunPhysicsSimulation?.Invoke();
+            var result = RunPhysicsSimulation?.Invoke(_runPhysicsSimulationHook) ?? _runPhysicsSimulationHook.OriginalFunction(); 
+            AfterRunPhysicsSimulation?.Invoke();
             return result;
         }
 
@@ -522,6 +555,7 @@ namespace Riders.Tweakbox.Controllers
         public unsafe delegate int UpdateLapCounterHandlerFn(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2);
         public delegate byte CdeclReturnByteFnFn(IHook<Functions.CdeclReturnByteFn> hook);
         public delegate int CdeclReturnIntFn(IHook<Functions.CdeclReturnIntFn> hook);
+        public delegate int RunPlayerPhysicsSimulationFn(IHook<Functions.RunPlayerPhysicsSimulationFn> hook, void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex);
 
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
     }

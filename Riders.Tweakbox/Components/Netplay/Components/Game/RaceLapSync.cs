@@ -76,8 +76,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.GoalRaceFinishTask    += GoalRaceFinishTask;
 
             Sewer56.SonicRiders.API.Event.OnKillTask += OnKillTask;
+            Sewer56.SonicRiders.API.Event.OnKillAllTasks += RemoveAllTasks;
             Event.AfterRace      += CheckIfAllFinishedRace;
-            Event.RemoveAllTasks += RemoveAllTasks;
 
             var controller = IoC.Get<PatchController>();
             controller.InjectRunTimerPostRace.Enable();
@@ -92,8 +92,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.GoalRaceFinishTask    -= GoalRaceFinishTask;
 
             Sewer56.SonicRiders.API.Event.OnKillTask -= OnKillTask;
+            Sewer56.SonicRiders.API.Event.OnKillAllTasks -= RemoveAllTasks;
             Event.AfterRace -= CheckIfAllFinishedRace;
-            Event.RemoveAllTasks -= RemoveAllTasks;
 
             var controller = IoC.Get<PatchController>();
             controller.InjectRunTimerPostRace.Disable();
@@ -268,14 +268,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Reset();
         }
 
-        private int RemoveAllTasks(IHook<Functions.CdeclReturnIntFn> hook)
+        private void RemoveAllTasks()
         {
             Log.WriteLine($"[{nameof(RaceLapSync)}] Kill All Tasks", LogCategory.LapSync);
             _isRaceFinishTaskEnabled = false;
             _goalRaceFinishTaskPtr = (void*)-1;
             Reset();
-
-            return hook.OriginalFunction();
         }
 
         private void CheckIfAllFinishedRace(Task<byte, RaceTaskState>* task)

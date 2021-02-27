@@ -2,6 +2,7 @@
 using System.Numerics;
 using DotNext.Buffers;
 using LiteNetLib;
+using Reloaded.Hooks.Definitions;
 using Reloaded.WPF.Animations.FrameLimiter;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Helpers;
@@ -14,7 +15,10 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
+using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
+using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
 using Extensions = Riders.Tweakbox.Components.Netplay.Helpers.Extensions;
 
@@ -53,6 +57,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private const DeliveryMethod RaceDeliveryMethod = DeliveryMethod.Unreliable;
         private readonly byte _raceChannel;
+        private bool _isRacing;
 
         public Race(Socket socket, EventController @event)
         {
@@ -65,12 +70,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(RaceDeliveryMethod);
             Event.OnSetSpawnLocationsStartOfRace += SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace += SwapSpawns;
-            Event.AfterRunPlayerPhysicsSimulation += OnAfterPhysicsSimulation;
+            Event.AfterRunPhysicsSimulation += OnAfterPhysicsSimulation;
 
             Event.OnSetMovementFlagsOnInput += OnSetMovementFlagsOnInput;
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+
+            Event.OnRace += OnRace;
+            Sewer56.SonicRiders.API.Event.OnKillAllTasks += OnKillAllTasks;
 
             var bufferSettings = Socket.Config.Data.PlayerSettings.BufferSettings;
             for (int x = 0; x < JitterBuffers.Length; x++)
@@ -85,12 +93,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Socket.ChannelAllocator.ReleaseChannel(RaceDeliveryMethod, _raceChannel);
             Event.OnSetSpawnLocationsStartOfRace -= SwapSpawns;
             Event.AfterSetSpawnLocationsStartOfRace -= SwapSpawns;
-            Event.AfterRunPlayerPhysicsSimulation -= OnAfterPhysicsSimulation;
+            Event.AfterRunPhysicsSimulation -= OnAfterPhysicsSimulation;
 
             Event.OnSetMovementFlagsOnInput -= OnSetMovementFlagsOnInput;
             Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput -= IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator -= IsHuman;
+
+            Event.OnRace -= OnRace;
+            Sewer56.SonicRiders.API.Event.OnKillAllTasks -= OnKillAllTasks;
         }
 
         public void Reset()
@@ -143,8 +154,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     if (players[x].AnalogXY.HasValue)
                         _analogXY[playerIndex + x] = players[x].AnalogXY.Value;
 
-                    Extensions.ReplaceOrSetCurrentCachedItem(players[x].MovementFlags, _movementFlags, playerIndex + x,
-                        State.MaxLatency);
+                    Extensions.ReplaceOrSetCurrentCachedItem(players[x].MovementFlags, _movementFlags, playerIndex + x, State.MaxLatency);
                 }
             }
             catch (Exception ex)
@@ -172,14 +182,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             return player;
         }
 
-        private void OnAfterPhysicsSimulation(void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex)
+        private int OnAfterPhysicsSimulation()
         {
-            // Only execute after last player! (Once Per Frame!)
-            if (playerIndex == (int*)0)
-                return;
-
-            if (*(byte*)playerIndex != *Sewer56.SonicRiders.API.State.NumberOfRacers - 1)
-                return;
+            if (!_isRacing)
+                return 0;
 
             Socket.Update();
             DequeueFromJitterBuffers(); 
@@ -247,6 +253,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             }
 
             Socket.Update();
+            return 0;
         }
 
         /// <summary>
@@ -318,6 +325,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             return player;
         }
+
+        #region SetTask
+        private void OnRace(Task<byte, RaceTaskState>* task) => _isRacing = true;
+        private void OnKillAllTasks() => _isRacing = false;
+        #endregion
 
         /// <inheritdoc />
         public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) { }
