@@ -76,7 +76,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Text($"Download: {socket.Bandwidth.KBytesPacketOverheadReceived * 8:####0.0}kbps");
         }
 
-        private void RenderDisconnectedWindow()
+        private unsafe void RenderDisconnectedWindow()
         {
             ProfileSelector.Render();
             ref var data = ref Config.Data;
@@ -97,6 +97,30 @@ namespace Riders.Tweakbox.Components.Netplay
                                     "1 = Single Screen\n" +
                                     "2 = Split-Screen\n" +
                                     "3-4 = 4-way Split Screen.");
+
+                bool openBufferSettings = ImGui.TreeNodeStr("Buffer Settings");
+                Tooltip.TextOnHover("Advanced users only. Changing the defaults is not recommended.");
+                if (openBufferSettings)
+                {
+
+                    var bufferSettings = playerSettings.BufferSettings;
+                    fixed (JitterBufferType* type = &bufferSettings.Type)
+                    {
+                        Reflection.MakeControlEnum(type, "Jitter Buffer Type");
+                        Tooltip.TextOnHover("Sets the buffer implementation used to smoothen out other players.\n" +
+                                            "Default: Smoothness 5*, Delay 1*.\n" +
+                                            "Adaptive: Smoothness 3*. Delay 5*.  Suffers on ping spikes.\n" +
+                                            "Hybrid: Smoothness 4.5*. Delay 4*. Recommended.");
+                    }
+
+                    Reflection.MakeControl(ref bufferSettings.DefaultBufferSize, "Default Buffer Size");
+                    Reflection.MakeControl(ref bufferSettings.NumJitterValuesSample, "Number of Samples");
+
+                    if (bufferSettings.Type == JitterBufferType.Adaptive)
+                        Reflection.MakeControl(ref bufferSettings.MaxRampDownAmount, "Max Ramp Down Amount");
+
+                    ImGui.TreePop();
+                }
 
                 ImGui.TreePop();
             }

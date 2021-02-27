@@ -1,8 +1,9 @@
 ﻿using System;
+using Reloaded.Memory.Utilities;
 using Reloaded.WPF.Animations.FrameLimiter;
 using StructLinq;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
+namespace Riders.Netplay.Messages.Helpers
 {
     public class JitterCalculator
     {

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using LiteNetLib;
 using MessagePack;
+using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers.Json;
@@ -76,6 +77,7 @@ namespace Riders.Tweakbox.Components.Netplay
 
             public int LocalPlayers = 1;
             public int MaxNumberOfCameras = 0;
+            public JitterBufferSettings BufferSettings = new JitterBufferSettings();
         }
 
         public class ClientSettings
@@ -109,27 +111,31 @@ namespace Riders.Tweakbox.Components.Netplay
             public int PunchTimeout = 8000;
         }
 
+        public class JitterBufferSettings
+        {
+            public JitterBufferType Type = JitterBufferType.Hybrid;
+            public int MaxRampDownAmount = 10;
+            public int DefaultBufferSize = 3; 
+            public int NumJitterValuesSample = 180;
+        }
+
         public class SimulateBadInternet
         {
-            [Key(0)]
             public bool IsEnabled;
 
             /// <summary>
             /// Packet loss between 0 and 100.
             /// </summary>
-            [Key(1)]
             public byte PacketLoss;
 
             /// <summary>
             /// Latency in ms to simulate.
             /// </summary>
-            [Key(2)]
             public byte MinLatency;
 
             /// <summary>
             /// Latency in ms to simulate.
             /// </summary>
-            [Key(3)]
             public byte MaxLatency;
 
             public void Apply(NetManager manager)

@@ -1,13 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Reloaded.WPF.Animations.FrameLimiter;
-using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Tweakbox.Misc;
-using StructLinq;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
+namespace Riders.Netplay.Messages.Helpers
 {
     /// <summary>
     /// Represents a "hybrid" jitter buffer sacrifices a bit of latency for smoothness, slowly rolling forward over time as needed.
@@ -56,8 +54,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (_currentNumSamples > _remainingNumPacketsArray.Capacity)
             {
                 var minimumToDequeue = _remainingNumPacketsArray.Min() - MinBufferSize;
+                
+                #if DEBUG
                 if (minimumToDequeue > 0)
-                    Log.WriteLine($"P[{playerIndex}] Reducing Hybrid Buffer Jitter by {minimumToDequeue}", LogCategory.JitterCalc);
+                    Debug.WriteLine($"P[{playerIndex}] Reducing Hybrid Buffer Jitter by {minimumToDequeue}");
+                #endif
 
                 for (int x = 0; x < minimumToDequeue; x++)
                     result = Buffer.TryDequeue(out packet);

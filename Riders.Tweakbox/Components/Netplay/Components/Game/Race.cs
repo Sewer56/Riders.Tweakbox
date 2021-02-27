@@ -51,13 +51,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// </summary>
         private Timestamped<AnalogXY>[] _analogXY = new Timestamped<AnalogXY>[Constants.MaxNumberOfPlayers + 1];
 
-        private const int   MaxRampDownAmount = 10; // Default size of jitter buffer.
-        private const int   DefaultBufferSize = 3; // Default size of jitter buffer.
-        private const int   NumJitterValuesSample = 180; // Number of jitter values to sample before update.
         private const DeliveryMethod RaceDeliveryMethod = DeliveryMethod.Unreliable;
-        
         private readonly byte _raceChannel;
-        private bool _reducedTickRate;
 
         public Race(Socket socket, EventController @event)
         {
@@ -76,8 +71,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+
+            var bufferSettings = Socket.Config.Data.PlayerSettings.BufferSettings;
             for (int x = 0; x < JitterBuffers.Length; x++)
-                JitterBuffers[x] = new HybridJitterBuffer<UnreliablePacket>(DefaultBufferSize, NumJitterValuesSample);
+                JitterBuffers[x] = IJitterBuffer<UnreliablePacket>.Create(bufferSettings.Type, bufferSettings.DefaultBufferSize, bufferSettings.NumJitterValuesSample, bufferSettings.MaxRampDownAmount);
 
             Reset();
         }

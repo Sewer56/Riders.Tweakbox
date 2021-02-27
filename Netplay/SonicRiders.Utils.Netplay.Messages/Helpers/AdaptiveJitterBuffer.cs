@@ -1,11 +1,10 @@
 ﻿using System;
-using Riders.Netplay.Messages;
-using Riders.Netplay.Messages.Helpers;
+using System.Diagnostics;
+using Microsoft.VisualBasic.Logging;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
-using Riders.Tweakbox.Misc;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
+namespace Riders.Netplay.Messages.Helpers
 {
     public class AdaptiveJitterBufferConstants
     {
@@ -127,7 +126,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             if (_calculator.TryCalculateJitter(AdaptiveJitterBufferConstants.JitterRampUpPercentile, out var maxJitter))
             {
                 int extraFrames = (int)(maxJitter / (1000f / AdaptiveJitterBufferConstants.PacketSendRate));
-                Log.WriteLine($"Jitter P[{playerIndex}]. Max: {maxJitter}, Extra Frames: {extraFrames}", LogCategory.JitterCalc);
+                Debug.WriteLine($"Jitter P[{playerIndex}]. Max: {maxJitter}, Extra Frames: {extraFrames}");
 
                 // If the buffer size is increasing, the jitter buffer itself will handle this case (if queued packets ever reaches 0)
                 if (extraFrames > 0)
@@ -147,7 +146,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
 
                     if (rollForwardBuffer.BufferSize != Buffer.BufferSize && rollForwardBuffer.BufferSize > JitterBuffer<T>.MinBufferSize)
                     {
-                        Log.WriteLine($"Reduce Buffer Jitter P[{playerIndex}].", LogCategory.JitterCalc);
+                        Debug.WriteLine($"Reduce Buffer Jitter P[{playerIndex}].");
                         SetBufferSize(rollForwardBuffer.BufferSize);
                         return;
                     }

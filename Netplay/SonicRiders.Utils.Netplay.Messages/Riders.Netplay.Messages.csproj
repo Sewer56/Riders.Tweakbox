@@ -15,7 +15,9 @@
     <PackageReference Include="MessagePack" Version="2.1.115" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.1.115" />
     <PackageReference Include="Ninject" Version="3.3.4" />
-    <PackageReference Include="Reloaded.Memory" Version="4.1.0" />
+    <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
+    <PackageReference Include="Reloaded.WPF.Animations" Version="1.2.2" />
+    <PackageReference Include="StructLinq" Version="0.25.3" />
     <PackageReference Include="ToString.Fody" Version="1.11.0" />
   </ItemGroup>
 
