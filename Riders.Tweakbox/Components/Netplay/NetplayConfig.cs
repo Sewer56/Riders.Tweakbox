@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Text.Json;
+using LiteNetLib;
 using MessagePack;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
@@ -130,6 +131,27 @@ namespace Riders.Tweakbox.Components.Netplay
             /// </summary>
             [Key(3)]
             public byte MaxLatency;
+
+            public void Apply(NetManager manager)
+            {
+                if (!IsEnabled)
+                {
+                    manager.SimulatePacketLoss = false;
+                    manager.SimulateLatency = false;
+                    return;
+                }
+
+                manager.SimulatePacketLoss = PacketLoss > 0 && PacketLoss <= 100;
+                if (manager.SimulatePacketLoss)
+                    manager.SimulationPacketLossChance = PacketLoss;
+
+                manager.SimulateLatency = MinLatency > 0 && MaxLatency > MinLatency;
+                if (manager.SimulateLatency)
+                {
+                    manager.SimulationMaxLatency = MaxLatency;
+                    manager.SimulationMinLatency = MinLatency;
+                }
+            }
         }
     }
 }

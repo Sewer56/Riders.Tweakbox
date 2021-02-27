@@ -1,6 +1,7 @@
 ﻿using System;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
 using Riders.Tweakbox.Misc;
 
@@ -17,7 +18,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
     /// Basic implementation of an adaptive jitter buffer which scales the internal buffer's number of queued frames as necessary.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class AdaptiveJitterBuffer<T> where T : struct, ISequenced, IDisposable
+    public class AdaptiveJitterBuffer<T> : IJitterBuffer<T> where T : struct, ISequenced, IDisposable
     {
         /// <summary>
         /// Jitter buffer for storing current movements
@@ -52,6 +53,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             }
         }
 
+        /// <inheritdoc />
+        public JitterBufferType GetBufferType() => JitterBufferType.Adaptive;
+
         public void Clear()
         {
             Buffer.Clear();
@@ -68,12 +72,14 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Tries to add a packet to the adaptive jitter buffer queue.
         /// </summary>
         /// <param name="packet"></param>
-        public void TryEnqueue(in T packet)
+        public bool TryEnqueue(in T packet)
         {
-            Buffer.TryEnqueue(packet);
+            bool result = Buffer.TryEnqueue(packet);
             var sequenceNumber = SequenceNumberCopy<T>.Create(packet);
             for (int x = 0; x < _jitterBufferRollforward.Length; x++)
                 _jitterBufferRollforward[x].TryEnqueue(sequenceNumber);
+
+            return result;
         }
 
         /// <summary>

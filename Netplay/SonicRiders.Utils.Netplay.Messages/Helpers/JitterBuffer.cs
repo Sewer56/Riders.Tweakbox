@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime;
+using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
 
 namespace Riders.Netplay.Messages.Helpers
@@ -8,7 +9,7 @@ namespace Riders.Netplay.Messages.Helpers
     /// <summary>
     /// A simple implementation of a jitter buffer, which takes in values and allows for them to be later dequeued at consistent intervals.
     /// </summary>
-    public class JitterBuffer<T> where T : struct, ISequenced, IDisposable
+    public class JitterBuffer<T> : IJitterBuffer<T> where T : struct, ISequenced, IDisposable
     {
         public const int MinBufferSize = 1;
         private static int  ModValue     = new T().MaxValue + 1;
@@ -73,6 +74,9 @@ namespace Riders.Netplay.Messages.Helpers
             LowLatencyMode = lowLatencyMode;
         }
 
+        /// <inheritdoc />
+        public JitterBufferType GetBufferType() => JitterBufferType.Simple;
+
         /// <summary>
         /// Clears the queue.
         /// </summary>
@@ -85,6 +89,9 @@ namespace Riders.Netplay.Messages.Helpers
             _dictionary.Clear();
             IsDeQueueing = false;
         }
+
+        /// <inheritdoc />
+        public bool TryDequeue(int playerIndex, out T packet) => TryDequeue(out packet);
 
         /// <summary>
         /// Sets the new number of buffered packets.

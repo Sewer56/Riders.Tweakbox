@@ -5,6 +5,7 @@ using LiteNetLib;
 using Reloaded.WPF.Animations.FrameLimiter;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Unreliable;
 using Riders.Netplay.Messages.Unreliable.Structs;
 using Riders.Tweakbox.Components.Netplay.Sockets;
@@ -33,7 +34,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// Jitter buffers for smoothing out incoming packets.
         /// There is a buffer per client.
         /// </summary>
-        internal AdaptiveJitterBuffer<UnreliablePacket>[] JitterBuffers = new AdaptiveJitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
+        internal IJitterBuffer<UnreliablePacket>[] JitterBuffers = new IJitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
 
         /// <summary>
         /// Sync data for races.
