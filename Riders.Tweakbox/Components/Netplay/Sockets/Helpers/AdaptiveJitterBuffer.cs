@@ -48,7 +48,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
             for (int x = 0; x < _jitterCalculatorRollforward.Length; x++)
             {
                 _jitterCalculatorRollforward[x] = new JitterCalculator(calculatorAmountFrames);
-                _jitterBufferRollforward[x] = new JitterBuffer<SequenceNumberCopy<T>>(Math.Max(0, defaultBufferSize - (x + 1)), true);
+                _jitterBufferRollforward[x] = new JitterBuffer<SequenceNumberCopy<T>>(defaultBufferSize - (x + 1), true);
             }
         }
 
@@ -79,29 +79,34 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// <summary>
         /// Tries to dequeue a packet from the adaptive buffer.
         /// </summary>
-        public bool TryDequeue(out T packet)
+        public bool TryDequeue(int playerIndex, out T packet)
         {
-            // Do sampling for roll forward buffers.
-            for (int x = 0; x < _jitterBufferRollforward.Length; x++)
-            {
-                if (_jitterBufferRollforward[x].TryDequeue(out var sequence))
-                    _jitterCalculatorRollforward[x].Sample();
-            }
+            bool dequeue = TryDequeueInternal(out packet);
+            UpdateBuffer(playerIndex);
+            return dequeue;
+        }
 
-            // Try dequeue.
-            if (Buffer.TryDequeue(out packet))
+        /// <summary>
+        /// Sets the size for the new buffer.
+        /// </summary>
+        /// <param name="newSize">New buffer size.</param>
+        public void SetBufferSize(int newSize)
+        {
+            if (newSize != Buffer.BufferSize)
             {
-                _calculator.Sample();
-                return true;
+                Buffer.SetBufferSize(newSize);
+                for (int x = 0; x < _jitterBufferRollforward.Length; x++)
+                {
+                    _jitterBufferRollforward[x].SetBufferSize(Buffer.BufferSize - (x + 1));
+                    _jitterCalculatorRollforward[x].Reset();
+                }
             }
-
-            return false;
         }
 
         /// <summary>
         /// Updates the jitter buffer values if necessary.
         /// </summary>
-        public void UpdateBuffer(int playerIndex)
+        private void UpdateBuffer(int playerIndex)
         {
             // Calculate if buffer should be increased.
             if (_calculator.TryCalculateJitter(AdaptiveJitterBufferConstants.JitterRampUpPercentile, out var maxJitter))
@@ -123,26 +128,35 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
                 {
                     int extraBufferedPackets = (int)(maxJitter / (1000f / AdaptiveJitterBufferConstants.PacketSendRate));
                     if (extraBufferedPackets > 0) 
-                        return;
+                        continue;
 
-                    if (rollForwardBuffer.BufferSize != Buffer.BufferSize)
+                    if (rollForwardBuffer.BufferSize != Buffer.BufferSize && rollForwardBuffer.BufferSize > JitterBuffer<T>.MinBufferSize)
                     {
                         Log.WriteLine($"Reduce Buffer Jitter P[{playerIndex}].", LogCategory.JitterCalc);
                         SetBufferSize(rollForwardBuffer.BufferSize);
+                        return;
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// Sets the size for the new buffer.
-        /// </summary>
-        /// <param name="newSize">New buffer size.</param>
-        public void SetBufferSize(int newSize)
+        private bool TryDequeueInternal(out T packet)
         {
-            Buffer.SetBufferSize(newSize);
+            // Do sampling for roll forward buffers.
             for (int x = 0; x < _jitterBufferRollforward.Length; x++)
-                _jitterBufferRollforward[x].SetBufferSize(Math.Max(0, Buffer.BufferSize - (x + 1)));
+            {
+                if (_jitterBufferRollforward[x].TryDequeue(out var sequence))
+                    _jitterCalculatorRollforward[x].Sample();
+            }
+
+            // Try dequeue.
+            if (Buffer.TryDequeue(out packet))
+            {
+                _calculator.Sample();
+                return true;
+            }
+
+            return false;
         }
     }
 }

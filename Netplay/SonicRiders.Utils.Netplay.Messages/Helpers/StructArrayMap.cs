@@ -58,8 +58,11 @@ namespace Riders.Netplay.Messages.Helpers
             set
             {
                 bool hasValue = ContainsKey(key);
-                if (!hasValue)
+                if (!hasValue && value != null)
                     Count += 1;
+
+                if (hasValue && value == null)
+                    Count -= 1;
 
                 _values[key.GetHashCode()] = value;
             }

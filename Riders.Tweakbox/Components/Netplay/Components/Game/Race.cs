@@ -128,10 +128,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             // Dequeue from buffer.
             var jitterBuffer = JitterBuffers[playerIndex];
-            if (jitterBuffer.TryDequeue(out var packet))
+            if (jitterBuffer.TryDequeue(playerIndex, out var packet))
                 HandlePacket(playerIndex, packet);
-
-            jitterBuffer.UpdateBuffer(playerIndex);
         }
 
         private void HandlePacket(int playerIndex, UnreliablePacket packet)

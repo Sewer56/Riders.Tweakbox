@@ -10,8 +10,9 @@ namespace Riders.Netplay.Messages.Helpers
     /// </summary>
     public class JitterBuffer<T> where T : struct, ISequenced, IDisposable
     {
+        public const int MinBufferSize = 1;
         private static int  ModValue     = new T().MaxValue + 1;
-
+        
         /// <summary>
         /// Holds the current packet for each sequence value.
         /// </summary>
@@ -68,7 +69,7 @@ namespace Riders.Netplay.Messages.Helpers
             if (bufferSize > Size / 2)
                 throw new ArgumentOutOfRangeException($"Number of buffered packets {bufferSize} is set too high for the sliding window size taken from {nameof(ISequenced)} ({ModValue}). Decrease number of buffered packets or increase window size.");
 
-            BufferSize = bufferSize;
+            SetBufferSize(bufferSize);
             LowLatencyMode = lowLatencyMode;
         }
 
@@ -86,15 +87,16 @@ namespace Riders.Netplay.Messages.Helpers
         }
 
         /// <summary>
-        /// Sets the new number of buffered packets..
+        /// Sets the new number of buffered packets.
         /// </summary>
         public void SetBufferSize(int value)
         {
             if (value != BufferSize)
             {
-                if (value > BufferSize)
-                    IsDeQueueing = false;
-                
+                if (value < MinBufferSize && LowLatencyMode)
+                    value = MinBufferSize;
+
+                IsDeQueueing = false;
                 BufferSize = value;
             }
         }

@@ -184,8 +184,9 @@ namespace Riders.Tweakbox.Components.Netplay
                             var bufferedPackets = buffer.Buffer.BufferSize;
                             ImGui.DragInt($"Num Buf Pkt [P{x}]", ref bufferedPackets, 0.1f, 0, 60, null);
                             ImGui.Checkbox($"Low Latency Mode", ref buffer.Buffer.LowLatencyMode);
-                            ImGui.Text($"Num in Buf: {buffer.Buffer.GetNumPacketsInWindow()}");
-                            buffer.Buffer.SetBufferSize(bufferedPackets);
+                            ImGui.Text($"Num in Window: {buffer.Buffer.GetNumPacketsInWindow()}");
+                            ImGui.Text($"Num in Buf: {buffer.Buffer.PacketCount}");
+                            buffer.SetBufferSize(bufferedPackets);
                         }
                     }
                 }
