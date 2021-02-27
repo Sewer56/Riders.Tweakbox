@@ -114,7 +114,10 @@ namespace Riders.Tweakbox.Components.Netplay
                     }
 
                     Reflection.MakeControl(ref bufferSettings.DefaultBufferSize, "Default Buffer Size");
+                    Tooltip.TextOnHover("This value adjusts automatically during gameplay. This is just the \"safe\" starting value.");
+
                     Reflection.MakeControl(ref bufferSettings.NumJitterValuesSample, "Number of Samples");
+                    Tooltip.TextOnHover("Number of samples before updating the buffer size during gameplay. Values of at least 90 are recommended.");
 
                     if (bufferSettings.Type == JitterBufferType.Adaptive)
                         Reflection.MakeControl(ref bufferSettings.MaxRampDownAmount, "Max Ramp Down Amount");
