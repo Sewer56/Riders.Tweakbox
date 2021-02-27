@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using DearImguiSharp;
+using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Helpers.Interfaces;
+using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -56,7 +61,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
-            RenderSimulateBadInternet();
+            RenderDebugOptions();
         }
 
         private void RenderBandwidthUsage(Socket socket)
@@ -71,7 +76,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Text($"Download: {socket.Bandwidth.KBytesPacketOverheadReceived * 8:####0.0}kbps");
         }
 
-        private void RenderDisconnectedWindow()
+        private unsafe void RenderDisconnectedWindow()
         {
             ProfileSelector.Render();
             ref var data = ref Config.Data;
@@ -92,6 +97,30 @@ namespace Riders.Tweakbox.Components.Netplay
                                     "1 = Single Screen\n" +
                                     "2 = Split-Screen\n" +
                                     "3-4 = 4-way Split Screen.");
+
+                bool openBufferSettings = ImGui.TreeNodeStr("Buffer Settings");
+                Tooltip.TextOnHover("Advanced users only. Changing the defaults is not recommended.");
+                if (openBufferSettings)
+                {
+
+                    var bufferSettings = playerSettings.BufferSettings;
+                    fixed (JitterBufferType* type = &bufferSettings.Type)
+                    {
+                        Reflection.MakeControlEnum(type, "Jitter Buffer Type");
+                        Tooltip.TextOnHover("Sets the buffer implementation used to smoothen out other players.\n" +
+                                            "Default: Smoothness 5*, Delay 1*.\n" +
+                                            "Adaptive: Smoothness 3*. Delay 5*.  Suffers on ping spikes.\n" +
+                                            "Hybrid: Smoothness 4.5*. Delay 4*. Recommended.");
+                    }
+
+                    Reflection.MakeControl(ref bufferSettings.DefaultBufferSize, "Default Buffer Size");
+                    Reflection.MakeControl(ref bufferSettings.NumJitterValuesSample, "Number of Samples");
+
+                    if (bufferSettings.Type == JitterBufferType.Adaptive)
+                        Reflection.MakeControl(ref bufferSettings.MaxRampDownAmount, "Max Ramp Down Amount");
+
+                    ImGui.TreePop();
+                }
 
                 ImGui.TreePop();
             }
@@ -148,48 +177,8 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
-            RenderSimulateBadInternet();
+            RenderDebugOptions();
             ImGui.Spacing();
-        }
-
-        [Conditional("DEBUG")]
-        private void RenderSimulateBadInternet()
-        {
-            ref var data = ref Config.Data;
-            var badInternet = data.BadInternet;
-            if (ImGui.TreeNodeStr("Debug"))
-            {
-                Reflection.MakeControl(ref badInternet.IsEnabled, "Simulate Bad Internet");
-                if (badInternet.IsEnabled)
-                {
-                    Reflection.MakeControl(ref badInternet.MinLatency, "Min Latency");
-                    Reflection.MakeControl(ref badInternet.MaxLatency, "Max Latency");
-                    Reflection.MakeControl(ref badInternet.PacketLoss, "Packet Loss Percent");
-                }
-            }
-
-            // Apply bad internet state.
-            if (Controller.Socket == null) 
-                return;
-
-            var manager     = Controller.Socket.Manager;
-            if (!badInternet.IsEnabled)
-            {
-                manager.SimulatePacketLoss = false;
-                manager.SimulateLatency = false;
-                return;
-            }
-
-            manager.SimulatePacketLoss = badInternet.PacketLoss > 0 && badInternet.PacketLoss <= 100;
-            if (manager.SimulatePacketLoss)
-                manager.SimulationPacketLossChance = badInternet.PacketLoss;
-
-            manager.SimulateLatency = badInternet.MinLatency > 0 && badInternet.MaxLatency > badInternet.MinLatency;
-            if (manager.SimulateLatency)
-            {
-                manager.SimulationMaxLatency = badInternet.MaxLatency;
-                manager.SimulationMinLatency = badInternet.MinLatency;
-            }
         }
 
         private void HostServer()
@@ -214,6 +203,99 @@ namespace Riders.Tweakbox.Components.Netplay
             {
                 Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
             }
+        }
+
+        [Conditional("DEBUG")]
+        private void RenderDebugOptions()
+        {
+            ref var data = ref Config.Data;
+            var badInternet = data.BadInternet;
+            if (!ImGui.TreeNodeStr("Debug")) 
+                return;
+
+            Reflection.MakeControl(ref badInternet.IsEnabled, "Simulate Bad Internet");
+            if (badInternet.IsEnabled)
+            {
+                Reflection.MakeControl(ref badInternet.MinLatency, "Min Latency");
+                Reflection.MakeControl(ref badInternet.MaxLatency, "Max Latency");
+                Reflection.MakeControl(ref badInternet.PacketLoss, "Packet Loss Percent");
+            }
+
+            if (Controller.Socket == null)
+            {
+                ImGui.TreePop();
+                return;
+            }
+
+            // Render jitter buffer info.
+            ImGui.Separator();
+            RenderJitterBufferDetails(Controller.Socket);
+            badInternet.Apply(Controller.Socket.Manager);
+            ImGui.TreePop();
+        }
+
+        private static void RenderJitterBufferDetails(Socket socket)
+        {
+            if (!socket.TryGetComponent(out Race race)) 
+                return;
+
+            var buffers = race.JitterBuffers;
+            var jitterBufferType = buffers[0].GetBufferType();
+            ImGui.Text($"{jitterBufferType} Jitter Buffer Stats");
+
+            switch (jitterBufferType)
+            {
+                case JitterBufferType.Simple:
+                    RenderDefaultBufferDetails(buffers, socket.State.GetPlayerCount());
+                    break;
+                case JitterBufferType.Adaptive:
+                    RenderAdaptiveBufferDetails(buffers, socket.State.GetPlayerCount());
+                    break;
+                case JitterBufferType.Hybrid:
+                    RenderHybridBufferDetails(buffers, socket.State.GetPlayerCount());
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void RenderHybridBufferDetails(IJitterBuffer<UnreliablePacket>[] buffers, int playerCount)
+        {
+            for (int x = 0; x < playerCount; x++)
+            {
+                var buffer = (HybridJitterBuffer<UnreliablePacket>)buffers[x];
+                RenderDefaultBufferInfo(buffer.Buffer, x);
+            }
+        }
+
+        private static void RenderDefaultBufferDetails(IJitterBuffer<UnreliablePacket>[] buffers, int playerCount)
+        {
+            for (int x = 0; x < playerCount; x++)
+            {
+                var buffer = (JitterBuffer<UnreliablePacket>)buffers[x];
+                RenderDefaultBufferInfo(buffer, x);
+            }
+        }
+
+        private static void RenderAdaptiveBufferDetails(IJitterBuffer<UnreliablePacket>[] buffers, int playerCount)
+        {
+            ImGui.DragFloat($"Jitter Ramp Up Percentile", ref AdaptiveJitterBufferConstants.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 1f);
+            ImGui.DragFloat($"Jitter Ramp Down Percentile", ref AdaptiveJitterBufferConstants.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 1f);
+            for (int x = 0; x < playerCount; x++)
+            {
+                var buffer = (AdaptiveJitterBuffer<UnreliablePacket>) buffers[x];
+                RenderDefaultBufferInfo(buffer.Buffer, x);
+            }
+        }
+
+        private static void RenderDefaultBufferInfo(JitterBuffer<UnreliablePacket> buffer, int playerIndex)
+        {
+            var bufferedPackets = buffer.BufferSize;
+            ImGui.DragInt($"Num Buf Pkt [P{playerIndex}]", ref bufferedPackets, 0.1f, 0, 60, null);
+            ImGui.Checkbox($"Low Latency Mode", ref buffer.LowLatencyMode);
+            ImGui.Text($"Num in Window: {buffer.GetNumPacketsInWindow()}");
+            ImGui.Text($"Num in Buf: {buffer.PacketCount}");
+            buffer.SetBufferSize(bufferedPackets);
         }
     }
 }

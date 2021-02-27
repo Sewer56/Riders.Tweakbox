@@ -18,7 +18,8 @@ namespace Riders.Tweakbox.Misc
         PlayerEvent = 1 << 5,
         Socket  = 1 << 6,
         RandomSeed = 1 << 7,
-        LapSync = 1 << 8
+        LapSync = 1 << 8,
+        JitterCalc = 1 << 9,
     }
 
     /// <summary>
@@ -32,7 +33,7 @@ namespace Riders.Tweakbox.Misc
         public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
                                                      LogCategory.Race | LogCategory.Menu |
                                                      LogCategory.PlayerEvent | LogCategory.Socket |
-                                                     LogCategory.Random;
+                                                     LogCategory.Random | LogCategory.JitterCalc;
 
         /// <summary>
         /// Declares whether each log type is declared or not.

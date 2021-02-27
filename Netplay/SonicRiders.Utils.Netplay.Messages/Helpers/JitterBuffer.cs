@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime;
+using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
 
 namespace Riders.Netplay.Messages.Helpers
@@ -7,10 +9,11 @@ namespace Riders.Netplay.Messages.Helpers
     /// <summary>
     /// A simple implementation of a jitter buffer, which takes in values and allows for them to be later dequeued at consistent intervals.
     /// </summary>
-    public class JitterBuffer<T> where T : struct, ISequenced, IDisposable
+    public class JitterBuffer<T> : IJitterBuffer<T> where T : struct, ISequenced, IDisposable
     {
+        public const int MinBufferSize = 1;
         private static int  ModValue     = new T().MaxValue + 1;
-
+        
         /// <summary>
         /// Holds the current packet for each sequence value.
         /// </summary>
@@ -19,7 +22,7 @@ namespace Riders.Netplay.Messages.Helpers
         /// <summary>
         /// Time spent in the buffer until an item can be dequeued.
         /// </summary>
-        public int NumBufferedPackets { get; private set; }
+        public int BufferSize { get; private set; }
 
         /// <summary>
         /// The current sequence value being handled.
@@ -52,16 +55,27 @@ namespace Riders.Netplay.Messages.Helpers
         public int Size => ModValue;
 
         /// <summary>
+        /// Sacrifices smoothness for low latency.
+        /// Allows for packets to be dropped if packets are being received outside the buffer.
+        /// </summary>
+        public bool LowLatencyMode = false;
+
+        /// <summary>
         /// A simple implementation of a jitter buffer, which takes in values and allows for them to be later dequeued at consistent intervals.
         /// </summary>
-        /// <param name="numBufferedPackets">Number of buffered packets.</param>
-        public JitterBuffer(int numBufferedPackets)
+        /// <param name="bufferSize">Number of buffered packets.</param>
+        /// <param name="lowLatencyMode">Sacrifices smoothness for low latency.</param>
+        public JitterBuffer(int bufferSize, bool lowLatencyMode = false)
         {
-            if (numBufferedPackets > Size / 2)
-                throw new ArgumentOutOfRangeException($"Number of buffered packets {numBufferedPackets} is set too high for the sliding window size taken from {nameof(ISequenced)} ({ModValue}). Decrease number of buffered packets or increase window size.");
+            if (bufferSize > Size / 2)
+                throw new ArgumentOutOfRangeException($"Number of buffered packets {bufferSize} is set too high for the sliding window size taken from {nameof(ISequenced)} ({ModValue}). Decrease number of buffered packets or increase window size.");
 
-            NumBufferedPackets = numBufferedPackets;
+            SetBufferSize(bufferSize);
+            LowLatencyMode = lowLatencyMode;
         }
+
+        /// <inheritdoc />
+        public JitterBufferType GetBufferType() => JitterBufferType.Simple;
 
         /// <summary>
         /// Clears the queue.
@@ -76,13 +90,30 @@ namespace Riders.Netplay.Messages.Helpers
             IsDeQueueing = false;
         }
 
+        /// <inheritdoc />
+        public bool TryDequeue(int playerIndex, out T packet) => TryDequeue(out packet, out _);
+
+        /// <summary>
+        /// Sets the new number of buffered packets.
+        /// </summary>
+        public void SetBufferSize(int value)
+        {
+            if (value != BufferSize)
+            {
+                if (value < MinBufferSize && LowLatencyMode)
+                    value = MinBufferSize;
+
+                IsDeQueueing = false;
+                BufferSize = value;
+            }
+        }
+        
         /// <summary>
         /// Adds an item to the queue.
         /// </summary>
         /// <param name="value">The item.</param>
-        /// <param name="allowPacketDrop">Allows for existing packets in the buffer to be dropped to ensure sender doesn't overwhelm receiver.</param>
         /// <returns>True if the item is queued. False if it is dropped.</returns>
-        public bool TryEnqueue(in T value, bool allowPacketDrop = false)
+        public bool TryEnqueue(in T value)
         {
             var sequenceNo = value.SequenceNo;
 
@@ -92,13 +123,13 @@ namespace Riders.Netplay.Messages.Helpers
 
             // Discard items if behind us in the sliding window.
             if (IsInSlidingWindow(value.SequenceNo, SlidingWindowBeforeStart, SlidingWindowStart))
-               return false;
+                return false;
 
             // Check if items ahead of us are not overwhelming the receiver.
-            if (allowPacketDrop && IsInSlidingWindow(value.SequenceNo, SlidingWindowStart, SlidingWindowEnd))
+            if (LowLatencyMode && !IsInBufferWindow(value.SequenceNo))
             {
                 var numSequenceAhead = GetSequenceDifference(value.SequenceNo);
-                var readAheadNo      = (numSequenceAhead - NumBufferedPackets);
+                var readAheadNo      = (numSequenceAhead - BufferSize);
 
                 // Dequeue necessary number of packets for consumer to catch up.
                 while (readAheadNo >= 0)
@@ -112,7 +143,7 @@ namespace Riders.Netplay.Messages.Helpers
             DisposeAtIndex(sequenceNo);
             _dictionary[sequenceNo] = value;
 
-            if (PacketCount >= NumBufferedPackets)
+            if (PacketCount >= BufferSize)
                 IsDeQueueing = true;
 
             return true;
@@ -122,13 +153,24 @@ namespace Riders.Netplay.Messages.Helpers
         /// Removes an item from the queue.
         /// </summary>
         /// <param name="value">The item.</param>
-        public bool TryDequeue(out T value)
+        public bool TryDequeue(out T value) => TryDequeue(out value, out _);
+
+        /// <summary>
+        /// Removes an item from the queue.
+        /// </summary>
+        /// <param name="value">The item.</param>
+        /// <param name="isNowEmpty">True if the buffer is now empty if it hasn't previously been.</param>
+        public bool TryDequeue(out T value, out bool isNowEmpty)
         {
+            isNowEmpty = false;
             if (IsDeQueueing)
             {
                 var result = _dictionary.Remove(IncrementSequenceNo(), out value);
                 if (PacketCount <= 0)
+                {
                     IsDeQueueing = false;
+                    isNowEmpty = true;
+                }
 
                 return result;
             }
@@ -169,9 +211,46 @@ namespace Riders.Netplay.Messages.Helpers
         }
 
         /// <summary>
+        /// Gets the number of packets in the sliding window.
+        /// </summary>
+        public int GetNumPacketsInWindow()
+        {
+            int sequenceNo = SlidingWindowStart;
+            int numPackets = 0;
+            
+            if (LowLatencyMode)
+            {
+                while (IsInBufferWindow(sequenceNo))
+                {
+                    if (_dictionary.ContainsKey(sequenceNo))
+                        numPackets++;
+
+                    sequenceNo = GetNextSequenceNo(sequenceNo);
+                }
+            }
+            else
+            {
+                while (IsInSlidingWindow(sequenceNo, SlidingWindowStart, SlidingWindowEnd))
+                {
+                    if (_dictionary.ContainsKey(sequenceNo))
+                        numPackets++;
+
+                    sequenceNo = GetNextSequenceNo(sequenceNo);
+                }
+            }
+
+            return numPackets;
+        }
+
+        /// <summary>
         /// Determines if a given sequence number fits the sliding window. Discard packet if it does not.
         /// </summary>
         public bool IsInSlidingWindow(int sequenceNo) => IsInSlidingWindow(sequenceNo, SlidingWindowStart, SlidingWindowEnd);
+
+        /// <summary>
+        /// Determines if a given sequence number fits the sliding window. Discard packet if it does not.
+        /// </summary>
+        public bool IsInBufferWindow(int sequenceNo) => IsInSlidingWindow(sequenceNo, SlidingWindowStart, GetNextSequenceNo(SlidingWindowStart, BufferSize));
 
         /// <summary>
         /// Checks if a given sequence number fits within a sliding window.

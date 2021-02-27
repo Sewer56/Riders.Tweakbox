@@ -160,13 +160,14 @@ namespace Riders.Netplay.Messages.Tests
         }
 
         [Fact]
-        public void SenderCannotOverwhelmReceiver()
+        public void SenderCannotOverwhelmReceiverInLowLatencyMode()
         {
             // Populate Buffer
+            Buffer.LowLatencyMode = true;
             for (int x = 0; x < Buffer.Size; x++)
             {
                 var packet = new Messages.UnreliablePacket() { Header = new UnreliablePacketHeader(1, x) };
-                Assert.True(Buffer.TryEnqueue(packet, true));
+                Assert.True(Buffer.TryEnqueue(packet));
             }
 
             Assert.Equal(TimeUntilDequeue, Buffer.PacketCount);
