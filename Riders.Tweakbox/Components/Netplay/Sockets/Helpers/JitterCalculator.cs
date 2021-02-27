@@ -35,28 +35,31 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
-        /// Calculates jitter at the current moment in time.
+        /// Calculates the amount of jitter that occurred during this time period.
         /// </summary>
-        /// <param name="averageJitter">The average jitter over the period of sampled time.</param>
+        /// <param name="percentile">The percentile between 0 and 1 which to use for calculating jitter.</param>
+        /// <param name="maxJitter">Maximum amount of jitter that occurred.</param>
         /// <returns>False if not enough data has yet been sampled since last calculation, otherwise true.</returns>
-        public bool TryCalculateJitter(out double averageJitter)
+        public bool TryCalculateJitter(float percentile, out double maxJitter)
         {
             if (IsFull)
             {
                 _currentNumSamples = 0;
+                int elementToSample = (int) (percentile * (Size - 1));
 
                 // Average time between successful receives.
                 var receiveTimes = _receiveTimes.ToStructEnumerable().Take(Size, x => x).ToArray(x => x);
                 double totalDifference = 0;
+                maxJitter   = 0;
 
                 for (int x = 0; x < receiveTimes.Length - 1; x++)
-                    totalDifference += Math.Abs(receiveTimes[x] - receiveTimes[x + 1]);
+                    receiveTimes[x] = Math.Abs(receiveTimes[x] - receiveTimes[x + 1]);
 
-                averageJitter = totalDifference / (Size - 1);
+                maxJitter = receiveTimes.ToStructEnumerable().Order(x => x).ElementAt(elementToSample, x => x);
                 return true;
             }
 
-            averageJitter = 0;
+            maxJitter = 0;
             return false;
         }
 

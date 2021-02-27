@@ -28,6 +28,30 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public CommonState State { get; set; }
         public FramePacingController PacingController { get; set; }
         public NetplayConfig.HostSettings HostSettings { get; set; }
+        
+        /// <summary>
+        /// Jitter buffers for smoothing out incoming packets.
+        /// There is a buffer per client 
+        /// </summary>
+        internal JitterBuffer<UnreliablePacket>[] JitterBuffers = new JitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
+        internal JitterBuffer<SequenceNumberCopy<UnreliablePacket>>[] _reduceDelayJitterBuffer = new JitterBuffer<SequenceNumberCopy<UnreliablePacket>>[Constants.MaxNumberOfPlayers + 1];
+
+        /// <summary>
+        /// Calculates whether the jitter buffer should be adjusted for each buffer.
+        /// </summary>
+        internal JitterCalculator[] JitterCalculators = new JitterCalculator[Constants.MaxNumberOfPlayers + 1];
+        internal JitterCalculator[] _reduceDelayJitterCalculator = new JitterCalculator[Constants.MaxNumberOfPlayers + 1];
+
+        /// <summary>
+        /// Percentile value used for calculating jitter
+        /// </summary>
+        internal float JitterRampUpPercentile = 0.98f;
+
+        
+        /// <summary>
+        /// Percentile value used for calculating jitter
+        /// </summary>
+        internal float JitterRampDownPercentile = 1.00f;
 
         /// <summary>
         /// Sync data for races.
@@ -43,17 +67,6 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// Contains inputs for each client.
         /// </summary>
         private Timestamped<AnalogXY>[] _analogXY = new Timestamped<AnalogXY>[Constants.MaxNumberOfPlayers + 1];
-
-        /// <summary>
-        /// Jitter buffers for smoothing out incoming packets.
-        /// There is a buffer per client 
-        /// </summary>
-        private JitterBuffer<UnreliablePacket>[] _jitterBuffers = new JitterBuffer<UnreliablePacket>[Constants.MaxNumberOfPlayers + 1];
-
-        /// <summary>
-        /// Calculates whether the jitter buffer should be adjusted for each buffer.
-        /// </summary>
-        private JitterCalculator[] _jitterCalculators = new JitterCalculator[Constants.MaxNumberOfPlayers + 1];
 
         private const int   PacketSendRate = 60;
         private const int   DefaultBufferSize = 1; // Default size of jitter buffer.
@@ -80,11 +93,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
             Event.OnCheckIfPlayerIsHumanInput += IsHuman;
             Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
-            for (int x = 0; x < _jitterBuffers.Length; x++)
-                _jitterBuffers[x] = new JitterBuffer<UnreliablePacket>(DefaultBufferSize);
+            for (int x = 0; x < JitterBuffers.Length; x++)
+            {
+                JitterBuffers[x] = new JitterBuffer<UnreliablePacket>(DefaultBufferSize, true);
+                _reduceDelayJitterBuffer[x] = new JitterBuffer<SequenceNumberCopy<UnreliablePacket>>(DefaultBufferSize - 1, true);
+            }
 
-            for (int x = 0; x < _jitterCalculators.Length; x++)
-                _jitterCalculators[x] = new JitterCalculator(NumJitterValuesSample);
+            for (int x = 0; x < JitterCalculators.Length; x++)
+            {
+                JitterCalculators[x] = new JitterCalculator(NumJitterValuesSample);
+                _reduceDelayJitterCalculator[x] = new JitterCalculator(NumJitterValuesSample); 
+            }
 
             Reset();
         }
@@ -108,11 +127,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Array.Fill(_raceSync, new Volatile<UnreliablePacketPlayer>());
             Array.Fill(_movementFlags, new Timestamped<Used<MovementFlags>>());
             Array.Fill(_analogXY, new Timestamped<AnalogXY>());
-            for (int x = 0; x < _jitterBuffers.Length; x++)
-                _jitterBuffers[x].Clear();
+            for (int x = 0; x < JitterBuffers.Length; x++)
+            {
+                JitterBuffers[x].Clear();
+                _reduceDelayJitterBuffer[x].Clear();
+            }
 
-            for (int x = 0; x < _jitterCalculators.Length; x++)
-                _jitterCalculators[x].Reset();
+            for (int x = 0; x < JitterCalculators.Length; x++)
+            {
+                JitterCalculators[x].Reset();
+                _reduceDelayJitterCalculator[x].Reset();
+            }
         }
 
         /// <inheritdoc />
@@ -126,52 +151,61 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            _jitterBuffers[playerIndex].TryEnqueue(packet.Clone());
+            JitterBuffers[playerIndex].TryEnqueue(packet.Clone());
+            _reduceDelayJitterBuffer[playerIndex].TryEnqueue(SequenceNumberCopy<UnreliablePacket>.Create(packet));
         }
 
         private void DequeueFromJitterBuffers()
         {
-            for (int x = 0; x < _jitterBuffers.Length; x++)
+            for (int x = 0; x < JitterBuffers.Length; x++)
                 DequeueFromJitterBuffer(x);
         }
 
         private void DequeueFromJitterBuffer(int playerIndex)
         {
             // Dequeue from buffer.
-            var jitterBuffer = _jitterBuffers[playerIndex];
+            var jitterBuffer = JitterBuffers[playerIndex];
             if (jitterBuffer.TryDequeue(out var packet))
             {
-                _jitterCalculators[playerIndex].Sample();
+                JitterCalculators[playerIndex].Sample();
                 HandlePacket(playerIndex, packet);
             }
 
-            // Calculate if buffer should be changed.
-            var bufferCalculator = _jitterCalculators[playerIndex];
-            if (bufferCalculator.TryCalculateJitter(out var averageJitter))
+            var reduceDelayJitterBuffer = _reduceDelayJitterBuffer[playerIndex]; 
+            if (reduceDelayJitterBuffer.TryDequeue(out var sequence))
+                _reduceDelayJitterCalculator[playerIndex].Sample();
+
+            // Calculate if buffer should be increased.
+            var bufferCalculator = JitterCalculators[playerIndex];
+            if (bufferCalculator.TryCalculateJitter(JitterRampUpPercentile, out var maxJitter))
             {
-                int extraBufferedPackets = (int)(averageJitter / (1000f / PacketSendRate));
-                Log.WriteLine($"Calculated Jitter Buffer for Player [{playerIndex}]. Millis: {averageJitter}, Extra Frames: {extraBufferedPackets}", LogCategory.JitterCalc);
+                int extraFrames = (int)(maxJitter / (1000f / PacketSendRate));
+                Log.WriteLine($"Jitter P[{playerIndex}]. Max: {maxJitter}, Extra Frames: {extraFrames}", LogCategory.JitterCalc);
 
-                /*
-                // No change in buffer.
-                if (extraBufferedPackets == 0) 
-                    return;
-
-                Log.WriteLine($"Updating Jitter Buffer for Player [{playerIndex}]. Old: {jitterBuffer.NumBufferedPackets}, New: {extreBufferedPackets}", LogCategory.JitterCalc);
-                jitterBuffer.NumBufferedPackets = extreBufferedPackets;
-                
                 // If the buffer size is increasing, the jitter buffer itself will handle this case (if queued packets ever reaches 0)
+                if (extraFrames > 0)
+                {
+                    jitterBuffer.SetBufferSize(jitterBuffer.BufferSize + extraFrames);
+                    reduceDelayJitterBuffer.SetBufferSize(Math.Max(0, jitterBuffer.BufferSize - 1));
+                    return;
+                }
+            }
+
+            // Check if buffer should be decreased.
+            var reduceBufferCalculator = _reduceDelayJitterCalculator[playerIndex];
+            if (reduceBufferCalculator.TryCalculateJitter(JitterRampDownPercentile, out maxJitter))
+            {
+                int extraBufferedPackets = (int)(maxJitter / (1000f / PacketSendRate));
                 if (extraBufferedPackets > 0) 
                     return;
 
-                // If the buffer size is reducing, process some extra packets.
-                var packetsToDequeue = -extraBufferedPackets;
-                for (int x = 0; x < packetsToDequeue; x++)
+                var reduced = Math.Max(0, jitterBuffer.BufferSize - 1);
+                if (jitterBuffer.BufferSize != reduced)
                 {
-                    if (jitterBuffer.TryDequeue(out packet))
-                        HandlePacket(playerIndex, packet);
+                    Log.WriteLine($"Reduce Buffer Jitter P[{playerIndex}]. Reducing by 1.", LogCategory.JitterCalc);
+                    jitterBuffer.SetBufferSize(reduced);
+                    reduceDelayJitterBuffer.SetBufferSize(Math.Max(0, jitterBuffer.BufferSize - 1));
                 }
-                */
             }
         }
 

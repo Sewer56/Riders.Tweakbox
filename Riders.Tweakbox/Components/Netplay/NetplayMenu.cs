@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using DearImguiSharp;
+using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -56,7 +57,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
-            RenderSimulateBadInternet();
+            RenderDebugOptions();
         }
 
         private void RenderBandwidthUsage(Socket socket)
@@ -148,12 +149,12 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.TreePop();
             }
 
-            RenderSimulateBadInternet();
+            RenderDebugOptions();
             ImGui.Spacing();
         }
 
         [Conditional("DEBUG")]
-        private void RenderSimulateBadInternet()
+        private void RenderDebugOptions()
         {
             ref var data = ref Config.Data;
             var badInternet = data.BadInternet;
@@ -165,6 +166,27 @@ namespace Riders.Tweakbox.Components.Netplay
                     Reflection.MakeControl(ref badInternet.MinLatency, "Min Latency");
                     Reflection.MakeControl(ref badInternet.MaxLatency, "Max Latency");
                     Reflection.MakeControl(ref badInternet.PacketLoss, "Packet Loss Percent");
+                }
+
+                if (Controller.Socket != null)
+                {
+                    ImGui.Separator();
+                    var socket = Controller.Socket;
+                    if (socket.TryGetComponent(out Race race))
+                    {
+                        ImGui.Text("Jitter Buffer Stats");
+                        ImGui.DragFloat($"Jitter Ramp Up Percentile", ref race.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 1f);
+                        ImGui.DragFloat($"Jitter Ramp Down Percentile", ref race.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 1f);
+                        for (int x = 0; x < socket.State.GetPlayerCount(); x++)
+                        {
+                            var buffer = race.JitterBuffers[x];
+                            var bufferedPackets = buffer.BufferSize;
+                            ImGui.DragInt($"Num Buf Pkt [P{x}]", ref bufferedPackets, 0.1f, 0, 60, null);
+                            ImGui.Checkbox($"Low Latency Mode", ref buffer.LowLatencyMode);
+                            ImGui.Text($"Num in Buf: {buffer.GetNumPacketsInWindow()}");
+                            buffer.SetBufferSize(bufferedPackets);
+                        }
+                    }
                 }
             }
 
