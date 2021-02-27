@@ -3,6 +3,7 @@ using System.Diagnostics;
 using DearImguiSharp;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -175,16 +176,16 @@ namespace Riders.Tweakbox.Components.Netplay
                     if (socket.TryGetComponent(out Race race))
                     {
                         ImGui.Text("Jitter Buffer Stats");
-                        ImGui.DragFloat($"Jitter Ramp Up Percentile", ref race.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 1f);
-                        ImGui.DragFloat($"Jitter Ramp Down Percentile", ref race.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 1f);
+                        ImGui.DragFloat($"Jitter Ramp Up Percentile", ref AdaptiveJitterBufferConstants.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 1f);
+                        ImGui.DragFloat($"Jitter Ramp Down Percentile", ref AdaptiveJitterBufferConstants.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 1f);
                         for (int x = 0; x < socket.State.GetPlayerCount(); x++)
                         {
                             var buffer = race.JitterBuffers[x];
-                            var bufferedPackets = buffer.BufferSize;
+                            var bufferedPackets = buffer.Buffer.BufferSize;
                             ImGui.DragInt($"Num Buf Pkt [P{x}]", ref bufferedPackets, 0.1f, 0, 60, null);
-                            ImGui.Checkbox($"Low Latency Mode", ref buffer.LowLatencyMode);
-                            ImGui.Text($"Num in Buf: {buffer.GetNumPacketsInWindow()}");
-                            buffer.SetBufferSize(bufferedPackets);
+                            ImGui.Checkbox($"Low Latency Mode", ref buffer.Buffer.LowLatencyMode);
+                            ImGui.Text($"Num in Buf: {buffer.Buffer.GetNumPacketsInWindow()}");
+                            buffer.Buffer.SetBufferSize(bufferedPackets);
                         }
                     }
                 }

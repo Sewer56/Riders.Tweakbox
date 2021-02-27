@@ -92,7 +92,9 @@ namespace Riders.Netplay.Messages.Helpers
         {
             if (value != BufferSize)
             {
-                IsDeQueueing = false;
+                if (value > BufferSize)
+                    IsDeQueueing = false;
+                
                 BufferSize = value;
             }
         }
