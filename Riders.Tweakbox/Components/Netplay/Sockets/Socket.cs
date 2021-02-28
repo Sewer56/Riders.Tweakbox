@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LiteNetLib;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -323,6 +324,18 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 Update();
                 return function();
             }, timeout, sleepTime, token);
+        }
+
+        /// <summary>
+        /// Disconnects a client with a given message.
+        /// </summary>
+        /// <param name="peer">The client to disconnect.</param>
+        /// <param name="message">The message to send.</param>
+        public void DisconnectWithMessage(NetPeer peer, string message)
+        {
+            Log.WriteLine($"[Socket] Disconnecting peer with message: {message}", LogCategory.Socket);
+            using var packet = ReliablePacket.Create(new Disconnect(message)).Serialize(out int numBytes);
+            peer.Disconnect(packet.Segment.Array, 0, numBytes);
         }
 
         /// <summary>

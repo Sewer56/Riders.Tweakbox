@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using DotNext;
 using LiteNetLib;
 using Riders.Netplay.Messages;
@@ -30,6 +31,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         public NetplayConfig.HostSettings HostSettings { get; set; }
         public NetplayConfig.ClientSettings ClientSettings { get; set; }
 
+        private Dictionary<int, VersionInformation> _versionMap = new Dictionary<int, VersionInformation>();
+        private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());
+
         public ConnectionManager(Socket socket, EventController @event)
         {
             Socket = socket;
@@ -56,13 +60,26 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         private async void OnHostPeerConnected(NetPeer peer)
         {
             bool HasReceivedPlayerData() => HostState.ClientMap.TryGetPlayerData(peer, out _);
+            bool HasReceivedVersionInformation() => _versionMap.ContainsKey(peer.Id);
 
             Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
 
+            if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.HandshakeTimeout))
+            {
+                Socket.DisconnectWithMessage(peer, "Did not receive user data from client. (Name, Number of Players etc.)");
+                return;
+            }
+
+            _versionMap.Remove(peer.Id, out VersionInformation info);
+            if (!info.Verify(_currentVersionInformation))
+            {
+                Socket.DisconnectWithMessage(peer, $"Client version does not match host version. Client version: {info.TweakboxVersion}, Host Version: {_currentVersionInformation.TweakboxVersion}");
+                return;
+            }
+
             if (!await Socket.PollUntilAsync(HasReceivedPlayerData, Socket.State.HandshakeTimeout))
             {
-                Log.WriteLine($"[Host] Disconnecting client, did not receive user data.", LogCategory.Socket);
-                peer.Disconnect();
+                Socket.DisconnectWithMessage(peer, "Did not receive user data from client. (Name, Number of Players etc.)");
                 return;
             }
 
@@ -77,8 +94,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
         private void OnClientPeerConnected(NetPeer peer)
         {
+            Socket.SendAndFlush(peer, ReliablePacket.Create(_currentVersionInformation), DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Version Information", LogCategory.Socket);
+
             using var packet = ReliablePacket.Create(new ClientSetPlayerData() { Data = State.SelfInfo });
-            Socket.SendAndFlush(peer, packet, DeliveryMethod.ReliableUnordered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
+            Socket.SendAndFlush(peer, packet, DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
         }
 
         private void OnHostPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -91,14 +110,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         {
             try
             {
-                if (disconnectInfo.Reason != DisconnectReason.DisconnectPeerCalled) 
-                    return;
-
-                var reader   = disconnectInfo.AdditionalData;
-                var rawBytes = reader.RawData.AsSpan(reader.UserDataOffset, reader.UserDataSize);
-                using var reliable = new ReliablePacket();
-                reliable.Deserialize(rawBytes);
-                Shell.AddDialog("Disconnected from Host", reliable.GetMessage<Disconnect>().Reason);
+                // According to docs I should check for DisconnectReason.RemoteConnectionClose but it seems other reasons can be assigned?.
+                if (disconnectInfo.AdditionalData != null && disconnectInfo.AdditionalData.AvailableBytes > 0)
+                {
+                    var reader   = disconnectInfo.AdditionalData;
+                    var rawBytes = reader.RawData.AsSpan(reader.UserDataOffset, reader.UserDataSize);
+                    using var reliable = new ReliablePacket();
+                    reliable.Deserialize(rawBytes);
+                    Shell.AddDialog("Disconnected from Host", reliable.GetMessage<Disconnect>().Reason);
+                }
             }
             finally
             {
@@ -128,21 +148,24 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
         private void HostHandleReliablePacket(ref ReliablePacket packet, NetPeer source)
         {
-            if (packet.MessageType != MessageType.ClientSetPlayerData)
-                return;
-
-            var data = packet.GetMessage<ClientSetPlayerData>();
-            if (!HostState.ClientMap.TryAddOrUpdatePeer(source, data.Data, out string failReason))
+            if (packet.MessageType == MessageType.ClientSetPlayerData)
             {
-                Log.WriteLine($"Failed to Add Peer to Session | Reason {failReason}", LogCategory.Socket);
-                source.Disconnect();
-                return;
-            }
+                var data = packet.GetMessage<ClientSetPlayerData>();
+                if (!HostState.ClientMap.TryAddOrUpdatePeer(source, data.Data, out string failReason))
+                {
+                    Socket.DisconnectWithMessage(source, $"Failed to add client to session: {failReason}");
+                    return;
+                }
 
-            HostUpdatePlayerMap();
+                HostUpdatePlayerMap();
+            }
+            else if (packet.MessageType == MessageType.Version)
+            {
+                _versionMap[source.Id] = packet.GetMessage<VersionInformation>();
+            }
         }
 
-        private void ClientHandleReliablePacket(ReliablePacket packet)
+        private void ClientHandleReliablePacket(ref ReliablePacket packet)
         {
             if (packet.MessageType == MessageType.HostSetPlayerData)
             {
@@ -178,7 +201,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             if (Socket.GetSocketType() == SocketType.Host)
                 HostHandleReliablePacket(ref packet, source);
             else
-                ClientHandleReliablePacket(packet);
+                ClientHandleReliablePacket(ref packet);
         }
 
         /// <inheritdoc />

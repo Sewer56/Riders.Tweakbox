@@ -90,6 +90,10 @@ namespace Riders.Netplay.Messages
                 switch (MessageType)
                 {
                     case MessageType.None:               break;
+
+                    case MessageType.Disconnect: Message = new Disconnect(); break;
+                    case MessageType.Version:    Message = new VersionInformation(); break;
+
                     case MessageType.SRand:              Message = new SRandSync(); break;
                     case MessageType.GameData:           Message = new GameData(); break;
                     case MessageType.StartSync:          Message = new StartSync(); break;
@@ -116,8 +120,6 @@ namespace Riders.Netplay.Messages
                     case MessageType.CharaSelectSync:       Message = new CharaSelectSync(); break;
                     case MessageType.CharaSelectExit:       Message = new CharaSelectExit(); break;
 
-                    case MessageType.Disconnect:
-                        break;
                     default: throw new Exception("Unrecognized Message Type");
                 }
 

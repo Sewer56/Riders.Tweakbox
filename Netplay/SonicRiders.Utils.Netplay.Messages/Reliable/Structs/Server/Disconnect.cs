@@ -10,6 +10,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server
         /// </summary>
         public string Reason;
 
+        public Disconnect(string reason) => Reason = reason;
+
         /// <inheritdoc />
         public void Dispose() { }
 

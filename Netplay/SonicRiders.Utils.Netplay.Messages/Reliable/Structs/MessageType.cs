@@ -9,6 +9,7 @@
 
         // Server
         Disconnect,         // Host -> Client: Reason for disconnection.
+        Version,            // Client -> Host: Version information.
 
         // Randomization & Time Sync
         SRand,              // Host -> Client: RNG Seed and Time to Resume Game synced with external NTP source
