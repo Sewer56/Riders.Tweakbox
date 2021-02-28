@@ -66,6 +66,8 @@ namespace Riders.Tweakbox.Components.Netplay
 
         private void RenderBandwidthUsage(Socket socket)
         {
+            ImGui.Text($"Packet Loss Percent: {socket.Manager.Statistics.PacketLossPercent:0.000}%");
+
             ImGui.Text($"Including UDP + IP Overhead");
             ImGui.Text($"Upload: {socket.Bandwidth.KBytesSentWithOverhead * 8:####0.0}kbps");
             ImGui.Text($"Download: {socket.Bandwidth.KBytesReceivedWithOverhead * 8:####0.0}kbps");

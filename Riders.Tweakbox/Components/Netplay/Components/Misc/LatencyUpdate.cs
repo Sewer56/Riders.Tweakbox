@@ -13,7 +13,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
     public class LatencyUpdate : INetplayComponent
     {
-        private const int UpdateIntervalMs = 3000;
+        private const int UpdateIntervalMs = 1000;
 
         /// <inheritdoc />
         public Socket Socket { get; set; }
