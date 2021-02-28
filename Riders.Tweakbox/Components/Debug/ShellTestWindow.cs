@@ -38,12 +38,13 @@ namespace Riders.Tweakbox.Components.Debug
         private bool TestManualDialog()
         {
             bool isOpened = true;
-            ImGui.OpenPopup(TestDialogId);
-            if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize)) 
+            ImGui.OpenPopup(TestDialogId, 0);
+            if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+            {
                 ImGui.Text("Test Manual Dialog");
+                ImGui.EndPopup();
+            }
 
-            ImGui.EndPopup();
-            ImGui.CloseCurrentPopup();
             return isOpened;
         }
     }

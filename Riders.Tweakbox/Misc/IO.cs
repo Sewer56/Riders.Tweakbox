@@ -20,6 +20,7 @@ namespace Riders.Tweakbox.Misc
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
+        public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
         /// <summary>
         /// Folder mod is stored in.

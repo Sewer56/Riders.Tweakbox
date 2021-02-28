@@ -9,7 +9,7 @@ namespace Sewer56.Imgui.Shell
     /// <summary>
     /// Encapsulates a simple, non-interactive information window that self resizes to meet the necessary content size.
     /// </summary>
-    public class InformationWindow
+    public class InformationWindow : IDisposable
     {
         private const int LogWindowFlags = (int)(ImGuiWindowFlags.ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlags.ImGuiWindowFlagsNoInputs |
                                                  ImGuiWindowFlags.ImGuiWindowFlagsNoMove | ImGuiWindowFlags.ImGuiWindowFlagsNoSavedSettings |
@@ -90,8 +90,9 @@ namespace Sewer56.Imgui.Shell
 
         private void SetWindowPosition()
         {
-            var displaySize      = ImGui.GetIO().DisplaySize;
-            var frameBufferScale = ImGui.GetIO().DisplayFramebufferScale;
+            using var io         = ImGui.GetIO();
+            var displaySize      = io.DisplaySize;
+            var frameBufferScale = io.DisplayFramebufferScale;
             var scaledPadding    = new Vector2(Padding.X * frameBufferScale.X, Padding.Y * frameBufferScale.Y);
 
             // Add padding.
@@ -138,6 +139,16 @@ namespace Sewer56.Imgui.Shell
             }
 
             ImGui.SetNextWindowPos(_nextWindowPos, (int)ImGuiCond.ImGuiCondAlways, WindowPivot);
+        }
+
+        ~InformationWindow() => Dispose();
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            WindowPivot?.Dispose();
+            _nextWindowPos?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -131,12 +131,13 @@ namespace Sewer56.Imgui.Shell
         private static bool DialogHandler(string name, DialogFn sup)
         {
             bool isOpened = true;
-            ImGui.OpenPopup(name);
-            if (ImGui.BeginPopupModal(name, ref isOpened, (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+            ImGui.OpenPopup(name, 0);
+            if (ImGui.BeginPopupModal(name, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+            {
                 sup(ref isOpened);
+                ImGui.EndPopup();
+            }
 
-            ImGui.EndPopup();
-            ImGui.CloseCurrentPopup();
             return isOpened;
         }
 
@@ -146,10 +147,12 @@ namespace Sewer56.Imgui.Shell
         private static bool WindowHandler(string name, DialogFn sup, ImGuiWindowFlags flags = 0)
         {
             bool isOpened = true;
-            if (ImGui.Begin(name, ref isOpened, (int) flags)) 
+            if (ImGui.Begin(name, ref isOpened, (int) flags))
+            {
                 sup(ref isOpened);
+                ImGui.End();
+            }
 
-            ImGui.End();
             return isOpened;
         }
 

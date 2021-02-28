@@ -72,7 +72,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen.\n" +
                                     "Do not combine/use with other widescreen hacks.");
 
-                if (ImGui.ButtonEx("Apply", Constants.ButtonSize, 0))
+                if (ImGui.Button("Apply", Constants.ButtonSize))
                     Config.Apply();
 
                 Tooltip.TextOnHover("Changing resolution mid-game is currently not supported.\n" +

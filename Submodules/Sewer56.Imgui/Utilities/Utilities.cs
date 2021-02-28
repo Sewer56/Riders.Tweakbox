@@ -1,44 +1,31 @@
 ﻿using System;
 using System.Numerics;
 using DearImguiSharp;
+using Sewer56.Imgui.Controls;
+using Sewer56.Imgui.Controls.Extensions;
 
 namespace Sewer56.Imgui.Utilities
 {
     public static class Utilities
     {
-        /// <summary>
-        /// Runs a function that accepts a vector and returns the result.
-        /// </summary>
-        public static unsafe Vector2 RunVectorFunction(Action<ImVec2> function)
+        /// <summary/>
+        public static FinalizedImVec4 ToImVec(this Vector4 vector)
         {
-            var vec2 = new Vector2();
-            function(new ImVec2(&vec2));
-            return vec2;
-        }
-
-        /// <summary>
-        /// Runs a function that accepts a vector and returns the result.
-        /// </summary>
-        public static unsafe Vector4 RunVectorFunction(Action<ImVec4> function)
-        {
-            var vec4 = new Vector4();
-            function(new ImVec4(&vec4));
-            return vec4;
+            return ToImVec(vector, new FinalizedImVec4());
         }
 
         /// <summary/>
-        public static ImVec4 ToImVec(this Vector4 vector)
+        public static FinalizedImVec4 ToImVec(this Vector4 vector, FinalizedImVec4 imVec4)
         {
-            var vec = new ImVec4
-            {
-                X = vector.X,
-                Y = vector.Y,
-                Z = vector.Z,
-                W = vector.W
-            };
-
-            return vec;
+            imVec4.X = vector.X;
+            imVec4.Y = vector.Y;
+            imVec4.Z = vector.Z;
+            imVec4.W = vector.W;
+            return imVec4;
         }
+
+        /// <summary/>
+        public static Vector4 ToVector(this ImVec4 vector) => new Vector4(vector.X, vector.Y, vector.Z, vector.W);
 
         /// <summary/>
         public static ImVec2 ToImVec(this Vector2 vector)
@@ -50,6 +37,20 @@ namespace Sewer56.Imgui.Utilities
             };
 
             return vec;
+        }
+
+        /// <summary>
+        /// Converts a hex RGBA colour into a <see cref="ImVec4"/>.
+        /// </summary>
+        public static ImVec4 HexToFloat(uint hex)
+        {
+            return new ImVec4()
+            {
+                X = ((hex >> 24) & 0xFF) / (float) byte.MaxValue * 1.00f,
+                Y = ((hex >> 16) & 0xFF) / (float) byte.MaxValue * 1.00f,
+                Z = ((hex >> 8) & 0xFF)  / (float) byte.MaxValue * 1.00f,
+                W = (hex & 0xFF) / (float) byte.MaxValue * 1.00f,
+            };
         }
     }
 }

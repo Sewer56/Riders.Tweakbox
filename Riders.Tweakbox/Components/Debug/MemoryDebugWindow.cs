@@ -64,9 +64,9 @@ namespace Riders.Tweakbox.Components.Debug
 
                 if (_simulatingLoad)
                 {
-                    ImGui.DragInt("Number of Objects", ref _objects, 1.0f, 0, 99999, null);
-                    ImGui.DragInt("Object Size", ref _objectSize, 1.0f, 0, 99999, null);
-                    ImGui.DragInt("Time Between Allocations (ms)", ref _timeBetweenAllocations, 1.0f, 0, 99999, null);
+                    ImGui.DragInt("Number of Objects", ref _objects, 1.0f, 0, 99999, null, 0);
+                    ImGui.DragInt("Object Size", ref _objectSize, 1.0f, 0, 99999, null, 0);
+                    ImGui.DragInt("Time Between Allocations (ms)", ref _timeBetweenAllocations, 1.0f, 0, 99999, null, 0);
 
                     var objectsPerSec = _objects * (1000.0f / _timeBetweenAllocations);
                     ImGui.Text($"Bytes/allocation: {(_objects * _objectSize) / 1000000.0f}MB");

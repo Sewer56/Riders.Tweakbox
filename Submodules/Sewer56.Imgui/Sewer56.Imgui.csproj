@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DearImguiSharp" Version="1.75.4" />
+    <PackageReference Include="DearImguiSharp" Version="1.81.3" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
-    <PackageReference Include="Reloaded.Imgui.Hook" Version="1.0.4" />
+    <PackageReference Include="Reloaded.Imgui.Hook" Version="1.1.2" />
     <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
   </ItemGroup>
 

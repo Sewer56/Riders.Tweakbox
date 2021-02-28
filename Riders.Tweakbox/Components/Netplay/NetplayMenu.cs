@@ -86,12 +86,12 @@ namespace Riders.Tweakbox.Components.Netplay
                 ref var playerSettings = ref data.PlayerSettings;
                 playerSettings.PlayerName.Render(nameof(playerSettings.PlayerName));
 
-                ImGui.DragInt("Number of Players", ref playerSettings.LocalPlayers, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ImGui.DragInt("Number of Players", ref playerSettings.LocalPlayers, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null, 0);
                 Tooltip.TextOnHover("Default: 1\n" +
                                     "Number of local players playing online.\n" +
                                     "Setting this value to 0 makes you a spectator.");
 
-                ImGui.DragInt("Max Number of Cameras", ref playerSettings.MaxNumberOfCameras, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null);
+                ImGui.DragInt("Max Number of Cameras", ref playerSettings.MaxNumberOfCameras, 0.1f, 0, Riders.Netplay.Messages.Misc.Constants.MaxNumberOfLocalPlayers, null, 0);
                 Tooltip.TextOnHover("Overrides the number of cameras, allowing you to spectate other players while in online multiplayer.\n" +
                                     "0 = Automatic\n" +
                                     "1 = Single Screen\n" +
@@ -134,7 +134,7 @@ namespace Riders.Tweakbox.Components.Netplay
 
                 clientData.IP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, clientData.IP.FilterIPAddress);
                 clientData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                ImGui.DragInt("Port", ref clientData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null);
+                ImGui.DragInt("Port", ref clientData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null, 0);
                 
                 if (ImGui.Button("Connect", Constants.DefaultVector2))
                     Connect();
@@ -147,7 +147,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 ref var hostData = ref data.HostSettings;
 
                 hostData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                ImGui.DragInt("Port", ref hostData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null);
+                ImGui.DragInt("Port", ref hostData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null, 0);
 
                 ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref hostData.ReducedTickRate);
                 Tooltip.TextOnHover("Only use when hosting 8 player lobby and upload speed is less than 1Mbit/s.\n" +
@@ -168,12 +168,12 @@ namespace Riders.Tweakbox.Components.Netplay
                 if (punchingServer.IsEnabled)
                 {
                     punchingServer.Host.Render("Host Server");
-                    ImGui.DragInt("Port", ref punchingServer.Port, 0.1f, 0, ushort.MaxValue, null);
+                    ImGui.DragInt("Port", ref punchingServer.Port, 0.1f, 0, ushort.MaxValue, null, 0);
                     
-                    ImGui.DragInt("Server Timeout", ref punchingServer.ServerTimeout, 0.1f, 0, ushort.MaxValue, null);
+                    ImGui.DragInt("Server Timeout", ref punchingServer.ServerTimeout, 0.1f, 0, ushort.MaxValue, null, 0);
                     Tooltip.TextOnHover("(Milliseconds) Timeout for connecting to the third party server.");
 
-                    ImGui.DragInt("Punch Timeout", ref punchingServer.PunchTimeout, 0.1f, 0, ushort.MaxValue, null);
+                    ImGui.DragInt("Punch Timeout", ref punchingServer.PunchTimeout, 0.1f, 0, ushort.MaxValue, null, 0);
                     Tooltip.TextOnHover("(Milliseconds) Timeout for trying to hole punch past the server firewall.\nIf you have trouble issues connecting, increasing this value might help.");
                 }
 
@@ -282,8 +282,8 @@ namespace Riders.Tweakbox.Components.Netplay
 
         private static void RenderAdaptiveBufferDetails(IJitterBuffer<UnreliablePacket>[] buffers, int playerCount)
         {
-            ImGui.DragFloat($"Jitter Ramp Up Percentile", ref AdaptiveJitterBufferConstants.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 1f);
-            ImGui.DragFloat($"Jitter Ramp Down Percentile", ref AdaptiveJitterBufferConstants.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 1f);
+            ImGui.DragFloat($"Jitter Ramp Up Percentile", ref AdaptiveJitterBufferConstants.JitterRampUpPercentile, 0.001f, 0f, 1f, null, 0);
+            ImGui.DragFloat($"Jitter Ramp Down Percentile", ref AdaptiveJitterBufferConstants.JitterRampDownPercentile, 0.001f, 0f, 1f, null, 0);
             for (int x = 0; x < playerCount; x++)
             {
                 var buffer = (AdaptiveJitterBuffer<UnreliablePacket>) buffers[x];
@@ -294,7 +294,7 @@ namespace Riders.Tweakbox.Components.Netplay
         private static void RenderDefaultBufferInfo(JitterBuffer<UnreliablePacket> buffer, int playerIndex)
         {
             var bufferedPackets = buffer.BufferSize;
-            ImGui.DragInt($"Num Buf Pkt [P{playerIndex}]", ref bufferedPackets, 0.1f, 0, 60, null);
+            ImGui.DragInt($"Num Buf Pkt [P{playerIndex}]", ref bufferedPackets, 0.1f, 0, 60, null, 0);
             ImGui.Checkbox($"Low Latency Mode", ref buffer.LowLatencyMode);
             ImGui.Text($"Num in Window: {buffer.GetNumPacketsInWindow()}");
             ImGui.Text($"Num in Buf: {buffer.PacketCount}");
