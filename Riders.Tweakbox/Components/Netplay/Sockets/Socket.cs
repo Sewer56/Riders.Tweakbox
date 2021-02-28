@@ -36,6 +36,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public CommonState State;
 
         /// <summary>
+        /// Host version of <see cref="State"/> or null if not applicable.
+        /// </summary>
+        public HostState HostState => State as HostState;
+
+        /// <summary>
         /// Listener to network events.
         /// </summary>
         public NetworkEventListener Listener;

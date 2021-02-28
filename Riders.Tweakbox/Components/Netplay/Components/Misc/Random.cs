@@ -9,6 +9,7 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
+using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
@@ -116,8 +117,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             hook.OriginalFunction(seed);
             if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
             {
-                Log.WriteLine($"[{nameof(Random)} / Host] It's no use, RNG seed sync failed, let's get outta here!.", LogCategory.Random);
-                Socket.Dispose();
+                // Disconnect those who are not ready.
+                foreach (var pair in _syncReady)
+                {
+                    if (pair.Value == true)
+                        continue;
+
+                    var peer = Socket.Manager.GetPeerById(pair.Key);
+                    if (peer != null & Socket.HostState.ClientMap.TryGetPlayerData(peer, out var data))
+                        Socket.DisconnectWithMessage(peer, $"Your client hasn't reported in time to sync RNG. Timeout: {Socket.State.HandshakeTimeout}ms");
+                }
+
                 return;
             }
 
