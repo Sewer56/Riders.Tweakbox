@@ -40,11 +40,6 @@ namespace Riders.Tweakbox.Controllers
         public float CpuUsage { get; private set; }
 
         /// <summary>
-        /// The current Direct3D Device.
-        /// </summary>
-        private Device _device = new Device((IntPtr)0x0);
-
-        /// <summary>
         /// Checks when to sample new CPU usage data.
         /// </summary>
         private Stopwatch _cpuLoadSampleWatch = Stopwatch.StartNew();
@@ -58,6 +53,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<TimeBeginPeriod> _beginPeriodHook;
         private IHook<TimeEndPeriod> _endPeriodHook;
         private IHook<ReturnVoidFnPtr> _endFrameHook;
+        private GraphicsController _graphicsController = IoC.GetConstant<GraphicsController>();
 
         public FramePacingController()
         {
@@ -122,9 +118,7 @@ namespace Riders.Tweakbox.Controllers
             {
                 try
                 {
-                    var deviceAddress = *(void**)0x016BF1B4;
-                    _device.NativePointer = (IntPtr)deviceAddress;
-                    _device.EndScene();
+                    _graphicsController.D3dDeviceEx.EndScene();
                 }
                 catch (Exception ex)
                 {
