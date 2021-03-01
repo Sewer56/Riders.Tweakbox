@@ -13,6 +13,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// Stores a mapping of peers to players.
         /// </summary>
         public ClientMap ClientMap;
+        
+        /// <summary>
+        /// Gets the <see cref="PlayerData"/> belonging to the host.
+        /// </summary>
+        public override PlayerData GetHostData() => SelfInfo;
 
         /// <summary>
         /// Translates a host player index into a local player index. 

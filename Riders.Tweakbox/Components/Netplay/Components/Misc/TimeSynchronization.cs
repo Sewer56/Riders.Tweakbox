@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using StructLinq;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
@@ -32,8 +34,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             if (Socket.GetSocketType() == SocketType.Host)
                 return time;
-            
-            return time + TimeSpan.FromTicks(Manager.FirstPeer.RemoteTimeDelta);
+
+            return time + TimeSpan.FromTicks(GetAccurateRemoteTimeDelta());
         }
 
         /// <summary>
@@ -45,7 +47,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             if (Socket.GetSocketType() == SocketType.Host)
                 return time;
 
-            return time - TimeSpan.FromTicks(Manager.FirstPeer.RemoteTimeDelta);
+            return time - TimeSpan.FromTicks(GetAccurateRemoteTimeDelta());
+        }
+
+        private long GetAccurateRemoteTimeDelta()
+        {
+            // Remote time delta without library calculated ping.
+            var recentLatencies             = Socket.State.GetHostData().RecentLatencies;
+            var remoteTimeDeltaWithoutPing  = Manager.FirstPeer.RemoteTimeDelta - ((Socket.State.GetHostData().Latency + 0.5) * TimeSpan.TicksPerMillisecond);
+            var averagePing                 = recentLatencies.ToStructEnumerable().Sum(x => x.Value + 0.5, x => x) / recentLatencies.Count;
+            return (long) (remoteTimeDeltaWithoutPing + (averagePing * TimeSpan.TicksPerMillisecond));
         }
 
         /// <inheritdoc />

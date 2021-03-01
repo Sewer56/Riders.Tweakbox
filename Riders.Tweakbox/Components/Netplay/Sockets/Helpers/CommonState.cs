@@ -63,6 +63,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         }
 
         /// <summary>
+        /// Gets the <see cref="PlayerData"/> belonging to the host.
+        /// </summary>
+        public virtual PlayerData GetHostData() => PlayerInfo[0];
+
+        /// <summary>
         /// Converts a local player index to an index on the host's end.
         /// </summary>
         public virtual int GetHostPlayerIndex(int playerIndex)

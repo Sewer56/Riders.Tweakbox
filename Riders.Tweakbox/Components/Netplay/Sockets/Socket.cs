@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -81,7 +82,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Manager.EnableStatistics = true;
             Bandwidth = new BandwidthTracker(Manager);
             Config = config;
-
+            Manager.PingInterval = PlayerData.LatencyUpdatePeriod;
 #if DEBUG
             Manager.DisconnectTimeout = int.MaxValue;
 #endif
@@ -355,7 +356,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             // TODO: Negotiation between multiple clients on current time so WaitUntil matches.
             Log.WriteLine($"[Socket] Waiting for event ({eventName}).", eventCategory);
             Log.WriteLine($"[Socket] Time: {DateTime.UtcNow}", eventCategory);
-            Log.WriteLine($"[Socket] Start Time: {waitUntil}", eventCategory);
+            Log.WriteLine($"[Socket] Start Time: {waitUntil}:{waitUntil.TimeOfDay.Milliseconds:000}", eventCategory);
 
             // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
             ActionWrappers.TryWaitUntil(() =>

@@ -142,23 +142,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
             // TODO: Handle error when time component is not available.
 
-            // Whether a packet is dropped is binary by nature.
-            // If the probability of packet drop is 0.5, then consider at least 1 drop guaranteed.
-            var highestPacketLossProbability = Socket.Manager.ConnectedPeerList.Max(x => x.Statistics.PacketLossPercent) / 100;
-            int minNumResends = 1;
-            while (highestPacketLossProbability >= 0.0005) // Allow max 0.05% probability of being late + resend time.
-            {
-                highestPacketLossProbability *= highestPacketLossProbability;
-                minNumResends++;
-            }
-
-            var highestPeerRtt = Socket.HostState.PlayerInfo.Max(x => x.Latency) * 2;
-            var startTime = DateTime.UtcNow.AddMilliseconds(CalculateLiteNetLibResendDelay(highestPeerRtt) * (minNumResends + 0.75f)); 
+            // Multiply the highest recently recorded Round Trip Time and multiply by 2 in case of spike.
+            // Should be good enough as long as RecentLatencies is a list long enough.
+            var timeOffset = (Socket.HostState.PlayerInfo.Max(x => x.RecentLatencies.Max(y => y.Value + 0.5)) * 2) * 2;
+            Log.WriteLine($"[{nameof(Random)} / Host] Time Offset: {timeOffset}ms");
+            var startTime = DateTime.UtcNow.AddMilliseconds(timeOffset); 
             Socket.SendToAllAndFlush(ReliablePacket.Create(new SRandSync(startTime, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
             Socket.WaitWithSpin(startTime, $"[{nameof(Random)} / Host] SRand Synchronized.", LogCategory.Random, 32);
             ResetRaceComponent();
-
-            float CalculateLiteNetLibResendDelay(int clientRtt) => (float)(25.0 + (clientRtt * 2.1)); // Resend delay stolen from LiteNetLib source.
         }
 
         private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)

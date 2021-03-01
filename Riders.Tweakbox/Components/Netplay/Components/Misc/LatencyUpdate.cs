@@ -4,6 +4,7 @@ using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Misc;
@@ -13,7 +14,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 {
     public class LatencyUpdate : INetplayComponent
     {
-        private const int UpdateIntervalMs = 1000;
+        private const int UpdateIntervalMs = PlayerData.LatencyUpdatePeriod;
 
         /// <inheritdoc />
         public Socket Socket { get; set; }
@@ -73,12 +74,12 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                     // Update latency of client.
                     var hostState = (HostState) Socket.State;
                     var data = hostState.ClientMap.GetPlayerData(peer);
-                    data.Latency = latency;
+                    data.UpdateLatency(latency);
                 }
                 else
                 {
                     // Update ping to host.
-                    Socket.State.PlayerInfo[0].Latency = latency;
+                    Socket.State.GetHostData().UpdateLatency(latency);
                 }
             }
             catch (Exception e)
@@ -102,7 +103,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                     {
                         // Fill in from player 2, as player 1 will be host.
                         for (int x = 0; x < latencies.NumElements; x++)
-                            Socket.State.PlayerInfo[x + 1].Latency = latencies.Data[x];
+                            Socket.State.PlayerInfo[x + 1].UpdateLatency(latencies.Data[x]);
                     }
                     catch (Exception e)
                     {

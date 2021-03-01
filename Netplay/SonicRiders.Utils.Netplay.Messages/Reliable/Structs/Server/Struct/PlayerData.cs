@@ -1,4 +1,6 @@
-﻿using Riders.Netplay.Messages.Misc;
+﻿using System.Collections.Generic;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Misc.Interfaces;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
@@ -9,6 +11,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Struct
     public class PlayerData : IReusable
     {
         public const int NumPlayersBits = 2;
+
+        /// <summary>
+        /// Time within which to remember the highest latency.
+        /// </summary>
+        public const int MaxLatencyTimeMs = 15000;
+
+        /// <summary>
+        /// Time between which latency updates are expected.
+        /// </summary>
+        public const int LatencyUpdatePeriod = 1000;
 
         /// <summary>
         /// The name of the player.
@@ -28,6 +40,12 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Struct
         public int Latency;
 
         /// <summary>
+        /// Contains the recent latencies of the player.
+        /// This is latencies which happened within the last <see cref="MaxLatencyTimeMs"/>
+        /// </summary>
+        public List<Timestamped<int>> RecentLatencies = new List<Timestamped<int>>((MaxLatencyTimeMs / LatencyUpdatePeriod) + 1);
+
+        /// <summary>
         /// Number of local players assigned to this machine.
         /// </summary>
         public int NumPlayers;
@@ -38,7 +56,22 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server.Struct
         public void UpdateFromClient(PlayerData data)
         {
             this.Name       = data.Name;
-            this.NumPlayers  = data.NumPlayers;
+            this.NumPlayers = data.NumPlayers;
+        }
+
+        /// <summary>
+        /// Updates the latency for this client.
+        /// </summary>
+        public void UpdateLatency(int latency)
+        {
+            Latency = latency;
+            RecentLatencies.Add(latency);
+
+            for (int x = RecentLatencies.Count - 1; x >= 0; x--)
+            {
+                if (RecentLatencies[x].IsDiscard(MaxLatencyTimeMs))
+                    RecentLatencies.RemoveAt(x);
+            }
         }
 
         public unsafe void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
