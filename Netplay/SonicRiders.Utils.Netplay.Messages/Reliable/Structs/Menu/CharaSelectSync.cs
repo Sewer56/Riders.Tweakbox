@@ -30,7 +30,6 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <inheritdoc />
         public readonly MessageType GetMessageType() => MessageType.CharaSelectSync;
 
-
         /// <inheritdoc />
         public void Set(CharaSelectLoop[] elements, int numElements = -1) => this.Set<CharaSelectSync, CharaSelectLoop, CharaSelectSync>(elements, numElements);
 
@@ -40,6 +39,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <inheritdoc />
         public CharaSelectSync CreatePooled(int numElements) => this.CreatePooled<CharaSelectSync, CharaSelectLoop, CharaSelectSync>(numElements);
         public void ToPooled(int numElements) => this = CreatePooled(numElements);
+
+        public CharaSelectSync Clone() => this.Clone<CharaSelectSync, CharaSelectLoop, CharaSelectSync>();
 
         /// <inheritdoc />
         public void Dispose() => IBitPackedArray<CharaSelectLoop, CharaSelectSync>.Dispose(ref this);

@@ -70,5 +70,20 @@ namespace Riders.Netplay.Messages.Misc.Interfaces
                 NumElements = numElements
             };
         }
+
+        /// <summary>
+        /// Clones the current bit packed array.
+        /// </summary>
+        public static TParent Clone<TParent, T, TOwner>(ref this TParent self)
+            where TParent : struct, IBitPackedArray<T, TOwner>
+            where T : unmanaged, IBitPackable<T>
+            where TOwner : struct, IBitPackedArray<T, TOwner>
+        {
+            var result = self.IsPooled ? CreatePooled<TParent, T, TOwner>(ref self, self.NumElements) : Create<TParent, T, TOwner>(ref self, new T[self.NumElements]);
+            for (int x = 0; x < result.NumElements; x++)
+                result.Elements[x] = self.Elements[x];
+
+            return result;
+        }
     }
 }
