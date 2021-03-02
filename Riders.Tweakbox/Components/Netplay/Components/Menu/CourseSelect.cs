@@ -35,7 +35,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Event = @event;
             Event.OnCourseSelect            += OnCourseSelect;
             Event.AfterCourseSelect         += Delta.Update;
-            Event.OnCourseSelectSetStage    += OnCourseSelectSetStage;
+            Event.OnEnterCharacterSelect    += EnterCharacterSelect;
             Delta.OnCourseSelectUpdated     += CourseSelectUpdated;
         }
 
@@ -44,7 +44,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         {
             Event.OnCourseSelect            -= OnCourseSelect;
             Event.AfterCourseSelect         -= Delta.Update;
-            Event.OnCourseSelectSetStage    -= OnCourseSelectSetStage;
+            Event.OnEnterCharacterSelect    -= EnterCharacterSelect;
             Delta.OnCourseSelectUpdated     -= CourseSelectUpdated;
         }
 
@@ -66,10 +66,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             }
         }
 
-        private void OnCourseSelectSetStage()
+        private void EnterCharacterSelect()
         {
             // Reset flag if old (e.g. received after entering charaselect).
-            if (_receivedSetStageFlag.IsDiscard(128))
+            if (_receivedSetStageFlag.IsDiscard(Socket.State.MaxLatency))
                 _receivedSetStageFlag = false;
 
             // If set stage was invoked by us, send to other clients.
@@ -111,6 +111,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 
                 case MessageType.CourseSelectSetStage:
                     var value = packet.GetMessage<CourseSelectSetStage>();
+                    if (!_receivedSetStageFlag.IsDiscard(Socket.State.MaxLatency))
+                        return; // Sorry, another peer beat you to the punch!
+
                     *Sewer56.SonicRiders.API.State.Level = (Levels)value.StageId;
                     _receivedSetStageFlag = true;
                     if (Socket.GetSocketType() == SocketType.Host)

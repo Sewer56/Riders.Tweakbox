@@ -81,7 +81,12 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Sets the stage when the player leaves the course select stage in battle mode picker.
         /// </summary>
-        public event AsmAction OnCourseSelectSetStage;
+        public event AsmAction OnBattleCourseSelectSetStage;
+
+        /// <summary>
+        /// Called right before entering character select from the course select menu.
+        /// </summary>
+        public event AsmAction OnEnterCharacterSelect;
 
         /// <summary>
         /// Executed when the user exits the character select menu.
@@ -229,7 +234,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
         private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
 
-        private IAsmHook _onCourseSelectSetStageHook;
+        private IAsmHook _onBattleCourseSelectSetStageHook;
         private IAsmHook _onExitCharaSelectHook;
         private IAsmHook _onCheckIfExitCharaSelectHook;
         private IAsmHook _onStartRaceHook;
@@ -246,6 +251,7 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _alwaysSeedRngOnIntroSkipHook;
         private IAsmHook _onCheckIfGiveAiRandomItemsHook;
         private IAsmHook _checkIfRandomizePlayerHook;
+        private IAsmHook _onEnterCharacterSelectHook;
         private Patch  _randItemPickupPatch;
         private IReverseWrapper<Functions.CdeclReturnIntFn> _randItemPickupWrapper;
         private Random _random = new Random();
@@ -260,8 +266,8 @@ namespace Riders.Tweakbox.Controllers
             // Do not move below onCheckIfSkipIntroAsm because both overwrite same regions of code. You want the other to capture this one. 
             _alwaysSeedRngOnIntroSkipHook = hooks.CreateAsmHook(new[] { $"use32", $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, false)}" }, 0x00415F33, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
-            var onCourseSelectSetStageAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCourseSelectSetStageHook, out _)}" };
-            _onCourseSelectSetStageHook   = hooks.CreateAsmHook(onCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
+            var onBattleCourseSelectSetStageAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnBattleCourseSelectSetStageHook, out _)}" };
+            _onBattleCourseSelectSetStageHook   = hooks.CreateAsmHook(onBattleCourseSelectSetStageAsm, 0x00464EAA, AsmHookBehaviour.ExecuteAfter).Activate();
 
             var ifQtePressLeftAsm = new string[] { $"mov eax,[edx+0xB3C]", utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4B3721, Environment.Is64BitProcess) };
             var onCheckIfQtePressLeft = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfQtePressLeftHook, out _, ifQtePressLeftAsm, null, null, "je")}" };
@@ -352,6 +358,9 @@ namespace Riders.Tweakbox.Controllers
             };
             _checkIfRandomizePlayerHook = hooks.CreateAsmHook(onCheckIfRandomizePlayer, 0x004638D1, AsmHookBehaviour.ExecuteFirst).Activate();
             _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
+
+            var onEnterCharacterSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnEnterCharacterSelectHook, out _)}" };
+            _onEnterCharacterSelectHook   = hooks.CreateAsmHook(onEnterCharacterSelectAsm, 0x00464EAA, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -361,7 +370,7 @@ namespace Riders.Tweakbox.Controllers
         {
             base.Disable();
             _setMovementFlagsOnInputHook.Disable();
-            _onCourseSelectSetStageHook.Disable();
+            _onBattleCourseSelectSetStageHook.Disable();
             _onExitCharaSelectHook.Disable();
             _onCheckIfExitCharaSelectHook.Disable();
             _onStartRaceHook.Disable();
@@ -390,6 +399,7 @@ namespace Riders.Tweakbox.Controllers
             _runPlayerPhysicsSimulationHook.Disable();
             _checkIfRandomizePlayerHook.Disable();
             _runPhysicsSimulationHook.Disable();
+            _onEnterCharacterSelectHook.Disable();
         }
 
         /// <summary>
@@ -399,7 +409,7 @@ namespace Riders.Tweakbox.Controllers
         {
             base.Enable();
             _setMovementFlagsOnInputHook.Enable();
-            _onCourseSelectSetStageHook.Enable();
+            _onBattleCourseSelectSetStageHook.Enable();
             _onExitCharaSelectHook.Enable();
             _onCheckIfExitCharaSelectHook.Enable();
             _onStartRaceHook.Enable();
@@ -428,6 +438,7 @@ namespace Riders.Tweakbox.Controllers
             _runPlayerPhysicsSimulationHook.Enable();
             _checkIfRandomizePlayerHook.Enable();
             _runPhysicsSimulationHook.Enable();
+            _onEnterCharacterSelectHook.Enable();
         }
 
         /// <summary>
@@ -519,7 +530,7 @@ namespace Riders.Tweakbox.Controllers
             return result;
         }
 
-        private void OnCourseSelectSetStageHook() => OnCourseSelectSetStage?.Invoke();
+        private void OnBattleCourseSelectSetStageHook() => OnBattleCourseSelectSetStage?.Invoke();
         private void OnExitCharaSelectHook() => OnExitCharaSelect?.Invoke();
         private Enum<AsmFunctionResult> OnCheckIfExitCharaSelectHook() => OnCheckIfExitCharaSelect != null && OnCheckIfExitCharaSelect.Invoke();
 
@@ -541,6 +552,8 @@ namespace Riders.Tweakbox.Controllers
         private int RemoveAllTasksHook() => RemoveAllTasks?.Invoke(_removeAllTasksHook) ?? _removeAllTasksHook.OriginalFunction();
 
         private Enum<AsmFunctionResult> OnCheckIfRandomizePlayerHook() => OnCheckIfRandomizePlayer?.Invoke(Sewer56.SonicRiders.API.Player.Players.Pointer) ?? AsmFunctionResult.Indeterminate;
+
+        private void OnEnterCharacterSelectHook() => OnEnterCharacterSelect?.Invoke();
 
         [Function(CallingConventions.Cdecl)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
