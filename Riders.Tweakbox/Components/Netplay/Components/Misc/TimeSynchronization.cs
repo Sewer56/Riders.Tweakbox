@@ -53,10 +53,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private long GetAccurateRemoteTimeDelta()
         {
             // Remote time delta without library calculated ping.
-            var recentLatencies             = Socket.State.GetHostData().RecentLatencies;
-            var remoteTimeDeltaWithoutPing  = Manager.FirstPeer.RemoteTimeDelta - ((Socket.State.GetHostData().Latency + 0.5) * TimeSpan.TicksPerMillisecond);
-            var averagePing                 = recentLatencies.ToStructEnumerable().Sum(x => x.Value + 0.5, x => x) / recentLatencies.Count;
-            return (long) (remoteTimeDeltaWithoutPing + (averagePing * TimeSpan.TicksPerMillisecond));
+            var hostData = Socket.State.GetHostData();
+            if (hostData != null)
+            {
+                var recentLatencies             = hostData.RecentLatencies;
+                var remoteTimeDeltaWithoutPing  = Manager.FirstPeer.RemoteTimeDelta - ((Socket.State.GetHostData().Latency + 0.5) * TimeSpan.TicksPerMillisecond);
+                var averagePing                 = recentLatencies.ToStructEnumerable().Sum(x => x.Value + 0.5, x => x) / recentLatencies.Count;
+                return (long) (remoteTimeDeltaWithoutPing + (averagePing * TimeSpan.TicksPerMillisecond));
+            }
+
+            return 0;
         }
 
         /// <inheritdoc />
