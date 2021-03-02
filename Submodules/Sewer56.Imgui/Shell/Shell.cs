@@ -131,13 +131,13 @@ namespace Sewer56.Imgui.Shell
         private static bool DialogHandler(string name, DialogFn sup)
         {
             bool isOpened = true;
-            ImGui.OpenPopup(name, 0);
+            ImGui.OpenPopup(name, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
             if (ImGui.BeginPopupModal(name, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
                 sup(ref isOpened);
                 ImGui.EndPopup();
             }
-
+            
             return isOpened;
         }
 

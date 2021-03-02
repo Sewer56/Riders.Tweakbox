@@ -104,8 +104,8 @@ namespace Riders.Tweakbox
 
             // Post-setup steps
             Shell.SetupImGuiConfig(modFolder);
-            tweakBox.DisplayFirstTimeDialog();
             tweakBox.EnableCrashDumps();
+            tweakBox.DisplayFirstTimeDialog();
             tweakBox.IsReady = true;
             return tweakBox;
         }

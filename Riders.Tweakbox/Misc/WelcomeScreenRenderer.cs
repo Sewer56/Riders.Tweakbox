@@ -36,8 +36,8 @@ namespace Riders.Tweakbox.Misc
         public unsafe bool RenderFirstTimeDialog()
         {
             bool isOpened = true;
-
-            ImGui.OpenPopup(Title, 0);
+            
+            ImGui.OpenPopup(Title, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
             ImGui.__Internal.SetNextWindowSize(new ImVec2.__Internal() { x = 400, y = 0 }, (int) ImGuiCond.ImGuiCondAlways);
             if (ImGui.BeginPopupModal(Title, ref isOpened, (int) (ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlagsNoSavedSettings)))
             {
