@@ -43,7 +43,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 *State.NumberOfRacers = Socket.State.GetPlayerCount();
 
             if (Socket.TryGetComponent(out CharacterSelect charSelect))
-                charSelect.LastSync.ToGameOnlyCharacter(Socket.State.NumLocalPlayers);
+                charSelect.LastSync.ToGameOnlyCharacter(Socket.State.NumLocalPlayers, Socket.State.GetPlayerCount());
 
             if (Socket.TryGetComponent(out Attack attack))
                 attack.Reset();

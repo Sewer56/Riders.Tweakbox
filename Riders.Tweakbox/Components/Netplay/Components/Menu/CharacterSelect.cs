@@ -29,7 +29,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
 
         public CommonState State { get; private set; }
         public EventController Event { get; set; }
-        public CharaSelectSync LastSync { get; private set; }
+        public CharaSelectSync LastSync { get; private set; } = new CharaSelectSync().CreatePooled(Constants.MaxNumberOfPlayers);
 
         /// <summary> Sync data for character select. </summary>
         private Timestamped<CharaSelectSync> _sync = new CharaSelectSync().CreatePooled(Constants.MaxNumberOfPlayers);
@@ -103,7 +103,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             // Discard outdated Character Selects
             for (int x = State.NumLocalPlayers; x < _stamps.Length; x++)
             {
-                if (_stamps[x].IsDiscard(State.MaxLatency))
+                if (_stamps[x].IsDiscard(State.DisconnectTimeout))
                     _sync.Value.Elements[x] = default;
             }
 
@@ -215,7 +215,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             if (_sync.IsDiscard(State.MaxLatency))
                 return;
 
-            LastSync = _sync.Value;
+            // Bit inefficient here but no allocations so we're good.
+            for (int x = 0; x < LastSync.NumElements; x++)
+                LastSync.Elements[x] = _sync.Value.Elements[x];
+
             _sync.Value.ToGame(task, State.NumLocalPlayers, State.GetPlayerCount());
         }
 

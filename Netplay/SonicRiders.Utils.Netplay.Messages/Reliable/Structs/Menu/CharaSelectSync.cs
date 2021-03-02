@@ -48,9 +48,9 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
         /// <summary>
         /// Applies the current struct to game data, but only the character data.
         /// </summary>
-        public unsafe void ToGameOnlyCharacter(int numLocalPlayers)
+        public unsafe void ToGameOnlyCharacter(int numLocalPlayers, int totalNumPlayers)
         {
-            for (var index = numLocalPlayers; index < NumElements; index++)
+            for (var index = numLocalPlayers; index < totalNumPlayers; index++)
             {
                 var sync = Elements[index];
                 sync.ToGameOnlyCharacter(index);
@@ -69,7 +69,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
                 return;
 
             ResetMenu(task, numLocalPlayers);
-            for (var index = numLocalPlayers; index < NumElements; index++)
+            for (var index = numLocalPlayers; index < totalNumPlayers; index++)
             {
                 var loop = Elements[index];
                 loop.ToGame(task, index);
