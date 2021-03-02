@@ -116,7 +116,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         {
             // Local function(s)
             hook.OriginalFunction(seed);
-            if (!Socket.PollUntil(IsEveryoneReady, Socket.State.HandshakeTimeout))
+            if (!Socket.PollUntil(IsEveryoneReady, Socket.State.DisconnectTimeout))
             {
                 // Disconnect those who are not ready.
                 foreach (var pair in _syncReady)
@@ -126,7 +126,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
 
                     var peer = Socket.Manager.GetPeerById(pair.Key);
                     if (peer != null & Socket.HostState.ClientMap.TryGetPlayerData(peer, out var data))
-                        Socket.DisconnectWithMessage(peer, $"Your client hasn't reported in time to sync RNG. Timeout: {Socket.State.HandshakeTimeout}ms");
+                        Socket.DisconnectWithMessage(peer, $"Your client hasn't reported in time to sync RNG. Timeout: {Socket.State.DisconnectTimeout}ms");
                 }
 
                 return;
@@ -159,7 +159,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
         private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
         {
             Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new SRandSync(default, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
-            if (!Socket.PollUntil(SyncAvailable, Socket.State.HandshakeTimeout))
+            if (!Socket.PollUntil(SyncAvailable, Socket.State.DisconnectTimeout))
             {
                 Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
                 hook.OriginalFunction(seed);

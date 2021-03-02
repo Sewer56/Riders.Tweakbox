@@ -83,13 +83,15 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             Bandwidth = new BandwidthTracker(Manager);
             Config = config;
             Manager.PingInterval = PlayerData.LatencyUpdatePeriod;
-#if DEBUG
-            Manager.DisconnectTimeout = int.MaxValue;
-#endif
         }
 
         protected void Initialize()
         {
+            Manager.DisconnectTimeout = State.DisconnectTimeout;
+#if DEBUG
+            Manager.DisconnectTimeout = int.MaxValue;
+#endif
+
             IoC.Kernel.Rebind<Socket>().ToConstant(this);
 
             // Server

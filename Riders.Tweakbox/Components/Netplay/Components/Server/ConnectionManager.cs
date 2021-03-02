@@ -64,7 +64,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
             Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
 
-            if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.HandshakeTimeout))
+            if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.DisconnectTimeout))
             {
                 Socket.DisconnectWithMessage(peer, "Did not receive user data from client. (Name, Number of Players etc.)");
                 return;
@@ -77,7 +77,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
                 return;
             }
 
-            if (!await Socket.PollUntilAsync(HasReceivedPlayerData, Socket.State.HandshakeTimeout))
+            if (!await Socket.PollUntilAsync(HasReceivedPlayerData, Socket.State.DisconnectTimeout))
             {
                 Socket.DisconnectWithMessage(peer, "Did not receive user data from client. (Name, Number of Players etc.)");
                 return;

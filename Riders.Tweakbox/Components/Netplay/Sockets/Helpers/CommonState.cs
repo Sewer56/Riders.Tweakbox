@@ -34,9 +34,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public int MaxLatency = 1000;
 
         /// <summary>
-        /// Timeout for various handshakes such as initial exchange of game/gear data or start line synchronization.
+        /// Timeout before a client is disconnected.
+        /// Also used for various handshakes such as initial exchange of game/gear data or start line synchronization.
         /// </summary>
-        public int HandshakeTimeout = 8000;
+        public int DisconnectTimeout = 8000;
 
         /// <summary>
         /// Contains information about other players.

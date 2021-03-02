@@ -147,7 +147,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             message.SyncType = StartSyncType.Ready;
             Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Client] Sending {nameof(StartSyncType.Ready)}.", LogCategory.Race);
 
-            if (!Socket.PollUntil(IsGoSignal, Socket.State.HandshakeTimeout))
+            if (!Socket.PollUntil(IsGoSignal, Socket.State.DisconnectTimeout))
             {
                 Log.WriteLine($"[{nameof(RaceIntroSync)} / Client] No Go Signal Received, Bailing Out!.", LogCategory.Race);
                 Dispose();
@@ -174,7 +174,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Waiting for ready messages.", LogCategory.Race);
 
             // Note: Don't use wait for all clients, because the messages may have already been sent by the clients.
-            if (!Socket.PollUntil(TestAllReady, state.HandshakeTimeout))
+            if (!Socket.PollUntil(TestAllReady, state.DisconnectTimeout))
             {
                 Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] It's no use, let's get outta here!.", LogCategory.Race);
                 Dispose();
