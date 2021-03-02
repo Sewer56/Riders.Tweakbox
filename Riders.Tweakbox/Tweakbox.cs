@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
+using Microsoft.Win32;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Components.Debug;
@@ -104,6 +105,7 @@ namespace Riders.Tweakbox
             // Post-setup steps
             Shell.SetupImGuiConfig(modFolder);
             tweakBox.DisplayFirstTimeDialog();
+            tweakBox.EnableCrashDumps();
             tweakBox.IsReady = true;
             return tweakBox;
         }
@@ -139,6 +141,32 @@ namespace Riders.Tweakbox
                 File.Create(io.FirstTimeFlagPath);
                 Shell.AddCustom(_welcomeScreenRenderer.RenderFirstTimeDialog);
             }
+        }
+
+        /// <summary>
+        /// Enables crash dumps for Sonic Riders.
+        /// </summary>
+        public void EnableCrashDumps()
+        {
+            const string dumpsConfigRegkeyPath = @"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps";
+            
+            var localMachineKey = Environment.Is64BitOperatingSystem ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32); 
+            var key = localMachineKey.OpenSubKey(dumpsConfigRegkeyPath, false);
+            if (key != null) 
+                return;
+
+            try
+            {
+                if (localMachineKey.CreateSubKey(dumpsConfigRegkeyPath) == null)
+                    ShowFailureDialog();
+            }
+            catch (Exception e)
+            {
+                ShowFailureDialog();
+            }
+
+            void ShowFailureDialog() => Shell.AddDialog("About Crash Dumps", "Tweakbox couldn't enable crash dumps necessary for reporting Netplay Crashes.\n" +
+                                                                             "Please run from Reloaded as admin at least once, thanks!");
         }
 
         private int BlockGameInputsIfEnabled()
@@ -179,6 +207,8 @@ namespace Riders.Tweakbox
             // Render Shell
             Shell.Render();
         }
+
+        
 
         public void Suspend()
         {

@@ -22,17 +22,13 @@ Sort by "Date Modified" and grab the latest log.
 
 ---------
 
-- **Event Viewer**
+- **Crash Dump**
 
-Press the Windows key and search for "Event Viewer".
+Open Windows Explorer and navigate to `%localappdata%/CrashDumps`.
 
-![Image](./Images/IssueReport_EventView_Part1.png)
+![Image](./Images/IssueReport_MiniDump.png)
 
-Navigate to `Windows Logs -> Application`, find an `Error` event with Source `.NET Runtime`.
-
-![Image](./Images/IssueReport_EventView_Part2.png)
-
-Right click and press `Save Selected Events`.
+Sort by "date modified" and copy the latest dump with `SonicRiders.exe` in the name.
 
 ---------
 
