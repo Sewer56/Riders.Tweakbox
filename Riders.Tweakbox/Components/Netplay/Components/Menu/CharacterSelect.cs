@@ -124,17 +124,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
                     
                     for (var x = 0; x < Socket.Manager.ConnectedPeerList.Count; x++)
                     {
-                        var peer           = Socket.Manager.ConnectedPeerList[x]; 
-                        var playerData     = hostState.ClientMap.GetPlayerData(peer);
-                        var excludeIndices = playerData.GetExcludeIndices(excludeIndexBuffer);
+                        var peer           = Socket.Manager.ConnectedPeerList[x];
+                        if (!((HostState) State).ClientMap.Contains(peer))
+                            continue;
 
+                        var excludeIndices = Extensions.GetExcludeIndices(hostState, peer, excludeIndexBuffer);
                         using var rental   = Extensions.GetItemsWithoutIndices(_sync.Value.Elements.AsSpan(0, State.GetPlayerCount()), excludeIndices);
                         if (rental.Length <= 0)
                             continue;
 
                         using var message  = new CharaSelectSync();
                         message.Set(rental.Segment.Array, rental.Length);
-
                         Socket.Send(peer, ReliablePacket.Create(message), DeliveryMethod.ReliableSequenced, _sequencedChannel);
                     }
 

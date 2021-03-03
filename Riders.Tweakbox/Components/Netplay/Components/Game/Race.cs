@@ -223,6 +223,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     for (var peerId = 0; peerId < Socket.Manager.ConnectedPeerList.Count; peerId++)
                     {
                         var peer = Socket.Manager.ConnectedPeerList[peerId];
+                        if (!((HostState) State).ClientMap.Contains(peer))
+                            continue;
+
                         var excludeIndices = Extensions.GetExcludeIndices((HostState) State, peer, excludeIndexBuffer);
                         using var rental = Extensions.GetItemsWithoutIndices(players.Span, excludeIndices);
 

@@ -194,6 +194,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (peer == excludePeer)
                     continue;
 
+                if (!((HostState) State).ClientMap.Contains(peer))
+                    continue;
+
                 var excludeIndices = Extensions.GetExcludeIndices((HostState)State, peer, excludeIndexBuffer);
                 using var rental   = Extensions.GetItemsWithoutIndices(_lapSync.AsSpan(0, State.GetPlayerCount()), excludeIndices);
 

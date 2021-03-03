@@ -37,6 +37,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         public bool TryGetPlayerData(NetPeer peer, out PlayerData data) => _dictionary.TryGetValue(peer.Id, out data);
 
         /// <summary>
+        /// Returns true if there is data for a given peer, else false.
+        /// </summary>
+        public bool Contains(NetPeer peer) => TryGetPlayerData(peer, out _);
+
+        /// <summary>
         /// Sets the player data for a peer.
         /// </summary>
         public bool TryAddOrUpdatePeer(NetPeer peer, PlayerData data, out string failureReason)
@@ -88,7 +93,10 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers
         /// </summary>
         public HostSetPlayerData ToMessage(NetPeer excludePeer)
         {
-            var excludeIndex = GetPlayerData(excludePeer).PlayerIndex;
+            var excludeIndex = int.MaxValue;
+            if (TryGetPlayerData(excludePeer, out var playerData))
+                excludeIndex = playerData.PlayerIndex;
+
             return ToMessage(excludeIndex);
         }
 

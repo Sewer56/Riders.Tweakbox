@@ -73,6 +73,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 {
                     // Calculate some preliminary data.
                     var peer = Socket.Manager.ConnectedPeerList[peerId];
+                    if (!((HostState) State).ClientMap.Contains(peer))
+                        continue;
+
                     var excludeIndices = Extensions.GetExcludeIndices((HostState)State, peer, excludeIndexBuffer);
 
                     // Get all attacks sans those made by players and their local players;

@@ -74,7 +74,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
                     // Update latency of client.
                     var hostState = (HostState) Socket.State;
                     var data = hostState.ClientMap.GetPlayerData(peer);
-                    data.UpdateLatency(latency);
+                    data?.UpdateLatency(latency);
                 }
                 else
                 {

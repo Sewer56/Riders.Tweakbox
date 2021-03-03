@@ -133,7 +133,10 @@ namespace Riders.Tweakbox.Components.Netplay.Helpers
         public static Span<byte> GetExcludeIndices(HostState state, NetPeer peer, Span<byte> excludeIndexBuffer)
         {
             var playerData = state.ClientMap.GetPlayerData(peer);
-            return playerData.GetExcludeIndices(excludeIndexBuffer);
+            if (playerData != null)
+                return playerData.GetExcludeIndices(excludeIndexBuffer);
+
+            return excludeIndexBuffer;
         }
     }
 }

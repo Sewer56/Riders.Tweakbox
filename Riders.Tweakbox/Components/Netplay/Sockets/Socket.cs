@@ -155,7 +155,18 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public void HandleReliablePacket(ref ReliablePacket packet, NetPeer peer)
         {
             foreach (var component in Components.Values)
-                component.HandleReliablePacket(ref packet, peer);
+            {
+                try
+                {
+                    component.HandleReliablePacket(ref packet, peer);
+                }
+                catch (Exception e)
+                {
+                    Log.WriteLine($"Error Processing Reliable Packet in Component {component}\n" +
+                                  $"{e.Message}\n" +
+                                  $"{e.StackTrace}");
+                }
+            }
         }
 
         /// <summary>
@@ -164,7 +175,18 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer peer)
         {
             foreach (var component in Components.Values)
-                component.HandleUnreliablePacket(ref packet, peer);
+            {
+                try
+                {
+                    component.HandleUnreliablePacket(ref packet, peer);
+                }
+                catch (Exception e)
+                {
+                    Log.WriteLine($"Error Processing Unreliable Packet in Component {component}\n" +
+                                  $"{e.Message}\n" +
+                                  $"{e.StackTrace}");
+                }
+            }
         }
 
         /// <summary>
