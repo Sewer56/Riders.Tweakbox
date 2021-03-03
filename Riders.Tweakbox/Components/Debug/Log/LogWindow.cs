@@ -10,7 +10,7 @@ namespace Riders.Tweakbox.Components.Debug.Log
         /// <inheritdoc />
         public override string Name { get; set; } = "Log Configuration";
 
-        public LogWindow(IO io) : base(io, io.LogConfigFolder, io.GetLogsConfigFiles)
+        public LogWindow(IO io) : base(io, io.LogConfigFolder, io.GetLogsConfigFiles, IO.JsonConfigExtension)
         {
             
         }
@@ -21,7 +21,16 @@ namespace Riders.Tweakbox.Components.Debug.Log
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 ProfileSelector.Render();
-                Reflection.MakeControlEnum((LogCategory*) Unsafe.AsPointer(ref Misc.Log.EnabledCategories), "Enabled Categories");
+                ImGui.PushIDInt(0);
+                ImGui.TextWrapped("UI/HUD Enabled Categories");
+                Reflection.MakeControlEnum((LogCategory*) Unsafe.AsPointer(ref Config.Data.Hud), null);
+                ImGui.PopID();
+
+                ImGui.PushIDInt(1);
+                ImGui.TextWrapped("Console & Log File Enabled Categories");
+                Reflection.MakeControlEnum((LogCategory*) Unsafe.AsPointer(ref Config.Data.Console), null);
+                ImGui.PopID();
+                Config.Data.Apply();
             }
 
             ImGui.End();

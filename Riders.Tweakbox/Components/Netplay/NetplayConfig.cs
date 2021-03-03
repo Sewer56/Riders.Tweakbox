@@ -2,12 +2,10 @@
 using System.Text;
 using System.Text.Json;
 using LiteNetLib;
-using MessagePack;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers.Json;
-using Riders.Tweakbox.Definitions.Serializers.MessagePack;
 using Sewer56.Imgui.Controls;
 
 namespace Riders.Tweakbox.Components.Netplay

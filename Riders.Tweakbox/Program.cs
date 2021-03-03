@@ -39,9 +39,8 @@ namespace Riders.Tweakbox
             string modFolder = _modLoader.GetDirectoryForModId("Riders.Tweakbox");
 
             /* Your mod code starts here. */
-            Trace.AutoFlush = true;
-            Trace.Listeners.Add(new ConsoleOutListener(_logger));
-            Trace.Listeners.Add(new ShellTraceListener());
+            Log.ConsoleListener = new ConsoleOutListener(_logger);
+            Log.HudListener = new ShellTraceListener();
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);

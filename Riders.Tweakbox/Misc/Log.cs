@@ -23,14 +23,22 @@ namespace Riders.Tweakbox.Misc
     }
 
     /// <summary>
-    /// Provides logging support for Tweakbox
+    /// Provides logging support for Tweakbox.
     /// </summary>
     public static class Log
     {
+        public static TraceListener ConsoleListener;
+        public static TraceListener HudListener;
+
         /// <summary>
         /// Default enabled logging categories
         /// </summary>
-        public const LogCategory DefaultCategories = LogCategory.Default | LogCategory.Memory |
+        public const LogCategory DefaultHudCategories = LogCategory.Socket;
+
+        /// <summary>
+        /// Default enabled logging categories
+        /// </summary>
+        public const LogCategory DefaultConsoleCategories = LogCategory.Default | LogCategory.Memory |
                                                      LogCategory.Race | LogCategory.Menu |
                                                      LogCategory.PlayerEvent | LogCategory.Socket |
                                                      LogCategory.Random | LogCategory.JitterCalc;
@@ -38,12 +46,26 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Declares whether each log type is declared or not.
         /// </summary>
-        public static LogCategory EnabledCategories = DefaultCategories;
+        public static LogCategory HudCategories = DefaultHudCategories;
+
+        /// <summary>
+        /// Declares whether each log type is declared or not.
+        /// </summary>
+        public static LogCategory ConsoleCategories = DefaultConsoleCategories;
         
         /// <summary>
         /// Checks if a given category is enabled.
         /// </summary>
-        public static bool IsEnabled(LogCategory category) => EnabledCategories.HasAnyFlags(category);
+        public static bool IsEnabled(ListenerType listenerType, LogCategory category)
+        {
+            switch (listenerType)
+            {
+                case ListenerType.Hud: return HudCategories.HasAnyFlags(category);
+                case ListenerType.Console: return ConsoleCategories.HasAnyFlags(category);
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Logs a given piece of text onto a new line.
@@ -52,8 +74,11 @@ namespace Riders.Tweakbox.Misc
         /// <param name="category">Category of the text.</param>
         public static void WriteLine(string text, LogCategory category = LogCategory.Default)
         {
-            if (IsEnabled(category))
-                Trace.WriteLine(text);
+            if (IsEnabled(ListenerType.Hud, category))
+                HudListener?.WriteLine(text);
+
+            if (IsEnabled(ListenerType.Console, category))
+                ConsoleListener?.WriteLine(text);
         }
 
         /// <summary>
@@ -63,8 +88,17 @@ namespace Riders.Tweakbox.Misc
         /// <param name="category">Category of the text.</param>
         public static void Write(string text, LogCategory category = LogCategory.Default)
         {
-            if (IsEnabled(category))
-                Trace.Write(text);
+            if (IsEnabled(ListenerType.Hud, category))
+                HudListener?.Write(text);
+
+            if (IsEnabled(ListenerType.Console, category))
+                ConsoleListener?.Write(text);
+        }
+
+        public enum ListenerType
+        {
+            Hud,
+            Console
         }
     }
 }
