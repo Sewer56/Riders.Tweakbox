@@ -13,7 +13,6 @@ namespace Riders.Tweakbox.Misc
 
         // Configuration Directories.
         public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
-        public string TweakboxConfigFolder => Path.Combine(ConfigFolder, "TweakboxConfigurations");
 
         public string FixesConfigFolder => Path.Combine(ConfigFolder, "FixesConfigurations");
         public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
@@ -30,7 +29,6 @@ namespace Riders.Tweakbox.Misc
         public IO (string modFolder)
         {
             ModFolder = modFolder;
-            Directory.CreateDirectory(TweakboxConfigFolder);
             Directory.CreateDirectory(FixesConfigFolder);
             Directory.CreateDirectory(GearConfigFolder);
             Directory.CreateDirectory(PhysicsConfigFolder);
@@ -38,11 +36,10 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(LogConfigFolder);
         }
 
-        public string[] GetTweakboxConfigFiles() => Directory.GetFiles(TweakboxConfigFolder, ConfigSearchPattern);
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
         public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
-        public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, ConfigSearchPattern);
+        public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, JsonSearchPattern);
         public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
     }
 }
