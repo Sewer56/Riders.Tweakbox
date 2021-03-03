@@ -95,7 +95,7 @@ namespace Riders.Tweakbox
                 },
                 Text = new List<string>()
                 {
-                    "F11: Show/Hide",
+                    "F11: Show/Hide Menus",
                     "F10: Enable/Disable Game Input"
                 }
             };
@@ -192,9 +192,6 @@ namespace Riders.Tweakbox
             if (ImGui.IsKeyPressed((int)Keys.F10, false))
                 InputsEnabled = !InputsEnabled;
 
-            if (!IsEnabled) 
-                return;
-
             // Update Menu Bar Text
             if (InputsEnabled)
                 MenuBar.Text[1] = "F10: Disable Game Input";
@@ -202,7 +199,8 @@ namespace Riders.Tweakbox
                 MenuBar.Text[1] = "F10: Enable Game Input";
 
             // Render MenuBar and Menus
-            MenuBar.Render();
+            if (IsEnabled) 
+                MenuBar.Render();
 
             // Render Shell
             Shell.Render();
