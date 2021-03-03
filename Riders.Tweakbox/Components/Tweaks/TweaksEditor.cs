@@ -49,7 +49,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
 
                 if (ImGui.Checkbox("Force Single Player Models", ref Config.Data.SinglePlayerModels.Value))
-                    _patchController.AlwaysLoadSinglePlayerCharacterModels.Set(Config.Data.SinglePlayerModels.Value);
+                    _patchController.SetAlwaysLoadSinglePlayerModels(Config.Data.SinglePlayerModels.Value);
 
                 Tooltip.TextOnHover("Forces the game to load high quality single player models for all characters.");
             }

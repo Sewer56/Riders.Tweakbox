@@ -1,5 +1,6 @@
 ﻿using System;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Enums;
 using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -27,13 +28,9 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public Patch AlwaysCanStartRaceInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
 
-        /// <summary>
-        /// Loads single player character models regardless of whether the character is an AI or split screen is used.
-        /// </summary>
-        public Patch AlwaysLoadSinglePlayerCharacterModels = new Patch((IntPtr)0x00408E87, new byte[] { 0xEB, 0x0B });
-
         // Settings
         private TweaksEditorConfig _config = IoC.Get<TweaksEditorConfig>();
+        private IAsmHook _alwaysLoadSinglePlayerCharacterModels;
 
         public PatchController()
         {
@@ -50,29 +47,55 @@ namespace Riders.Tweakbox.Controllers
 
             InjectRunTimerPostRace = SDK.ReloadedHooks.CreateAsmHook(runTimerPostRace, 0x004166EB).Activate();
             _config.ConfigUpdated += OnConfigUpdated;
+
+            var loadSinglePlayerCharModel = new string[]
+            {
+                "use32",
+
+                // Check if story mode.
+                "push eax",
+                "mov eax, [0x00692B88]",
+                "cmp eax, 100",
+                "pop eax",
+                $"je story",
+                // Not story mode, we can load SP models. Insert null terminator.
+                $"mov [esp+0x29], bl",
+                $"jmp complete",
+                $"story:",
+                // Original code for story mode.
+                $"mov [esp+0x28], byte 0x4D",
+                $"mov [esp+0x29], bl",
+                $"complete:"
+            };
+            _alwaysLoadSinglePlayerCharacterModels = SDK.ReloadedHooks.CreateAsmHook(loadSinglePlayerCharModel, 0x00408E87, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
         }
 
         /// <inheritdoc />
         public void Disable()
         {
-            AlwaysLoadSinglePlayerCharacterModels.Disable();
             InjectRunTimerPostRace.Disable();
             DisableRacePositionOverwrite.Disable();
             AlwaysCanStartRaceInCharacterSelect.Disable();
+            _alwaysLoadSinglePlayerCharacterModels.Disable();
         }
 
         /// <inheritdoc />
         public void Enable()
         {
-            AlwaysLoadSinglePlayerCharacterModels.Enable();
+            _alwaysLoadSinglePlayerCharacterModels.Enable();
             InjectRunTimerPostRace.Enable();
             DisableRacePositionOverwrite.Enable();
             AlwaysCanStartRaceInCharacterSelect.Enable();
         }
 
-        private void OnConfigUpdated()
+        public void SetAlwaysLoadSinglePlayerModels(bool isEnabled)
         {
-            AlwaysLoadSinglePlayerCharacterModels.Set(_config.Data.SinglePlayerStageData);
+            if (isEnabled)
+                _alwaysLoadSinglePlayerCharacterModels.Enable();
+            else
+                _alwaysLoadSinglePlayerCharacterModels.Disable();
         }
+
+        private void OnConfigUpdated() => SetAlwaysLoadSinglePlayerModels(_config.Data.SinglePlayerStageData);
     }
 }
