@@ -23,6 +23,7 @@ namespace Riders.Tweakbox
         private IModLoader _modLoader;
 
         private Tweakbox _tweakbox;
+        private DllNotifier _notifier;
 
         /// <summary>
         /// Entry point for your mod.
@@ -43,6 +44,7 @@ namespace Riders.Tweakbox
             Log.HudListener = new ShellTraceListener();
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
+            _notifier = new DllNotifier(hooks);
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);
 
             // Tweak Garbage Collection.

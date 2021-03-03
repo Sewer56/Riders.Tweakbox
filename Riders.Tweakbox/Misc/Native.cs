@@ -14,6 +14,36 @@ namespace Riders.Tweakbox.Misc
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
+        /// <summary>
+        /// Represents a singular unicode string.
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct UNICODE_STRING
+        {
+            public ushort Length;
+            public ushort MaximumLength;
+            private IntPtr buffer;
+
+            public unsafe UNICODE_STRING(char* pointer, int length)
+            {
+                Length = (ushort)(length * 2);
+                MaximumLength = (ushort)(Length + 2);
+                buffer = (IntPtr) pointer;
+            }
+
+            /// <summary>
+            /// Returns a string with the contents
+            /// </summary>
+            /// <returns></returns>
+            public override unsafe string ToString()
+            {
+                if (buffer != IntPtr.Zero)
+                    return new string((char*)buffer, 0, Length / sizeof(char));
+
+                return String.Empty;
+            }
+        }
+
         public const int MONITOR_DEFAULTTONEAREST = 0x00000002;
 
         [Flags]
