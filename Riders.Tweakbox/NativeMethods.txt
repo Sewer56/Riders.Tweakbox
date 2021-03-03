@@ -4,6 +4,7 @@ SetWindowLong
 GetWindowLong
 MoveWindow
 SetWindowText
+SetLastError
 
 GetMonitorInfo
 MonitorFromWindow
