@@ -78,7 +78,7 @@ namespace Sewer56.Imgui.Shell
         /// Adds a new item onto the log window.
         /// </summary>
         /// <param name="item">The item to log.</param>
-        public static void Log(LogItem item)
+        public static void Log(in LogItem item)
         {
             lock (_logs) 
                 _logs.Enqueue(item);

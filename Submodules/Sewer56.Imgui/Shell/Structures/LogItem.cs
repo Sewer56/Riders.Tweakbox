@@ -5,7 +5,7 @@ namespace Sewer56.Imgui.Shell.Structures
     /// <summary>
     /// Encapsulates an individual log item.
     /// </summary>
-    public class LogItem
+    public struct LogItem
     {
         public string Text { get; set; }
         public int Timeout { get; set; }
