@@ -119,6 +119,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
                     reliable.Deserialize(rawBytes);
                     Shell.AddDialog("Disconnected from Host", reliable.GetMessage<Disconnect>().Reason);
                 }
+                else
+                {
+                    Shell.AddDialog("Disconnected from Host", "Disconnected for unknown reason. Most likely, your internet connection dropped.");
+                }
             }
             finally
             {

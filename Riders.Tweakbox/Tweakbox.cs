@@ -208,8 +208,6 @@ namespace Riders.Tweakbox
             Shell.Render();
         }
 
-        
-
         public void Suspend()
         {
             Hook.Disable();
