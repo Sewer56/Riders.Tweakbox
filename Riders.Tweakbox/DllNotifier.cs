@@ -54,9 +54,8 @@ namespace Riders.Tweakbox
             var moduleFileName = Path.GetFileName(moduleName);
             if (TestDll(moduleFileName))
             {
-                PInvoke.SetLastError(0x4); // ACCESS DENIED
-                handle = IntPtr.Zero;
-                return 0xC0000135; // "DLL NOT FOUND"
+                handle = (IntPtr) (-1);
+                return 0x0; // Lie about successfully loading DLL.
             }
 
             return _ldrLoadDllHook.OriginalFunction(searchPath, flags, modulefilename, out handle);
