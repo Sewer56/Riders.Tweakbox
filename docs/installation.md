@@ -12,7 +12,7 @@
 
 ## Recommendations 
 - [GameMaster's 16:9 EXE](https://www.wsgf.org/f/u/contrib/dr/658/hacks/riders169.7z) 
-  - Optional: Tweakbox' widescreen hack is incomplete. Resolution can be overwritten inside Tweakbox.
+  - Optional: Use either this or Tweakbox' (incomplete) widescreen hack. Resolution can be overwritten inside Tweakbox.
 
 ## Instructions
 This is a Reloaded-II mod.  
