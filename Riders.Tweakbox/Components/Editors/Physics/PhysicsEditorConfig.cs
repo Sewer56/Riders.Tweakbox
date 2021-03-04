@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Definitions.Interfaces;
@@ -13,7 +11,6 @@ namespace Riders.Tweakbox.Components.Editors.Physics
 {
     public unsafe class PhysicsEditorConfig : IConfiguration
     {
-        private static FixedArrayPtr<CharacterTypeStats> _typeStats => new FixedArrayPtr<CharacterTypeStats>(0x005BD4D8, 3);
         private static PhysicsEditorConfig _default = PhysicsEditorConfig.FromGame();
 
         /// <inheritdoc />
@@ -29,16 +26,20 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         /// </summary>
         public static PhysicsEditorConfig FromGame()
         {
-            return new PhysicsEditorConfig
-            {
-                Data =
-                {
-                    Contents = PhysicsEditorContents.Running | PhysicsEditorContents.TypeStats,
-                    RunningPhysics1 = *Player.RunPhysics,
-                    RunningPhysics2 = *Player.RunPhysics2,
-                    CharacterTypeStats = _typeStats.ToArray()
-                }
-            };
+            var config = new PhysicsEditorConfig();
+            ref var data = ref config.Data;
+
+            data.Contents = EnumsNET.FlagEnums.GetAllFlags<PhysicsEditorContents>();
+            data.RunningPhysics1 = *Player.RunPhysics;
+            data.RunningPhysics2 = *Player.RunPhysics2;
+
+            data.CharacterTypeStats = new CharacterTypeStats[Player.TypeStats.Count];
+            Player.TypeStats.CopyTo(data.CharacterTypeStats, Player.TypeStats.Count);
+
+            data.TurbulenceProperties = new TurbulenceProperties[Player.TurbulenceProperties.Count];
+            Player.TurbulenceProperties.CopyTo(data.TurbulenceProperties, Player.TurbulenceProperties.Count);
+            
+            return config;
         }
 
         public IConfiguration GetCurrent() => FromGame();
@@ -54,7 +55,11 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         {
             *Player.RunPhysics  = Data.RunningPhysics1;
             *Player.RunPhysics2 = Data.RunningPhysics2;
-            Player.TypeStats.CopyFrom(Data.CharacterTypeStats, Data.CharacterTypeStats.Length);
+            if (Data.CharacterTypeStats != null)
+                Player.TypeStats.CopyFrom(Data.CharacterTypeStats, Data.CharacterTypeStats.Length);
+            
+            if (Data.TurbulenceProperties != null)
+                Player.TurbulenceProperties.CopyFrom(Data.TurbulenceProperties, Data.TurbulenceProperties.Length);
         }
 
         /* Internal representation of this config. */
@@ -68,6 +73,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             public RunningPhysics  RunningPhysics1;
             public RunningPhysics2 RunningPhysics2;
             public CharacterTypeStats[] CharacterTypeStats;
+            public TurbulenceProperties[] TurbulenceProperties;
 
             public byte[] ToBytes()
             {
@@ -76,6 +82,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                 extendedMemoryStream.Write(RunningPhysics1);
                 extendedMemoryStream.Write(RunningPhysics2);
                 extendedMemoryStream.Write(CharacterTypeStats);
+                extendedMemoryStream.Write(TurbulenceProperties);
                 return extendedMemoryStream.ToArray();
             }
 
@@ -89,8 +96,8 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                     bufferedStreamReader.Read(out Contents);
                     bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
                     bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
-                    bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, _typeStats.Count, Contents, PhysicsEditorContents.TypeStats);
-
+                    bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
+                    bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
                     numBytesRead = (int) bufferedStreamReader.Position();
                 }
             }
@@ -99,6 +106,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
             {
                 Running   = 1 << 0,
                 TypeStats = 1 << 1,
+                TurbulenceProperties = 1 << 2,
             }
         }
     }

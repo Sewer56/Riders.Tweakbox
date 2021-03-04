@@ -2,6 +2,7 @@
 using EnumsNET;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -36,14 +37,72 @@ namespace Riders.Tweakbox.Components.Editors.Physics
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Character Type Stats", 0))
                 {
-                    foreach (var type in Enums.GetValues<FormationTypes>())
-                        EditTypeStatsType(type);
+                    EditTypeStatsType(FormationTypes.Speed);
+                    EditTypeStatsType(FormationTypes.Fly);
+                    EditTypeStatsType(FormationTypes.Power);
+                }
+
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Turbulence Properties", 0))
+                {
+                    if (ImGui.TreeNodeStr("Regular Turbulence"))
+                    {
+                        EditTurbulenceType(TurbulenceType.NoTrick, 0);
+                        EditTurbulenceType(TurbulenceType.TrickOne, 0);
+                        EditTurbulenceType(TurbulenceType.TrickTwo, 0);
+                        EditTurbulenceType(TurbulenceType.TrickThree, 0);
+                        EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, 0);
+                        ImGui.TreePop();
+                    }
+                    
+                    if (ImGui.TreeNodeStr("Babylon Garden Turbulence"))
+                    {
+                        var offset = (int) TurbulenceType.TrickRainbowTopPath + 1;
+                        EditTurbulenceType(TurbulenceType.NoTrick, offset);
+                        EditTurbulenceType(TurbulenceType.TrickOne, offset);
+                        EditTurbulenceType(TurbulenceType.TrickTwo, offset);
+                        EditTurbulenceType(TurbulenceType.TrickThree, offset);
+                        EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, offset);
+                        ImGui.TreePop();
+                    }
+                    
+                    if (ImGui.TreeNodeStr("Sky Road Turbulence"))
+                    {
+                        var offset = ((int) TurbulenceType.TrickRainbowTopPath + 1) * 2;
+                        EditTurbulenceType(TurbulenceType.NoTrick, offset);
+                        EditTurbulenceType(TurbulenceType.TrickOne, offset);
+                        EditTurbulenceType(TurbulenceType.TrickTwo, offset);
+                        EditTurbulenceType(TurbulenceType.TrickThree, offset);
+                        EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, offset);
+                        ImGui.TreePop();
+                    }
                 }
 
                 ImGui.PopItemWidth();
             }
 
             ImGui.End();
+        }
+
+        private void EditTurbulenceType(TurbulenceType type, int startingIndex)
+        {
+            if (ImGui.TreeNodeStr(type.ToString()))
+            {
+                var turbulenceProperties = &Player.TurbulenceProperties.Pointer[(int) type + startingIndex];
+                Reflection.MakeControl(&turbulenceProperties->MaxSpeed, "Max Speed", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->MaxSpeed)})");
+                Reflection.MakeControl(&turbulenceProperties->SpeedLossAboveMaxSpeed, "Speed Loss Above Max Speed", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->SpeedLossAboveMaxSpeed)})");
+                Reflection.MakeControl(&turbulenceProperties->MinSpeed, "Min Speed", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->MinSpeed)})");
+                Reflection.MakeControl(&turbulenceProperties->SpeedGainBelowMinSpeed, "Speed Gain Below Min Speed", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->SpeedGainBelowMinSpeed)})");
+                
+                Reflection.MakeControl(&turbulenceProperties->TrickSpeed, "Speed on Trick Land", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->TrickSpeed)})");
+                Tooltip.TextOnHover($"This is the speed set when entering this turbulence type.\ne.g. for {TurbulenceType.TrickOne} this is the speed set when landing first trick.");
+
+                Reflection.MakeControl(&turbulenceProperties->AccelOnCurve, "Speed on Curves", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->AccelOnCurve)})");
+                Tooltip.TextOnHover("Amount of speed gained when going from the edge to the center of the turbulence. Noticeable on turns.");
+                
+                Reflection.MakeControl(&turbulenceProperties->ApparentlyMaxSpeed, "Max Speed (Unused)", 0.01f, $"%f ({Formula.SpeedToSpeedometer(turbulenceProperties->ApparentlyMaxSpeed)})");
+                Tooltip.TextOnHover("Appears to be unused. This was the original Max Speed variable in earlier versions of the game.");
+                ImGui.TreePop();
+            }
         }
 
         private void EditTypeStatsType(FormationTypes type)
