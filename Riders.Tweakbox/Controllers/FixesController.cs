@@ -13,6 +13,7 @@ using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Input;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -88,6 +89,14 @@ namespace Riders.Tweakbox.Controllers
                     State.UnlockedGearModels[x] = true;
 
             *State.IsBabylonCupUnlocked = true;
+            for (int x = 0; x < Player.MaxNumberOfPlayers; x++)
+            {
+                // We omit setting player pointers and mission mode doesn't set it,
+                // so we need to do it in here in case player goes straight for mission mode.
+                Player.Players[x].PlayerInput = (Player.Inputs.Pointer) + x; 
+            }
+
+
             _bootToMenu.Disable();
         }
 
@@ -103,7 +112,7 @@ namespace Riders.Tweakbox.Controllers
                     $"{utils.GetAbsoluteJumpMnemonics((IntPtr) 0x0046AF9D, false)}",
                 };
 
-                _bootToMenu = SDK.ReloadedHooks.CreateAsmHook(bootToMain, 0x0046AEE9, AsmHookBehaviour.ExecuteFirst).Activate();
+                _bootToMenu = SDK.ReloadedHooks.CreateAsmHook(bootToMain, 0x46AD01, AsmHookBehaviour.ExecuteFirst).Activate();
             }
         }
 
