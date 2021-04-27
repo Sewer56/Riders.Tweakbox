@@ -18,6 +18,7 @@ namespace Riders.Tweakbox.Misc
         public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
+        public string InputRecordingFolder => Path.Combine(ConfigFolder, "InputRecordings");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
         public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
@@ -34,6 +35,7 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(PhysicsConfigFolder);
             Directory.CreateDirectory(NetplayConfigFolder);
             Directory.CreateDirectory(LogConfigFolder);
+            Directory.CreateDirectory(InputRecordingFolder);
         }
 
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
