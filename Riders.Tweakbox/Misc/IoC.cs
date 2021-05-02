@@ -66,7 +66,7 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         public static bool IsExplicitlyBound(Type t)
         {
-            return !Kernel.GetBindings(t).All(x => x.IsImplicit);
+            return Kernel.GetBindings(t).Any(x => !x.IsImplicit);
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         public static bool IsExplicitlyBound<T>()
         {
-            return !Kernel.GetBindings(typeof(T)).All(x => x.IsImplicit);
+            return Kernel.GetBindings(typeof(T)).Any(x => !x.IsImplicit);
         }
     }
 }
