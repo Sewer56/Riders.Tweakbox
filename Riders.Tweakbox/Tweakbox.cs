@@ -12,6 +12,7 @@ using DearImguiSharp;
 using Microsoft.Win32;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
+using Reloaded.Mod.Interfaces;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
@@ -46,7 +47,10 @@ namespace Riders.Tweakbox
         public MenuBar MenuBar { get; private set; }
         public List<IController> Controllers { get; private set; } = new List<IController>();
         public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
+       
         private WelcomeScreenRenderer _welcomeScreenRenderer;
+        private DllNotifier _notifier;
+        private IModLoader _modLoader;
 
         /* Creation & Disposal */
         private Tweakbox(){}
@@ -54,10 +58,13 @@ namespace Riders.Tweakbox
         /// <summary>
         /// Creates a new instance of Riders Tweakbox.
         /// </summary>
-        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities,
-            string modFolder)
+        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IModLoader modLoader)
         {
-            var tweakBox = new Tweakbox();
+            var modFolder       = modLoader.GetDirectoryForModId("Riders.Tweakbox");
+            var tweakBox        = new Tweakbox();
+
+            tweakBox._notifier  = new DllNotifier(hooks);
+            tweakBox._modLoader = modLoader;
             tweakBox.InitializeIoC(modFolder);
             tweakBox.Hooks = hooks;
             tweakBox.HooksUtilities = hooksUtilities;
@@ -73,7 +80,8 @@ namespace Riders.Tweakbox
                     }),
                     new MenuBarItem("Tweaks", new List<IComponent>()
                     {
-                        IoC.GetConstant<TweaksEditor>()
+                        IoC.GetConstant<TweaksEditor>(),
+                        IoC.GetConstant<TextureEditor>(),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
@@ -118,14 +126,16 @@ namespace Riders.Tweakbox
             var io = new IO(modFolder);
             IoC.Kernel.Bind<IO>().ToConstant(io);
             IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
+            IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
+            var types = Assembly.GetExecutingAssembly().GetTypes();
 
             // Initialize all configs.
-            var configTypes = Assembly.GetExecutingAssembly().GetTypes().Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface);
+            var configTypes = types.Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in configTypes)
                 IoC.GetConstant(type);
 
             // Initialize all controllers.
-            var controllerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface);
+            var controllerTypes = types.Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in controllerTypes)
                 Controllers.Add(IoC.GetConstant<IController>(type));
         }
@@ -149,14 +159,14 @@ namespace Riders.Tweakbox
         public void EnableCrashDumps()
         {
             const string dumpsConfigRegkeyPath = @"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps";
-            
-            var localMachineKey = Environment.Is64BitOperatingSystem ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32); 
-            var key = localMachineKey.OpenSubKey(dumpsConfigRegkeyPath, false);
-            if (key != null) 
-                return;
 
             try
             {
+                var localMachineKey = Environment.Is64BitOperatingSystem ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32); 
+                var key = localMachineKey.OpenSubKey(dumpsConfigRegkeyPath, false);
+                if (key != null) 
+                    return;
+                
                 if (localMachineKey.CreateSubKey(dumpsConfigRegkeyPath) == null)
                     ShowFailureDialog();
             }

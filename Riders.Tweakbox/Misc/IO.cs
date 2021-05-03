@@ -19,6 +19,8 @@ namespace Riders.Tweakbox.Misc
         public string NetplayConfigFolder => Path.Combine(ConfigFolder, "NetplayConfig");
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
+        public string TextureConfigFolder => Path.Combine(ConfigFolder, "TextureConfigurations");
+        public string TextureDumpFolder => Path.Combine(ConfigFolder, "TextureDumps");
         public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
         /// <summary>
@@ -34,11 +36,14 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(PhysicsConfigFolder);
             Directory.CreateDirectory(NetplayConfigFolder);
             Directory.CreateDirectory(LogConfigFolder);
+            Directory.CreateDirectory(TextureDumpFolder);
+            Directory.CreateDirectory(TextureConfigFolder);
         }
 
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
         public string[] GetPhysicsConfigFiles() => Directory.GetFiles(PhysicsConfigFolder, ConfigSearchPattern);
-        public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, ConfigSearchPattern);
+        public string[] GetFixesConfigFiles() => Directory.GetFiles(FixesConfigFolder, JsonSearchPattern);
+        public string[] GetTextureConfigFiles() => Directory.GetFiles(TextureConfigFolder, JsonSearchPattern);
         public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, JsonSearchPattern);
         public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
     }

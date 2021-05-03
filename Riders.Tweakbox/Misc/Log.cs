@@ -20,6 +20,8 @@ namespace Riders.Tweakbox.Misc
         RandomSeed = 1 << 7,
         LapSync = 1 << 8,
         JitterCalc = 1 << 9,
+        TextureDump = 1 << 10,
+        TextureLoad = 1 << 11,
     }
 
     /// <summary>
@@ -39,9 +41,10 @@ namespace Riders.Tweakbox.Misc
         /// Default enabled logging categories
         /// </summary>
         public const LogCategory DefaultConsoleCategories = LogCategory.Default | LogCategory.Memory |
-                                                     LogCategory.Race | LogCategory.Menu |
-                                                     LogCategory.PlayerEvent | LogCategory.Socket |
-                                                     LogCategory.Random | LogCategory.JitterCalc;
+                                                            LogCategory.Race | LogCategory.Menu |
+                                                            LogCategory.PlayerEvent | LogCategory.Socket |
+                                                            LogCategory.Random | LogCategory.JitterCalc |
+                                                            LogCategory.TextureDump | LogCategory.TextureLoad;
 
         /// <summary>
         /// Declares whether each log type is declared or not.

@@ -15,7 +15,7 @@ namespace Riders.Tweakbox.Components.Tweaks
         private FramePacingController _pacingController = IoC.Get<FramePacingController>();
         private PatchController _patchController = IoC.Get<PatchController>();
 
-        public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles)
+        public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
         {
 
         }
@@ -39,17 +39,17 @@ namespace Riders.Tweakbox.Components.Tweaks
             
             if (ImGui.CollapsingHeaderTreeNodeFlags("Startup", 0))
             {
-                ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu.Value);
+                ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu);
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
-                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE.Value);
-                ImGui.Checkbox("Force Single Player Stage Data", ref Config.Data.SinglePlayerStageData.Value);
+                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
+                ImGui.Checkbox("Force Single Player Stage Data", ref Config.Data.SinglePlayerStageData);
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
 
-                if (ImGui.Checkbox("Force Single Player Models", ref Config.Data.SinglePlayerModels.Value))
-                    _patchController.SetAlwaysLoadSinglePlayerModels(Config.Data.SinglePlayerModels.Value);
+                if (ImGui.Checkbox("Force Single Player Models", ref Config.Data.SinglePlayerModels))
+                    _patchController.SetAlwaysLoadSinglePlayerModels(Config.Data.SinglePlayerModels);
 
                 Tooltip.TextOnHover("Forces the game to load high quality single player models for all characters.");
             }
@@ -58,17 +58,17 @@ namespace Riders.Tweakbox.Components.Tweaks
             {
                 ImGui.Text("Startup Settings");
 
-                Reflection.MakeControl(ref Config.Data.ResolutionX.Value, "Resolution X");
-                Reflection.MakeControl(ref Config.Data.ResolutionY.Value, "Resolution Y");
-                Reflection.MakeControl(ref Config.Data.Fullscreen.Value, "Fullscreen");
+                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
+                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
+                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
 
                 ImGui.Text("For these settings to apply, please *save* the default configuration above and restart the game.");
 
                 ImGui.Separator();
                 ImGui.Text("Live Settings");
-                Reflection.MakeControl(ref Config.Data.Blur.Value, "Blur");
-                Reflection.MakeControl(ref Config.Data.Borderless.Value, "Borderless Windowed");
-                Reflection.MakeControl(ref Config.Data.WidescreenHack.Value, "Centered Widescreen Hack");
+                Reflection.MakeControl(ref Config.Data.Blur, "Blur");
+                Reflection.MakeControl(ref Config.Data.Borderless, "Borderless Windowed");
+                Reflection.MakeControl(ref Config.Data.WidescreenHack, "Centered Widescreen Hack");
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen.\n" +
                                     "Do not combine/use with other widescreen hacks.");
 
@@ -83,25 +83,25 @@ namespace Riders.Tweakbox.Components.Tweaks
             if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))
             {
                 ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
-                ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags.Value);
+                ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
                 Tooltip.TextOnHover("Applies on boot.");
 
-                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync.Value);
+                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync);
                 Tooltip.TextOnHover("Applies on boot.");
 
-                if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing.Value))
+                if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing))
                     _pacingController.ResetSpeedup();
 
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
                 if (Config.Data.FramePacing)
                 {
-                    ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup.Value);
+                    ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup);
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
 
                     ImGui.Text($"CPU Load {_pacingController.CpuUsage:00.00}%");
                     ImGui.Text($"Windows Timer Granularity: {_pacingController.TimerGranularity}ms");
-                    Reflection.MakeControl(ref Config.Data.DisableYieldThreshold.Value, "CPU Spin Disable Thread Yield Threshold");
+                    Reflection.MakeControl(ref Config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
                     Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }
 

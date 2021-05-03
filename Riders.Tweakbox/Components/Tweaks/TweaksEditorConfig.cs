@@ -1,41 +1,21 @@
 ﻿using System;
-using MessagePack;
 using Reloaded.Memory;
-using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Riders.Tweakbox.Definitions.Serializers;
 using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
-using Riders.Tweakbox.Definitions.Serializers.MessagePack;
+using Riders.Tweakbox.Components.Common;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
-    public class TweaksEditorConfig : IConfiguration
+    public class TweaksEditorConfig : JsonConfigBase<TweaksEditorConfig, TweaksEditorConfig.Internal>
     {
-        private static IFormatterResolver MsgPackResolver = MessagePack.Resolvers.CompositeResolver.Create(NullableResolver.Instance, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        private static MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard.WithResolver(MsgPackResolver);
-
-        // Serialization
-        public Internal Data = Internal.GetDefault();
-
-        /// <inheritdoc />
-        public Action ConfigUpdated { get; set; }
-
-        public byte[] ToBytes() => MessagePackSerializer.Serialize(Data, SerializerOptions);
-        public void FromBytes(Span<byte> bytes)
-        {
-            Data = Utilities.DeserializeMessagePack<Internal>(bytes, out int bytesRead, SerializerOptions);
-            Data.Initialize();
-            ConfigUpdated?.Invoke();
-        }
-
         // Apply
-        public unsafe void Apply()
+        public override unsafe void Apply()
         {
             *Sewer56.SonicRiders.API.Misc.Blur = Data.Blur;
 
@@ -146,53 +126,24 @@ namespace Riders.Tweakbox.Components.Tweaks
             PInvoke.MoveWindow(new HWND(handle), left, top, newX, newY, true);
         }
 
-        public IConfiguration GetCurrent() => this;
-        public IConfiguration GetDefault() => new TweaksEditorConfig();
-
         #region Internal
-        public struct Internal
+        public class Internal
         {
-            public Definitions.Nullable<bool> BootToMenu;
-            public Definitions.Nullable<bool> FramePacing;
-            public Definitions.Nullable<bool> FramePacingSpeedup; // Speed up game to compensate for lag.
-            public Definitions.Nullable<float> DisableYieldThreshold;
-            public Definitions.Nullable<bool> D3DDeviceFlags;
-            public Definitions.Nullable<bool> DisableVSync;
-            public Definitions.Nullable<bool> AutoQTE;
-            public Definitions.Nullable<int> ResolutionX;
-            public Definitions.Nullable<int> ResolutionY;
-            public Definitions.Nullable<bool> Fullscreen;
-            public Definitions.Nullable<bool> Blur;
-            public Definitions.Nullable<bool> WidescreenHack;
-            public Definitions.Nullable<bool> Borderless;
-            public Definitions.Nullable<bool> SinglePlayerStageData;
-            public Definitions.Nullable<bool> SinglePlayerModels;
-
-            internal static Internal GetDefault()
-            {
-                var result = new Internal();
-                result.Initialize();
-                return result;
-            }
-
-            public void Initialize()
-            {
-                BootToMenu.SetIfNull(true);
-                FramePacingSpeedup.SetIfNull(true);
-                FramePacing.SetIfNull(true);
-                DisableYieldThreshold.SetIfNull(80);
-                D3DDeviceFlags.SetIfNull(true);
-                DisableVSync.SetIfNull(true);
-                AutoQTE.SetIfNull(true);
-                ResolutionX.SetIfNull(1280);
-                ResolutionY.SetIfNull(720);
-                Fullscreen.SetIfNull(false);
-                Blur.SetIfNull(false);
-                WidescreenHack.SetIfNull(false);
-                Borderless.SetIfNull(false);
-                SinglePlayerStageData.SetIfNull(true);
-                SinglePlayerModels.SetIfNull(true);
-            }
+            public bool BootToMenu = true;
+            public bool FramePacing = true;
+            public bool FramePacingSpeedup = true; // Speed up game to compensate for lag.
+            public float DisableYieldThreshold = 80;
+            public bool D3DDeviceFlags = true;
+            public bool DisableVSync = true;
+            public bool AutoQTE = true;
+            public int ResolutionX = 1280;
+            public int ResolutionY = 720;
+            public bool Fullscreen = false;
+            public bool Blur = false;
+            public bool WidescreenHack = false;
+            public bool Borderless = false;
+            public bool SinglePlayerStageData = true;
+            public bool SinglePlayerModels = true;
         }
         #endregion
     }

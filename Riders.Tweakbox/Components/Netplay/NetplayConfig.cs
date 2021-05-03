@@ -1,50 +1,16 @@
 ﻿using System;
-using System.Text;
-using System.Text.Json;
 using LiteNetLib;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
-using Riders.Tweakbox.Definitions.Interfaces;
-using Riders.Tweakbox.Definitions.Serializers.Json;
+using Riders.Tweakbox.Components.Common;
 using Sewer56.Imgui.Controls;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
-    public class NetplayConfig : IConfiguration
+    public class NetplayConfig : JsonConfigBase<NetplayConfig, NetplayConfig.Internal>
     {
-        private static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
-        {
-            IncludeFields = true,
-            WriteIndented = true,
-            Converters = { new TextInputJsonConverter() }
-        };
-
         private const int TextLength = 128;
         private const int IPLength   = 15;
-
-        public Internal Data = new Internal();
-        
-        /// <inheritdoc />
-        public Action ConfigUpdated { get; set; }
-
-        /// <inheritdoc />
-        public byte[] ToBytes() => Encoding.UTF8.GetBytes(JsonSerializer.Serialize(Data, SerializerOptions));
-
-        /// <inheritdoc />
-        public unsafe void FromBytes(Span<byte> bytes)
-        {
-            Data = JsonSerializer.Deserialize<Internal>(bytes, SerializerOptions);
-            ConfigUpdated?.Invoke();
-        }
-
-        /// <inheritdoc />
-        public void Apply() { }
-
-        /// <inheritdoc />
-        public IConfiguration GetCurrent() => this;
-
-        /// <inheritdoc />
-        public IConfiguration GetDefault() => new NetplayConfig();
 
         /// <summary>
         /// Turns a player config into user data to send over the web.
@@ -62,11 +28,11 @@ namespace Riders.Tweakbox.Components.Netplay
         public class Internal
         {
             // Gap in keys due to removed old items.
-            public SimulateBadInternet BadInternet = new SimulateBadInternet();
+            public SimulateBadInternet BadInternet  = new SimulateBadInternet();
             public NatPunchingServer PunchingServer = new NatPunchingServer();
-            public HostSettings HostSettings = new HostSettings();
-            public ClientSettings ClientSettings = new ClientSettings();
-            public PlayerSettings PlayerSettings = new PlayerSettings();
+            public HostSettings HostSettings        = new HostSettings();
+            public ClientSettings ClientSettings    = new ClientSettings();
+            public PlayerSettings PlayerSettings    = new PlayerSettings();
         }
 
         public class PlayerSettings

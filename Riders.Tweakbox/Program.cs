@@ -23,7 +23,6 @@ namespace Riders.Tweakbox
         private IModLoader _modLoader;
 
         private Tweakbox _tweakbox;
-        private DllNotifier _notifier;
 
         /// <summary>
         /// Entry point for your mod.
@@ -31,21 +30,19 @@ namespace Riders.Tweakbox
         public async void Start(IModLoaderV1 loader)
         {
             #if DEBUG
-            //Debugger.Launch();
+            Debugger.Launch();
             #endif
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
             _modLoader.GetController<IReloadedHooksUtilities>().TryGetTarget(out var hooksUtilities);
-            string modFolder = _modLoader.GetDirectoryForModId("Riders.Tweakbox");
 
             /* Your mod code starts here. */
             Log.ConsoleListener = new ConsoleOutListener(_logger);
             Log.HudListener = new ShellTraceListener();
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
-            _notifier = new DllNotifier(hooks);
-            _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, modFolder);
+            _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, _modLoader);
 
             // Tweak Garbage Collection.
             GC.Collect();

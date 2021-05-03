@@ -65,8 +65,8 @@ namespace Riders.Tweakbox.Controllers
         }
 
         // Hook Implementation
-        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressRight() => _config.Data.AutoQTE.Value;
-        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressLeft() => _config.Data.AutoQTE.Value;
+        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressRight() => _config.Data.AutoQTE;
+        private Enum<AsmFunctionResult> EventOnOnCheckIfQtePressLeft() => _config.Data.AutoQTE;
         private int ReadConfigFile()
         {
             var originalResult = _readConfigHook.OriginalFunction();
@@ -130,6 +130,6 @@ namespace Riders.Tweakbox.Controllers
             return result;
         }
 
-        private Enum<AsmFunctionResult> CheckIfLoadSinglePlayerObjectLayout() => _config.Data.SinglePlayerStageData.Value;
+        private Enum<AsmFunctionResult> CheckIfLoadSinglePlayerObjectLayout() => _config.Data.SinglePlayerStageData;
     }
 }
