@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using StructLinq;
 
@@ -10,24 +12,27 @@ namespace Riders.Tweakbox.Services.Texture
     /// </summary>
     public class TextureDictionary
     {
+
         private const string PngExtension = ".png";
         private const string DdsExtension = ".dds";
+        private const string DdsLz4Extension = ".dds.lz4";
 
         private const string PngFilter = "*.png";
         private const string DdsFilter = "*.dds";
+        private const string DdsLz4Filter = "*.dds.lz4";
 
         // DO NOT CHANGE
         private const int HashLength = 16;
 
         /// <summary>
-        /// Maps texture hashes to new file paths.
-        /// </summary>
-        public Dictionary<string, string> Redirects { get; set; } = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
         /// The path to the folder where textures are sourced from.
         /// </summary>
         public string Source;
+
+        /// <summary>
+        /// Maps texture hashes to new file paths.
+        /// </summary>
+        private Dictionary<string, Redirect> Redirects { get; set; } = new Dictionary<string,Redirect>(StringComparer.OrdinalIgnoreCase);
 
         private FileSystemWatcher _watcher;
 
@@ -47,12 +52,19 @@ namespace Riders.Tweakbox.Services.Texture
         /// <param name="xxHash">The hash.</param>
         /// <param name="data">The texture data.</param>
         /// <param name="filePath">The file path from which the data was loaded.</param>
-        public bool TryGetTexture(string xxHash, out Span<byte> data, out string filePath)
+        public bool TryGetTexture(string xxHash, out TextureRef data, out string filePath)
         {
             var fileRedirects = Redirects;
-            if (fileRedirects.TryGetValue(xxHash, out filePath))
+            if (fileRedirects.TryGetValue(xxHash, out var redirect))
             {
-                data = File.ReadAllBytes(filePath);
+                filePath = redirect.FilePath;
+                if (redirect.Type == RedirectType.DdsLz4)
+                {
+                    data = TextureCompression.PickleFromFile(filePath);
+                    return true;
+                }
+
+                data = new TextureRef(File.ReadAllBytes(filePath));
                 return true;
             }
 
@@ -69,6 +81,7 @@ namespace Riders.Tweakbox.Services.Texture
                 _watcher.Path = Source;
                 _watcher.Filters.Add(PngFilter);
                 _watcher.Filters.Add(DdsFilter);
+                _watcher.Filters.Add(DdsLz4Filter);
 
                 _watcher.EnableRaisingEvents   = true;
                 _watcher.IncludeSubdirectories = true;
@@ -82,23 +95,54 @@ namespace Riders.Tweakbox.Services.Texture
         {
             if (Directory.Exists(Source))
             {
-                var redirects   = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var redirects   = new Dictionary<string, Redirect>(StringComparer.OrdinalIgnoreCase);
                 var allFiles    = Directory.GetFiles(Source, "*.*", SearchOption.AllDirectories);
-                var allTextures = allFiles.ToStructEnumerable().Where(x => x.EndsWith(PngExtension) || x.EndsWith(DdsExtension), x => x);
                 
-                foreach (string textureFile in allTextures)
+                foreach (string file in allFiles)
                 {
+                    var type = GetRedirectType(file);
+                    if (type == RedirectType.None)
+                        continue;
+
                     // Extract hash from filename.
-                    var indexOfHash = textureFile.IndexOf('_');
+                    var indexOfHash = file.IndexOf('_');
                     if (indexOfHash == -1)
                         continue;
 
-                    string hash = textureFile.Substring(indexOfHash + 1, HashLength);
-                    redirects[hash] = textureFile;
+                    string hash = file.Substring(indexOfHash + 1, HashLength);
+                    redirects[hash] = new Redirect() { FilePath = file, Type = type };
                 }
 
                 Redirects = redirects;
             }
+        }
+
+        private RedirectType GetRedirectType(string file)
+        {
+            if (file.EndsWith(DdsExtension, StringComparison.OrdinalIgnoreCase))
+                return RedirectType.Dds;
+
+            if (file.EndsWith(PngExtension, StringComparison.OrdinalIgnoreCase))
+                return RedirectType.Png;
+
+            if (file.EndsWith(DdsLz4Extension, StringComparison.OrdinalIgnoreCase))
+                return RedirectType.DdsLz4;
+
+            return RedirectType.None;
+        }
+
+        private struct Redirect
+        {
+            public string FilePath;
+            public RedirectType Type;
+        }
+
+        private enum RedirectType
+        {
+            None,
+            Png,
+            Dds,
+            DdsLz4
         }
     }
 }

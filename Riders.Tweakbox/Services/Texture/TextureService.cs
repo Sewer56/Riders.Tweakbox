@@ -72,7 +72,7 @@ namespace Riders.Tweakbox.Services.Texture
         /// <param name="data">The loaded texture data.</param>
         /// <param name="filePath">File path of the texture that was loaded.</param>
         /// <returns>Whether texture data was found.</returns>
-        public bool TryGetData(string xxHash, out Span<byte> data, out string filePath)
+        public bool TryGetData(string xxHash, out TextureRef data, out string filePath)
         {
             // Doing this in reverse because mods with highest priority get loaded last.
             // We want to look at those mods first.

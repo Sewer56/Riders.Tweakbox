@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -41,10 +41,11 @@ namespace Riders.Tweakbox.Controllers
             // Load alternative texture if necessary.
             if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var filePath))
             {
+                using var textureRef = data;
                 Log.WriteLine($"Loading Custom Texture: {filePath}", LogCategory. TextureLoad);
-                fixed (byte* dataPtr = &data[0])
+                fixed (byte* dataPtr = &data.Data[0])
                 {
-                    return _createTextureHook.OriginalFunction(deviceref, dataPtr, data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+                    return _createTextureHook.OriginalFunction(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
                 }
             }
 
