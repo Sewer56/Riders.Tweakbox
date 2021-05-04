@@ -37,7 +37,7 @@ namespace Riders.Tweakbox.Controllers
         {
             // Hash the texture,
             var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
-            
+
             // Load alternative texture if necessary.
             if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var filePath))
             {

@@ -1,9 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using EnumsNET;
+using Reloaded.Memory;
+using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Riders.Tweakbox.Services.Texture.Headers;
 using Standart.Hash.xxHash;
+using StructLinq.Utils;
+using Unsafe = System.Runtime.CompilerServices.Unsafe;
 
 namespace Riders.Tweakbox.Services.Texture
 {
@@ -35,9 +41,11 @@ namespace Riders.Tweakbox.Services.Texture
         /// <summary>
         /// Gets a hash for a single texture.
         /// </summary>
-        /// <param name="textureData">Span which contains only the texture data..</param>
+        /// <param name="textureData">Span which contains only the texture data.</param>
         public string ComputeHashString(Span<byte> textureData)
         {
+            textureData = TryFixDdsLength(textureData);
+
             // Alternative seed for hashing, must not be changed.
             const int AlternateSeed = 1337;
 
@@ -102,5 +110,65 @@ namespace Riders.Tweakbox.Services.Texture
         private void OnModUnloading(IModV1 mod, IModConfigV1 config) => Remove(config);
         private void OnModLoading(IModV1 mod, IModConfigV1 config) => Add(config);
         private string GetRedirectFolder(string modId) => _modLoader.GetDirectoryForModId(modId) + @"/Tweakbox/Textures";
+
+        private unsafe Span<byte> TryFixDdsLength(Span<byte> input)
+        {
+            const int DdsMagic = 0x20534444; // 'DDS '
+
+            /*
+                The developers of Sonic Riders pass the right length of data for certain formats (e.g. DXT1).
+                This is because they incorrectly assumed DXT1 and others use 1 byte per pixel and incorrectly 
+                generate the header. 
+            
+                such as D3DXCreateTextureFromFileInMemoryEx; with the length sometimes exceeding the actual size
+                of the DDS file.
+
+                We try to detect if the file is a DDS and compute the real length of the DDS file here.
+            */
+
+            Struct.FromArray(input, out int magic);
+            if (magic != DdsMagic)
+                return input;
+
+            // Read Header
+            ref var pinned = ref input.GetPinnableReference();
+            var ptr        = (byte*) Unsafe.AsPointer(ref pinned);
+            var ddsHeader  = (DdsHeader*) ptr;
+
+            uint headerSize  = ddsHeader->DwSize + sizeof(int);
+            uint textureSize = 0;
+
+            // Check for uncompressed texture, size is dwPitchOrLinearSize x dwHeight
+            // Note: We ignore the mipmap chain because:
+            // = I'm lazy to write the code for that.
+            // = The game doesn't seem to use them; just creates new ones anyway.
+            // = Highly doubt there will be duplicates with different mips.
+            if (ddsHeader->DwFlags.HasAllFlags(DdsFlags.Pitch) &&
+                ddsHeader->DdsPf.DwFlags.HasAllFlags(DdsPixelFormatFlags.Rgb))
+            {
+                // Because Riders can't calculate DwPitchOrLinearSize properly, we'll do it ourselves.
+                uint pitch  = (ddsHeader->DwWidth * ddsHeader->DdsPf.DwRgbBitCount + 7) / 8;
+                textureSize = pitch * ddsHeader->DwHeight;
+            }
+            else if (ddsHeader->DwFlags.HasAllFlags(DdsFlags.LinearSize) &&
+                     ddsHeader->DdsPf.DwFlags.HasAllFlags(DdsPixelFormatFlags.Fourcc))
+            {
+                // 1 = 1 byte per pixel (DXT5)
+                // 2 = 0.5 bytes per pixel (DXT1)
+                int oneOverBytesPerPixel = ddsHeader->DdsPf.DwFourCc switch
+                {
+                    DdsFourCC.DXT1 => 2,
+                    DdsFourCC.DXT2 => 1,
+                    DdsFourCC.DXT3 => 1,
+                    DdsFourCC.DXT4 => 1,
+                    DdsFourCC.DXT5 => 1,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                textureSize = (uint) ((ddsHeader->DwWidth * ddsHeader->DwHeight) / oneOverBytesPerPixel);
+            }
+
+            return input.Slice(0, (int) (textureSize + headerSize));
+        }
     }
 }
