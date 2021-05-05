@@ -5,9 +5,11 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DearImguiSharp;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Constants = Sewer56.Imgui.Misc.Constants;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Tweaks
@@ -17,14 +19,16 @@ namespace Riders.Tweakbox.Components.Tweaks
         /// <inheritdoc />
         public override string Name { get; set; } = "DirectX Texture Injection";
 
-        /// <inheritdoc />
-        public TextureEditor(IO io) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
-        {
+        private TextureController _controller;
 
+        /// <inheritdoc />
+        public TextureEditor(IO io, TextureController controller) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
+        {
+            _controller = controller;
         }
 
         /// <inheritdoc />
-        public unsafe override void Render()
+        public override unsafe void Render()
         {
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
@@ -54,6 +58,13 @@ namespace Riders.Tweakbox.Components.Tweaks
                         Reflection.MakeControl(ref Config.Data.DeduplicationMaxFiles, "Maximum Duplicates", 0.01f);
                         Tooltip.TextOnHover($"Maximum number of duplicates before moving to common folder.\n" +
                                             $"This is set to 2 by default because stage pairs (e.g. Metal City, Night Chase) often have shared textures.");
+
+                        bool remove = ImGui.Button("Remove Duplicates in Common Folder", Constants.ButtonSize);
+                        Tooltip.TextOnHover($"Removes items in the Common Folder ({Io.TextureDumpCommonFolder})\n" +
+                                            $"that are duplicates of items outside of the common folder.");
+
+                        if (remove)
+                            _controller.RemoveDuplicatesInCommon();
                     }
                 }
 

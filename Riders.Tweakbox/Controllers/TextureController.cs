@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -40,6 +41,25 @@ namespace Riders.Tweakbox.Controllers
 
         /// <inheritdoc />
         public void Enable() => _createTextureHook.Enable();
+
+        /// <summary>
+        /// Removes duplicates in Auto Common folder.
+        /// </summary>
+        public void RemoveDuplicatesInCommon()
+        {
+            var files      = Directory.GetFiles(_io.TextureDumpCommonFolder, TextureCommon.PngFilter, SearchOption.AllDirectories);
+            var dictionary = BuildDumpFolderFileNameDictionary();
+            
+            foreach (var file in files)
+            {
+                var fileName = Path.GetFileName(file);
+                if (dictionary.ContainsKey(fileName))
+                {
+                    Log.WriteLine($"Removing Duplicate in Auto Common: {fileName}", LogCategory.TextureDump);
+                    File.Delete(file);
+                }
+            }
+        }
 
         private unsafe int CreateTextureFromFileInMemoryHook(void* deviceref, void* srcdataref, int srcdatasize, int width, int height, int miplevels, int usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, void* srcinforef, PaletteEntry* paletteref, void** textureout)
         {
