@@ -1,5 +1,7 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -33,6 +35,12 @@ namespace Riders.Tweakbox.Controllers
             _createTextureHook = SDK.ReloadedHooks.CreateHook<D3DXCreateTextureFromFileInMemoryEx>(CreateTextureFromFileInMemoryHook, (long) createTextureFromFileInMemoryEx).Activate();
         }
 
+        /// <inheritdoc />
+        public void Disable() => _createTextureHook.Disable();
+
+        /// <inheritdoc />
+        public void Enable() => _createTextureHook.Enable();
+
         private unsafe int CreateTextureFromFileInMemoryHook(void* deviceref, void* srcdataref, int srcdatasize, int width, int height, int miplevels, int usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, void* srcinforef, PaletteEntry* paletteref, void** textureout)
         {
             // Hash the texture,
@@ -53,30 +61,98 @@ namespace Riders.Tweakbox.Controllers
             
             // Dump texture if successfully loaded.
             if (result == Result.Ok && _config.Data.DumpTextures)
+                DumpTexture(new Texture((IntPtr) (*textureout)), xxHash);
+
+            return result;
+        }
+
+        private void DumpTexture(Texture texture, string xxHash)
+        {
+            // Hash The Texture
+            var description = texture.GetLevelDescription(0);
+            var fileName = $"{description.Width}x{description.Height}_{xxHash}.png"; // DO NOT PREPEND, ONLY APPEND
+
+            switch (_config.Data.DumpingMode)
             {
-                // Texture Load
-                var texture     = new Texture((IntPtr) (*textureout));
+                case TextureInjectionConfig.DumpingMode.OnlyNew:
+                {
+                    var dictionary = BuildDumpFolderFileNameDictionary();
+                    if (dictionary.ContainsKey(fileName))
+                    {
+                        Log.WriteLine($"Skipped Texture [Only New]: {fileName}", LogCategory.TextureDump);
+                        return;
+                    }
 
-                // Hash The Texture
-                var description = texture.GetLevelDescription(0);
-                var fileName    = $"{description.Width}x{description.Height}_{xxHash}.png"; // DO NOT PREPEND, ONLY APPEND
+                    goto case TextureInjectionConfig.DumpingMode.All;
+                }
 
-                BaseTexture.ToFile(texture, Path.Combine(_io.TextureDumpFolder, fileName), ImageFileFormat.Png);
-                Log.WriteLine($"Dumped Texture: {fileName}", LogCategory.TextureDump);
+                case TextureInjectionConfig.DumpingMode.Deduplicate:
+                {
+                    var dictionary = BuildDumpFolderFileNameDictionary();
+                    if (dictionary.ContainsKey(fileName))
+                    {
+                        var entry = dictionary[fileName];
+                        if (entry.NumAppearances > _config.Data.DeduplicationMaxFiles)
+                        {
+                            Log.WriteLine($"Deduplicating Texture [{entry.NumAppearances} Duplicates]: {fileName}", LogCategory.TextureDump);
+                            File.Move(entry.FullPaths[0], Path.Combine(_io.TextureDumpCommonFolder, fileName), true);
+                            for (int x = 1; x < entry.FullPaths.Count; x++)
+                                File.Delete(entry.FullPaths[x]);
+
+                            return;
+                        }
+                    }
+
+                    // Ensure file isn't in common already.
+                    var commonDictionary = Directory.GetFiles(_io.TextureDumpCommonFolder, TextureCommon.PngFilter, SearchOption.AllDirectories)
+                                                    .Select(Path.GetFileName).ToHashSet();
+
+                    if (commonDictionary.Contains(fileName))
+                        return;
+
+                    goto case TextureInjectionConfig.DumpingMode.All;
+                }
+
+                case TextureInjectionConfig.DumpingMode.All:
+                    BaseTexture.ToFile(texture, Path.Combine(_io.TextureDumpFolder, fileName), ImageFileFormat.Png);
+                    Log.WriteLine($"Dumped Texture: {fileName}", LogCategory.TextureDump);
+                    break;
+            }
+        }
+
+        private Dictionary<string, TextureDictEntry> BuildDumpFolderFileNameDictionary()
+        {
+            var result   = new Dictionary<string, TextureDictEntry>();
+            var allFiles = Directory.GetFiles(_io.TextureDumpFolder, TextureCommon.PngFilter, SearchOption.AllDirectories);
+
+            foreach (var file in allFiles)
+            {
+                // Ignore Common Folder
+                if (file.StartsWith(_io.TextureDumpCommonFolder))
+                    continue;
+
+                var fileName = Path.GetFileName(file);
+                if (!result.ContainsKey(fileName))
+                    result[fileName] = new TextureDictEntry() { FullPaths = new List<string>(), NumAppearances = 0 };
+
+                var entry = result[fileName];
+                entry.NumAppearances += 1;
+                entry.FullPaths.Add(file);
+                result[fileName] = entry;
             }
 
             return result;
         }
 
-        /// <inheritdoc />
-        public void Disable() => _createTextureHook.Disable();
-
-        /// <inheritdoc />
-        public void Enable() => _createTextureHook.Enable();
+        protected struct TextureDictEntry
+        {
+            public int NumAppearances;
+            public List<string> FullPaths;
+        }
 
         [Function(CallingConventions.Stdcall)]
         public unsafe delegate int D3DXCreateTextureFromFileInMemoryEx(void* deviceRef, void* srcDataRef, int srcDataSize, int width, int height,
-                                                                        int mipLevels, int usage, Format format, Pool pool, int filter, int mipFilter, 
-                                                                        RawColorBGRA colorKey, void* srcInfoRef, PaletteEntry* paletteRef, void** textureOut);
+            int mipLevels, int usage, Format format, Pool pool, int filter, int mipFilter, 
+            RawColorBGRA colorKey, void* srcInfoRef, PaletteEntry* paletteRef, void** textureOut);
     }
 }

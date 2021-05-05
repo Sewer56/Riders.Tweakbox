@@ -21,6 +21,7 @@ namespace Riders.Tweakbox.Misc
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
         public string TextureConfigFolder => Path.Combine(ConfigFolder, "TextureConfigurations");
         public string TextureDumpFolder => Path.Combine(ConfigFolder, "TextureDumps");
+        public string TextureDumpCommonFolder => Path.Combine(TextureDumpFolder, "Auto Common");
         public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
         /// <summary>
@@ -37,6 +38,7 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(NetplayConfigFolder);
             Directory.CreateDirectory(LogConfigFolder);
             Directory.CreateDirectory(TextureDumpFolder);
+            Directory.CreateDirectory(TextureDumpCommonFolder);
             Directory.CreateDirectory(TextureConfigFolder);
         }
 

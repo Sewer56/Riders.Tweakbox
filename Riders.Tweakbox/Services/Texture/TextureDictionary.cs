@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using StructLinq;
 
 namespace Riders.Tweakbox.Services.Texture
 {
@@ -12,15 +9,6 @@ namespace Riders.Tweakbox.Services.Texture
     /// </summary>
     public class TextureDictionary
     {
-
-        private const string PngExtension = ".png";
-        private const string DdsExtension = ".dds";
-        private const string DdsLz4Extension = ".dds.lz4";
-
-        private const string PngFilter = "*.png";
-        private const string DdsFilter = "*.dds";
-        private const string DdsLz4Filter = "*.dds.lz4";
-
         // DO NOT CHANGE
         private const int HashLength = 16;
 
@@ -79,9 +67,9 @@ namespace Riders.Tweakbox.Services.Texture
             {
                 _watcher = new FileSystemWatcher();
                 _watcher.Path = Source;
-                _watcher.Filters.Add(PngFilter);
-                _watcher.Filters.Add(DdsFilter);
-                _watcher.Filters.Add(DdsLz4Filter);
+                _watcher.Filters.Add(TextureCommon.PngFilter);
+                _watcher.Filters.Add(TextureCommon.DdsFilter);
+                _watcher.Filters.Add(TextureCommon.DdsLz4Filter);
 
                 _watcher.EnableRaisingEvents   = true;
                 _watcher.IncludeSubdirectories = true;
@@ -119,13 +107,13 @@ namespace Riders.Tweakbox.Services.Texture
 
         private RedirectType GetRedirectType(string file)
         {
-            if (file.EndsWith(DdsExtension, StringComparison.OrdinalIgnoreCase))
+            if (file.EndsWith(TextureCommon.DdsExtension, StringComparison.OrdinalIgnoreCase))
                 return RedirectType.Dds;
 
-            if (file.EndsWith(PngExtension, StringComparison.OrdinalIgnoreCase))
+            if (file.EndsWith(TextureCommon.PngExtension, StringComparison.OrdinalIgnoreCase))
                 return RedirectType.Png;
 
-            if (file.EndsWith(DdsLz4Extension, StringComparison.OrdinalIgnoreCase))
+            if (file.EndsWith(TextureCommon.DdsLz4Extension, StringComparison.OrdinalIgnoreCase))
                 return RedirectType.DdsLz4;
 
             return RedirectType.None;

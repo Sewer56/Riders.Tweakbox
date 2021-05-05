@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DearImguiSharp;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
@@ -22,7 +24,7 @@ namespace Riders.Tweakbox.Components.Tweaks
         }
 
         /// <inheritdoc />
-        public override void Render()
+        public unsafe override void Render()
         {
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
@@ -33,11 +35,27 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ImGui.TextWrapped("Built to solve the problem of duplicate textures across e.g. Gear x Character combinations as well as solving menu texture scaling.");
 
                 ImGui.Checkbox("Dump Textures", ref Config.Data.DumpTextures);
-                Tooltip.TextOnHover($"Texture Dump Directory:\n{Io.TextureDumpFolder}");
+                Tooltip.TextOnHover($"Textures are dumped when they are loaded (e.g. stage load) as opposed to when they are shown (Dolphin Emu)\n" +
+                                    $"Texture Dump Directory:\n{Io.TextureDumpFolder}");
 
                 ImGui.Checkbox("Load Custom Textures", ref Config.Data.LoadTextures);
                 Tooltip.TextOnHover("In order to load custom textures, add a `Tweakbox/Textures` folder to your Reloaded mod and place textures in PNG or DDS (Recommended) format inside.\n" +
                                     "Textures are loaded using the priority set in the Reloaded launcher (drag & drop) where bottom-most mod has the highest priority.");
+
+                if (ImGui.CollapsingHeaderBoolPtr("Texture Dump Options", ref Config.Data.DumpTextures, 0))
+                {
+                    Reflection.MakeControlEnum((TextureInjectionConfig.DumpingMode*) Unsafe.AsPointer(ref Config.Data.DumpingMode), "Dumping Mode");
+                    Tooltip.TextOnHover($"Only New: Only dumps textures if they are not already in the dump folder.\n" +
+                                        $"Deduplicate: Removes duplicates in folders by putting them in a common folder at \n" +
+                                        $"{Io.TextureDumpCommonFolder}");
+
+                    if (Config.Data.DumpingMode == TextureInjectionConfig.DumpingMode.Deduplicate)
+                    {
+                        Reflection.MakeControl(ref Config.Data.DeduplicationMaxFiles, "Maximum Duplicates", 0.01f);
+                        Tooltip.TextOnHover($"Maximum number of duplicates before moving to common folder.\n" +
+                                            $"This is set to 2 by default because stage pairs (e.g. Metal City, Night Chase) often have shared textures.");
+                    }
+                }
 
                 ImGui.Separator();
                 ImGui.TextWrapped($"Note: This functionality is experimental.\n\nThere is no way to force reload textures live at this moment in time, you must wait for the game to load them. " +

@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using EnumsNET;
 using Reloaded.Memory;
-using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Services.Texture.Headers;
 using Standart.Hash.xxHash;
-using StructLinq.Utils;
 using Unsafe = System.Runtime.CompilerServices.Unsafe;
 
 namespace Riders.Tweakbox.Services.Texture
