@@ -43,8 +43,9 @@ namespace Riders.Tweakbox.Components.Tweaks
                                     $"Texture Dump Directory:\n{Io.TextureDumpFolder}");
 
                 ImGui.Checkbox("Load Custom Textures", ref Config.Data.LoadTextures);
-                Tooltip.TextOnHover("In order to load custom textures, add a `Tweakbox/Textures` folder to your Reloaded mod and place textures in PNG or DDS (Recommended) format inside.\n" +
-                                    "Textures are loaded using the priority set in the Reloaded launcher (drag & drop) where bottom-most mod has the highest priority.");
+                Tooltip.TextOnHover("In order to load custom textures, create a new Reloaded mod and add `Tweakbox/Textures` folder to the mod\n." +
+                                    "Place textures in PNG or DDS format inside. Textures are loaded using the priority set in the Reloaded\n" +
+                                    "launcher (drag & drop) where bottom-most mod has the highest priority.");
 
                 if (ImGui.CollapsingHeaderBoolPtr("Texture Dump Options", ref Config.Data.DumpTextures, 0))
                 {
@@ -69,7 +70,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 }
 
                 ImGui.Separator();
-                ImGui.TextWrapped($"Note: This functionality is experimental.\n\nThere is no way to force reload textures live at this moment in time, you must wait for the game to load them. " +
+                ImGui.TextWrapped($"Note: This functionality is experimental.\n\nTextures are injected at time of load, there is no force reload functionality currently (e.g. you must exit and re-enter stage to take effect). " +
                                   $"If you are unsure whether your textures are being loaded, enabled {nameof(LogCategory.TextureLoad)} and/or {nameof(LogCategory.TextureDump)} in your log configuration.");
             }
 
