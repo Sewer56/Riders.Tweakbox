@@ -1,7 +1,5 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using DearImguiSharp;
-using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Controls.Extensions;
 
 namespace Sewer56.Imgui.Utilities

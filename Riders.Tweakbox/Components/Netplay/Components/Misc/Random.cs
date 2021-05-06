@@ -10,7 +10,6 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
-using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;

@@ -13,7 +13,6 @@ using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
-using Sewer56.SonicRiders.Structures.Input;
 
 namespace Riders.Tweakbox.Controllers
 {

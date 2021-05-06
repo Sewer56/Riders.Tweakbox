@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,7 +10,6 @@ using Riders.Tweakbox.Misc.Graphics;
 using Sewer56.NumberUtilities.Matrices;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.NumberUtilities.Vectors;
-using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX.Direct3D9;
@@ -22,6 +20,8 @@ using static Sewer56.SonicRiders.Functions.Functions;
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using SharpDX;
+using Sewer56.SonicRiders.API;
+using System.Diagnostics;
 
 namespace Riders.Tweakbox.Controllers
 {

@@ -1,7 +1,6 @@
 ﻿using System;
 using Reloaded.Memory;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;

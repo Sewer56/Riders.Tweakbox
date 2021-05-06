@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
@@ -22,14 +19,9 @@ using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Controls.Extensions;
-using Sewer56.Imgui.Layout;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
-using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Functions;
-using static DearImguiSharp.ImGuiWindowFlags;
-using Constants = Sewer56.Imgui.Misc.Constants;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox

@@ -1,5 +1,4 @@
 ﻿using System;
-using Reloaded.Memory.Utilities;
 using Reloaded.WPF.Animations.FrameLimiter;
 using StructLinq;
 

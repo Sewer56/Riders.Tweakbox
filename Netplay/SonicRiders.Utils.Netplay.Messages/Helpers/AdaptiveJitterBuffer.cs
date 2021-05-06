@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using Microsoft.VisualBasic.Logging;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Misc.Interfaces;
 

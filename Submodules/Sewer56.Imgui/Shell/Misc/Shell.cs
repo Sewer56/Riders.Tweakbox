@@ -2,7 +2,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using DearImguiSharp;
-using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Controls.Extensions;
 using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Utilities;

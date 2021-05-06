@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
-using Riders.Tweakbox.Services;
 using SharpDX.Direct3D9;
 using SharpDX.Mathematics.Interop;
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;

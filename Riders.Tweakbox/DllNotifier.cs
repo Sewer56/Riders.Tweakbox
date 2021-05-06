@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Utilities;
 
 namespace Riders.Tweakbox
 {

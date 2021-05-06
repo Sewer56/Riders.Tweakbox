@@ -1,5 +1,4 @@
 ﻿using DearImguiSharp;
-using EnumsNET;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;

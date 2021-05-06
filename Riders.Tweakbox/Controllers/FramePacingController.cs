@@ -10,7 +10,6 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
-using SharpDX.Direct3D9;
 using static Sewer56.SonicRiders.Functions.Functions;
 using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 

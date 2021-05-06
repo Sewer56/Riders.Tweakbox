@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Windows;
 using DearImguiSharp;
 using Sewer56.Imgui.Layout;
 using Sewer56.Imgui.Shell;

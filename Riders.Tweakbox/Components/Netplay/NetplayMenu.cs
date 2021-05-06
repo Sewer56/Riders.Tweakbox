@@ -6,7 +6,6 @@ using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
-using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
