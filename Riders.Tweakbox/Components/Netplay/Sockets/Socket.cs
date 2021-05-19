@@ -144,7 +144,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 return;
 
             var elapsedMilliseconds = (int)_stopWatch.ElapsedMilliseconds != 0 ? _stopWatch.ElapsedMilliseconds : 1;
-            Manager.ManualReceive();
+            Manager.PollEvents();
             Manager.ManualUpdate((int) elapsedMilliseconds);
             _stopWatch.Restart();
         }

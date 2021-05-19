@@ -55,7 +55,7 @@ namespace MLAPI.Puncher.LiteNetLib
 
                 Thread.Sleep(_manager.UpdateTime);
                 if (_manager.IsInManualMode && !_isClosed)
-                    _manager.ManualReceive();
+                    _manager.PollEvents();
             }
 
             endpoint = new IPEndPoint(IPAddress.None, 0);
