@@ -7,6 +7,7 @@ using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Sewer56.SonicRiders.Utility;
 using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
@@ -15,10 +16,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     public unsafe struct GameData : IReliableMessage
     {
         public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears) +
+                                                StructArray.GetSize<TurbulenceProperties>(Player.TurbulenceProperties.Count) +
                                                 sizeof(RunningPhysics) + sizeof(RunningPhysics2) + sizeof(RaceSettings);
 
         public static readonly int NumGears = Player.NumberOfGears;
-
+        public static readonly int NumTurbulenceProperties = Player.TurbulenceProperties.Count;
 
         /// <summary>
         /// Extreme gears of the host player.
@@ -40,6 +42,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// </summary>
         public RaceSettings RaceSettings;
 
+        /// <summary>
+        /// Contains all of the properties regarding how turbulence is internally handled.
+        /// </summary>
+        public TurbulenceProperties[] TurbulenceProperties;
+
         /// <inheritdoc />
         public void Dispose() { }
 
@@ -52,6 +59,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             *Player.RunPhysics2 = RunningPhysics2;
             Player.Gears.CopyFrom(Gears, NumGears);
             *State.CurrentRaceSettings = RaceSettings;
+            Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
         }
 
         public static unsafe GameData FromGame()
@@ -61,7 +69,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
                 RunningPhysics1 = *Player.RunPhysics,
                 RunningPhysics2 = *Player.RunPhysics2,
                 RaceSettings = *State.CurrentRaceSettings,
-                Gears = Player.Gears.ToArray()
+                Gears = Player.Gears.ToArray(),
+                TurbulenceProperties = Player.TurbulenceProperties.ToArray()
             };
 
             return data;
@@ -126,11 +135,15 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             var bitStream = new BitStream<RentalByteStream>(stream);
 
             Gears = new ExtremeGear[NumGears];
+            TurbulenceProperties = new TurbulenceProperties[NumTurbulenceProperties];
             RunningPhysics1 = bitStream.ReadGeneric<RunningPhysics>();
             RunningPhysics2 = bitStream.ReadGeneric<RunningPhysics2>();
             RaceSettings = bitStream.ReadGeneric<RaceSettings>();
             for (int x = 0; x < NumGears; x++)
                 Gears[x] = bitStream.ReadGeneric<ExtremeGear>();
+
+            for (int x = 0; x < NumTurbulenceProperties; x++)
+                TurbulenceProperties[x] = bitStream.ReadGeneric<TurbulenceProperties>();
         }
 
         private ArrayRental<byte> ToBytes(out int bytesWritten)
@@ -141,8 +154,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             bitStream.WriteGeneric(RunningPhysics1);
             bitStream.WriteGeneric(RunningPhysics2);
             bitStream.WriteGeneric(RaceSettings);
-            for (int x = 0; x < NumGears; x++) 
+            for (int x = 0; x < NumGears; x++)
                 bitStream.WriteGeneric(Gears[x]);
+
+            for (int x = 0; x < NumTurbulenceProperties; x++)
+                bitStream.WriteGeneric(TurbulenceProperties[x]);
 
             bytesWritten = bitStream.NextByteIndex;
             return rental;
