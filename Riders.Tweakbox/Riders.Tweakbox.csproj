@@ -28,9 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bogus" Version="33.0.2" />
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.2" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
+    <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
     <PackageReference Include="K4os.Compression.LZ4" Version="1.2.6" />
+    <PackageReference Include="Mapster" Version="7.2.0" />
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.1.319-beta">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -50,6 +53,7 @@
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />
+    <ProjectReference Include="..\Submodules\Riders.Tweakbox.API\Source\Riders.Tweakbox.API.SDK\Riders.Tweakbox.API.SDK.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.Hooks.Utilities\Sewer56.Hooks.Utilities.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.Imgui\Sewer56.Imgui.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />

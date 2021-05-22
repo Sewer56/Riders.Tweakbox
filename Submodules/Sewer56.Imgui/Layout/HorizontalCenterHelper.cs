@@ -17,11 +17,11 @@ namespace Sewer56.Imgui.Layout
         /// <summary>
         /// Call this before placing your control.
         /// </summary>
-        public void Begin()
+        public void Begin(float? availableWidth = null)
         {
             ImGui.NewLine();
-            var availableWidth = ImGui.GetWindowContentRegionWidth();
-            ImGui.SameLine(0, (availableWidth - LastItemWidth) / 2);
+            availableWidth ??= ImGui.GetWindowContentRegionWidth();
+            ImGui.SameLine((availableWidth.Value - LastItemWidth) / 2, 0);
         }
 
         /// <summary>

@@ -37,6 +37,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLAPI.Puncher.Shared", "Sub
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLAPI.Puncher.Client", "Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj", "{9D4920C4-DE82-4CB5-BA97-D68E68B8656F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.SDK", "Submodules\Riders.Tweakbox.API\Source\Riders.Tweakbox.API.SDK\Riders.Tweakbox.API.SDK.csproj", "{23053311-F73F-4C94-86F0-0B9F6AD4F67A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.Application.Commands", "Submodules\Riders.Tweakbox.API\Source\Riders.Tweakbox.API.Application.Commands\Riders.Tweakbox.API.Application.Commands.csproj", "{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,14 @@ Global
 		{9D4920C4-DE82-4CB5-BA97-D68E68B8656F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D4920C4-DE82-4CB5-BA97-D68E68B8656F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D4920C4-DE82-4CB5-BA97-D68E68B8656F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23053311-F73F-4C94-86F0-0B9F6AD4F67A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23053311-F73F-4C94-86F0-0B9F6AD4F67A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23053311-F73F-4C94-86F0-0B9F6AD4F67A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23053311-F73F-4C94-86F0-0B9F6AD4F67A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +130,8 @@ Global
 		{73021870-B3CE-41DB-B940-118D7A299043} = {0730E42C-E129-4620-8F89-429EFA5FDC52}
 		{E299C21F-9CB8-4AA7-8C1A-B5A5BDB0301F} = {0730E42C-E129-4620-8F89-429EFA5FDC52}
 		{9D4920C4-DE82-4CB5-BA97-D68E68B8656F} = {0730E42C-E129-4620-8F89-429EFA5FDC52}
+		{23053311-F73F-4C94-86F0-0B9F6AD4F67A} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
+		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}

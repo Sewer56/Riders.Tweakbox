@@ -13,3 +13,6 @@
 [submodule "Submodules/MLAPI.Puncher"]
 	path = Submodules/MLAPI.Puncher
 	url = https://github.com/Sewer56/MLAPI.Puncher.git
+[submodule "Submodules/Riders.Tweakbox.API"]
+	path = Submodules/Riders.Tweakbox.API
+	url = https://github.com/Sewer56/Riders.Tweakbox.API
