@@ -66,7 +66,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
 
             if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.DisconnectTimeout))
             {
-                Socket.DisconnectWithMessage(peer, "Did not receive user data from client. (Name, Number of Players etc.)");
+                Socket.DisconnectWithMessage(peer, "Did not receive Tweakbox version information from client.");
                 return;
             }
 
