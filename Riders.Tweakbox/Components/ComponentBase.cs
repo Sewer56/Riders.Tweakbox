@@ -14,7 +14,7 @@ namespace Riders.Tweakbox.Components
         protected bool Enabled = false;
 
         /// <inheritdoc />
-        public ref bool IsEnabled() => ref Enabled;
+        public virtual ref bool IsEnabled() => ref Enabled;
 
         /// <inheritdoc />
         public abstract void Render();

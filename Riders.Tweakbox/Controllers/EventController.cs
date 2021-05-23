@@ -84,14 +84,24 @@ namespace Riders.Tweakbox.Controllers
         public event AsmAction OnBattleCourseSelectSetStage;
 
         /// <summary>
-        /// Called right before entering character select from the course select menu.
+        /// Called right before entering character select from the (battle) course select menu.
+        /// </summary>
+        public event AsmAction OnBattleEnterCharacterSelect;
+
+        /// <summary>
+        /// Called as the game is about to enter character select menu.
         /// </summary>
         public event AsmAction OnEnterCharacterSelect;
 
         /// <summary>
+        /// Called as the game is about to leave the course select menu.
+        /// </summary>
+        public event AsmAction OnExitCourseSelect;
+
+        /// <summary>
         /// Executed when the user exits the character select menu.
         /// </summary>
-        public event AsmAction OnExitCharaSelect;
+        public event AsmAction OnExitCharacterSelect;
 
         /// <summary>
         /// Queries the user whether the character select menu should be left.
@@ -359,8 +369,12 @@ namespace Riders.Tweakbox.Controllers
             _checkIfRandomizePlayerHook = hooks.CreateAsmHook(onCheckIfRandomizePlayer, 0x004638D1, AsmHookBehaviour.ExecuteFirst).Activate();
             _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
 
-            var onEnterCharacterSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnEnterCharacterSelectHook, out _)}" };
+            var onEnterCharacterSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnBattleEnterCharacterSelectHook, out _)}" };
             _onEnterCharacterSelectHook   = hooks.CreateAsmHook(onEnterCharacterSelectAsm, 0x00464EAA, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            
+            OnCourseSelect += OnBeforeCourseSelect;
+            AfterCourseSelect += OnAfterCourseSelect;
         }
 
         /// <summary>
@@ -531,7 +545,7 @@ namespace Riders.Tweakbox.Controllers
         }
 
         private void OnBattleCourseSelectSetStageHook() => OnBattleCourseSelectSetStage?.Invoke();
-        private void OnExitCharaSelectHook() => OnExitCharaSelect?.Invoke();
+        private void OnExitCharaSelectHook() => OnExitCharacterSelect?.Invoke();
         private Enum<AsmFunctionResult> OnCheckIfExitCharaSelectHook() => OnCheckIfExitCharaSelect != null && OnCheckIfExitCharaSelect.Invoke();
 
         private void OnStartRaceHook() => OnStartRace?.Invoke();
@@ -553,7 +567,24 @@ namespace Riders.Tweakbox.Controllers
 
         private Enum<AsmFunctionResult> OnCheckIfRandomizePlayerHook() => OnCheckIfRandomizePlayer?.Invoke(Sewer56.SonicRiders.API.Player.Players.Pointer) ?? AsmFunctionResult.Indeterminate;
 
-        private void OnEnterCharacterSelectHook() => OnEnterCharacterSelect?.Invoke();
+        private void OnBattleEnterCharacterSelectHook() => OnBattleEnterCharacterSelect?.Invoke();
+
+        private CourseSelectTaskState LastStatus = CourseSelectTaskState.Exit;
+        private void OnBeforeCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
+        {
+            LastStatus = task->TaskStatus;
+        }
+
+        private void OnAfterCourseSelect(Task<CourseSelect, CourseSelectTaskState>* task)
+        {
+            if (LastStatus != CourseSelectTaskState.Exit && task->TaskStatus == CourseSelectTaskState.Exit)
+            {
+                if (task->TaskData->NextMenu == 1)
+                    OnEnterCharacterSelect?.Invoke();
+                else if (task->TaskData->NextMenu == 0)
+                    OnExitCourseSelect?.Invoke();
+            }
+        }
 
         [Function(CallingConventions.Cdecl)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

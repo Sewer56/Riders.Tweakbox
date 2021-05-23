@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading;
 using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
+using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -28,13 +29,13 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         private Thread _punchServerThread;
 
-        public Host(NetplayConfig config, NetplayController controller) : base(controller, config)
+        public Host(NetplayConfig config, NetplayController controller, TweakboxApi tweakboxApi) : base(controller, config, tweakboxApi)
         {
             var hostSettings   = config.Data.HostSettings;
             var socketSettings = hostSettings.SocketSettings;
             var punchServer    = config.Data.PunchingServer;
 
-            Log.WriteLine($"[Host] Hosting Server on {socketSettings.Port} with password {socketSettings.Password.Text}", LogCategory.Socket);
+            Log.WriteLine($"[Host] Hosting Server on {socketSettings.Port} with password {socketSettings.Password}", LogCategory.Socket);
             base.State = new HostState(config.ToPlayerData(), this);
             Manager.StartInManualMode(socketSettings.Port);
 
@@ -55,8 +56,8 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             try
             {
-                Log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host.Text}:{punchServerSettings.Port}", LogCategory.Socket);
-                host.NatPunchClient = new PuncherClient(punchServerSettings.Host.Text, (ushort) punchServerSettings.Port);
+                Log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host}:{punchServerSettings.Port}", LogCategory.Socket);
+                host.NatPunchClient = new PuncherClient(punchServerSettings.Host, (ushort) punchServerSettings.Port);
                 host.NatPunchClient.Transport = new LiteNetLibUdpTransport(Manager, Listener);
 
                 Log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches... Port: {host.Manager.LocalPort}", LogCategory.Socket);

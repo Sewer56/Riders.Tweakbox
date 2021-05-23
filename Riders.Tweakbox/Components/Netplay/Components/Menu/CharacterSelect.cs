@@ -47,7 +47,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             _sequencedChannel = (byte) Socket.ChannelAllocator.GetChannel(DeliveryMethod.ReliableSequenced);
             Event.OnCharacterSelect         += OnCharaSelect;
             Event.OnCheckIfExitCharaSelect  += MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect         += MenuOnExitCharaSelect;
+            Event.OnExitCharacterSelect         += MenuOnExitCharacterSelect;
             Event.OnCheckIfStartRace        += MenuCheckIfStartRace;
             Event.OnStartRace               += MenuOnMenuStartRace;
 
@@ -61,7 +61,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
             Socket.ChannelAllocator.ReleaseChannel(DeliveryMethod.ReliableSequenced, _sequencedChannel);
             Event.OnCharacterSelect         -= OnCharaSelect;
             Event.OnCheckIfExitCharaSelect  -= MenuCheckIfExitCharaSelect;
-            Event.OnExitCharaSelect         -= MenuOnExitCharaSelect;
+            Event.OnExitCharacterSelect         -= MenuOnExitCharacterSelect;
             Event.OnCheckIfStartRace        -= MenuCheckIfStartRace;
             Event.OnStartRace               -= MenuOnMenuStartRace;
 
@@ -70,7 +70,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Menu
         }
 
         private void MenuOnMenuStartRace() => DoExitCharaSelect(ExitKind.Start);
-        private void MenuOnExitCharaSelect() => DoExitCharaSelect(ExitKind.Exit);
+        private void MenuOnExitCharacterSelect() => DoExitCharaSelect(ExitKind.Exit);
         private Enum<AsmFunctionResult> MenuCheckIfStartRace() => _exit == ExitKind.Start;
         private Enum<AsmFunctionResult> MenuCheckIfExitCharaSelect() => _exit == ExitKind.Exit;
 

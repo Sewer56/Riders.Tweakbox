@@ -140,7 +140,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             if (OpenCharacterSelect > 0)
             {
                 task->TaskStatus = 0;
-                task->TaskData->EnterCharacterSelectFlag = 1;
+                task->TaskData->NextMenu = 1;
             }
 
             // Menu scrolling fixups for laggy clients.
@@ -187,7 +187,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
                 HighlightedItem = task->TaskData->HighlightedHorizontalItem
             };
 
-            if (task->TaskStatus == 0 && task->TaskData->EnterCharacterSelectFlag == 1)
+            if (task->TaskStatus == 0 && task->TaskData->NextMenu == 1)
                 sync.OpenCharacterSelect = 1;
 
             switch (task->TaskData->SubmenuState)

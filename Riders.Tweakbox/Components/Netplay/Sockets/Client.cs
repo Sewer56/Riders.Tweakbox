@@ -2,6 +2,7 @@
 using System.Net;
 using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
+using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -14,7 +15,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     {
         public override SocketType GetSocketType() => SocketType.Client;
 
-        public Client(NetplayConfig config, NetplayController controller) : base(controller, config)
+        public Client(NetplayConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
         {
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
@@ -29,26 +30,26 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             if (punchSettings.IsEnabled)
             {
-                Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host.Text}:{punchSettings.Port}", LogCategory.Socket);
-                using PuncherClient connectPeer = new PuncherClient(punchSettings.Host.Text, (ushort) punchSettings.Port);
+                Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host}:{punchSettings.Port}", LogCategory.Socket);
+                using PuncherClient connectPeer = new PuncherClient(punchSettings.Host, (ushort) punchSettings.Port);
                 connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
                 connectPeer.ServerRegisterResponseTimeout = punchSettings.ServerTimeout;
                 connectPeer.PunchResponseTimeout = punchSettings.PunchTimeout;
 
-                if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP.Text), out IPEndPoint connectResult))
+                if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP), out IPEndPoint connectResult))
                 {
                     Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);
-                    Manager.Connect(connectResult, socketSettings.Password.Text);
+                    Manager.Connect(connectResult, socketSettings.Password);
                 }
                 else
                 {
                     Log.WriteLine($"[{nameof(Client)}] NAT Punch Failed, Trying Direct IP", LogCategory.Socket);
-                    ConnectToIp(clientSettings.IP.Text, socketSettings.Port, socketSettings.Password.Text);
+                    ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
                 }
             }
             else
             {
-                ConnectToIp(clientSettings.IP.Text, socketSettings.Port, socketSettings.Password.Text);
+                ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
             }
 
             Initialize();

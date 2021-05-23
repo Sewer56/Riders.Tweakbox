@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DearImguiSharp;
 using Sewer56.Imgui.Shell.Structures;
 using Sewer56.Imgui.Utilities;
@@ -44,25 +45,76 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static void AddDialog(string name, DialogFn dialogFunction)
+        public static void AddDialog(string name, DialogFn dialogFunction, Action onClose = null)
         {
-            AddCustom(() => DialogHandler(name, dialogFunction));
+            AddCustom(() => DialogHandler(name, dialogFunction, onClose));
         }
 
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static void AddDialog(string name, string dialogText)
+        public static async Task AddDialogAsync(string name, DialogFn dialogFunction, Action onClose = null)
         {
-            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText)));
+            bool hasFinished = false;
+
+            AddCustom(() => DialogHandler(name, dialogFunction, () =>
+            {
+                onClose?.Invoke();
+                hasFinished = true;
+            }));
+
+            while (!hasFinished)
+                await Task.Delay(16);
         }
 
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static void AddWindow(string name, DialogFn dialogFunction, ImGuiWindowFlags flags = 0)
+        public static void AddDialog(string name, string dialogText, Action onClose = null)
         {
-            AddCustom(() => WindowHandler(name, dialogFunction, flags));
+            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText), onClose));
+        }
+
+        /// <summary>
+        /// Adds a function that displays a dialog to the current shell.
+        /// </summary>
+        public static async Task AddDialogAsync(string name, string dialogText, Action onClose = null)
+        {
+            bool hasFinished = false;
+            
+            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText), () =>
+            {
+                onClose?.Invoke();
+                hasFinished = true;
+            }));
+
+            while (!hasFinished)
+                await Task.Delay(16);
+        }
+
+        /// <summary>
+        /// Adds a function that displays a dialog to the current shell.
+        /// </summary>
+        public static void AddWindow(string name, DialogFn dialogFunction, Action onClose = null, ImGuiWindowFlags flags = 0)
+        {
+            AddCustom(() => WindowHandler(name, dialogFunction, onClose, flags));
+        }
+
+        /// <summary>
+        /// Adds a function that displays a dialog to the current shell.
+        /// </summary>
+        public static async Task AddWindowAsync(string name, DialogFn dialogFunction, Action onClose = null, ImGuiWindowFlags flags = 0)
+        {
+            bool hasFinished = false;
+
+            AddCustom(() => WindowHandler(name, dialogFunction, () =>
+            {
+                onClose?.Invoke();
+                hasFinished = true;
+            }, flags));
+
+            while (!hasFinished)
+                await Task.Delay(16);
         }
 
         /// <summary>
@@ -128,7 +180,7 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Wraps a dialog.
         /// </summary>
-        private static bool DialogHandler(string name, DialogFn sup)
+        private static bool DialogHandler(string name, DialogFn sup, Action onClose = null)
         {
             bool isOpened = true;
             ImGui.OpenPopup(name, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
@@ -137,14 +189,17 @@ namespace Sewer56.Imgui.Shell
                 sup(ref isOpened);
                 ImGui.EndPopup();
             }
-            
+
+            if (!isOpened)
+                onClose?.Invoke();
+
             return isOpened;
         }
 
         /// <summary>
         /// Wraps a window.
         /// </summary>
-        private static bool WindowHandler(string name, DialogFn sup, ImGuiWindowFlags flags = 0)
+        private static bool WindowHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = 0)
         {
             bool isOpened = true;
             if (ImGui.Begin(name, ref isOpened, (int) flags))
@@ -152,6 +207,9 @@ namespace Sewer56.Imgui.Shell
                 sup(ref isOpened);
                 ImGui.End();
             }
+
+            if (!isOpened)
+                onClose?.Invoke();
 
             return isOpened;
         }

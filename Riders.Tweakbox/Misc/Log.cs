@@ -35,7 +35,7 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Default enabled logging categories
         /// </summary>
-        public const LogCategory DefaultHudCategories = LogCategory.Socket;
+        public const LogCategory DefaultHudCategories = LogCategory.Default | LogCategory.Socket;
 
         /// <summary>
         /// Default enabled logging categories

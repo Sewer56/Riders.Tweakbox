@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using LiteNetLib;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
@@ -9,8 +10,8 @@ namespace Riders.Tweakbox.Components.Netplay
 {
     public class NetplayConfig : JsonConfigBase<NetplayConfig, NetplayConfig.Internal>
     {
-        private const int TextLength = 128;
-        private const int IPLength   = 15;
+        public const int TextLength = 128;
+        public const int IPLength   = 15;
 
         /// <summary>
         /// Turns a player config into user data to send over the web.
@@ -19,7 +20,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             return new PlayerData()
             {
-                Name = Data.PlayerSettings.PlayerName.Text,
+                Name = Data.PlayerSettings.PlayerName,
                 NumPlayers = Data.PlayerSettings.LocalPlayers,
                 PlayerIndex = 0,
             };
@@ -33,6 +34,16 @@ namespace Riders.Tweakbox.Components.Netplay
             public HostSettings HostSettings        = new HostSettings();
             public ClientSettings ClientSettings    = new ClientSettings();
             public PlayerSettings PlayerSettings    = new PlayerSettings();
+            public ServerSettings ServerSettings    = new ServerSettings();
+        }
+
+        public class ServerSettings
+        {
+            public TextInputData Host = new TextInputData("https://tweakbox.sewer56.moe", TextLength);
+            
+            public TextInputData Username = new TextInputData("", TextLength);
+            public TextInputData Password = new TextInputData("", TextLength);
+            public TextInputData Email    = new TextInputData("", TextLength);
         }
 
         public class PlayerSettings
@@ -52,12 +63,29 @@ namespace Riders.Tweakbox.Components.Netplay
             /// IP address of the host.
             /// </summary>
             public TextInputData IP = new TextInputData("127.0.0.1", IPLength);
+
+            [JsonIgnore]
+            public ref TextInputData Password => ref SocketSettings.Password;
+            
+            [JsonIgnore]
+            public ref int Port => ref SocketSettings.Port;
         }
 
         public class HostSettings
         {
             public SocketSettings SocketSettings = new SocketSettings();
             public bool ReducedTickRate = false;
+
+            [JsonIgnore]
+            public ref TextInputData Password => ref SocketSettings.Password;
+            
+            [JsonIgnore]
+            public ref int Port => ref SocketSettings.Port;
+
+            /// <summary>
+            /// Name of the lobby in server browser.
+            /// </summary>
+            public TextInputData Name { get; set; } = new TextInputData("My Dank Riders Lobby", TextLength);
         }
 
         public class SocketSettings

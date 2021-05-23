@@ -21,14 +21,15 @@ namespace Riders.Tweakbox.Components.Debug
         /// <inheritdoc />
         public override string Name { get; set; } = "Server Browser Test Window";
 
-        public ServerBrowser Browser;
+        public ServerBrowserMenu BrowserMenu;
         public int NumServers = 50;
 
         /// <inheritdoc />
         public ServerBrowserDebugWindow()
         {
-            Browser = new ServerBrowser(FakeConnect, FakeRefresh);
+            BrowserMenu = new ServerBrowserMenu(FakeConnect, FakeRefresh);
             GenerateData(NumServers);
+            BrowserMenu.IsEnabled() = true;
         }
 
         /// <inheritdoc />
@@ -37,11 +38,14 @@ namespace Riders.Tweakbox.Components.Debug
             ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
             if (ImGui.Begin(Name, ref IsEnabled(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
-                Browser.Render();
+                BrowserMenu.Render();
 
                 ImGui.SliderInt("Number of Servers", ref NumServers, 1, 1000, null, 0);
                 if (ImGui.Button("Generate", Constants.ButtonSize))
                     GenerateData(NumServers);
+
+                if (!BrowserMenu.IsEnabled() && ImGui.Button("Show Menu", Constants.ButtonSize))
+                    BrowserMenu.IsEnabled() = true;
             }
 
             ImGui.End();
@@ -51,7 +55,7 @@ namespace Riders.Tweakbox.Components.Debug
         private void GenerateData(int numServers)
         {
             var faker = GetPostServerRequestFaker();
-            Browser.Results = Mapping.Mapper.Map<List<GetServerResultEx>>(faker.Generate(numServers));
+            BrowserMenu.SetResults(Mapping.Mapper.Map<List<GetServerResultEx>>(faker.Generate(numServers)));
         }
 
         // Sample Events

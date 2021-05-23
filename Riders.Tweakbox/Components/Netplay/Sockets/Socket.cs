@@ -7,6 +7,7 @@ using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
+using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
@@ -66,15 +67,21 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         public NetplayConfig Config { get; set; }
 
+        /// <summary>
+        /// Provides access to the Tweakbox Online Service.
+        /// </summary>
+        public TweakboxApi Api { get; set; }
+
         private Stopwatch _stopWatch = new Stopwatch();
         private bool _isDisposed = false;
 
         /// <summary>
         /// Constructs the current socket.
         /// </summary>
-        public Socket(NetplayController controller, NetplayConfig config)
+        public Socket(NetplayController controller, NetplayConfig config, TweakboxApi tweakboxApi)
         {
             _stopWatch.Start();
+            Api = tweakboxApi;
             Listener = new NetworkEventListener(this);
             Manager = new NetManager(Listener) { ChannelsCount = 64, AutoRecycle = true };
             ChannelAllocator = new LnlChannelAllocator(Manager.ChannelsCount);
@@ -114,6 +121,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Misc.TimeSynchronization>());
             AddComponent(IoC.Get<Components.Misc.Random>());
             AddComponent(IoC.Get<Components.Misc.LatencyUpdate>());
+
+            // API
+            AddComponent(IoC.Get<Components.Api.ServerReporter>());
         }
 
         /// <summary>

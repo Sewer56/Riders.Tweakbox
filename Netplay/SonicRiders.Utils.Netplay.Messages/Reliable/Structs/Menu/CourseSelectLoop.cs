@@ -148,7 +148,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu
             else if (OpenCharacterSelect > 0)
             {
                 task->TaskStatus = CourseSelectTaskState.Normal;
-                task->TaskData->EnterCharacterSelectFlag = 0;
+                task->TaskData->NextMenu = 0;
             }
         }
 

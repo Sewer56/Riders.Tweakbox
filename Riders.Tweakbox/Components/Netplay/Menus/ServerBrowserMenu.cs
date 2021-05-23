@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DearImguiSharp;
 using EnumsNET;
 using Riders.Tweakbox.API.Application.Commands.v1;
-using Riders.Tweakbox.API.Application.Commands.v1.Browser.Result;
 using Riders.Tweakbox.Components.Netplay.Menus.Models;
 using Sewer56.Imgui.Layout;
 using Sewer56.Imgui.Misc;
@@ -15,7 +15,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Riders.Tweakbox.Components.Netplay.Menus
 {
-    public class ServerBrowser : ComponentBase
+    public class ServerBrowserMenu : ComponentBase
     {
         /// <inheritdoc />
         public override string Name { get; set; } = "Server Browser";
@@ -23,14 +23,19 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         /// <summary>
         /// All of the servers to be displayed.
         /// </summary>
-        public List<GetServerResultEx> Results { get; set; } = new List<GetServerResultEx>();
+        public List<GetServerResultEx> Results { get; private set; } = new List<GetServerResultEx>();
+
+        /// <summary>
+        /// Total players across all servers.
+        /// </summary>
+        public int TotalPlayers { get; private set; }
 
         // Actions
         public Func<GetServerResultEx, Task> Connect;
         public Func<Task> Refresh;
 
         /// <inheritdoc />
-        public ServerBrowser(Func<GetServerResultEx, Task> connect, Func<Task> refresh)
+        public ServerBrowserMenu(Func<GetServerResultEx, Task> connect, Func<Task> refresh)
         {
             Connect = connect;
             Refresh = refresh;
@@ -46,14 +51,30 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         private GetServerResultEx _currentSelection;
         
         private HorizontalCenterHelper _centerHelperButton = new HorizontalCenterHelper();
-        private HorizontalCenterHelper _centerHelperPlayer = new HorizontalCenterHelper();
+        private HorizontalCenterHelper _centerHelperCurrentServerPlayerCount = new HorizontalCenterHelper();
+        private HorizontalCenterHelper _centerHelperTotalServerCount = new HorizontalCenterHelper();
+        private HorizontalCenterHelper _centerHelperTotalPlayerCount = new HorizontalCenterHelper();
         private ImVec4 _passwordColor = Utilities.HexToFloat(0xF0C84FFF);
+        private const int heightOffsetPlayerTable = -70;
+
+        /// <summary>
+        /// Sets the current available server info.
+        /// </summary>
+        public void SetResults(List<GetServerResultEx> results)
+        {
+            TotalPlayers = results.Sum(x => x.Players.Count);
+            Results = results;
+        }
 
         /// <summary>
         /// Render all of the available results.
+        /// Note: Must set IsEnabled = true to display this menu.
         /// </summary>
         public override unsafe void Render()
         {
+            if (!IsEnabled())
+                return;
+
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
                 // Get client area
@@ -75,12 +96,19 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
             ImGui.BeginGroup();
 
             var availableWidth = contentRegionWidth * 0.25f;
-            _centerHelperPlayer.Begin(availableWidth);
-            var maxPlayers = _currentSelection?.Type.GetNumTeams() * _currentSelection?.Type.GetNumPlayersPerTeam();
-            ImGui.TextUnformatted($"Players {_currentSelection?.Players.Count:00} / {maxPlayers:00}", null);
-            _centerHelperPlayer.End();
 
-            var playerTableSize = new ImVec2.__Internal() {x = availableWidth, y = -50};
+            // Total Servers
+            _centerHelperTotalServerCount.Begin(availableWidth);
+            ImGui.TextWrapped($"Total Server Count: {results.Count}");
+            _centerHelperTotalServerCount.End();
+
+            // Total Players
+            _centerHelperTotalPlayerCount.Begin(availableWidth);
+            ImGui.TextWrapped($"Total Player Count: {TotalPlayers}");
+            _centerHelperTotalPlayerCount.End();
+
+            // Table
+            var playerTableSize = new ImVec2.__Internal() {x = availableWidth, y = heightOffsetPlayerTable };
             if (ImGui.__Internal.BeginTable("player_table", 2, (int) (_tableFlags & ~ImGuiTableFlagsSortable), playerTableSize, 0))
             {
                 // Create Headers
@@ -117,11 +145,22 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
                 ImGui.EndTable();
             }
 
-            _centerHelperButton.Begin(availableWidth);
-            if (ImGui.Button("Connect", Constants.ButtonSize))
-                Connect?.Invoke(_currentSelection);
+            // Players In Lobby
+            _centerHelperCurrentServerPlayerCount.Begin(availableWidth);
+            var maxPlayers = _currentSelection?.Type.GetNumTeams() * _currentSelection?.Type.GetNumPlayersPerTeam();
+            ImGui.TextUnformatted($"Players {_currentSelection?.Players.Count:00} / {maxPlayers:00}", null);
+            _centerHelperCurrentServerPlayerCount.End();
 
-            _centerHelperButton.End();
+            // Connect
+            if (_currentSelection != null)
+            {
+                _centerHelperButton.Begin(availableWidth);
+                if (ImGui.Button("Connect", Constants.ButtonSize))
+                    Connect?.Invoke(_currentSelection);
+
+                _centerHelperButton.End();
+            }
+
             _centerHelperButton.Begin(availableWidth);
             if (ImGui.Button("Refresh", Constants.ButtonSize))
                 Refresh?.Invoke();
@@ -187,7 +226,7 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
 
                     // Password
                     if (ImGui.TableSetColumnIndex(3))
-                        ImGui.TextUnformatted(item.Mods, null);
+                        ImGui.TextUnformatted(item.Mods ?? "", null);
 
                     // Ping
                     if (ImGui.TableSetColumnIndex(4))

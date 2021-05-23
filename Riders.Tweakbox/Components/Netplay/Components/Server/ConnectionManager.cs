@@ -146,7 +146,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             else
             {
                 Log.WriteLine($"[Host] Accepting if Password Matches", LogCategory.Socket);
-                request.AcceptIfKey(HostSettings.SocketSettings.Password.Text);
+                request.AcceptIfKey(HostSettings.Password);
             }
         }
 
@@ -225,7 +225,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             if (Socket.GetSocketType() == SocketType.Host)
                 OnHostConnectionRequest(request);
             else
-                request.AcceptIfKey(ClientSettings.SocketSettings.Password.Text);
+                request.AcceptIfKey(ClientSettings.Password);
         }
 
         private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)

@@ -189,7 +189,7 @@ namespace Sewer56.Imgui.Controls
 
             if (ImGui.Button("Create", Constants.ButtonSizeThin))
             {
-                New(_inputData.Text);
+                New(_inputData);
                 ImGui.CloseCurrentPopup();
             }
 

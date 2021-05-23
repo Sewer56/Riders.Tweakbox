@@ -20,6 +20,7 @@ namespace Sewer56.Imgui.Controls
 
         private Pinnable<sbyte> _textInput;
 
+        // Construction/Deconstruction
         public TextInputData(int maxCharacters, int characterwidth = sizeof(int))
         {
             SizeOfData = (ulong)(maxCharacters * characterwidth + 1);
@@ -41,7 +42,14 @@ namespace Sewer56.Imgui.Controls
             }
         }
 
-        public string GetText()
+        public TextInputData(string text) : this(text, text.Length, sizeof(int)) { }
+
+        public void Render(string label = "", ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = null, IntPtr userData = default)
+        {
+            ImGui.InputText(label, Pointer, (IntPtr)SizeOfData, (int) flags, callback, userData);
+        }
+
+        private string GetText()
         {
             var text = Encoding.UTF8.GetString((byte*)Pointer, (int)SizeOfData);
             int index = text.IndexOf('\0');
@@ -51,15 +59,23 @@ namespace Sewer56.Imgui.Controls
             return text;
         }
 
-        public void Render(string label = "", ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = null, IntPtr userData = default)
-        {
-            ImGui.InputText(label, Pointer, (IntPtr)SizeOfData, (int) flags, callback, userData);
-        }
+        public static implicit operator TextInputData(string text) => new TextInputData(text);
+        public static implicit operator string(TextInputData text) => text.Text;
 
+        /// <inheritdoc />
+        public override string ToString() => Text;
+    }
+
+    /// <summary>
+    /// Extension methods for <see cref="TextInputData"/>.
+    /// A repository of filters and other similar tools.
+    /// </summary>
+    public static unsafe class TextInputDataExtensions
+    {
         /// <summary>
         /// Custom filter for functions such as <see cref="ImGui.InputText"/>
         /// </summary>
-        public int FilterValidPathCharacters(IntPtr ptr)
+        public static int FilterValidPathCharacters(this TextInputData textInputData, IntPtr ptr)
         {
             var data = new ImGuiInputTextCallbackData((void*)ptr);
             return CharacterFilter.IsPathCharacterValid(GetEventCharacter(data)) ? 0 : 1;
@@ -68,13 +84,13 @@ namespace Sewer56.Imgui.Controls
         /// <summary>
         /// Custom filter for functions such as <see cref="ImGui.InputText"/>
         /// </summary>
-        public int FilterIPAddress(IntPtr ptr)
+        public static int FilterIPAddress(this TextInputData textInputData,IntPtr ptr)
         {
             const char dot = '.';
             const int charsBetweenDot = 3;
             var data = new ImGuiInputTextCallbackData((void*)ptr);
 
-            var text     = this.GetText();
+            var text     = textInputData.Text;
             var dotIndex = text.LastIndexOf(dot);
             int charsAfterDelim = text.Length;
 
@@ -93,7 +109,7 @@ namespace Sewer56.Imgui.Controls
         }
 
         private static char GetEventCharacter(ImGuiInputTextCallbackData data) => Encoding.UTF8.ToCharacter(data.EventChar);
-        public static class CharacterFilter
+        private static class CharacterFilter
         {
             public static readonly char[] PathInvalidCharacters   = Path.GetInvalidPathChars().Union(Path.GetInvalidFileNameChars()).ToArray();
             public static readonly char[] IPAddressCharacters = "0123456789.".ToCharArray();
