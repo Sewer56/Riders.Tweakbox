@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime;
+using System.Windows;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
@@ -30,7 +31,7 @@ namespace Riders.Tweakbox
         public async void Start(IModLoaderV1 loader)
         {
             #if DEBUG
-            Debugger.Launch();
+            MessageBox.Show("Attach Debugger Now");
             #endif
             _modLoader = (IModLoader)loader;
             _logger = (ILogger)_modLoader.GetLogger();

@@ -1,4 +1,5 @@
 ﻿using DearImguiSharp;
+using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -14,6 +15,7 @@ namespace Riders.Tweakbox.Components.Tweaks
 
         private FramePacingController _pacingController = IoC.Get<FramePacingController>();
         private PatchController _patchController = IoC.Get<PatchController>();
+        private FixesController _fixesController = IoC.Get<FixesController>();
 
         public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
         {
@@ -44,6 +46,15 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
+                if (ImGui.Checkbox("Return to Stage Select from Race", ref Config.Data.NormalRaceReturnToTrackSelect))
+                    _fixesController.ReturnToCourseSelectNormalRace.Toggle(Config.Data.NormalRaceReturnToTrackSelect);
+
+                if (ImGui.Checkbox("Return to Stage Select from Tag", ref Config.Data.TagReturnToTrackSelect))
+                    _fixesController.ReturnToCourseSelectTag.Toggle(Config.Data.TagReturnToTrackSelect);
+
+                if (ImGui.Checkbox("Return to Stage Select from Survival", ref Config.Data.SurvivalReturnToTrackSelect))
+                    _fixesController.ReturnToCourseSelectSurvival.Toggle(Config.Data.SurvivalReturnToTrackSelect);
+
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
                 ImGui.Checkbox("Force Single Player Stage Data", ref Config.Data.SinglePlayerStageData);
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");

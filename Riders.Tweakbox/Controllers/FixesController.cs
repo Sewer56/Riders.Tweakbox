@@ -3,6 +3,7 @@ using System.Linq;
 using EnumsNET;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Memory.Interop;
 using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -26,9 +27,17 @@ namespace Riders.Tweakbox.Controllers
 
         // Hooks
         private IAsmHook _bootToMenu;
+        public IAsmHook ReturnToCourseSelectSurvival { get; }
+        public IAsmHook ReturnToCourseSelectNormalRace { get; }
+        public IAsmHook ReturnToCourseSelectTag { get; }
+
         private IHook<Functions.CdeclReturnIntFn> _readConfigHook;
         private IHook<Functions.CdeclReturnIntFn> _loadWorldAssetsHook;
         private IAsmHook _initializeObjectLayoutHook;
+
+        // Hooks Persistent Data
+        private IAsmHook _getReturnMenuHook;
+        private Pinnable<int> _menuReturn = new Pinnable<int>(22);
 
         public FixesController()
         {
@@ -44,6 +53,170 @@ namespace Riders.Tweakbox.Controllers
             _config.ConfigUpdated += OnConfigUpdated;
             _event.OnCheckIfQtePressLeft += EventOnOnCheckIfQtePressLeft;
             _event.OnCheckIfQtePressRight += EventOnOnCheckIfQtePressRight;
+
+            // Return to Course Select Hook
+            var utils = SDK.ReloadedHooks.Utilities;
+
+            // Setup Return to Course Select
+            var getReturnMenu = new string[]
+            {
+                "use32",
+                $"mov dword [{(long)_menuReturn.Pointer}], eax",  // Set Menu to Return To
+            };
+
+            _getReturnMenuHook = SDK.ReloadedHooks.CreateAsmHook(getReturnMenu, 0x0046AC73, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            var returnToRaceNormal = new string[]
+            {
+                "use32",
+                
+                // Get Menu to Return To
+                $"mov ecx, dword [{(long)_menuReturn.Pointer}]",
+                $"mov [0x006A21D8], ecx", // Set return menu
+
+                // Jump if Below Minimum
+                "cmp ecx, 40",
+                "jl exit",
+
+                // Normal Race
+                "cmp ecx, 43",
+                "jge exit",
+
+                    // Shared Between Free Race, Time Trial, World Grand Prix
+                    "mov  byte [edi+14h], 22",
+                    "push 1",
+                    "push 7530h",
+                    "push dword 0x00465070",
+                    $"{utilities.GetAbsoluteCallMnemonics((IntPtr) 0x00527E00, false)}",
+                    "mov dword [esi], eax", 
+                    "add esp, 0Ch",
+                
+                    // Free Race
+                    $"mov ecx, dword [{(long)_menuReturn.Pointer}]", // restore trashed register.
+                    "cmp ecx, 40",
+                    "jne timetrial",
+
+                    "mov eax, dword [0x017BE86C]",
+                    "mov dword [0x005F8758], eax",
+                    "mov byte [esi+3Ch], 0",
+                    "mov byte [esi+0x0E], 0",
+
+                    "jmp return",
+
+                    // TimeTrial
+                    "timetrial:",
+                    "cmp ecx, 41",
+                    "jne grandprix",
+
+                    "mov eax, dword [0x017BE870]",
+                    "mov dword [0x005F8758], eax",
+                    "mov byte [esi+3Ch], 1",
+                    "mov dword [0x17DF3C4], 0",
+                    "mov byte [esi+0x0E], 1",
+
+                    "jmp return",
+
+                    // WGP
+                    "grandprix:",
+                    "mov eax, dword [0x017BE874]",
+                    "mov dword [0x005F8758], eax",
+                    "mov byte [esi+3Ch], 2",
+
+                "return:",
+                $"mov ecx, 0",
+                $"mov dword [{(long)_menuReturn.Pointer}], ecx",
+                "mov byte [0x00692B88], 1",
+                "pop ebp",
+                "pop edi",
+                "pop esi",
+                "pop ebx",
+                "add esp, 8",
+                "ret",
+
+                "exit:"
+            };
+
+            ReturnToCourseSelectNormalRace = SDK.ReloadedHooks.CreateAsmHook(returnToRaceNormal, 0x0046B1D2, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            string[] returnToRaceTag = new[]
+            {
+                "use32",
+                $"mov edx, dword [{(long)_menuReturn.Pointer}]",
+                "cmp edx, 70",
+                "jne exit",
+
+                // Reset Return Menu Value
+                $"mov edx, 0",
+                $"mov dword [{(long)_menuReturn.Pointer}], edx",
+
+                // Close Menu, Taken from 0x0046B161
+                "movzx   eax, byte [esi+39h]",
+                "push    esi",
+                "call    dword [eax*4+0x005BC21C]" ,
+                "add     esp, 4",
+
+                $"{utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x0046B7C3, false)}",
+                "exit:"
+            };
+
+            ReturnToCourseSelectTag = SDK.ReloadedHooks.CreateAsmHook(returnToRaceTag, 0x0046B08B, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            var returnToRaceSurvival = new string[]
+            {
+                "use32",
+                
+                // Get Menu to Return To
+                $"mov ecx, dword [{(long)_menuReturn.Pointer}]",
+                $"mov [0x006A21D8], ecx", // Set return menu
+
+                // Jump if Below Minimum
+                "cmp ecx, 82",
+                "jge exit",
+
+                // Normal Race
+                "cmp ecx, 80",
+                "jl exit",
+
+                    "mov  byte [edi+14h], 22",
+                    "push 1",
+                    "push 7530h",
+                    "push dword 0x00465070",
+                    $"{utilities.GetAbsoluteCallMnemonics((IntPtr) 0x00527E00, false)}",
+                    "mov [esi], eax", 
+                    "add esp, 0Ch",
+
+                    // Race
+                    $"mov ecx, dword [{(long)_menuReturn.Pointer}]",
+                    "cmp ecx, 80",
+                    "jne battle",
+
+                    "mov eax, dword [0x017BE87C]",
+                    "mov dword [0x005F8758], eax",
+                    "mov byte [esi+3Ch], 4",
+                    "jmp return",
+
+                    // Battle
+                    "battle:",
+                    "mov eax, dword [0x017BE880]",
+                    "mov dword [0x005F8758], eax",
+                    "mov byte [esi+3Ch], 5",
+                    
+                "return:",
+                $"mov ecx, 0",
+                $"mov dword [{(long)_menuReturn.Pointer}], ecx",
+                "mov byte [0x00692B88], 1",
+
+                "pop ebp",
+                "pop edi",
+                "pop esi",
+                "pop ebx",
+                "add esp, 8",
+                "ret",
+
+                "exit:"
+            };
+
+            ReturnToCourseSelectSurvival = SDK.ReloadedHooks.CreateAsmHook(returnToRaceSurvival, 0x0046B80B, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         // Interface
@@ -53,6 +226,10 @@ namespace Riders.Tweakbox.Controllers
             _readConfigHook?.Disable();
             _loadWorldAssetsHook?.Disable();
             _initializeObjectLayoutHook?.Disable();
+            ReturnToCourseSelectNormalRace?.Disable();
+            _getReturnMenuHook?.Disable();
+            ReturnToCourseSelectSurvival?.Disable();
+            ReturnToCourseSelectTag?.Disable();
         }
 
         public void Enable()
@@ -61,6 +238,10 @@ namespace Riders.Tweakbox.Controllers
             _readConfigHook?.Enable();
             _loadWorldAssetsHook?.Enable();
             _initializeObjectLayoutHook?.Enable();
+            ReturnToCourseSelectNormalRace?.Enable();
+            _getReturnMenuHook?.Enable();
+            ReturnToCourseSelectSurvival?.Enable();
+            ReturnToCourseSelectTag?.Enable();
         }
 
         // Hook Implementation
@@ -95,7 +276,6 @@ namespace Riders.Tweakbox.Controllers
                 Player.Players[x].PlayerInput = (Player.Inputs.Pointer) + x; 
             }
 
-
             _bootToMenu.Disable();
         }
 
@@ -113,6 +293,10 @@ namespace Riders.Tweakbox.Controllers
 
                 _bootToMenu = SDK.ReloadedHooks.CreateAsmHook(bootToMain, 0x46AD01, AsmHookBehaviour.ExecuteFirst).Activate();
             }
+
+            ReturnToCourseSelectTag.Toggle(_config.Data.TagReturnToTrackSelect);
+            ReturnToCourseSelectNormalRace.Toggle(_config.Data.NormalRaceReturnToTrackSelect);
+            ReturnToCourseSelectSurvival.Toggle(_config.Data.NormalRaceReturnToTrackSelect);
         }
 
         private int LoadWorldAssetsHook()

@@ -143,6 +143,10 @@ namespace Riders.Tweakbox.Components.Tweaks
             public bool Borderless = false;
             public bool SinglePlayerStageData = true;
             public bool SinglePlayerModels = true;
+
+            public bool NormalRaceReturnToTrackSelect = true;
+            public bool TagReturnToTrackSelect = true;
+            public bool SurvivalReturnToTrackSelect = true;
         }
         #endregion
     }
