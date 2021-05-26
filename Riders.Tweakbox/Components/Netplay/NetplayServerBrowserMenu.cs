@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DearImguiSharp;
-using Refit;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Menus.Models;
@@ -14,6 +11,7 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
+using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -76,6 +74,8 @@ namespace Riders.Tweakbox.Components.Netplay
                     await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
                     {
                         inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                        if (ImGui.Button("Ok", Constants.Zero))
+                            opened = false;
                     });
 
                     password = inputData;
@@ -87,7 +87,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 data.ClientSettings.Port = result.Port;
                 data.ClientSettings.IP = result.Address;
 
-                Controller.Socket = new Client(Config, Controller, Api);
+                Controller.Socket = new Client(configCopy, Controller, Api);
                 IsEnabled() = false;
             }
             catch (Exception e)
