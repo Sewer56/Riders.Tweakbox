@@ -16,6 +16,9 @@ using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Api
 {
+    /// <summary>
+    /// Handles all server reporting to the API.
+    /// </summary>
     public class ServerReporter : INetplayComponent
     {
         /// <inheritdoc />
@@ -52,7 +55,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
             RemoveServer();
         }
 
-        private void OnExitCharacterSelect() => PostServerRequest();
+        private void OnExitCharacterSelect() => PostServerRequest(true);
         private void UpdateServerDetails(object? state) => PostServerRequest();
         private async void OnEnterCharaSelect() => RemoveServer();
         private void OnExitCourseSelect() => RemoveServer();
@@ -63,9 +66,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
             await Socket.Api.BrowserApi.Delete(_guid, config.HostSettings.Port);
         }
 
-        private async void PostServerRequest()
+        private async void PostServerRequest(bool force = false)
         {
-            if (Event.LastTask != Tasks.CourseSelect)
+            if (!force && Event.LastTask != Tasks.CourseSelect)
                 return;
 
             var state   = Socket.State;
