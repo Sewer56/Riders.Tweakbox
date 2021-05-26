@@ -20,7 +20,7 @@ namespace Riders.Tweakbox.Misc
             var typeAdapterConfig = new TypeAdapterConfig();
             typeAdapterConfig.Compiler = exp => exp.CompileFast();
             typeAdapterConfig.NewConfig<GetServerResult, GetServerResultEx>().AfterMapping(result => result.Extend());
-            typeAdapterConfig.NewConfig<TextInputData, TextInputData>().MapWith(result => new TextInputData(result.Text));
+            typeAdapterConfig.NewConfig<TextInputData, TextInputData>().MapWith(result => new TextInputData(result.Text, (int) result.SizeOfData, 1));
             Mapper = new Mapper(typeAdapterConfig);
         }
     }
