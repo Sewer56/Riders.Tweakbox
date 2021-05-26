@@ -119,6 +119,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Game.SetupRace>());
 
             // Misc
+            AddComponent(IoC.Get<Components.Misc.DisconnectOnCourseLeave>());
             AddComponent(IoC.Get<Components.Misc.TimeSynchronization>());
             AddComponent(IoC.Get<Components.Misc.Random>());
             AddComponent(IoC.Get<Components.Misc.LatencyUpdate>());
@@ -365,6 +366,16 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 Update();
                 return function();
             }, timeout, sleepTime, token);
+        }
+
+        /// <summary>
+        /// Disconnects all clients with a given message.
+        /// </summary>
+        /// <param name="message">The message to send.</param>
+        public void DisconnectAllWithMessage(string message)
+        {
+            for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
+                DisconnectWithMessage(Manager.ConnectedPeerList[x], message);
         }
 
         /// <summary>

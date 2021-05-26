@@ -8,6 +8,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
@@ -32,6 +33,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public Host(NetplayEditorConfig config, NetplayController controller, TweakboxApi tweakboxApi) : base(controller, config, tweakboxApi)
         {
+            if (Event.LastTask != Tasks.CourseSelect)
+                throw new Exception("You are only allowed to start hosting in the Course Select Menu");
+
             var hostSettings   = config.Data.HostSettings;
             var socketSettings = hostSettings.SocketSettings;
             var punchServer    = config.Data.PunchingServer;
