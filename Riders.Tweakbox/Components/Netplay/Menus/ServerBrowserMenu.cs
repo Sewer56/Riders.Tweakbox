@@ -177,8 +177,10 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
             if (ImGui.__Internal.BeginTable("server_table", (int) TableColumn.Ping, (int) _tableFlags, serverTableSize, 0))
             {
                 // Create Headers
+                // TODO: Re-add Type when they become relevant.
                 ImGui.TableSetupColumn("Name", 0, 0, (uint) TableColumn.Name);
-                ImGui.TableSetupColumn("Type", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Type);
+                // ImGui.TableSetupColumn("Type", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Type);
+                ImGui.TableSetupColumn("Game Mode", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.GameMode);
                 ImGui.TableSetupColumn("Continent", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Region);
                 ImGui.TableSetupColumn("Mods", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Mods);
                 ImGui.TableSetupColumn("Ping", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Ping);
@@ -206,30 +208,37 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
 
                     ImGui.PushIDInt(x);
                     ImGui.TableNextRow(0, 0);
+                    int columnIndex = 0;
 
                     // Password Color Set
                     if (item.HasPassword)
                         ImGui.PushStyleColorVec4((int) ImGuiCol.ImGuiColText, _passwordColor);
 
                     // Name (Selectable)
-                    ImGui.TableSetColumnIndex(0);
+                    ImGui.TableSetColumnIndex(columnIndex++);
                     if (ImGui.__Internal.SelectableBool(item.Name, isSelected, (int) _flags, _rowMinHeight))
                         _currentSelection = item;
 
                     // Type
-                    if (ImGui.TableSetColumnIndex(1))
+                    /*
+                    if (ImGui.TableSetColumnIndex(columnIndex++))
                         ImGui.TextUnformatted(item.Type.AsString(), null);
+                    */
+
+                    // Mode
+                    if (ImGui.TableSetColumnIndex(columnIndex++))
+                        ImGui.TextUnformatted(item.GameMode.AsString(), null);
 
                     // Continent
-                    if (ImGui.TableSetColumnIndex(2))
+                    if (ImGui.TableSetColumnIndex(columnIndex++))
                         ImGui.TextUnformatted(item.ContinentString, null);
 
                     // Password
-                    if (ImGui.TableSetColumnIndex(3))
+                    if (ImGui.TableSetColumnIndex(columnIndex++))
                         ImGui.TextUnformatted(item.Mods ?? "", null);
 
                     // Ping
-                    if (ImGui.TableSetColumnIndex(4))
+                    if (ImGui.TableSetColumnIndex(columnIndex++))
                         ImGui.TextUnformatted(item.Ping?.ToString() ?? "???", null);
 
                     // Password Color Unset
@@ -256,8 +265,14 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
                     results.Sort((a, b) => String.Compare(a.Name, b.Name, StringComparison.Ordinal) * compareModifier);
                     break;
 
+                /*
                 case (int) TableColumn.Type:
                     results.Sort((a, b) => a.Type.CompareTo(b.Type) * compareModifier);
+                    break;
+                */
+
+                case (int) TableColumn.GameMode:
+                    results.Sort((a, b) => a.GameMode.CompareTo(b.GameMode) * compareModifier);
                     break;
 
                 case (int) TableColumn.Region:
@@ -277,7 +292,8 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         private enum TableColumn
         {
             Name = 1,
-            Type,
+            //Type,
+            GameMode,
             Region,
             Mods,
             Ping,

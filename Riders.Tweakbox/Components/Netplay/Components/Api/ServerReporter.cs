@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using LiteNetLib;
 using Riders.Netplay.Messages;
@@ -12,6 +11,7 @@ using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Api
@@ -85,6 +85,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
                 HasPassword = hostSettings.Password.Text.Length > 0,
                 Type = MatchTypeDto.Default, // TODO: Add Other GameModes
                 Mods = "Vanilla", // TODO: Add Mod Support
+                GameMode = GetMode(),
                 Port = hostSettings.Port,
                 Players = players
             };
@@ -98,6 +99,21 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
             {
                 _guid = result.AsT0.Id;
             }
+        }
+
+        private unsafe GameModeDto GetMode() => GetMode(Event.TitleSequence->TaskData->RaceMode);
+        private GameModeDto GetMode(RaceMode raceMode)
+        {
+            return raceMode switch
+            {
+                RaceMode.FreeRace => GameModeDto.NormalRace,
+                RaceMode.TimeTrial => GameModeDto.TimeTrial,
+                RaceMode.GrandPrix => GameModeDto.GrandPrix,
+                RaceMode.RaceStage => GameModeDto.SurvivalRace,
+                RaceMode.BattleStage => GameModeDto.SurvivalBattle,
+                RaceMode.TagMode => GameModeDto.Tag,
+                _ => throw new ArgumentOutOfRangeException(nameof(raceMode), raceMode, null)
+            };
         }
 
         private List<ServerPlayerInfoResult> GetServerInfoFromClient(PlayerData playerData)

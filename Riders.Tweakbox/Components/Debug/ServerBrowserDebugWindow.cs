@@ -81,6 +81,7 @@ namespace Riders.Tweakbox.Components.Debug
                 .RuleFor(x => x.Name, x => x.Internet.UserName() + "'s Game")
                 .RuleFor(x => x.HasPassword, x => x.Random.Bool(0.5f))
                 .RuleFor(x => x.Type, x => x.PickRandom<MatchTypeDto>())
+                .RuleFor(x => x.GameMode, x => x.PickRandom<GameModeDto>())
                 .RuleFor(x => x.Country, x => x.PickRandom<CountryDto>())
                 .RuleFor(x => x.Mods, GetRandomModString)
                 .RuleFor(x => x.Address, x => x.Internet.IpAddress().ToString())
