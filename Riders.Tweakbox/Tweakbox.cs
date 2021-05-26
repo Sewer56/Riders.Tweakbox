@@ -19,6 +19,7 @@ using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Services.Interfaces;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Functions;
@@ -57,41 +58,40 @@ namespace Riders.Tweakbox
 
             tweakBox._notifier  = new DllNotifier(hooks);
             tweakBox._modLoader = modLoader;
-            tweakBox.InitializeIoC(modFolder);
             tweakBox.Hooks = hooks;
             tweakBox.HooksUtilities = hooksUtilities;
             tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
-
+            tweakBox.InitializeIoC(modFolder);
             tweakBox.MenuBar = new MenuBar()
             {
                 Menus = new List<MenuBarItem>()
                 {
                     new MenuBarItem("Netplay", new List<IComponent>()
                     {
-                        IoC.GetConstant<NetplayMenu>()
+                        IoC.GetSingleton<NetplayMenu>()
                     }),
                     new MenuBarItem("Tweaks", new List<IComponent>()
                     {
-                        IoC.GetConstant<TweaksEditor>(),
-                        IoC.GetConstant<TextureEditor>(),
+                        IoC.GetSingleton<TweaksEditor>(),
+                        IoC.GetSingleton<TextureEditor>(),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
-                        IoC.GetConstant<GearEditor>(),
-                        IoC.GetConstant<PhysicsEditor>()
+                        IoC.GetSingleton<GearEditor>(),
+                        IoC.GetSingleton<PhysicsEditor>()
                     }),
                     new MenuBarItem("Debug", new List<IComponent>()
                     {
-                        IoC.GetConstant<DemoWindow>(),
-                        IoC.GetConstant<UserGuideWindow>(),
-                        IoC.GetConstant<ShellTestWindow>(),
-                        IoC.GetConstant<TaskTrackerWindow>(),
-                        IoC.GetConstant<MemoryDebugWindow>(),
-                        IoC.GetConstant<LogWindow>(),
-                        IoC.GetConstant<RaceSettingsWindow>(),
-                        IoC.GetConstant<DolphinDumperWindow>(),
-                        IoC.GetConstant<LapCounterWindow>(),
-                        IoC.GetConstant<ServerBrowserDebugWindow>(),
+                        IoC.GetSingleton<DemoWindow>(),
+                        IoC.GetSingleton<UserGuideWindow>(),
+                        IoC.GetSingleton<ShellTestWindow>(),
+                        IoC.GetSingleton<TaskTrackerWindow>(),
+                        IoC.GetSingleton<MemoryDebugWindow>(),
+                        IoC.GetSingleton<LogWindow>(),
+                        IoC.GetSingleton<RaceSettingsWindow>(),
+                        IoC.GetSingleton<DolphinDumperWindow>(),
+                        IoC.GetSingleton<LapCounterWindow>(),
+                        IoC.GetSingleton<ServerBrowserDebugWindow>(),
                     })
                 },
                 Text = new List<string>()
@@ -120,17 +120,26 @@ namespace Riders.Tweakbox
             IoC.Kernel.Bind<IO>().ToConstant(io);
             IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
             IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
+            IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
+            IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
+            IoC.Kernel.Bind<IReloadedHooksUtilities>().ToConstant(HooksUtilities);
+
             var types = Assembly.GetExecutingAssembly().GetTypes();
 
             // Initialize all configs.
             var configTypes = types.Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in configTypes)
-                IoC.GetConstant(type);
+                IoC.GetSingleton(type);
+
+            // Initialize all services.
+            var serviceTypes = types.Where(x => typeof(ISingletonService).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
+            foreach (var type in serviceTypes)
+                IoC.GetSingleton(type);
 
             // Initialize all controllers.
             var controllerTypes = types.Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in controllerTypes)
-                Controllers.Add(IoC.GetConstant<IController>(type));
+                Controllers.Add(IoC.GetSingleton<IController>(type));
         }
         
         private void DisplayFirstTimeDialog()
@@ -207,20 +216,6 @@ namespace Riders.Tweakbox
 
             // Render Shell
             Shell.Render();
-        }
-
-        public void Suspend()
-        {
-            Hook.Disable();
-            MenuBar.Suspend();
-            Controllers.ForEach(x => x.Disable());
-        }
-
-        public void Resume()
-        {
-            Hook.Enable();
-            MenuBar.Resume();
-            Controllers.ForEach(x => x.Enable());
         }
     }
 }

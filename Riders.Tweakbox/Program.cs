@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime;
 using System.Windows;
 using Reloaded.Hooks.Definitions;
@@ -51,15 +50,15 @@ namespace Riders.Tweakbox
         }
 
         /* Mod loader actions. */
-        public void Suspend() => _tweakbox.Suspend();
-        public void Resume()  => _tweakbox.Resume();
-        public void Unload() { Suspend(); }
+        public void Suspend() { }
+        public void Resume() { }
+        public void Unload() { }
 
         /*  If CanSuspend == false, suspend and resume button are disabled in Launcher and Suspend()/Resume() will never be called.
             If CanUnload == false, unload button is disabled in Launcher and Unload() will never be called.
         */
         public bool CanUnload()  => false;
-        public bool CanSuspend() => true;
+        public bool CanSuspend() => false;
 
         /* Automatically called by the mod loader when the mod is about to be unloaded. */
         public Action Disposing { get; }

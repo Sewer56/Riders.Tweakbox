@@ -4,7 +4,6 @@ namespace Sewer56.Imgui.Controls
 {
     public static class Tooltip
     {
-
         /// <summary>
         /// Displays a tooltip if the last item was hovered over.
         /// </summary>
@@ -12,12 +11,12 @@ namespace Sewer56.Imgui.Controls
         /// <param name="flags">Item hover flags.</param>
         public static void TextOnHover(string text, ImGuiHoveredFlags flags = ImGuiHoveredFlags.ImGuiHoveredFlagsNone)
         {
-            if (ImGui.IsItemHovered((int) flags))
-            {
-                ImGui.BeginTooltip();
-                ImGui.Text(text);
-                ImGui.EndTooltip();
-            }
+            if (!ImGui.IsItemHovered((int) flags)) 
+                return;
+
+            ImGui.BeginTooltip();
+            ImGui.Text(text);
+            ImGui.EndTooltip();
         }
     }
 }

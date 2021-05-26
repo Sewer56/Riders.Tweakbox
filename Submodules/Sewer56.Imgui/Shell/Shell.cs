@@ -7,7 +7,6 @@ using Sewer56.Imgui.Utilities;
 
 namespace Sewer56.Imgui.Shell
 {
-    // TODO: Add notification system (messages show bottom right of screen).
     public static partial class Shell
     {
         /// <summary>

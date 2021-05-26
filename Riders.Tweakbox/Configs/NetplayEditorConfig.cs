@@ -3,12 +3,12 @@ using System.Text.Json.Serialization;
 using LiteNetLib;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
-using Riders.Tweakbox.Components.Common;
+using Riders.Tweakbox.Configs.Json;
 using Sewer56.Imgui.Controls;
 
-namespace Riders.Tweakbox.Components.Netplay
+namespace Riders.Tweakbox.Configs
 {
-    public class NetplayConfig : JsonConfigBase<NetplayConfig, NetplayConfig.Internal>
+    public class NetplayEditorConfig : JsonConfigBase<NetplayEditorConfig, NetplayEditorConfig.Internal>
     {
         public const int TextLength = 128;
         public const int IPLength   = 15;

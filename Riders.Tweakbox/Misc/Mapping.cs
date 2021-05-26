@@ -3,6 +3,7 @@ using Mapster;
 using MapsterMapper;
 using Riders.Tweakbox.API.Application.Commands.v1.Browser.Result;
 using Riders.Tweakbox.Components.Netplay.Menus.Models;
+using Sewer56.Imgui.Controls;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -19,6 +20,7 @@ namespace Riders.Tweakbox.Misc
             var typeAdapterConfig = new TypeAdapterConfig();
             typeAdapterConfig.Compiler = exp => exp.CompileFast();
             typeAdapterConfig.NewConfig<GetServerResult, GetServerResultEx>().AfterMapping(result => result.Extend());
+            typeAdapterConfig.NewConfig<TextInputData, TextInputData>().MapWith(result => new TextInputData(result.Text));
             Mapper = new Mapper(typeAdapterConfig);
         }
     }

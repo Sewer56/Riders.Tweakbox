@@ -6,6 +6,7 @@ using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Misc;
@@ -16,7 +17,7 @@ namespace Riders.Tweakbox.Components.Netplay
     {
         public NetplayMenu Owner { get; set; }
         public NetplayController Controller => Owner.Controller;
-        public NetplayConfig Config => Owner.Config;
+        public NetplayEditorConfig Config => Owner.Config;
 
         /// <inheritdoc />
         public override string Name { get; set; } = "Netplay Lobby";

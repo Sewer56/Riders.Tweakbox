@@ -40,7 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Event.SeedRandom += OnSeedRandom;
             Event.Random     += OnRandom;
             Event.ItemPickupRandom += OnItemPickupRandom;
-            Event.OnCheckIfGiveAiRandomItems += OnChekIfGiveAiRandomItems;
+            Event.OnCheckIfGiveAiRandomItems += OnCheckIfGiveAiRandomItems;
             _itemPickupRandom = new System.Random();
 
             if (Socket.GetSocketType() == SocketType.Host)
@@ -58,7 +58,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             Event.SeedRandom -= OnSeedRandom;
             Event.Random     -= OnRandom;
             Event.ItemPickupRandom -= OnItemPickupRandom;
-            Event.OnCheckIfGiveAiRandomItems -= OnChekIfGiveAiRandomItems;
+            Event.OnCheckIfGiveAiRandomItems -= OnCheckIfGiveAiRandomItems;
 
             if (Socket.GetSocketType() == SocketType.Host)
             {
@@ -67,7 +67,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             }
         }
 
-        private Enum<AsmFunctionResult> OnChekIfGiveAiRandomItems()
+        private Enum<AsmFunctionResult> OnCheckIfGiveAiRandomItems()
         {
             Log.WriteLine($"[{nameof(Random)}] Overwriting to Give AI Random Item", LogCategory.RandomSeed);
             return true;

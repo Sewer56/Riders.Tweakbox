@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -7,6 +8,24 @@ namespace Riders.Tweakbox.Misc
 {
     public class Reflection
     {
+        /// <summary>
+        /// Returns the list of all public instance fields present for a type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        public static List<string> GetAllInstanceFieldNames(Type type)
+        {
+            var result = new List<string>();
+            foreach (var field in type.GetFields())
+            {
+                if (field.IsStatic)
+                    continue;
+
+                result.Add(field.Name);
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Swaps the endianness of a given struct using reflection.
         /// </summary>

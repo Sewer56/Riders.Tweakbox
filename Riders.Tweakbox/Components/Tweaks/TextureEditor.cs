@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using DearImguiSharp;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -14,12 +15,12 @@ namespace Riders.Tweakbox.Components.Tweaks
         /// <inheritdoc />
         public override string Name { get; set; } = "DirectX Texture Injection";
 
-        private TextureController _controller;
+        private TextureInjectionController _injectionController;
 
         /// <inheritdoc />
-        public TextureEditor(IO io, TextureController controller) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
+        public TextureEditor(IO io, TextureInjectionController injectionController) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
         {
-            _controller = controller;
+            _injectionController = injectionController;
         }
 
         /// <inheritdoc />
@@ -60,7 +61,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                                             $"that are duplicates of items outside of the common folder.");
 
                         if (remove)
-                            _controller.RemoveDuplicatesInCommon();
+                            _injectionController.RemoveDuplicatesInCommon();
                     }
                 }
 

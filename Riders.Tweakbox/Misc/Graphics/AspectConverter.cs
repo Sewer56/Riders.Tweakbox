@@ -10,11 +10,6 @@ namespace Riders.Tweakbox.Misc.Graphics
         public const float OriginalGameAspect = 4F / 3F;
 
         /// <summary>
-        /// Half of the width the game elements were programmed to be positioned against.
-        /// </summary>
-        public const float GameHalfCanvasWidth = 640;
-
-        /// <summary>
         /// The width the game elements were programmed to be positioned against.
         /// </summary>
         public const float GameCanvasWidth = 640;

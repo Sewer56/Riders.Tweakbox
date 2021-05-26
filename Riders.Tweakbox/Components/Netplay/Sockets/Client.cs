@@ -4,6 +4,7 @@ using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Utility;
@@ -15,7 +16,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
     {
         public override SocketType GetSocketType() => SocketType.Client;
 
-        public Client(NetplayConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
+        public Client(NetplayEditorConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
         {
             if (Event.LastTask != Tasks.CourseSelect)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");

@@ -15,6 +15,7 @@ using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
+using Riders.Tweakbox.Configs;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -22,11 +23,6 @@ namespace Riders.Tweakbox.Controllers
     {
         private const float CpuSampleIntervalMs = (float)((1000 / 60.0f) * 10);
         private static FramePacingController _controller;
-
-        /// <summary>
-        /// An event executed before the <see cref="EndFrame"/> hook is executed.
-        /// </summary>
-        public event Action OnEndFrame;
 
         /// <summary>
         /// Amount of time spinning after sleep.
@@ -46,13 +42,13 @@ namespace Riders.Tweakbox.Controllers
         private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
         private FramePacer _fps;
         private bool _resetSpeedup = false;
-        private TweaksEditorConfig _config = IoC.Get<TweaksEditorConfig>();
+        private TweaksConfig _config = IoC.Get<TweaksConfig>();
 
         // Hooks
         private IHook<TimeBeginPeriod> _beginPeriodHook;
         private IHook<TimeEndPeriod> _endPeriodHook;
         private IHook<ReturnVoidFnPtr> _endFrameHook;
-        private GraphicsController _graphicsController = IoC.GetConstant<GraphicsController>();
+        private Direct3DController _direct3DController = IoC.GetSingleton<Direct3DController>();
 
         public FramePacingController()
         {
@@ -74,22 +70,6 @@ namespace Riders.Tweakbox.Controllers
             _controller = this;
         }
 
-        /// <inheritdoc />
-        public void Disable()
-        {
-            _endFrameHook.Disable();
-            _beginPeriodHook.Disable();
-            _endPeriodHook.Disable();
-        }
-
-        /// <inheritdoc />
-        public void Enable()
-        {
-            _endFrameHook.Enable();
-            _beginPeriodHook.Enable();
-            _endPeriodHook.Enable();
-        }
-
         /// <summary>
         /// If called, resets the speedup "lag compensation" inside the frame pacing implementation.
         /// </summary>
@@ -103,9 +83,6 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void EndFrameImpl()
         {
-            // Invoke EndFrame event.
-            OnEndFrame?.Invoke();
-
             // Sample CPU usage.
             if (_cpuLoadSampleWatch.Elapsed.TotalMilliseconds > CpuSampleIntervalMs)
             {
@@ -117,14 +94,14 @@ namespace Riders.Tweakbox.Controllers
             {
                 try
                 {
-                    _graphicsController.D3dDeviceEx.EndScene();
+                    _direct3DController.D3dDeviceEx.EndScene();
                 }
                 catch (Exception ex)
                 {
                     /* Game is Stupid */
                 }
 
-                _fps.EndFrame(true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
+                _fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
                 *State.TotalFrameCounter += 1;
 
                 if (_resetSpeedup)

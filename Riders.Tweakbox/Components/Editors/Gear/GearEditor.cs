@@ -1,5 +1,6 @@
 ﻿using DearImguiSharp;
 using EnumsNET;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -26,8 +27,6 @@ namespace Riders.Tweakbox.Components.Editors.Gear
         }
 
         public bool IsAvailable() => !IoC.Get<NetplayController>().IsConnected();
-        public override void Disable() => Config.GetDefault().Apply();
-        public override void Enable()  => Config.Apply();
 
         /// <inheritdoc />
         public override void Render()

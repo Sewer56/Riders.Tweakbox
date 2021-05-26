@@ -5,6 +5,7 @@ using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 
@@ -29,7 +30,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// </summary>
         private Thread _punchServerThread;
 
-        public Host(NetplayConfig config, NetplayController controller, TweakboxApi tweakboxApi) : base(controller, config, tweakboxApi)
+        public Host(NetplayEditorConfig config, NetplayController controller, TweakboxApi tweakboxApi) : base(controller, config, tweakboxApi)
         {
             var hostSettings   = config.Data.HostSettings;
             var socketSettings = hostSettings.SocketSettings;

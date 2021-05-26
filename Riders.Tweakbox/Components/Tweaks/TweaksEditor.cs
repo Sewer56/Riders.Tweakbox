@@ -1,7 +1,8 @@
 ﻿using DearImguiSharp;
-using Reloaded.Hooks.Definitions;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;
@@ -9,13 +10,11 @@ using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
-    public class TweaksEditor : ComponentBase<TweaksEditorConfig>, IComponent
+    public class TweaksEditor : ComponentBase<TweaksConfig>, IComponent
     {
         public override string Name { get; set; } = "Various Fixes";
 
         private FramePacingController _pacingController = IoC.Get<FramePacingController>();
-        private PatchController _patchController = IoC.Get<PatchController>();
-        private FixesController _fixesController = IoC.Get<FixesController>();
 
         public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
         {
@@ -38,30 +37,24 @@ namespace Riders.Tweakbox.Components.Tweaks
         {
             // Fix item width for long labels.
             ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
-            
+            var data = Config.Data;
+
             if (ImGui.CollapsingHeaderTreeNodeFlags("Startup", 0))
             {
-                ImGui.Checkbox("Boot to Menu", ref Config.Data.BootToMenu);
+                ImGui.Checkbox("Boot to Menu & Unlock All", ref data.BootToMenu).Notify(data, nameof(data.BootToMenu));
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             {
-                if (ImGui.Checkbox("Return to Stage Select from Race", ref Config.Data.NormalRaceReturnToTrackSelect))
-                    _fixesController.ReturnToCourseSelectNormalRace.Toggle(Config.Data.NormalRaceReturnToTrackSelect);
+                ImGui.Checkbox("Return to Stage Select from Race", ref data.NormalRaceReturnToTrackSelect).Notify(data, nameof(data.NormalRaceReturnToTrackSelect));
+                ImGui.Checkbox("Return to Stage Select from Tag", ref data.TagReturnToTrackSelect).Notify(data, nameof(data.TagReturnToTrackSelect));
+                ImGui.Checkbox("Return to Stage Select from Survival", ref data.SurvivalReturnToTrackSelect).Notify(data, nameof(data.SurvivalReturnToTrackSelect));
 
-                if (ImGui.Checkbox("Return to Stage Select from Tag", ref Config.Data.TagReturnToTrackSelect))
-                    _fixesController.ReturnToCourseSelectTag.Toggle(Config.Data.TagReturnToTrackSelect);
-
-                if (ImGui.Checkbox("Return to Stage Select from Survival", ref Config.Data.SurvivalReturnToTrackSelect))
-                    _fixesController.ReturnToCourseSelectSurvival.Toggle(Config.Data.SurvivalReturnToTrackSelect);
-
-                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref Config.Data.AutoQTE);
-                ImGui.Checkbox("Force Single Player Stage Data", ref Config.Data.SinglePlayerStageData);
+                ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref data.AutoQTE).Notify(data, nameof(data.AutoQTE));
+                ImGui.Checkbox("Force Single Player Stage Data", ref data.SinglePlayerStageData).Notify(data, nameof(data.SinglePlayerStageData));
                 Tooltip.TextOnHover("Forces the game to load Single Player stage assets and Single Player Object Layout.");
 
-                if (ImGui.Checkbox("Force Single Player Models", ref Config.Data.SinglePlayerModels))
-                    _patchController.SetAlwaysLoadSinglePlayerModels(Config.Data.SinglePlayerModels);
-
+                ImGui.Checkbox("Force Single Player Models", ref data.SinglePlayerModels).Notify(data, nameof(data.SinglePlayerModels));
                 Tooltip.TextOnHover("Forces the game to load high quality single player models for all characters.");
             }
 
@@ -69,50 +62,44 @@ namespace Riders.Tweakbox.Components.Tweaks
             {
                 ImGui.Text("Startup Settings");
 
-                Reflection.MakeControl(ref Config.Data.ResolutionX, "Resolution X");
-                Reflection.MakeControl(ref Config.Data.ResolutionY, "Resolution Y");
-                Reflection.MakeControl(ref Config.Data.Fullscreen, "Fullscreen");
+                Reflection.MakeControl(ref data.ResolutionX, "Resolution X").Notify(data, nameof(data.ResolutionX));
+                Reflection.MakeControl(ref data.ResolutionY, "Resolution Y").Notify(data, nameof(data.ResolutionY));
+                Reflection.MakeControl(ref data.Fullscreen, "Fullscreen").Notify(data, nameof(data.Fullscreen));
 
                 ImGui.Text("For these settings to apply, please *save* the default configuration above and restart the game.");
 
                 ImGui.Separator();
                 ImGui.Text("Live Settings");
-                Reflection.MakeControl(ref Config.Data.Blur, "Blur");
-                Reflection.MakeControl(ref Config.Data.Borderless, "Borderless Windowed");
-                Reflection.MakeControl(ref Config.Data.WidescreenHack, "Centered Widescreen Hack");
+                Reflection.MakeControl(ref data.Blur, "Blur").Notify(data, nameof(data.Blur));;
+                Reflection.MakeControl(ref data.Borderless, "Borderless Windowed").Notify(data, nameof(data.Borderless));
+                Reflection.MakeControl(ref data.WidescreenHack, "Centered Widescreen Hack").Notify(data, nameof(data.WidescreenHack));
                 Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen.\n" +
                                     "Do not combine/use with other widescreen hacks.");
-
-                if (ImGui.Button("Apply", Constants.ButtonSize))
-                    Config.Apply();
-
-                Tooltip.TextOnHover("Changing resolution mid-game is currently not supported.\n" +
-                                    "Need to find every single texture, buffer etc. that needs to be recreated before calling Reset.\n" +
-                                    "I need help of a graphics programmer experienced with DX9 for this one.");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))
             {
                 ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
-                ImGui.Checkbox("Fix D3D Device Flags", ref Config.Data.D3DDeviceFlags);
+                ImGui.Checkbox("Fix D3D Device Flags", ref data.D3DDeviceFlags).Notify(data, nameof(data.D3DDeviceFlags));
                 Tooltip.TextOnHover("Applies on boot.");
 
-                ImGui.Checkbox("Disable VSync ", ref Config.Data.DisableVSync);
+                ImGui.Checkbox("Disable VSync ", ref data.DisableVSync).Notify(data, nameof(data.DisableVSync));
                 Tooltip.TextOnHover("Applies on boot.");
 
-                if (ImGui.Checkbox("Frame Pacing Fix", ref Config.Data.FramePacing))
-                    _pacingController.ResetSpeedup();
-
+                ImGui.Checkbox("Frame Pacing Fix", ref data.FramePacing).Notify(data, nameof(data.FramePacing));
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
                 if (Config.Data.FramePacing)
                 {
-                    ImGui.Checkbox("Lag Compensation", ref Config.Data.FramePacingSpeedup);
+                    ImGui.Checkbox("Lag Compensation", ref data.FramePacingSpeedup).Notify(data, nameof(data.FramePacingSpeedup));
                     Tooltip.TextOnHover("Speeds up the game to compensate for lag.");
+
+                    if (data.FramePacingSpeedup)
+                        Reflection.MakeControl(ref data.MaxSpeedupTimeMillis, "Lag Compensation Max Amount (Milliseconds)").Notify(data, nameof(data.MaxSpeedupTimeMillis));
 
                     ImGui.Text($"CPU Load {_pacingController.CpuUsage:00.00}%");
                     ImGui.Text($"Windows Timer Granularity: {_pacingController.TimerGranularity}ms");
-                    Reflection.MakeControl(ref Config.Data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
+                    Reflection.MakeControl(ref data.DisableYieldThreshold, "CPU Spin Disable Thread Yield Threshold");
                     Tooltip.TextOnHover("Calls Sleep(0) while spinning when CPU usage is below this threshold.");
                 }
 

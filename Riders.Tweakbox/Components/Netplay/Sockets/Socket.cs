@@ -10,6 +10,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Components;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 
@@ -65,7 +66,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// The netplay configuration with which this socket was created with.
         /// </summary>
-        public NetplayConfig Config { get; set; }
+        public NetplayEditorConfig Config { get; set; }
 
         /// <summary>
         /// Provides access to the Tweakbox Online Service.
@@ -78,7 +79,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// <summary>
         /// Constructs the current socket.
         /// </summary>
-        public Socket(NetplayController controller, NetplayConfig config, TweakboxApi tweakboxApi)
+        public Socket(NetplayController controller, NetplayEditorConfig config, TweakboxApi tweakboxApi)
         {
             _stopWatch.Start();
             Api = tweakboxApi;

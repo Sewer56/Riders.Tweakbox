@@ -48,17 +48,17 @@ namespace Sewer56.Imgui.Layout
         /// </summary>
         private unsafe void SetInitialX()
         {
-            if (!InitialX.HasValue)
-            {
-                var windowPos = new Vector2();
-                var rectMin = new Vector2();
+            if (InitialX.HasValue) 
+                return;
 
-                ImGui.__Internal.GetWindowPos((IntPtr)(&windowPos));
-                ImGui.__Internal.GetItemRectMin((IntPtr)(&rectMin));
+            var windowPos = new Vector2();
+            var rectMin = new Vector2();
 
-                InitialX = (int)(rectMin.X - windowPos.X);
-                CurrentX = InitialX.Value;
-            }
+            ImGui.__Internal.GetWindowPos((IntPtr)(&windowPos));
+            ImGui.__Internal.GetItemRectMin((IntPtr)(&rectMin));
+
+            InitialX = (int)(rectMin.X - windowPos.X);
+            CurrentX = InitialX.Value;
         }
     }
 }

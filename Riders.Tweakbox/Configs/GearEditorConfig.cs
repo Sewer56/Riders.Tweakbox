@@ -7,7 +7,7 @@ using Riders.Tweakbox.Definitions.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
 
-namespace Riders.Tweakbox.Components.Editors.Gear
+namespace Riders.Tweakbox.Configs
 {
     public unsafe class GearEditorConfig : IConfiguration
     {

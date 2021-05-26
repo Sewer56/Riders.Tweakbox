@@ -8,6 +8,7 @@ using Riders.Netplay.Messages.Unreliable;
 using Riders.Netplay.Messages.Unreliable.Structs;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Hooks.Utilities.Enums;
@@ -28,7 +29,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public EventController Event { get; set; }
         public CommonState State { get; set; }
         public FramePacingController PacingController { get; set; }
-        public NetplayConfig.HostSettings HostSettings { get; set; }
+        public NetplayEditorConfig.HostSettings HostSettings { get; set; }
         
         /// <summary>
         /// Jitter buffers for smoothing out incoming packets.
@@ -61,7 +62,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event = @event;
             State = socket.State;
             HostSettings = Socket.Config.Data.HostSettings;
-            PacingController = IoC.GetConstant<FramePacingController>();
+            PacingController = IoC.GetSingleton<FramePacingController>();
 
             _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(RaceDeliveryMethod);
             Event.OnSetSpawnLocationsStartOfRace += SwapSpawns;

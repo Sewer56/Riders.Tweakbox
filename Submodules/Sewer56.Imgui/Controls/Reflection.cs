@@ -16,9 +16,9 @@ namespace Sewer56.Imgui.Controls
         /// </summary>
         /// <param name="value">The value to bind to the UI.</param>
         /// <param name="name">The name of the field.</param>
-        public static void MakeControl(Vector3* value, string name)
+        public static bool MakeControl(Vector3* value, string name)
         {
-            ImGui.Custom.DragFloat3(name, value, 1.0f);
+            return ImGui.Custom.DragFloat3(name, value, 1.0f);
         }
 
         /// <summary>
@@ -26,9 +26,9 @@ namespace Sewer56.Imgui.Controls
         /// </summary>
         /// <param name="value">The value to bind to the UI.</param>
         /// <param name="name">The name of the field.</param>
-        public static void MakeControl(ref bool value, string name)
+        public static bool MakeControl(ref bool value, string name)
         {
-            ImGui.Checkbox(name, ref value);
+            return ImGui.Checkbox(name, ref value);
         }
 
         /// <summary>
@@ -36,9 +36,9 @@ namespace Sewer56.Imgui.Controls
         /// </summary>
         /// <param name="value">The value to bind to the UI.</param>
         /// <param name="name">The name of the field.</param>
-        public static void MakeControl(bool* value, string name)
+        public static bool MakeControl(bool* value, string name)
         {
-            ImGui.Checkbox(name, ref Unsafe.AsRef<bool>(value));
+            return ImGui.Checkbox(name, ref Unsafe.AsRef<bool>(value));
         }
 
         /// <summary>
@@ -51,8 +51,9 @@ namespace Sewer56.Imgui.Controls
         /// <param name="values">The available items.</param>
         /// <param name="names">The names of the available items.</param>
         /// <param name="itemSelected">Executed when a new item is selected. Returns the selected value.</param>
-        public static void MakeControlComboBox<T>(string name, T currentValue, string currentName, IReadOnlyList<T> values, IReadOnlyList<string> names, Action<T> itemSelected)
+        public static bool MakeControlComboBox<T>(string name, T currentValue, string currentName, IReadOnlyList<T> values, IReadOnlyList<string> names, Action<T> itemSelected)
         {
+            bool returnValue = false;
             if (ImGui.BeginCombo(name, currentName, 0))
             {
                 for (int x = 0; x < values.Count; x++)
@@ -62,6 +63,7 @@ namespace Sewer56.Imgui.Controls
                     {
                         currentValue = values[x];
                         itemSelected(currentValue);
+                        returnValue = true;
                     }
 
                     if (isSelected)
@@ -70,6 +72,8 @@ namespace Sewer56.Imgui.Controls
 
                 ImGui.EndCombo();
             }
+
+            return returnValue;
         }
 
         /// <summary>
@@ -78,7 +82,7 @@ namespace Sewer56.Imgui.Controls
         /// <param name="value">The value to bind to the UI.</param>
         /// <param name="name">The name of the field.</param>
         /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
-        public static void MakeControlEnum<T>(T* value, string name, int itemWidth = 120) where T : unmanaged, Enum
+        public static bool MakeControlEnum<T>(T* value, string name, int itemWidth = 120) where T : unmanaged, Enum
         {
             var values  = Enums.GetValues<T>();
             var names   = Enums.GetNames<T>();
@@ -87,37 +91,47 @@ namespace Sewer56.Imgui.Controls
 
             if (isFlags)
             {
-                MakeControlEnumFlags<T>(value, values, names, itemWidth);
+                return MakeControlEnumFlags<T>(value, values, names, itemWidth);
             }
             else
             {
-                MakeControlEnumComboBox<T>(name, currentItemName, value, values, names);
+                return MakeControlEnumComboBox<T>(name, currentItemName, value, values, names);
             }
         }
 
-        private static void MakeControlEnumFlags<T>(T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth) where T : unmanaged, Enum
+        private static bool MakeControlEnumFlags<T>(T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth) where T : unmanaged, Enum
         {
+            var result = false;
             var wrapperUtility = new ContentWrapper(itemWidth);
             
             for (int x = 0; x < names.Count; x++)
             {
                 var hasFlag = currentValue->HasAnyFlags(values[x]);
                 if (ImGui.Checkbox(names[x], ref hasFlag))
+                {
                     *currentValue = FlagEnums.ToggleFlags(*currentValue, values[x]);
+                    result = true;
+                }
 
                 wrapperUtility.AfterPlaceItem(x == names.Count - 1);
             }
+
+            return result;
         }
 
-        private static void MakeControlEnumComboBox<T>(string name, string currentItemName, T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
+        private static bool MakeControlEnumComboBox<T>(string name, string currentItemName, T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
         {
+            var result = false;
             if (ImGui.BeginCombo(name, currentItemName, 0))
             {
                 for (int x = 0; x < values.Count; x++)
                 {
                     bool isSelected = Enums.EqualsUnsafe(*currentValue, values[x]);
                     if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
+                    {
                         *currentValue = values[x];
+                        result = true;
+                    }
 
                     if (isSelected)
                         ImGui.SetItemDefaultFocus();
@@ -125,6 +139,8 @@ namespace Sewer56.Imgui.Controls
 
                 ImGui.EndCombo();
             }
+
+            return result;
         }
     }
 }

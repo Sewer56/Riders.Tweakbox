@@ -15,14 +15,6 @@ namespace Riders.Tweakbox.Controllers
         public Socket Socket;
 
         public NetplayController() => Event.AfterEndScene += OnEndScene;
-        public void Disable()
-        {
-            Event.AfterEndScene -= OnEndScene;
-            Socket?.Dispose();
-            Socket = null;
-        }
-
-        public void Enable() => Event.AfterEndScene += OnEndScene;
 
         /// <summary>
         /// True is currently connected, else false.

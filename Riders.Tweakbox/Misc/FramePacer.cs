@@ -107,7 +107,7 @@ namespace Riders.Tweakbox.Misc
         public double StatRenderTime { get; private set; }
 
         /// <summary>
-        /// [Milliseconds] The time that will be spent sleeping during the last frame.
+        /// [Milliseconds] The time that will be spent sleeping during the next frame.
         /// Note: Actual time slept is <see cref="StatSleepTime"/> + <see cref="StatOverslept"/>.
         /// </summary>
         public double StatSleepTime { get; private set; }
@@ -142,6 +142,7 @@ namespace Riders.Tweakbox.Misc
         /// 
         ///     See: <see cref="SpinTimeRemaining"/> to control the time in milliseconds left to sleep at which to start spinning at.
         /// </param>
+        /// <param name="maxSpeedupTimeMillis">The maximum duration in milliseconds of how long speedup can occur.</param>
         /// <param name="allowSpeedup">
         ///     Allows for the speeding up of the frame counter to maintain target FPS by sleeping less on the next frame.
         ///     If set to false, frame pacer will not try to catch up on next sleep in cases of lost frames.
@@ -150,7 +151,8 @@ namespace Riders.Tweakbox.Misc
         ///     If true allows the thread to yield when spinning.
         ///     Only set this to false if the CPU is maxed out (>95% usage).
         /// </param>
-        public void EndFrame(bool spin = false, bool allowSpeedup = true, bool spinAllowThreadYield = true)
+        public void EndFrame(float maxSpeedupTimeMillis = 2000, bool spin = false, bool allowSpeedup = true,
+            bool spinAllowThreadYield = true)
         {
             // Summarize stats for the current frame.
             StatRenderTime = _frameTimeWatch.Elapsed.TotalMilliseconds;
@@ -159,6 +161,9 @@ namespace Riders.Tweakbox.Misc
 
             if (!allowSpeedup && StatSleepTime < 0)
                 StatSleepTime = 0;
+
+            if (allowSpeedup && StatSleepTime < -maxSpeedupTimeMillis)
+                StatSleepTime = -maxSpeedupTimeMillis;
 
             // Sleep
             Sleep(spin, spinAllowThreadYield);

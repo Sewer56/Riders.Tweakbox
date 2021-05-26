@@ -1,165 +1,52 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
-using Riders.Tweakbox.Components.Tweaks;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Misc.Graphics;
 using Sewer56.NumberUtilities.Matrices;
 using Sewer56.NumberUtilities.Primitives;
 using Sewer56.NumberUtilities.Vectors;
 using Sewer56.SonicRiders.Functions;
-using Sewer56.SonicRiders.Internal.DirectX;
-using SharpDX.Direct3D9;
 using static Sewer56.SonicRiders.API.Misc;
-using static Riders.Tweakbox.Misc.Native;
 using static Sewer56.SonicRiders.Functions.Functions;
-
-// ReSharper disable once RedundantUsingDirective
-using Microsoft.Windows.Sdk;
-using SharpDX;
-using Sewer56.SonicRiders.API;
-using System.Diagnostics;
 
 namespace Riders.Tweakbox.Controllers
 {
-    public unsafe class GraphicsController : IController
+    public unsafe class CenteredWidescreenHackController : IController
     {
-        private static GraphicsController _controller;
+        private static CenteredWidescreenHackController _controller;
+        private TweaksConfig _config;
+        private AspectConverter _aspectConverter = new AspectConverter(4 / 3f);
 
-        /// <summary>
-        /// The D3D9 Instance.
-        /// </summary>
-        public Direct3D D3d { get; private set; }
-
-        /// <summary>
-        /// The D3D9 Instance.
-        /// </summary>
-        public Direct3DEx D3dEx { get; private set; }
-
-        /// <summary>
-        /// The D3D9 Device.
-        /// </summary>
-        public DeviceEx D3dDeviceEx { get; private set; }
-
-        /// <summary>
-        /// Presentation parameters passed to Direct3D on last device reset.
-        /// </summary>
-        public PresentParameters LastPresentParameters;
-
-        private TweaksEditorConfig _config = IoC.Get<TweaksEditorConfig>();
-
-        // Hooks
-        private IHook<DX9Hook.CreateDevice> _createDeviceHook;
         private IHook<RenderTexture2DFnPtr> _renderTexture2dHook;
         private IHook<RenderPlayerIndicatorFnPtr> _renderPlayerIndicatorHook;
 
-        // Utilities
-        private AspectConverter _aspectConverter = new AspectConverter(4 / 3f);
         private float _originalAspectRatio2dResX = *AspectRatio2dResolutionX;
 
-        public GraphicsController()
+        public CenteredWidescreenHackController(TweaksConfig config)
         {
-            _controller        = this;
-            _createDeviceHook  = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+            _config = config;
 
-            _renderTexture2dHook       = Functions.RenderTexture2D.HookAs<RenderTexture2DFnPtr>(typeof(GraphicsController), nameof(RenderTexture2DPtr)).Activate();
-            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicator.HookAs<RenderPlayerIndicatorFnPtr>(typeof(GraphicsController), nameof(RenderPlayerIndicatorPtr)).Activate();
-
-            // Patch window style if borderless is set
-            _config.ConfigUpdated += OnConfigUpdated;
+            _controller = this;
+            _renderTexture2dHook       = Functions.RenderTexture2D.HookAs<RenderTexture2DFnPtr>(typeof(CenteredWidescreenHackController), nameof(RenderTexture2DPtr)).Activate();
+            _renderPlayerIndicatorHook = Functions.RenderPlayerIndicator.HookAs<RenderPlayerIndicatorFnPtr>(typeof(CenteredWidescreenHackController), nameof(RenderPlayerIndicatorPtr)).Activate();
+            _config.Data.AddPropertyUpdatedHandler(PropertyUpdated);
         }
 
-        /// <inheritdoc />
-        public void Disable()
+        private void PropertyUpdated(string propertyname)
         {
-            _createDeviceHook.Disable();
-            _renderTexture2dHook.Disable();
-            _renderPlayerIndicatorHook.Disable();
-        }
-
-        /// <inheritdoc />
-        public void Enable()
-        {
-            _createDeviceHook.Enable();
-            _renderTexture2dHook.Enable();
-            _renderPlayerIndicatorHook.Enable();
-        }
-
-        private void OnConfigUpdated()
-        {
-            ref var style = ref Unsafe.AsRef<WindowStyles>((void*) 0x005119EC);
-            if (_config.Data.Borderless)
-                _config.RemoveBorder(ref style);
-            else
-                _config.AddBorder(ref style);
-
-            // Enable/Disable Widescreen Hooks
-            if (_config.Data.WidescreenHack)
+            if (propertyname == nameof(_config.Data.WidescreenHack))
             {
-                _renderTexture2dHook.Enable();
-                _renderPlayerIndicatorHook.Enable();
-            }
-            else
-            {
-                _renderTexture2dHook.Disable();
-                _renderPlayerIndicatorHook.Disable();
-                *AspectRatio2dResolutionX = _originalAspectRatio2dResX;
-            }
-        }
+                _renderTexture2dHook.Toggle(_config.Data.WidescreenHack);
+                _renderPlayerIndicatorHook.Toggle(_config.Data.WidescreenHack);
 
-        private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType deviceType, IntPtr hFocusWindow, CreateFlags behaviorFlags, ref PresentParameters presentParameters, int** ppReturnedDeviceInterface)
-        {
-            if (_config.Data.D3DDeviceFlags)
-            {
-                behaviorFlags &= ~CreateFlags.Multithreaded;
-                behaviorFlags |= CreateFlags.DisablePsgpThreading;
+                // Enable/Disable Widescreen Hooks
+                if (!_config.Data.WidescreenHack)
+                    *AspectRatio2dResolutionX = _originalAspectRatio2dResX;
             }
-
-            if (!presentParameters.Windowed)
-                PInvoke.ShowCursor(true);
-
-            // Disable VSync
-            if (_config.Data.DisableVSync)
-            {
-                presentParameters.PresentationInterval = PresentInterval.Immediate;
-                presentParameters.FullScreenRefreshRateInHz = 0;
-            }
-
-#if DEBUG
-            PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
-#endif
-            LastPresentParameters = presentParameters;
-            try
-            {
-                D3d = new Direct3D(direct3dpointer);
-                if (presentParameters.Windowed)
-                {
-                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters);
-                }
-                else
-                {
-                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters, new DisplayModeEx()
-                    {
-                        Format = presentParameters.BackBufferFormat,
-                        Height = presentParameters.BackBufferHeight,
-                        Width = presentParameters.BackBufferWidth,
-                        RefreshRate = presentParameters.FullScreenRefreshRateInHz,
-                        ScanLineOrdering = ScanlineOrdering.Progressive,
-                    });
-                }
-                
-                *ppReturnedDeviceInterface = (int*)D3dDeviceEx.NativePointer;
-            }
-            catch (SharpDXException ex)
-            {
-                Log.WriteLine($"Failed To Initialize Direct3DEx Device: HRESULT | {ex.HResult}, Descriptor | {ex.Descriptor}");
-                return (IntPtr) ex.HResult;
-            }
-
-            return IntPtr.Zero;
         }
 
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]

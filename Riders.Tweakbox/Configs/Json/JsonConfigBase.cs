@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Definitions.Serializers.Json;
+using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Extensions;
 
-namespace Riders.Tweakbox.Components.Common
+namespace Riders.Tweakbox.Configs.Json
 {
     public abstract class JsonConfigBase<TParent, TConfig> : IConfiguration where TParent : new() where TConfig : new()
     {
@@ -14,6 +17,11 @@ namespace Riders.Tweakbox.Components.Common
             WriteIndented = true,
             Converters = { new TextInputJsonConverter() }
         };
+
+        /// <summary>
+        /// Gets a list of all properties for the internal configuration.
+        /// </summary>
+        public static readonly IReadOnlyList<string> Properties = Reflection.GetAllInstanceFieldNames(typeof(TConfig));
 
         protected JsonConfigBase() { }
 
@@ -31,12 +39,18 @@ namespace Riders.Tweakbox.Components.Common
         /// <inheritdoc />
         public virtual void FromBytes(Span<byte> bytes)
         {
-            Data = JsonSerializer.Deserialize<TConfig>(bytes, SerializerOptions);
+            var result = JsonSerializer.Deserialize<TConfig>(bytes, SerializerOptions);
             ConfigUpdated?.Invoke();
+            Mapping.Mapper.From(result).AdaptTo(Data);
         }
 
         /// <inheritdoc />
-        public virtual void Apply() { }
+        public virtual void Apply()
+        {
+            if (Data is INotifyPropertyUpdated ex)
+                foreach (var prop in Properties)
+                    ex.RaisePropertyUpdated(prop);
+        }
 
         /// <inheritdoc />
         public virtual IConfiguration GetCurrent() => this;

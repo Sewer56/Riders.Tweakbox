@@ -1,6 +1,6 @@
-﻿using Riders.Tweakbox.Components.Common;
+﻿using Riders.Tweakbox.Configs.Json;
 
-namespace Riders.Tweakbox.Components.Tweaks
+namespace Riders.Tweakbox.Configs
 {
     public class TextureInjectionConfig : JsonConfigBase<TextureInjectionConfig, TextureInjectionConfig.Internal>
     {

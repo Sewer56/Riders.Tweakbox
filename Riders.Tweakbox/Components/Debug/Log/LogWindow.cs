@@ -1,11 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using DearImguiSharp;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Debug.Log
 {
-    public class LogWindow : ComponentBase<LogWindowConfig>
+    public class LogWindow : ComponentBase<LogEditorConfig>
     {
         /// <inheritdoc />
         public override string Name { get; set; } = "Log Configuration";

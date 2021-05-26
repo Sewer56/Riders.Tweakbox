@@ -9,6 +9,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
@@ -28,8 +29,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         public HostState HostState => (HostState) State;
         public NetManager Manager { get; set; }
         public EventController Event { get; set; }
-        public NetplayConfig.HostSettings HostSettings { get; set; }
-        public NetplayConfig.ClientSettings ClientSettings { get; set; }
+        public NetplayEditorConfig.HostSettings HostSettings { get; set; }
+        public NetplayEditorConfig.ClientSettings ClientSettings { get; set; }
 
         private Dictionary<int, VersionInformation> _versionMap = new Dictionary<int, VersionInformation>();
         private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());

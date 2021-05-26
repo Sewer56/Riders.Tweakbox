@@ -23,7 +23,7 @@ namespace Riders.Tweakbox.Misc
         /// Retrieves a constant service/class.
         /// If none is registered, binds it as the new constant to then be re-acquired.
         /// </summary>
-        public static T GetConstant<T>()
+        public static T GetSingleton<T>()
         {
             var value = Kernel.Get<T>();
 
@@ -37,7 +37,7 @@ namespace Riders.Tweakbox.Misc
         /// Retrieves a constant service/class.
         /// If none is registered, binds it as the new constant to then be re-acquired.
         /// </summary>
-        public static T GetConstant<T>(Type type)
+        public static T GetSingleton<T>(Type type)
         {
             var value = (T) Kernel.Get(type);
 
@@ -51,7 +51,7 @@ namespace Riders.Tweakbox.Misc
         /// Retrieves a constant service/class.
         /// If none is registered, binds it as the new constant to then be re-acquired.
         /// </summary>
-        public static object GetConstant(Type type)
+        public static object GetSingleton(Type type)
         {
             var value = Kernel.Get(type);
 

@@ -15,5 +15,18 @@ namespace Reloaded.Hooks.Definitions
             else
                 hook.Disable();
         }
+
+        /// <summary>
+        /// Disables or enables the hook based on the value of toggle.
+        /// </summary>
+        /// <param name="hook">The hook.</param>
+        /// <param name="toggle">Whether to enable or disable.</param>
+        public static void Toggle(this IHook hook, bool toggle)
+        {
+            if (toggle)
+                hook.Enable();
+            else
+                hook.Disable();
+        }
     }
 }

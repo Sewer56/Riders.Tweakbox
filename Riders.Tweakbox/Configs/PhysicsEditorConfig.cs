@@ -4,10 +4,10 @@ using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
-using static Riders.Tweakbox.Components.Editors.Physics.PhysicsEditorConfig.Internal;
+using static Riders.Tweakbox.Configs.PhysicsEditorConfig.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
 
-namespace Riders.Tweakbox.Components.Editors.Physics
+namespace Riders.Tweakbox.Configs
 {
     public unsafe class PhysicsEditorConfig : IConfiguration
     {

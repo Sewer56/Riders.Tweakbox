@@ -5,6 +5,7 @@ using EnumsNET;
 using Reloaded.Memory;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.Texture.Headers;
 using Standart.Hash.xxHash;
 using Unsafe = System.Runtime.CompilerServices.Unsafe;
@@ -14,7 +15,7 @@ namespace Riders.Tweakbox.Services.Texture
     /// <summary>
     /// The texture service keeps track of injectable textures sourced from other mods.
     /// </summary>
-    public class TextureService
+    public class TextureService : ISingletonService
     {
         // DO NOT CHANGE, TEXTUREDICTIONARY DEPENDS ON THIS.
         private const string HashStringFormat = "X8";

@@ -5,6 +5,7 @@ using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Tweakbox.API.Application.Commands.v1.User;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -15,10 +16,10 @@ using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
-    public class NetplayMenu : ComponentBase<NetplayConfig>
+    public class NetplayMenu : ComponentBase<NetplayEditorConfig>
     {
         public NetplayController Controller = IoC.Get<NetplayController>();
-        public new NetplayConfig Config => base.Config;
+        public new NetplayEditorConfig Config => base.Config;
         public override string Name   { get; set; } = "Netplay Menu";
         
         // Sub-menus.
@@ -74,7 +75,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.Spacing();
         }
 
-        private void RenderAccountNode(NetplayConfig.Internal data)
+        private void RenderAccountNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("Account")) 
                 return;
@@ -132,7 +133,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private void RenderHostServerNode(NetplayConfig.Internal data)
+        private void RenderHostServerNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("Host Server")) 
                 return;
@@ -153,7 +154,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private void RenderJoinByIpNode(NetplayConfig.Internal data)
+        private void RenderJoinByIpNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("Join Game")) 
                 return;
@@ -181,7 +182,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private void RenderCentralServerSettingsNode(NetplayConfig.Internal data)
+        private void RenderCentralServerSettingsNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("Central Server Settings"))
                 return;
@@ -196,7 +197,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private static void RenderNatPunchSettingsNode(NetplayConfig.Internal data)
+        private static void RenderNatPunchSettingsNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("NAT Punch/Traversal Server")) 
                 return;
@@ -220,7 +221,7 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private static unsafe void RenderPlayerSettingsNode(NetplayConfig.Internal data)
+        private static unsafe void RenderPlayerSettingsNode(NetplayEditorConfig.Internal data)
         {
             if (!ImGui.TreeNodeStr("Player Settings")) 
                 return;

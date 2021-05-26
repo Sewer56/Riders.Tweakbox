@@ -11,34 +11,28 @@ using SharpDX.Mathematics.Interop;
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using Reloaded.Hooks.Definitions;
-using Riders.Tweakbox.Components.Tweaks;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Services.Texture;
 using Sewer56.SonicRiders;
 using SharpDX;
 
 namespace Riders.Tweakbox.Controllers
 {
-    public unsafe class TextureController : IController
+    public unsafe class TextureInjectionController : IController
     {
-        private TextureService _textureService = IoC.GetConstant<TextureService>();
-        private TextureInjectionConfig _config = IoC.GetConstant<TextureInjectionConfig>();
+        private TextureService _textureService = IoC.GetSingleton<TextureService>();
+        private TextureInjectionConfig _config = IoC.GetSingleton<TextureInjectionConfig>();
 
         private IO _io;
         private IHook<D3DXCreateTextureFromFileInMemoryEx> _createTextureHook;
         
-        public TextureController(IO io)
+        public TextureInjectionController(IO io)
         {
             _io = io;
             var d3dx9Handle  = PInvoke.LoadLibrary("d3dx9_25.dll");
             var createTextureFromFileInMemoryEx = Native.GetProcAddress(d3dx9Handle, "D3DXCreateTextureFromFileInMemoryEx");
             _createTextureHook = SDK.ReloadedHooks.CreateHook<D3DXCreateTextureFromFileInMemoryEx>(CreateTextureFromFileInMemoryHook, (long) createTextureFromFileInMemoryEx).Activate();
         }
-
-        /// <inheritdoc />
-        public void Disable() => _createTextureHook.Disable();
-
-        /// <inheritdoc />
-        public void Enable() => _createTextureHook.Enable();
 
         /// <summary>
         /// Removes duplicates in Auto Common folder.

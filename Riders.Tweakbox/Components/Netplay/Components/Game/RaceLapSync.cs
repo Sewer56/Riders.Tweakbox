@@ -79,9 +79,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Sewer56.SonicRiders.API.Event.OnKillAllTasks += RemoveAllTasks;
             Event.AfterRace      += CheckIfAllFinishedRace;
 
-            var controller = IoC.Get<PatchController>();
-            controller.InjectRunTimerPostRace.Enable();
-            controller.DisableRacePositionOverwrite.Enable();
+            IoC.Get<MiscPatchController>().DisableRacePositionOverwrite.Enable();
+            IoC.Get<EnableTimerPostRaceController>().Hook.Enable();
         }
 
         /// <inheritdoc />
@@ -95,9 +94,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Sewer56.SonicRiders.API.Event.OnKillAllTasks -= RemoveAllTasks;
             Event.AfterRace -= CheckIfAllFinishedRace;
 
-            var controller = IoC.Get<PatchController>();
-            controller.InjectRunTimerPostRace.Disable();
-            controller.DisableRacePositionOverwrite.Disable();
+            IoC.Get<MiscPatchController>().DisableRacePositionOverwrite.Disable();
+            IoC.Get<EnableTimerPostRaceController>().Hook.Disable();
         }
 
         public void Reset()

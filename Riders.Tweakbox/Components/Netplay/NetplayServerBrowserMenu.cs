@@ -9,6 +9,7 @@ using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Menus.Models;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Controls;
@@ -29,7 +30,7 @@ namespace Riders.Tweakbox.Components.Netplay
         
         public TweakboxApi Api              => Owner.Api;
         public NetplayController Controller => Owner.Controller;
-        public NetplayConfig     Config     => Owner.Config;
+        public NetplayEditorConfig     Config     => Owner.Config;
 
         // Re-route to internal window.
         public override ref bool IsEnabled() => ref BrowserMenu.IsEnabled();
@@ -71,7 +72,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 if (result.HasPassword)
                 {
                     // TODO: Query for Password
-                    var inputData = new TextInputData(NetplayConfig.TextLength);
+                    var inputData = new TextInputData(NetplayEditorConfig.TextLength);
                     await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
                     {
                         inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
@@ -80,7 +81,7 @@ namespace Riders.Tweakbox.Components.Netplay
                     password = inputData;
                 }
 
-                var configCopy = Mapping.Mapper.Map<NetplayConfig>(Config); // Deep Copy
+                var configCopy = Mapping.Mapper.Map<NetplayEditorConfig>(Config); // Deep Copy
                 var data = configCopy.Data;
                 data.ClientSettings.Password = password;
                 data.ClientSettings.Port = result.Port;

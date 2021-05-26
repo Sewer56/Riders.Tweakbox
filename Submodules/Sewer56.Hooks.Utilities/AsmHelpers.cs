@@ -171,6 +171,17 @@ namespace Sewer56.Hooks.Utilities
 
         private static string Architecture(bool is64bit) => is64bit ? "use64" : "use32";
         private static string SetAddress(long address) => $"org {address}";
+
+        /// <summary>
+        /// Invokes the function if it's not null, else does nothing.
+        /// </summary>
+        public static Enum<AsmFunctionResult> InvokeIfNotNull(this AsmFunc func)
+        {
+            if (func != null)
+                return func();
+
+            return AsmFunctionResult.Indeterminate;
+        }
     }
 
     [Function(CallingConventions.Cdecl)]
