@@ -8,8 +8,9 @@
         None,
 
         // Server
-        Disconnect,         // Host -> Client: Reason for disconnection.
-        Version,            // Client -> Host: Version information.
+        Disconnect,         // Host -> Client: Reason for disconnection [backwards compatible].
+        Version,            // Client -> Host: Version information [backwards compatible].
+        VersionEx,          // Client -> Host: Version information [current + newer versions].
 
         // Randomization & Time Sync
         SRand,              // Host -> Client: RNG Seed and Time to Resume Game synced with external NTP source

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DotNext;
 using LiteNetLib;
 using Riders.Netplay.Messages;
@@ -33,6 +34,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         public NetplayEditorConfig.ClientSettings ClientSettings { get; set; }
 
         private Dictionary<int, VersionInformation> _versionMap = new Dictionary<int, VersionInformation>();
+        private Dictionary<int, VersionInformationEx> _versionExMap = new Dictionary<int, VersionInformationEx>();
+
         private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());
 
         public ConnectionManager(Socket socket, EventController @event)
@@ -61,22 +64,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
         private async void OnHostPeerConnected(NetPeer peer)
         {
             bool HasReceivedPlayerData() => HostState.ClientMap.TryGetPlayerData(peer, out _);
-            bool HasReceivedVersionInformation() => _versionMap.ContainsKey(peer.Id);
 
             Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
 
-            if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.DisconnectTimeout))
-            {
-                Socket.DisconnectWithMessage(peer, "Did not receive Tweakbox version information from client.");
+            if (await HostValidateVersionInformation(peer)) 
                 return;
-            }
 
-            _versionMap.Remove(peer.Id, out VersionInformation info);
-            if (!info.Verify(_currentVersionInformation))
-            {
-                Socket.DisconnectWithMessage(peer, $"Client version does not match host version. Client version: {info.TweakboxVersion}, Host Version: {_currentVersionInformation.TweakboxVersion}");
+            if (await HostValidateVersionInformationEx(peer)) 
                 return;
-            }
 
             if (!await Socket.PollUntilAsync(HasReceivedPlayerData, Socket.State.DisconnectTimeout))
             {
@@ -93,9 +88,54 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             }
         }
 
-        private void OnClientPeerConnected(NetPeer peer)
+        private async Task<bool> HostValidateVersionInformationEx(NetPeer peer)
         {
+            bool HasReceivedVersionInformationEx() => _versionExMap.ContainsKey(peer.Id);
+            if (!await Socket.PollUntilAsync(HasReceivedVersionInformationEx, Socket.State.DisconnectTimeout))
+            {
+                Socket.DisconnectWithMessage(peer, "Did not receive Tweakbox extended version information from client.");
+                return true;
+            }
+
+            unsafe
+            {
+                var mode = Event.CourseSelect->TaskData->RaceMode;
+                var versionEx = new VersionInformationEx() {GameMode = (VersionInformationEx.RaceMode) mode};
+                _versionExMap.Remove(peer.Id, out VersionInformationEx infoEx);
+                if (!versionEx.Verify(infoEx, out string errors))
+                {
+                    Socket.DisconnectWithMessage(peer, $"Client extended version information does not match host's.\n{errors}");
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private async Task<bool> HostValidateVersionInformation(NetPeer peer)
+        {
+            bool HasReceivedVersionInformation() => _versionMap.ContainsKey(peer.Id);
+            if (!await Socket.PollUntilAsync(HasReceivedVersionInformation, Socket.State.DisconnectTimeout))
+            {
+                Socket.DisconnectWithMessage(peer, "Did not receive Tweakbox version information from client.");
+                return true;
+            }
+
+            _versionMap.Remove(peer.Id, out VersionInformation info);
+            if (!_currentVersionInformation.Verify(info))
+            {
+                Socket.DisconnectWithMessage(peer, $"Client version does not match host version. Client version: {info.TweakboxVersion}, Host Version: {_currentVersionInformation.TweakboxVersion}");
+                return true;
+            }
+
+            return false;
+        }
+
+        private unsafe void OnClientPeerConnected(NetPeer peer)
+        {
+            var mode = Event.CourseSelect->TaskData->RaceMode;
             Socket.SendAndFlush(peer, ReliablePacket.Create(_currentVersionInformation), DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Version Information", LogCategory.Socket);
+            Socket.SendAndFlush(peer, ReliablePacket.Create(new VersionInformationEx() { GameMode = (VersionInformationEx.RaceMode) mode }), DeliveryMethod.ReliableOrdered, "[Client] Sending Extended Version Information", LogCategory.Socket);
 
             using var packet = ReliablePacket.Create(new ClientSetPlayerData() { Data = State.SelfInfo });
             Socket.SendAndFlush(peer, packet, DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
@@ -167,6 +207,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
             else if (packet.MessageType == MessageType.Version)
             {
                 _versionMap[source.Id] = packet.GetMessage<VersionInformation>();
+            }
+            else if (packet.MessageType == MessageType.VersionEx)
+            {
+                _versionExMap[source.Id] = packet.GetMessage<VersionInformationEx>();
             }
         }
 

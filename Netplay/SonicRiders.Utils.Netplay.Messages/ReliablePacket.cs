@@ -93,6 +93,7 @@ namespace Riders.Netplay.Messages
 
                     case MessageType.Disconnect: Message = new Disconnect(); break;
                     case MessageType.Version:    Message = new VersionInformation(); break;
+                    case MessageType.VersionEx:  Message = new VersionInformationEx(); break;
 
                     case MessageType.SRand:              Message = new SRandSync(); break;
                     case MessageType.GameData:           Message = new GameData(); break;
