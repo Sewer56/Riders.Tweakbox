@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -9,6 +10,7 @@ using SharpDX.Direct3D9;
 using Microsoft.Windows.Sdk;
 using SharpDX;
 using Riders.Tweakbox.Configs;
+using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Controllers
 {
