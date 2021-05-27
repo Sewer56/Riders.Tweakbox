@@ -1,5 +1,6 @@
 ﻿using System;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Imgui.Hook;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -17,13 +18,15 @@ namespace Riders.Tweakbox.Controllers
         private TweaksConfig _config;
         private WindowService _windowService;
         private readonly ImguiHook _hook;
+        private FramePacingController _pacingController;
+        private IFunction<ResetDeviceFn> _resetDevice = SDK.Hooks.CreateFunction<ResetDeviceFn>(0x00519F70);
+        private IFunction<SetupViewports> _setupViewports = SDK.Hooks.CreateFunction<SetupViewports>(0x0050F9E0);
 
         public ResolutionController(TweaksConfig config, WindowService service)
         {
             _config = config;
             _windowService = service;
             _readConfigHook = Functions.ReadConfigFile.Hook(ReadConfigFile).Activate();
-
             _config.Data.AddPropertyUpdatedHandler(OnPropertyUpdated);
         }
 
@@ -42,11 +45,11 @@ namespace Riders.Tweakbox.Controllers
             switch (propertyname)
             {
                 case nameof(data.ResolutionX):
-                    //Resize();
+                    Resize();
                     break;
                 
                 case nameof(data.ResolutionY):
-                    //Resize();
+                    Resize();
                     break;
 
                 case nameof(data.Fullscreen):
@@ -74,9 +77,6 @@ namespace Riders.Tweakbox.Controllers
         private unsafe void Resize()
         {
             var data = _config.Data;
-            if (Window.WindowHandle != IntPtr.Zero)
-                _windowService.ResizeWindow(_config.Data.ResolutionX, _config.Data.ResolutionY, Window.WindowHandle);
-
             *Sewer56.SonicRiders.API.Misc.ResolutionX = data.ResolutionX;
             *Sewer56.SonicRiders.API.Misc.ResolutionY = data.ResolutionY;
             ResetDevice();
@@ -90,14 +90,31 @@ namespace Riders.Tweakbox.Controllers
             var data = _config.Data;
             if (handle != IntPtr.Zero)
             {
-                // Reset D3D Device
-                // TODO: Write code to recreate all textures and possibly other assets, as described in Reset() function.
-                var controller = IoC.Get<Direct3DController>();
-                var presentParametersCopy = controller.LastPresentParameters;
-                presentParametersCopy.BackBufferHeight = data.ResolutionY;
-                presentParametersCopy.BackBufferWidth  = data.ResolutionX;
-                controller.D3dDeviceEx.ResetEx(ref presentParametersCopy);
+                _pacingController ??= IoC.Get<FramePacingController>();
+                _pacingController.AfterEndFrame += AfterEndFrame;
             }
         }
+
+        private void AfterEndFrame()
+        {
+            _resetDevice.GetWrapper()();
+            _setupViewports.GetWrapper()();
+            if (Window.WindowHandle != IntPtr.Zero)
+                _windowService.ResizeWindow(_config.Data.ResolutionX, _config.Data.ResolutionY, Window.WindowHandle);
+
+            _pacingController.AfterEndFrame -= AfterEndFrame;
+        }
+
+        /// <summary>
+        /// Internal game function to reset the D3D9 device.
+        /// </summary>
+        [Function(CallingConventions.Cdecl)]
+        private delegate void ResetDeviceFn();
+
+        /// <summary>
+        /// Internal game function which sets up viewports for all players and menus.
+        /// </summary>
+        [Function(CallingConventions.Cdecl)]
+        private delegate void SetupViewports();
     }
 }

@@ -12,5 +12,6 @@ MonitorFromWindow
 LoadLibraryW
 GetProcAddress
 ShowCursor
+GetModuleHandle
 
 MONITORINFO

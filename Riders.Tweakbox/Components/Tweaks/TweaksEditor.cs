@@ -1,4 +1,5 @@
-﻿using DearImguiSharp;
+﻿using System;
+using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -62,8 +63,8 @@ namespace Riders.Tweakbox.Components.Tweaks
             {
                 ImGui.Text("Startup Settings");
 
-                Reflection.MakeControl(ref data.ResolutionX, "Resolution X").Notify(data, nameof(data.ResolutionX));
-                Reflection.MakeControl(ref data.ResolutionY, "Resolution Y").Notify(data, nameof(data.ResolutionY));
+                ImGui.DragInt("Resolution X", ref data.ResolutionX, 1, 640, 16384, null, 0).Notify(data, nameof(data.ResolutionX));
+                ImGui.DragInt("Resolution Y", ref data.ResolutionY, 1, 480, 16384, null, 0).Notify(data, nameof(data.ResolutionY));
                 Reflection.MakeControl(ref data.Fullscreen, "Fullscreen").Notify(data, nameof(data.Fullscreen));
 
                 ImGui.Text("For these settings to apply, please *save* the default configuration above and restart the game.");
@@ -79,6 +80,8 @@ namespace Riders.Tweakbox.Components.Tweaks
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Rendering Optimizations", 0))
             {
+                ImGui.Text($"Current FPS: " + _pacingController.Fps.StatFPS);
+
                 ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
                 ImGui.Checkbox("Fix D3D Device Flags", ref data.D3DDeviceFlags).Notify(data, nameof(data.D3DDeviceFlags));
                 Tooltip.TextOnHover("Applies on boot.");

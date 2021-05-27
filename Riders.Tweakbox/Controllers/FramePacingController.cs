@@ -25,9 +25,14 @@ namespace Riders.Tweakbox.Controllers
         private static FramePacingController _controller;
 
         /// <summary>
+        /// An action to run after the frame finishes rendering.
+        /// </summary>
+        public Action AfterEndFrame { get; set; }
+
+        /// <summary>
         /// Amount of time spinning after sleep.
         /// </summary>
-        public float TimerGranularity => (float)_fps.TimerGranularity;
+        public float TimerGranularity => (float)Fps.TimerGranularity;
 
         /// <summary>
         /// CPU Usage between 0 - 100.
@@ -35,12 +40,17 @@ namespace Riders.Tweakbox.Controllers
         public float CpuUsage { get; private set; }
 
         /// <summary>
+        /// Provides access to performance statistics.
+        /// </summary>
+        public FramePacer Fps { get; private set; }
+
+        /// <summary>
         /// Checks when to sample new CPU usage data.
         /// </summary>
         private Stopwatch _cpuLoadSampleWatch = Stopwatch.StartNew();
 
         private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        private FramePacer _fps;
+        
         private bool _resetSpeedup = false;
         private TweaksConfig _config = IoC.Get<TweaksConfig>();
 
@@ -66,7 +76,7 @@ namespace Riders.Tweakbox.Controllers
 
             // Test
             _endFrameHook = EndFrame.HookAs<ReturnVoidFnPtr>(typeof(FramePacingController), nameof(EndFrameImplStatic)).Activate();
-            _fps          = new FramePacer { FPSLimit = 60 };
+            Fps          = new FramePacer { FPSLimit = 60 };
             _controller = this;
         }
 
@@ -101,16 +111,18 @@ namespace Riders.Tweakbox.Controllers
                     /* Game is Stupid */
                 }
 
-                _fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
+                Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
                 *State.TotalFrameCounter += 1;
 
                 if (_resetSpeedup)
                     _resetSpeedup = false;
 
+                AfterEndFrame?.Invoke();
                 return;
             }
 
             _endFrameHook.OriginalFunction.Value.Invoke();
+            AfterEndFrame?.Invoke();
         }
 
         /* Parameter: uMilliseconds */

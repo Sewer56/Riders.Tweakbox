@@ -8,9 +8,12 @@ using SharpDX.Direct3D9;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
+using Reloaded.Hooks.Definitions.X86;
 using SharpDX;
 using Riders.Tweakbox.Configs;
+using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
+using SharpDX.Mathematics.Interop;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -19,7 +22,7 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// The D3D9 Instance.
         /// </summary>
-        public Direct3D D3d { get; private set; }
+        public Direct3DEx D3dEx { get; private set; }
 
         /// <summary>
         /// The D3D9 Device.
@@ -32,21 +35,65 @@ namespace Riders.Tweakbox.Controllers
         public PresentParameters LastPresentParameters;
 
         private TweaksConfig _config;
+        private IFunction<Direct3dCreate9Wrapper> _d3dCreate9Wrapper = SDK.ReloadedHooks.CreateFunction<Direct3dCreate9Wrapper>(0x005253B0);
 
         // Hooks
         private IHook<DX9Hook.CreateDevice> _createDeviceHook;
+        private IHook<DX9Hook.Reset> _resetHook;
+        private IHook<Direct3dCreate9Wrapper> _createHook;
+        private IHook<CreateVertexBuffer> _createVertexBufferHook;
+        private IHook<CreateIndexBuffer> _createIndexBufferHook;
+        private IHook<CreateTexture> _createTextureHook;
+        private IHook<CreateVolumeTexture> _createVolumeTextureHook;
+        private IHook<CreateCubeTexture> _createCubeTextureHook;
+        private IHook<CreateOffscreenPlainSurface> _createOffscreenPlainSurfaceHook;
 
         public Direct3DController(TweaksConfig config)
         {
             _config = config;
-            _createDeviceHook  = Sewer56.SonicRiders.API.Misc.DX9Hook.Value.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+            var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
+            _createDeviceHook = dx9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
+
+            _createTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateTexture>((int)IDirect3DDevice9.CreateTexture, CreateTextureHook).Activate();
+            _createVertexBufferHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateVertexBuffer>((int)IDirect3DDevice9.CreateVertexBuffer, CreateVertexBufferHook).Activate();
+            _createIndexBufferHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateIndexBuffer>((int)IDirect3DDevice9.CreateIndexBuffer, CreateIndexBufferHook).Activate();
+            _createVolumeTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateVolumeTexture>((int)IDirect3DDevice9.CreateVolumeTexture, CreateVolumeTextureHook).Activate();
+            _createCubeTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateCubeTexture>((int)IDirect3DDevice9.CreateCubeTexture, CreateCubeTextureHook).Activate();
+            _createOffscreenPlainSurfaceHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateOffscreenPlainSurface>((int)IDirect3DDevice9.CreateOffscreenPlainSurface, CreateOffscreenPlainSurfaceHook).Activate();
+
+            _resetHook = dx9Hook.DeviceVTable.CreateFunctionHook<DX9Hook.Reset>((int)IDirect3DDevice9.Reset, ResetHook).Activate();
+            _createHook = _d3dCreate9Wrapper.Hook(CreateRidersDeviceImpl).Activate();
+        }
+
+        private IntPtr CreateRidersDeviceImpl(uint sdkversion)
+        {
+            D3dEx = new Direct3DEx();
+
+            // Fill in method pointers.
+            var moduleHandle = Native.GetModuleHandle("d3d9.dll");
+            *(IntPtr*) 0x016BEE8C = moduleHandle;
+
+            *(IntPtr*) 0x016BEE90 = Native.GetProcAddress(moduleHandle, "Direct3DCreate9");
+            *(IntPtr*) 0x016BEE94 = Native.GetProcAddress(moduleHandle, "D3DPERF_BeginEvent");
+            *(IntPtr*) 0x016BEE98 = Native.GetProcAddress(moduleHandle, "D3DPERF_EndEvent");
+            *(IntPtr*) 0x016BEE9C = Native.GetProcAddress(moduleHandle, "D3DPERF_SetMarker");
+            *(IntPtr*) 0x016BEEA0 = Native.GetProcAddress(moduleHandle, "D3DPERF_SetRegion");
+            *(IntPtr*) 0x016BEEA4 = Native.GetProcAddress(moduleHandle, "D3DPERF_QueryRepeatFrame");
+            *(IntPtr*) 0x016BEEA8 = Native.GetProcAddress(moduleHandle, "D3DPERF_SetOptions");
+            *(IntPtr*) 0x016BEEAC = Native.GetProcAddress(moduleHandle, "D3DPERF_GetStatus");
+
+            return D3dEx.NativePointer;
         }
 
         private IntPtr CreateDeviceHook(IntPtr direct3dpointer, uint adapter, DeviceType deviceType, IntPtr hFocusWindow, CreateFlags behaviorFlags, ref PresentParameters presentParameters, int** ppReturnedDeviceInterface)
         {
+            // Do not edit if does not belong to Riders.
+            if (D3dEx == null || direct3dpointer != D3dEx.NativePointer)
+                return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
+
             if (_config.Data.D3DDeviceFlags)
             {
-                behaviorFlags &= ~CreateFlags.Multithreaded;
+                behaviorFlags |= CreateFlags.HardwareVertexProcessing;
                 behaviorFlags |= CreateFlags.DisablePsgpThreading;
             }
 
@@ -54,11 +101,7 @@ namespace Riders.Tweakbox.Controllers
                 PInvoke.ShowCursor(true);
 
             // Disable VSync
-            if (_config.Data.DisableVSync)
-            {
-                presentParameters.PresentationInterval = PresentInterval.Immediate;
-                presentParameters.FullScreenRefreshRateInHz = 0;
-            }
+            SetPresentParameters(ref presentParameters);
 
 #if DEBUG
             PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
@@ -66,14 +109,13 @@ namespace Riders.Tweakbox.Controllers
             LastPresentParameters = presentParameters;
             try
             {
-                D3d = new Direct3D(direct3dpointer);
                 if (presentParameters.Windowed)
                 {
-                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters);
+                    D3dDeviceEx = new DeviceEx(D3dEx, (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters);
                 }
                 else
                 {
-                    D3dDeviceEx = new DeviceEx(new Direct3DEx(direct3dpointer), (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters, new DisplayModeEx()
+                    D3dDeviceEx = new DeviceEx(D3dEx, (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters, new DisplayModeEx()
                     {
                         Format = presentParameters.BackBufferFormat,
                         Height = presentParameters.BackBufferHeight,
@@ -92,6 +134,120 @@ namespace Riders.Tweakbox.Controllers
             }
 
             return IntPtr.Zero;
+            
         }
+
+        private IntPtr ResetHook(IntPtr device, ref PresentParameters presentparameters)
+        {
+            SetPresentParameters(ref presentparameters);
+            return _resetHook.OriginalFunction(device, ref presentparameters);
+        }
+
+        private void SetPresentParameters(ref PresentParameters presentParameters)
+        {
+            if (_config.Data.DisableVSync)
+            {
+                presentParameters.PresentationInterval = PresentInterval.Immediate;
+                presentParameters.FullScreenRefreshRateInHz = 0;
+            }
+            
+            // Cannot be used with FlipEx
+            presentParameters.MultiSampleQuality = 0;
+            presentParameters.MultiSampleType = 0;
+
+            // Subscribe to new D3D9Ex Swap Model
+            if (!_config.Data.Fullscreen)
+            {
+                presentParameters.BackBufferCount = 2;
+                presentParameters.SwapEffect = SwapEffect.FlipEx;
+            }
+            
+            // Set new resolution.
+            presentParameters.BackBufferWidth  = _config.Data.ResolutionX;
+            presentParameters.BackBufferHeight = _config.Data.ResolutionY;
+        }
+
+        private IntPtr CreateTextureHook(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
+        {
+            if (D3dDeviceEx.NativePointer != devicePointer)
+                return _createTextureHook.OriginalFunction(devicePointer, width, height, miplevels, usage, format, pool, pptexture, sharedhandle);
+
+            usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+            return _createTextureHook.OriginalFunction(devicePointer, width, height, miplevels, usage, format, pool, pptexture, sharedhandle);
+        }
+
+        private IntPtr CreateVertexBufferHook(IntPtr devicePointer, uint length, Usage usage, VertexFormat format, Pool pool, void** ppvertexbuffer, void* psharedhandle)
+        {
+            if (D3dDeviceEx.NativePointer != devicePointer)
+                return _createVertexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppvertexbuffer, psharedhandle);
+
+            usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+            return _createVertexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppvertexbuffer, psharedhandle);
+        }
+
+        private IntPtr CreateIndexBufferHook(IntPtr devicePointer, uint length, Usage usage, Format format, Pool pool, void** ppindexbuffer, void* psharedhandle)
+        {
+            if (D3dDeviceEx.NativePointer != devicePointer)
+                return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
+            
+            usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+
+            return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
+        }
+
+        #region These APIs aren't used but just in case!!
+        private IntPtr CreateVolumeTextureHook(IntPtr devicepointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
+        {
+            if (D3dDeviceEx.NativePointer != devicepointer)
+                return _createVolumeTextureHook.OriginalFunction(devicepointer, width, height, depth, miplevels, usage, format, pool, pptexture, sharedhandle);
+
+            usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+            return _createVolumeTextureHook.OriginalFunction(devicepointer, width, height, depth, miplevels, usage, format, pool, pptexture, sharedhandle);
+        }
+
+        private IntPtr CreateCubeTextureHook(IntPtr devicepointer, int edgelength, int levels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
+        {            
+            if (D3dDeviceEx.NativePointer != devicepointer)
+                return _createCubeTextureHook.OriginalFunction(devicepointer, edgelength, levels, usage, format, pool, pptexture, sharedhandle);
+
+            usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+            return _createCubeTextureHook.OriginalFunction(devicepointer, edgelength, levels, usage, format, pool, pptexture, sharedhandle);
+        }
+
+        private IntPtr CreateOffscreenPlainSurfaceHook(IntPtr devicepointer, int width, int height, Format format, Pool pool, void** ppsurface, void* sharedhandle)
+        {
+            if (D3dDeviceEx.NativePointer != devicepointer)
+                return _createOffscreenPlainSurfaceHook.OriginalFunction(devicepointer, width, height, format, pool, ppsurface, sharedhandle);
+            
+            pool = (pool == Pool.Managed) ? Pool.Default : pool;
+            return _createOffscreenPlainSurfaceHook.OriginalFunction(devicepointer, width, height, format, pool, ppsurface, sharedhandle);
+        }
+        #endregion
+
+        [Function(CallingConventions.Stdcall)]
+        private delegate IntPtr Direct3dCreate9Wrapper(uint sdkVersion);
+
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateVertexBuffer(IntPtr devicePointer, uint length, Usage usage, VertexFormat format, Pool pool, void** ppVertexBuffer, void* pSharedHandle);
+        
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateIndexBuffer(IntPtr devicePointer, uint length, Usage usage, Format format, Pool pool, void** ppIndexBuffer, void* pSharedHandle);
+
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateTexture(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
+
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateVolumeTexture(IntPtr devicePointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
+        
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateCubeTexture(IntPtr devicePointer, int edgeLength, int levels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
+
+        [Function(CallingConventions.Stdcall)]
+        public unsafe delegate IntPtr CreateOffscreenPlainSurface(IntPtr devicePointer, int width, int height, Format format, Pool pool, void** ppSurface, void* sharedHandle);
     }
 }

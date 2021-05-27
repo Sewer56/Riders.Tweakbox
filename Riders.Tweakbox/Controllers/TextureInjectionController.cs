@@ -53,8 +53,12 @@ namespace Riders.Tweakbox.Controllers
             }
         }
 
-        private unsafe int CreateTextureFromFileInMemoryHook(void* deviceref, void* srcdataref, int srcdatasize, int width, int height, int miplevels, int usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, void* srcinforef, PaletteEntry* paletteref, void** textureout)
+        private unsafe int CreateTextureFromFileInMemoryHook(void* deviceref, void* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, void* srcinforef, PaletteEntry* paletteref, void** textureout)
         {
+            // If not enabled, don't do anything.
+            if (!_config.Data.LoadTextures && !_config.Data.DumpTextures)
+                return _createTextureHook.OriginalFunction(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+            
             // Hash the texture,
             var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
 
@@ -62,7 +66,7 @@ namespace Riders.Tweakbox.Controllers
             if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var filePath))
             {
                 using var textureRef = data;
-                Log.WriteLine($"Loading Custom Texture: {filePath}", LogCategory. TextureLoad);
+                Log.WriteLine($"Loading Custom Texture: {filePath}", LogCategory.TextureLoad);
                 fixed (byte* dataPtr = &data.Data[0])
                 {
                     return _createTextureHook.OriginalFunction(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
@@ -164,7 +168,7 @@ namespace Riders.Tweakbox.Controllers
 
         [Function(CallingConventions.Stdcall)]
         public unsafe delegate int D3DXCreateTextureFromFileInMemoryEx(void* deviceRef, void* srcDataRef, int srcDataSize, int width, int height,
-            int mipLevels, int usage, Format format, Pool pool, int filter, int mipFilter, 
+            int mipLevels, Usage usage, Format format, Pool pool, int filter, int mipFilter, 
             RawColorBGRA colorKey, void* srcInfoRef, PaletteEntry* paletteRef, void** textureOut);
     }
 }
