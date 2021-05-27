@@ -2,6 +2,7 @@
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Imgui.Hook;
+using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -22,12 +23,19 @@ namespace Riders.Tweakbox.Controllers
         private IFunction<ResetDeviceFn> _resetDevice = SDK.Hooks.CreateFunction<ResetDeviceFn>(0x00519F70);
         private IFunction<SetupViewports> _setupViewports = SDK.Hooks.CreateFunction<SetupViewports>(0x0050F9E0);
 
+        private Patch _disableSetRectInReset = new Patch((IntPtr) 0x51879D, new byte[] { 0x83, 0xC4, 0x10 }, true);
+        private Patch _disableSetWindowPosInReset = new Patch((IntPtr) 0x0051883B, new byte[] { 0x83, 0xC4, 0x1C, 0x90, 0x90, 0x90 }, true);
+
         public ResolutionController(TweaksConfig config, WindowService service)
         {
             _config = config;
             _windowService = service;
             _readConfigHook = Functions.ReadConfigFile.Hook(ReadConfigFile).Activate();
             _config.Data.AddPropertyUpdatedHandler(OnPropertyUpdated);
+
+            // Disable game's built in resize on device reset
+            _disableSetRectInReset.Set(true);
+            _disableSetWindowPosInReset.Set(true);
         }
 
         private int ReadConfigFile()
