@@ -24,10 +24,22 @@ namespace Riders.Tweakbox.Services
         /// <param name="centered">Whether the window should be centered to screen.</param>
         public void ResizeWindow(int x, int y, IntPtr handle, bool centered = true)
         {
-            GetWindowSizeWithBorder(handle, x, y, out var newX, out var newY);
+            const int GWL_STYLE = -16;
+            var rect = new RECT()
+            {
+                left = 0,
+                top = 0,
+                bottom = y,
+                right = x
+            };
+
+            var style  = PInvoke.GetWindowLong((HWND) handle, GWL_STYLE);
+            var adjust = PInvoke.AdjustWindowRect(ref rect, (uint) style, false);
 
             int left = 0;
             int top  = 0;
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
 
             if (centered)
             {
@@ -36,25 +48,12 @@ namespace Riders.Tweakbox.Services
 
                 if (PInvoke.GetMonitorInfo(monitor, ref info))
                 {
-                    left += (info.rcMonitor.right - newX) / 2;
-                    top += (info.rcMonitor.bottom - newY) / 2;
+                    left += (info.rcMonitor.right - width) / 2;
+                    top += (info.rcMonitor.bottom - height) / 2;
                 }
             }
             
-            PInvoke.MoveWindow(new HWND(handle), left, top, newX, newY, true);
-        }
-
-        public void GetWindowSizeWithBorder(IntPtr handle, int x, int y, out int newX, out int newY)
-        {
-            // get size of window and the client area
-            PInvoke.GetWindowRect(new HWND(handle), out var windowRect);
-            PInvoke.GetClientRect(new HWND(handle), out var clientRect);
-
-            // calculate size of non-client area
-            int extraX = windowRect.right - windowRect.left - clientRect.right;
-            int extraY = windowRect.bottom - windowRect.top - clientRect.bottom;
-            newX = x + extraX;
-            newY = y + extraY;
+            PInvoke.MoveWindow(new HWND(handle), left, top, width, height, true);
         }
     }
 }

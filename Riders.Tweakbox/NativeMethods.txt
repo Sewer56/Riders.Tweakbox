@@ -2,6 +2,7 @@
 GetClientRect
 SetWindowLong
 GetWindowLong
+AdjustWindowRect
 MoveWindow
 SetWindowText
 SetLastError

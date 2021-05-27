@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Imgui.Hook;
@@ -20,11 +22,9 @@ namespace Riders.Tweakbox.Controllers
         private WindowService _windowService;
         private readonly ImguiHook _hook;
         private FramePacingController _pacingController;
-        private IFunction<ResetDeviceFn> _resetDevice = SDK.Hooks.CreateFunction<ResetDeviceFn>(0x00519F70);
-        private IFunction<SetupViewports> _setupViewports = SDK.Hooks.CreateFunction<SetupViewports>(0x0050F9E0);
 
-        private Patch _disableSetRectInReset = new Patch((IntPtr) 0x51879D, new byte[] { 0x83, 0xC4, 0x10 }, true);
-        private Patch _disableSetWindowPosInReset = new Patch((IntPtr) 0x0051883B, new byte[] { 0x83, 0xC4, 0x1C, 0x90, 0x90, 0x90 }, true);
+        private Patch _disableGameWindowAdjustment = new Patch((IntPtr) 0x00518680, new byte[] { 0xC3 }, true);
+        private Patch _disableSetWindowStyleOnReset = new Patch((IntPtr) 0x00517BE0, new byte[] { 0xC3 }, true);
 
         public ResolutionController(TweaksConfig config, WindowService service)
         {
@@ -34,8 +34,8 @@ namespace Riders.Tweakbox.Controllers
             _config.Data.AddPropertyUpdatedHandler(OnPropertyUpdated);
 
             // Disable game's built in resize on device reset
-            _disableSetRectInReset.Set(true);
-            _disableSetWindowPosInReset.Set(true);
+            _disableGameWindowAdjustment.Set(true);
+            _disableSetWindowStyleOnReset.Set(true);
         }
 
         private int ReadConfigFile()
@@ -61,7 +61,7 @@ namespace Riders.Tweakbox.Controllers
                     break;
 
                 case nameof(data.Fullscreen):
-                    //SetFullscreen();
+                    SetFullscreen();
                     break;
 
                 // Blur effect is dependent on resolution; might tweak it one day.
@@ -80,6 +80,7 @@ namespace Riders.Tweakbox.Controllers
                 *Sewer56.SonicRiders.API.Misc.MultiSampleType = 0;
 
             *Sewer56.SonicRiders.API.Misc.Fullscreen = data.Fullscreen;
+            Resize();
         }
 
         private unsafe void Resize()
@@ -94,8 +95,7 @@ namespace Riders.Tweakbox.Controllers
         {
             // Currently Unused
             // Reset Game Window
-            var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
-            var data = _config.Data;
+            var handle = Window.WindowHandle;
             if (handle != IntPtr.Zero)
             {
                 _pacingController ??= IoC.Get<FramePacingController>();
@@ -105,24 +105,17 @@ namespace Riders.Tweakbox.Controllers
 
         private void AfterEndFrame()
         {
-            _resetDevice.GetWrapper()();
-            _setupViewports.GetWrapper()();
-            if (Window.WindowHandle != IntPtr.Zero)
-                _windowService.ResizeWindow(_config.Data.ResolutionX, _config.Data.ResolutionY, Window.WindowHandle);
-
+            Functions.ResetDevice.GetWrapper()();
+            Functions.SetupViewports.GetWrapper()();
+            ResizeWindow();
             _pacingController.AfterEndFrame -= AfterEndFrame;
         }
 
-        /// <summary>
-        /// Internal game function to reset the D3D9 device.
-        /// </summary>
-        [Function(CallingConventions.Cdecl)]
-        private delegate void ResetDeviceFn();
 
-        /// <summary>
-        /// Internal game function which sets up viewports for all players and menus.
-        /// </summary>
-        [Function(CallingConventions.Cdecl)]
-        private delegate void SetupViewports();
+        private void ResizeWindow()
+        {
+            if (Window.WindowHandle != IntPtr.Zero)
+                _windowService.ResizeWindow(_config.Data.ResolutionX, _config.Data.ResolutionY, Window.WindowHandle);
+        }
     }
 }

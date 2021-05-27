@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -11,6 +12,7 @@ using Microsoft.Windows.Sdk;
 using Reloaded.Hooks.Definitions.X86;
 using SharpDX;
 using Riders.Tweakbox.Configs;
+using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using SharpDX.Mathematics.Interop;
@@ -30,9 +32,14 @@ namespace Riders.Tweakbox.Controllers
         public DeviceEx D3dDeviceEx { get; private set; }
 
         /// <summary>
-        /// Presentation parameters passed to Direct3D on last device reset.
+        /// The current display modes.
         /// </summary>
-        public PresentParameters LastPresentParameters;
+        public DisplayModeCollection Modes { get; private set; }
+
+        /// <summary>
+        /// Last presentation parameters used for instantiation.
+        /// </summary>
+        public PresentParameters LastPresentParameters { get; private set; }
 
         private TweaksConfig _config;
         private IFunction<Direct3dCreate9Wrapper> _d3dCreate9Wrapper = SDK.ReloadedHooks.CreateFunction<Direct3dCreate9Wrapper>(0x005253B0);
@@ -68,6 +75,7 @@ namespace Riders.Tweakbox.Controllers
         private IntPtr CreateRidersDeviceImpl(uint sdkversion)
         {
             D3dEx = new Direct3DEx();
+            Modes = D3dEx.Adapters.First().GetDisplayModes(Format.X8R8G8B8);
 
             // Fill in method pointers.
             var moduleHandle = Native.GetModuleHandle("d3d9.dll");
@@ -106,9 +114,9 @@ namespace Riders.Tweakbox.Controllers
 #if DEBUG
             PInvoke.SetWindowText(new HWND(Window.WindowHandle), $"Sonic Riders w/ Tweakbox (Debug) | PID: {Process.GetCurrentProcess().Id}");
 #endif
-            LastPresentParameters = presentParameters;
             try
             {
+                LastPresentParameters = presentParameters;
                 if (presentParameters.Windowed)
                 {
                     D3dDeviceEx = new DeviceEx(D3dEx, (int)adapter, deviceType, hFocusWindow, behaviorFlags, presentParameters);
@@ -140,6 +148,7 @@ namespace Riders.Tweakbox.Controllers
         private IntPtr ResetHook(IntPtr device, ref PresentParameters presentparameters)
         {
             SetPresentParameters(ref presentparameters);
+            LastPresentParameters = presentparameters;
             return _resetHook.OriginalFunction(device, ref presentparameters);
         }
 
@@ -152,6 +161,7 @@ namespace Riders.Tweakbox.Controllers
             }
             
             // Cannot be used with FlipEx
+            presentParameters.Windowed = !_config.Data.Fullscreen;
             presentParameters.MultiSampleQuality = 0;
             presentParameters.MultiSampleType = 0;
 
@@ -167,6 +177,7 @@ namespace Riders.Tweakbox.Controllers
             presentParameters.BackBufferHeight = _config.Data.ResolutionY;
         }
 
+        #region Hooks for D3D9Ex Support
         private IntPtr CreateTextureHook(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
             if (D3dDeviceEx.NativePointer != devicePointer)
@@ -198,7 +209,9 @@ namespace Riders.Tweakbox.Controllers
             return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
         }
 
-        #region These APIs aren't used but just in case!!
+        #endregion
+        
+        #region D3D9Ex: These APIs aren't used but just in case!!
         private IntPtr CreateVolumeTextureHook(IntPtr devicepointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
             if (D3dDeviceEx.NativePointer != devicepointer)
