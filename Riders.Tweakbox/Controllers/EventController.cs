@@ -161,6 +161,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event CdeclReturnIntFn RunPhysicsSimulation;
 
+        /// <summary>
+        /// Replaces the code to pause the game.
+        /// </summary>
+        public event PauseGameHandlerFn PauseGame;
+
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -172,6 +177,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.CdeclReturnIntFn> _removeAllTasksHook;
         private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
         private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
+        private IHook<Functions.PauseGameFn> _pauseGameHook;
 
         private IAsmHook _onStartRaceHook;
         private IAsmHook _onCheckIfStartRaceHook;
@@ -239,6 +245,7 @@ namespace Riders.Tweakbox.Controllers
             _removeAllTasksHook = Functions.RemoveAllTasks.Hook(RemoveAllTasksHook).Activate();
             _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulationHook).Activate();
             _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
+            _pauseGameHook = Functions.PauseGame.Hook(PauseGameHook).Activate();
         }
 
         /// <summary>
@@ -316,7 +323,9 @@ namespace Riders.Tweakbox.Controllers
         private int SetGoalRaceFinishTaskHook(Player* player) => SetGoalRaceFinishTask?.Invoke(_setGoalRaceFinishTaskHook, player) ?? _setGoalRaceFinishTaskHook.OriginalFunction(player);
         private byte GoalRaceFinishTaskHook() => GoalRaceFinishTask?.Invoke(_goalRaceFinishTaskHook) ?? _goalRaceFinishTaskHook.OriginalFunction();
         private int RemoveAllTasksHook() => RemoveAllTasks?.Invoke(_removeAllTasksHook) ?? _removeAllTasksHook.OriginalFunction();
+        private int PauseGameHook(int a1, int a2, byte a3) => PauseGame?.Invoke(a1, a2, a3, _pauseGameHook) ?? _pauseGameHook.OriginalFunction(a1, a2, a3);
 
+        public delegate int PauseGameHandlerFn(int a1, int a2, byte a3, IHook<Functions.PauseGameFn> hook);
         public delegate void SetSpawnLocationsStartOfRaceFn(int numberOfPlayers);
         public delegate void SetupRaceFn(Task<TitleSequence, TitleSequenceTaskState>* task);
         public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);
