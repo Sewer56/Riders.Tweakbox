@@ -17,6 +17,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
     {
         private static Patch _disableGrandPrixOverridePlayerCount = new Patch((IntPtr)0x0050BC34, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 });
 
+        // TODO: Add this in the future without breaking culling.
+        private static Patch _dontSetPlayerTypeOnInit = new Patch((IntPtr) 0x00413E60, new byte[] { 0xEB, 0x27 });
+        private static Patch _dontSetPlayerTypeOnCharSelectInit = new Patch((IntPtr) 0x00463A97, new byte[] { 0xE9, 0xDA, 0x00, 0x00, 0x00 });
+
         /// <inheritdoc />
         public Socket Socket { get; set; }
         public EventController Event { get; set; }
@@ -28,6 +32,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
             Event.OnSetupRace += OnSetupRace;
             _disableGrandPrixOverridePlayerCount.Enable();
+            //_dontSetPlayerTypeOnInit.Enable();
+            //_dontSetPlayerTypeOnCharSelectInit.Enable();
         }
 
         /// <inheritdoc />
@@ -35,6 +41,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             Event.OnSetupRace -= OnSetupRace;
             _disableGrandPrixOverridePlayerCount.Disable();
+            //_dontSetPlayerTypeOnInit.Disable();
+            //_dontSetPlayerTypeOnCharSelectInit.Disable();
         }
 
         private unsafe void OnSetupRace(Task<TitleSequence, TitleSequenceTaskState>* task)
