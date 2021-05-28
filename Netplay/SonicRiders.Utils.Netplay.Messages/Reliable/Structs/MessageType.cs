@@ -1,4 +1,10 @@
-﻿namespace Riders.Netplay.Messages.Reliable.Structs
+﻿using System;
+using Reloaded.Hooks.Definitions;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
+using Riders.Netplay.Messages.Reliable.Structs.Menu;
+using Riders.Netplay.Messages.Reliable.Structs.Server;
+
+namespace Riders.Netplay.Messages.Reliable.Structs
 {
     /// <summary>
     /// Declares whether the packet has a particular component of data.
@@ -23,6 +29,7 @@
         BoostTornado,       // Host -> Client && Client -> Host: Boost or tornado was activated by a player with a given index.
         LapCounters,        // Host -> Client && Client -> Host: Set Lap counters for each player.
         Attack,             // Host -> Client && Client -> Host: Inform client/host of 1 or more attacks.
+        EndGame,            // Host -> Client: Ends or restarts the current race.
 
         // Anti-Cheat
         SetAntiCheatTypes,  // Host -> Client: Sets the enabled Anti-Cheat modules.
@@ -48,5 +55,53 @@
         CharaSelectLoop,      // Client -> Host
         CharaSelectSync,      // Host   -> Client
         CharaSelectExit,      // Client -> Host & Host -> Client.
+    }
+
+    public static class MessageTypeExtensions
+    {
+        public static IReliableMessage Get(this MessageType type)
+        {
+            return type switch
+            {
+                MessageType.None => null,
+
+                // Base
+                MessageType.Disconnect  => new Disconnect(),
+                MessageType.Version     => new VersionInformation(),
+                MessageType.VersionEx   => new VersionInformationEx(),
+
+                // Gameplay
+                MessageType.SRand        => new SRandSync(),
+                MessageType.GameData     => new GameData(),
+                MessageType.StartSync    => new StartSync(),
+                MessageType.BoostTornado => new BoostTornadoPacked(),
+                MessageType.LapCounters  => new LapCountersPacked(),
+                MessageType.Attack       => new AttackPacked(),
+                MessageType.EndGame      => new EndNetplayGame(),
+
+                // Cheat
+                MessageType.SetAntiCheatTypes   => new SetAntiCheat(),
+                MessageType.AntiCheatTriggered  => new AntiCheatTriggered(),
+                MessageType.AntiCheatDataHash   => new GameData(),
+                MessageType.AntiCheatHeartbeat  => new AntiCheatHeartbeat(),
+
+                // Server
+                MessageType.ClientSetPlayerData  => new ClientSetPlayerData(),
+                MessageType.HostSetPlayerData    => new HostSetPlayerData(),
+                MessageType.HostUpdateClientPing => new HostUpdateClientLatency(),
+
+                // Menus
+                MessageType.CourseSelectLoop     => new CourseSelectLoop(),
+                MessageType.CourseSelectSync     => new CourseSelectSync(),
+                MessageType.CourseSelectSetStage => new CourseSelectSetStage(),
+                MessageType.RuleSettingsLoop     => new RuleSettingsLoop(),
+                MessageType.RuleSettingsSync     => new RuleSettingsSync(),
+                MessageType.CharaSelectLoop      => new CharaSelectLoop(),
+                MessageType.CharaSelectSync      => new CharaSelectSync(),
+                MessageType.CharaSelectExit      => new CharaSelectExit(),
+
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            };
+        }
     }
 }
