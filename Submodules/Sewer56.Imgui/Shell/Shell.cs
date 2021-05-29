@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DearImguiSharp;
 using Sewer56.Imgui.Shell.Structures;
 using Sewer56.Imgui.Utilities;
+using static DearImguiSharp.ImGuiWindowFlags;
 
 namespace Sewer56.Imgui.Shell
 {
@@ -44,15 +45,17 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static void AddDialog(string name, DialogFn dialogFunction, Action onClose = null)
+        public static void AddDialog(string name, DialogFn dialogFunction, Action onClose = null,
+            ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
-            AddCustom(() => DialogHandler(name, dialogFunction, onClose));
+            AddCustom(() => DialogHandler(name, dialogFunction, onClose, flags, showClose));
         }
 
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static async Task AddDialogAsync(string name, DialogFn dialogFunction, Action onClose = null)
+        public static async Task AddDialogAsync(string name, DialogFn dialogFunction, Action onClose = null,
+            ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
             bool hasFinished = false;
 
@@ -60,7 +63,7 @@ namespace Sewer56.Imgui.Shell
             {
                 onClose?.Invoke();
                 hasFinished = true;
-            }));
+            }, flags, showClose));
 
             while (!hasFinished)
                 await Task.Delay(16);
@@ -69,15 +72,17 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static void AddDialog(string name, string dialogText, Action onClose = null)
+        public static void AddDialog(string name, string dialogText, Action onClose = null,
+            ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
-            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText), onClose));
+            AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText), onClose, flags, showClose));
         }
 
         /// <summary>
         /// Adds a function that displays a dialog to the current shell.
         /// </summary>
-        public static async Task AddDialogAsync(string name, string dialogText, Action onClose = null)
+        public static async Task AddDialogAsync(string name, string dialogText, Action onClose = null,
+            ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
             bool hasFinished = false;
             
@@ -85,7 +90,7 @@ namespace Sewer56.Imgui.Shell
             {
                 onClose?.Invoke();
                 hasFinished = true;
-            }));
+            }, flags, showClose));
 
             while (!hasFinished)
                 await Task.Delay(16);
@@ -179,11 +184,16 @@ namespace Sewer56.Imgui.Shell
         /// <summary>
         /// Wraps a dialog.
         /// </summary>
-        private static bool DialogHandler(string name, DialogFn sup, Action onClose = null)
+        private static unsafe bool DialogHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
             bool isOpened = true;
             ImGui.OpenPopup(name, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
-            if (ImGui.BeginPopupModal(name, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+
+            bool beginSuccess = showClose ? 
+                ImGui.BeginPopupModal(name, ref isOpened, (int) flags) : 
+                ImGui.__Internal.BeginPopupModal(name, null, (int) flags);
+
+            if (beginSuccess)
             {
                 sup(ref isOpened);
                 ImGui.EndPopup();

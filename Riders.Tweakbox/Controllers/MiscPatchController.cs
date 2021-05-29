@@ -17,11 +17,11 @@ namespace Riders.Tweakbox.Controllers
         /// <summary>
         /// Disables overwriting of race position after the race has completed.
         /// </summary>
-        public Patch DisableRacePositionOverwrite = new Patch((IntPtr)0x4B40E6, new byte[] { 0xEB, 0x44 });
+        public Patch DisableRacePositionOverwrite = new Patch(0x4B40E6, new byte[] { 0xEB, 0x44 });
 
         /// <summary>
         /// Allows the player to always start a race in character select.
         /// </summary>
-        public Patch AlwaysCanStartRaceInCharacterSelect = new Patch((IntPtr) 0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
+        public Patch AlwaysCanStartRaceInCharacterSelect = new Patch(0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
     }
 }

@@ -13,6 +13,7 @@ namespace Riders.Tweakbox.Misc
         private byte[] _bytes;
         private byte[] _originalBytes;
 
+        public Patch(long address, byte[] bytes, bool changePermission = false) : this((IntPtr) address, bytes, changePermission) { }
         public Patch(IntPtr address, byte[] bytes, bool changePermission = false)
         {
             _address = address;

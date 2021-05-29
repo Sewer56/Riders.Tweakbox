@@ -166,6 +166,12 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event PauseGameHandlerFn PauseGame;
 
+        /// <summary>
+        /// Only applies to dialogs without the replay option!!
+        /// We do a little hack in our Netplay code for the other ones.
+        /// </summary>
+        public event SetEndOfRaceDialogHandlerFn SetEndOfRaceDialog;
+
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -178,6 +184,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
         private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
         private IHook<Functions.PauseGameFn> _pauseGameHook;
+        private IHook<Functions.SetEndOfRaceDialogTaskFn> _setEndOfRaceDialogTask;
 
         private IAsmHook _onStartRaceHook;
         private IAsmHook _onCheckIfStartRaceHook;
@@ -246,6 +253,7 @@ namespace Riders.Tweakbox.Controllers
             _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulationHook).Activate();
             _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
             _pauseGameHook = Functions.PauseGame.Hook(PauseGameHook).Activate();
+            _setEndOfRaceDialogTask = Functions.SetEndOfRaceDialogTask.Hook(SetEndOfRaceDialogHandlerHook).Activate();
         }
 
         /// <summary>
@@ -325,7 +333,11 @@ namespace Riders.Tweakbox.Controllers
         private int RemoveAllTasksHook() => RemoveAllTasks?.Invoke(_removeAllTasksHook) ?? _removeAllTasksHook.OriginalFunction();
         private int PauseGameHook(int a1, int a2, byte a3) => PauseGame?.Invoke(a1, a2, a3, _pauseGameHook) ?? _pauseGameHook.OriginalFunction(a1, a2, a3);
 
+        private Task* SetEndOfRaceDialogHandlerHook(EndOfRaceDialogMode mode) => SetEndOfRaceDialog != null ? SetEndOfRaceDialog.Invoke(mode, _setEndOfRaceDialogTask) : _setEndOfRaceDialogTask.OriginalFunction(mode);
+
         public delegate int PauseGameHandlerFn(int a1, int a2, byte a3, IHook<Functions.PauseGameFn> hook);
+        public delegate Task* SetEndOfRaceDialogHandlerFn(EndOfRaceDialogMode mode, IHook<Functions.SetEndOfRaceDialogTaskFn> hook);
+
         public delegate void SetSpawnLocationsStartOfRaceFn(int numberOfPlayers);
         public delegate void SetupRaceFn(Task<TitleSequence, TitleSequenceTaskState>* task);
         public unsafe delegate byte SetNewPlayerStateHandlerFn(Player* player, PlayerState state, IHook<Functions.SetNewPlayerStateFn> hook);

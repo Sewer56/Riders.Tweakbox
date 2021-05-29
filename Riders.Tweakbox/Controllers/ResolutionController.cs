@@ -23,8 +23,8 @@ namespace Riders.Tweakbox.Controllers
         private readonly ImguiHook _hook;
         private FramePacingController _pacingController;
 
-        private Patch _disableGameWindowAdjustment = new Patch((IntPtr) 0x00518680, new byte[] { 0xC3 }, true);
-        private Patch _disableSetWindowStyleOnReset = new Patch((IntPtr) 0x00517BE0, new byte[] { 0xC3 }, true);
+        private Patch _disableGameWindowAdjustment = new Patch(0x00518680, new byte[] { 0xC3 }, true);
+        private Patch _disableSetWindowStyleOnReset = new Patch(0x00517BE0, new byte[] { 0xC3 }, true);
 
         public ResolutionController(TweaksConfig config, WindowService service)
         {

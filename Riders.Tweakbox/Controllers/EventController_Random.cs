@@ -70,7 +70,7 @@ namespace Riders.Tweakbox.Controllers
             _onCheckIfGiveAiRandomItemsHook = hooks.CreateAsmHook(onCheckIfAiRandomItemsAsm, 0x004C71F9).Activate();
 
             _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.CdeclReturnIntFn>(ItemPickupRandImpl);
-            _randItemPickupPatch = new Patch((IntPtr)0x004C714C, AsmHelpers.AssembleRelativeCall(0x004C714C, (long)_randItemPickupWrapper.WrapperPointer)).ChangePermission().Enable();
+            _randItemPickupPatch = new Patch(0x004C714C, AsmHelpers.AssembleRelativeCall(0x004C714C, (long)_randItemPickupWrapper.WrapperPointer)).ChangePermission().Enable();
 
             var ifNotRandomizePlayer = new[] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004639DC, Environment.Is64BitProcess)}"};
             var ifRandomizePlayer = new [] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004638E0, Environment.Is64BitProcess)}" };

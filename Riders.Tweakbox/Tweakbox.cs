@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DearImguiSharp;
 using Microsoft.Win32;
+using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Reloaded.Mod.Interfaces;
@@ -123,6 +124,7 @@ namespace Riders.Tweakbox
             IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
             IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
             IoC.Kernel.Bind<IReloadedHooksUtilities>().ToConstant(HooksUtilities);
+            IoC.Kernel.Bind<Assembler>().ToConstant(new Assembler());
 
             var types = Assembly.GetExecutingAssembly().GetTypes();
 

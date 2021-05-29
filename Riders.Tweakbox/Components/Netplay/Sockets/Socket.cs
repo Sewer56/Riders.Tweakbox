@@ -117,7 +117,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
             AddComponent(IoC.Get<Components.Game.RaceIntroSync>());
             AddComponent(IoC.Get<Components.Game.RacePlayerEventSync>());
             AddComponent(IoC.Get<Components.Game.SetupRace>());
-            AddComponent(IoC.Get<Components.Game.PauseMenu>());
+            AddComponent(IoC.Get<Components.Game.PauseDialogOverride>());
 
             // Misc
             AddComponent(IoC.Get<Components.Misc.DisconnectOnCourseLeave>());
