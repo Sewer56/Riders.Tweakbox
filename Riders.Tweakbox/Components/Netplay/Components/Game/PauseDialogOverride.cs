@@ -112,7 +112,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             ExecuteEndMode(mode);
         }
 
-        private void ExecuteEndMode(EndMode mode)
+        public void ExecuteEndMode(EndMode mode)
         {
             switch (mode)
             {
@@ -219,13 +219,17 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 if (!isHost && IsEndOfRace)
                     ImGui.Text("Waiting for Host to Make Decision.");
 
-                if (ImGui.Button("Disconnect", Constants.Zero))
+                string disconnectString = IsEndOfRace ? "Disconnect & Quit" : "Disconnect";
+                if (ImGui.Button(disconnectString, Constants.Zero))
                 {
                     isOpened = false;
                     if (isHost)
                         socket.DisconnectAllWithMessage("Host has closed lobby.");
                      
                     socket.Dispose();
+
+                    if (IsEndOfRace)
+                        Owner.ExecuteEndMode(EndMode.Exit);
                 }
 
                 if (!IsEndOfRace && !_isFirstFrame && AnyPlayerPressedPause())
