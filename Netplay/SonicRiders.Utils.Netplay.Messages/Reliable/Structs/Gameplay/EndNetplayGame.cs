@@ -32,6 +32,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     public enum EndMode
     {
         Exit,
-        Restart
+        Restart,
+        NextTrack
     }
 }

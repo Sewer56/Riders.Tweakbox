@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using DearImguiSharp;
+using EnumsNET;
 using LiteNetLib;
 using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
@@ -11,8 +12,10 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Input.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Managed;
 using Constants = Sewer56.Imgui.Misc.Constants;
@@ -69,7 +72,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
 
         private unsafe Task* SetEndOfRaceDialog(EndOfRaceDialogMode mode, IHook<Functions.SetEndOfRaceDialogTaskFn> hook)
         {
-            EndOfRaceDialog.IsCompleted = false;
+            EndOfRaceDialog.Initialize(true, mode == EndOfRaceDialogMode.GrandPrix);
             Shell.AddDialog("Finished!", EndOfRaceDialog.Render, EndOfRaceDialog.OnClose, showClose: false);
             _restartDialogTask = new MessageDialogTask(EndOfRaceDialog);
             return _restartDialogTask.NativeTask;
@@ -81,7 +84,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             if (!PauseDialog.IsCompleted)
                 return 0;
 
-            PauseDialog.IsCompleted = false;
+            PauseDialog.Initialize(false, false);
             Shell.AddDialog("Paused", PauseDialog.Render, PauseDialog.OnClose);
             return 1;
         }
@@ -95,15 +98,8 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                     return;
 
                 var message = packet.GetMessage<EndNetplayGame>();
-                switch (message.Mode)
-                {
-                    case EndMode.Exit:
-                        ExitRace();
-                        break;
-                    case EndMode.Restart:
-                        RestartRace();
-                        break;
-                }
+                ExecuteEndMode(message.Mode);
+                EndOfRaceDialog.IsCompleted = true;
             }
         }
 
@@ -113,6 +109,11 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         internal unsafe void HostSendAndExit(EndMode mode)
         {
             Socket.SendToAllAndFlush(ReliablePacket.Create(new EndNetplayGame(mode)), DeliveryMethod.ReliableOrdered);
+            ExecuteEndMode(mode);
+        }
+
+        private void ExecuteEndMode(EndMode mode)
+        {
             switch (mode)
             {
                 case EndMode.Exit:
@@ -121,11 +122,15 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
                 case EndMode.Restart:
                     RestartRace();
                     break;
+                case EndMode.NextTrack:
+                    NextTrack();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
 
+        internal unsafe void NextTrack() => _setEndOfGameTask(EndOfGameMode.GrandPrixNextTrack);
         internal unsafe void RestartRace() => _setEndOfGameTask(EndOfGameMode.Restart);
         internal unsafe void ExitRace() => _setEndOfGameTask(EndOfGameMode.Exit);
 
@@ -157,6 +162,16 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             public bool IsCompleted = false;
 
             /// <summary>
+            /// Shows the "next track" button.
+            /// </summary>
+            public bool ShowNextTrack = false;
+
+            /// <summary>
+            /// True if this dialog is for end of race, else false.
+            /// </summary>
+            public bool IsEndOfRace = false;
+
+            /// <summary>
             /// Informs of dialog exit.
             /// </summary>
             public void OnClose() => IsCompleted = true;
@@ -166,39 +181,80 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             /// </summary>
             public PauseDialogOverride Owner;
 
+            private bool _isFirstFrame;
+
+            /// <summary>
+            /// Utility method for quickly setting the relevant properties.
+            /// </summary>
+            public void Initialize(bool isEndOfRace, bool showNextTrackOption)
+            {
+                IsCompleted = false;
+                IsEndOfRace = isEndOfRace;
+                ShowNextTrack = showNextTrackOption;
+                _isFirstFrame = true;
+            }
+
             /// <summary>
             /// Renders the contents of the window.
             /// </summary>
-            /// <param name="isopened">Controls whether the window should be opened.</param>
-            public unsafe void Render(ref bool isopened)
+            /// <param name="isOpened">Controls whether the window should be opened.</param>
+            public unsafe void Render(ref bool isOpened) => RenderInternal(ref isOpened);
+
+            public unsafe bool RenderInternal(ref bool isOpened)
             {
                 var socket = Owner.Socket;
                 bool isHost = socket.GetSocketType() == SocketType.Host;
                 if (isHost)
                 {
+                    if (ShowNextTrack && ImGui.Button("Next Track", Constants.Zero))
+                        return HostCommitMode(EndMode.NextTrack, ref isOpened);
+
                     if (ImGui.Button("Restart", Constants.Zero))
-                    {
-                        Owner.HostSendAndExit(EndMode.Restart);
-                        isopened = false;
-                        return;
-                    }
+                        return HostCommitMode(EndMode.Restart, ref isOpened);
 
                     if (ImGui.Button("Exit", Constants.Zero))
-                    {
-                        Owner.HostSendAndExit(EndMode.Exit);
-                        isopened = false;
-                        return;
-                    }
+                        return HostCommitMode(EndMode.Exit, ref isOpened);
                 }
+
+                if (!isHost && IsEndOfRace)
+                    ImGui.Text("Waiting for Host to Make Decision.");
 
                 if (ImGui.Button("Disconnect", Constants.Zero))
                 {
-                    isopened = false;
+                    isOpened = false;
                     if (isHost)
                         socket.DisconnectAllWithMessage("Host has closed lobby.");
                      
                     socket.Dispose();
                 }
+
+                if (!IsEndOfRace && !_isFirstFrame && AnyPlayerPressedPause())
+                    IsCompleted = true;
+
+                if (IsCompleted)
+                    isOpened = false;
+
+                _isFirstFrame = false;
+                return true;
+            }
+
+            private bool HostCommitMode(EndMode mode, ref bool isOpened)
+            {
+                Owner.HostSendAndExit(mode);
+                isOpened = false;
+                return isOpened;
+            }
+
+            private bool AnyPlayerPressedPause()
+            {
+                for (int x = 0; x < Player.Inputs.Count; x++)
+                {
+                    ref var input = ref Player.Inputs[x];
+                    if (input.ButtonsPressed.HasAllFlags(Buttons.Start))
+                        return true;
+                }
+
+                return false;
             }
         }
 
