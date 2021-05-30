@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Riders.Tweakbox.Services.Texture.Animation;
+using Riders.Tweakbox.Services.Texture.Enums;
+using Riders.Tweakbox.Services.Texture.Structs;
 
 namespace Riders.Tweakbox.Services.Texture
 {
@@ -20,7 +23,12 @@ namespace Riders.Tweakbox.Services.Texture
         /// <summary>
         /// Maps texture hashes to new file paths.
         /// </summary>
-        private Dictionary<string, Redirect> Redirects { get; set; } = new Dictionary<string,Redirect>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, TextureFile> Redirects { get; set; } = new Dictionary<string, TextureFile>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Maps texture hashes to animated textures.
+        /// </summary>
+        private Dictionary<string, AnimatedTexture> AnimatedRedirects { get; set; } = new Dictionary<string, AnimatedTexture>(StringComparer.OrdinalIgnoreCase);
 
         private FileSystemWatcher _watcher;
 
@@ -30,7 +38,7 @@ namespace Riders.Tweakbox.Services.Texture
         {
             Source = source;
             SetupFileWatcher();
-            SetupFileRedirects();
+            SetupRedirects();
         }
 
         /// <summary>
@@ -39,25 +47,49 @@ namespace Riders.Tweakbox.Services.Texture
         /// </summary>
         /// <param name="xxHash">The hash.</param>
         /// <param name="data">The texture data.</param>
-        /// <param name="filePath">The file path from which the data was loaded.</param>
-        public bool TryGetTexture(string xxHash, out TextureRef data, out string filePath)
+        /// <param name="info">The file path from which the data was loaded.</param>
+        public bool TryGetTexture(string xxHash, out TextureRef data, out TextureInfo info)
         {
-            var fileRedirects = Redirects;
-            if (fileRedirects.TryGetValue(xxHash, out var redirect))
-            {
-                filePath = redirect.FilePath;
-                if (redirect.Type == RedirectType.DdsLz4)
-                {
-                    data = TextureCompression.PickleFromFile(filePath);
-                    return true;
-                }
+            if (TryGetNormalTexture(xxHash, out data, out info))
+                return true;
 
-                data = new TextureRef(File.ReadAllBytes(filePath));
+            if (TryGetAnimatedTexture(xxHash, out data, out info))
+                return true;
+
+            info = default;
+            data = default;
+            return false;
+        }
+
+        private bool TryGetAnimatedTexture(string xxHash, out TextureRef data, out TextureInfo info)
+        {
+            var animRedirects = AnimatedRedirects;
+
+            if (animRedirects.TryGetValue(xxHash, out var animTexture))
+            {
+                data = animTexture.GetFirstTexture(out var filePath);
+                info = new TextureInfo(filePath, TextureType.Animated, animTexture);
                 return true;
             }
 
-            filePath = default;
-            data     = default;
+            info = default;
+            data = default;
+            return false;
+        }
+
+        private bool TryGetNormalTexture(string xxHash, out TextureRef data, out TextureInfo info)
+        {
+            var fileRedirects = Redirects;
+
+            if (fileRedirects.TryGetValue(xxHash, out var redirect))
+            {
+                data = TextureRef.FromFile(redirect.Path, redirect.Format);
+                info = new TextureInfo(redirect.Path, TextureType.Normal);
+                return true;
+            }
+
+            info = default;
+            data = default;
             return false;
         }
 
@@ -73,64 +105,64 @@ namespace Riders.Tweakbox.Services.Texture
 
                 _watcher.EnableRaisingEvents   = true;
                 _watcher.IncludeSubdirectories = true;
-                _watcher.Created += (sender, args) => { SetupFileRedirects(); };
-                _watcher.Deleted += (sender, args) => { SetupFileRedirects(); };
-                _watcher.Renamed += (sender, args) => { SetupFileRedirects(); };
+                _watcher.Created += (sender, args) => { SetupRedirects(); };
+                _watcher.Deleted += (sender, args) => { SetupRedirects(); };
+                _watcher.Renamed += (sender, args) => { SetupRedirects(); };
             }
+        }
+
+        private void SetupRedirects()
+        {
+            if (!Directory.Exists(Source))
+                return;
+                
+            SetupFileRedirects();
+            SetupFolderRedirects();
         }
 
         private void SetupFileRedirects()
         {
-            if (Directory.Exists(Source))
+            var redirects = new Dictionary<string, TextureFile>(StringComparer.OrdinalIgnoreCase);
+            var allFiles  = Directory.GetFiles(Source, "*.*", SearchOption.AllDirectories);
+
+            foreach (string file in allFiles)
             {
-                var redirects   = new Dictionary<string, Redirect>(StringComparer.OrdinalIgnoreCase);
-                var allFiles    = Directory.GetFiles(Source, "*.*", SearchOption.AllDirectories);
-                
-                foreach (string file in allFiles)
-                {
-                    var type = GetRedirectType(file);
-                    if (type == RedirectType.None)
-                        continue;
+                var type = file.GetTextureFormatFromFileName();
+                if (type == TextureFormat.None)
+                    continue;
 
-                    // Extract hash from filename.
-                    var indexOfHash = file.IndexOf('_');
-                    if (indexOfHash == -1)
-                        continue;
+                // Extract hash from filename.
+                var fileName = Path.GetFileName(file);
+                var indexOfHash = fileName.IndexOf('_');
+                if (indexOfHash == -1)
+                    continue;
 
-                    string hash = file.Substring(indexOfHash + 1, HashLength);
-                    redirects[hash] = new Redirect() { FilePath = file, Type = type };
-                }
-
-                Redirects = redirects;
+                string hash = file.Substring(indexOfHash + 1, HashLength);
+                redirects[hash] = new TextureFile() {Path = file, Format = type};
             }
+
+            Redirects = redirects;
         }
 
-        private RedirectType GetRedirectType(string file)
+        private void SetupFolderRedirects()
         {
-            if (file.EndsWith(TextureCommon.DdsExtension, StringComparison.OrdinalIgnoreCase))
-                return RedirectType.Dds;
+            var redirects  = new Dictionary<string, AnimatedTexture>(StringComparer.OrdinalIgnoreCase);
+            var allFolders = Directory.GetDirectories(Source, "*.*", SearchOption.AllDirectories);
 
-            if (file.EndsWith(TextureCommon.PngExtension, StringComparison.OrdinalIgnoreCase))
-                return RedirectType.Png;
+            foreach (string folder in allFolders)
+            {
+                // Extract hash from filename.
+                var folderName = Path.GetFileName(folder);
+                var indexOfHash = folderName.IndexOf('_');
+                if (indexOfHash == -1)
+                    continue;
 
-            if (file.EndsWith(TextureCommon.DdsLz4Extension, StringComparison.OrdinalIgnoreCase))
-                return RedirectType.DdsLz4;
+                string hash = folderName.Substring(indexOfHash + 1, HashLength);
+                if (AnimatedTexture.TryCreate(folder, out var texture))
+                    redirects[hash] = texture;
+            }
 
-            return RedirectType.None;
-        }
-
-        private struct Redirect
-        {
-            public string FilePath;
-            public RedirectType Type;
-        }
-
-        private enum RedirectType
-        {
-            None,
-            Png,
-            Dds,
-            DdsLz4
+            AnimatedRedirects = redirects;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Reloaded.Hooks.Definitions;
@@ -9,13 +10,16 @@ using SharpDX.Direct3D9;
 
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
+using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Memory.Pointers;
 using SharpDX;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using SharpDX.Mathematics.Interop;
+using Void = Reloaded.Hooks.Definitions.Structs.Void;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -55,7 +59,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<CreateCubeTexture> _createCubeTextureHook;
         private IHook<CreateOffscreenPlainSurface> _createOffscreenPlainSurfaceHook;
 
-        public Direct3DController(TweaksConfig config)
+        public Direct3DController(TweaksConfig config, IReloadedHooks hooks)
         {
             _config = config;
             var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
@@ -67,7 +71,6 @@ namespace Riders.Tweakbox.Controllers
             _createVolumeTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateVolumeTexture>((int)IDirect3DDevice9.CreateVolumeTexture, CreateVolumeTextureHook).Activate();
             _createCubeTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateCubeTexture>((int)IDirect3DDevice9.CreateCubeTexture, CreateCubeTextureHook).Activate();
             _createOffscreenPlainSurfaceHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateOffscreenPlainSurface>((int)IDirect3DDevice9.CreateOffscreenPlainSurface, CreateOffscreenPlainSurfaceHook).Activate();
-
             _resetHook = dx9Hook.DeviceVTable.CreateFunctionHook<DX9Hook.Reset>((int)IDirect3DDevice9.Reset, ResetHook).Activate();
             _createHook = _d3dCreate9Wrapper.Hook(CreateRidersDeviceImpl).Activate();
         }
@@ -132,7 +135,8 @@ namespace Riders.Tweakbox.Controllers
                         ScanLineOrdering = ScanlineOrdering.Progressive,
                     });
                 }
-                
+
+                IoC.Kernel.Bind<Device>().ToConstant(D3dDeviceEx);
                 *ppReturnedDeviceInterface = (int*)D3dDeviceEx.NativePointer;
             }
             catch (SharpDXException ex)
@@ -208,6 +212,7 @@ namespace Riders.Tweakbox.Controllers
 
             return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
         }
+        
 
         #endregion
         
@@ -262,5 +267,6 @@ namespace Riders.Tweakbox.Controllers
 
         [Function(CallingConventions.Stdcall)]
         public unsafe delegate IntPtr CreateOffscreenPlainSurface(IntPtr devicePointer, int width, int height, Format format, Pool pool, void** ppSurface, void* sharedHandle);
+
     }
 }

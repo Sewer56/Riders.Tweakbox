@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -11,27 +12,45 @@ using SharpDX.Mathematics.Interop;
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Structs;
+using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Services.Texture;
+using Riders.Tweakbox.Services.Texture.Enums;
 using Sewer56.SonicRiders;
+using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX;
+using Void = Reloaded.Hooks.Definitions.Structs.Void;
 
 namespace Riders.Tweakbox.Controllers
 {
     public unsafe class TextureInjectionController : IController
     {
         private TextureService _textureService = IoC.GetSingleton<TextureService>();
+        private AnimatedTextureService _animatedTextureService = IoC.GetSingleton<AnimatedTextureService>();
         private TextureInjectionConfig _config = IoC.GetSingleton<TextureInjectionConfig>();
+        
+        private static TextureInjectionController _controller;
 
         private IO _io;
         private IHook<D3DXCreateTextureFromFileInMemoryEx> _createTextureHook;
-        
-        public TextureInjectionController(IO io)
+        private IHook<SetTexturePtr> _setTextureHook;
+        private IHook<ComReleasePtr> _releaseTextureHook;
+
+        public TextureInjectionController(IO io, IReloadedHooks hooks)
         {
             _io = io;
+            _controller = this;
             var d3dx9Handle  = PInvoke.LoadLibrary("d3dx9_25.dll");
             var createTextureFromFileInMemoryEx = Native.GetProcAddress(d3dx9Handle, "D3DXCreateTextureFromFileInMemoryEx");
             _createTextureHook = SDK.ReloadedHooks.CreateHook<D3DXCreateTextureFromFileInMemoryEx>(CreateTextureFromFileInMemoryHook, (long) createTextureFromFileInMemoryEx).Activate();
+
+            var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
+            var releaseTextureRefAddress = (long) dx9Hook.Texture9VTable[(int) IDirect3DTexture9.Release].FunctionPointer;
+            var setTexturePtrAddress     = dx9Hook.DeviceVTable[(int) IDirect3DDevice9.SetTexture].FunctionPointer;
+            _releaseTextureHook = hooks.CreateHook<ComReleasePtr>(typeof(TextureInjectionController), nameof(TextureRelease), releaseTextureRefAddress).Activate();
+            _setTextureHook     = hooks.CreateHook<SetTexturePtr>(typeof(TextureInjectionController), nameof(SetTextureHook), (long) setTexturePtrAddress).Activate();
         }
 
         /// <summary>
@@ -63,13 +82,17 @@ namespace Riders.Tweakbox.Controllers
             var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
 
             // Load alternative texture if necessary.
-            if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var filePath))
+            if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
             {
                 using var textureRef = data;
-                Log.WriteLine($"Loading Custom Texture: {filePath}", LogCategory.TextureLoad);
+                Log.WriteLine($"Loading Custom Texture: {info.Path}", LogCategory.TextureLoad);
                 fixed (byte* dataPtr = &data.Data[0])
                 {
-                    return _createTextureHook.OriginalFunction(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+                    var texture = _createTextureHook.OriginalFunction(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+                    if (info.Type == TextureType.Animated)
+                        _animatedTextureService.TrackAnimatedTexture(*textureout, info.Animated);
+
+                    return texture;
                 }
             }
 
@@ -80,6 +103,29 @@ namespace Riders.Tweakbox.Controllers
                 DumpTexture(new Texture((IntPtr) (*textureout)), xxHash);
 
             return result;
+        }
+
+        private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
+        {
+            if (_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
+                return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*) newTexture);
+
+            return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*) texture);
+        }
+
+        private bool _isReleasing;
+        private IntPtr ReleaseTexture(IntPtr thisptr)
+        {
+            if (_isReleasing)
+                return _releaseTextureHook.OriginalFunction.Value.Invoke(thisptr);
+
+            _isReleasing = true;
+            var count = _releaseTextureHook.OriginalFunction.Value.Invoke(thisptr);
+            if ((int)count == 0)
+                _animatedTextureService.ReleaseAnimatedTexture((void*) thisptr);
+
+            _isReleasing = false;
+            return count;
         }
 
         private void DumpTexture(Texture texture, string xxHash)
@@ -166,9 +212,31 @@ namespace Riders.Tweakbox.Controllers
             public List<string> FullPaths;
         }
 
+#if DEBUG
+        [UnmanagedCallersOnly]
+#endif
+        private static IntPtr SetTextureHook(IntPtr devicepointer, int stage, void* texture) => _controller.SetTextureHookInstance(devicepointer, stage, texture);
+
+#if DEBUG
+        [UnmanagedCallersOnly]
+#endif
+        private static IntPtr TextureRelease(IntPtr texturePtr) => _controller.ReleaseTexture(texturePtr);
+
         [Function(CallingConventions.Stdcall)]
         public unsafe delegate int D3DXCreateTextureFromFileInMemoryEx(void* deviceRef, void* srcDataRef, int srcDataSize, int width, int height,
             int mipLevels, Usage usage, Format format, Pool pool, int filter, int mipFilter, 
             RawColorBGRA colorKey, void* srcInfoRef, PaletteEntry* paletteRef, void** textureOut);
+
+#if !DEBUG
+        [ManagedFunction(CallingConventions.ClrCall)]
+#endif
+        [Function(CallingConventions.Stdcall)]
+        public struct ComReleasePtr { public FuncPtr<IntPtr, IntPtr> Value; }
+
+#if !DEBUG
+        [ManagedFunction(CallingConventions.ClrCall)]
+#endif
+        [Function(CallingConventions.Stdcall)]
+        public struct SetTexturePtr { public FuncPtr<IntPtr, int, BlittablePointer<Void>, IntPtr> Value; }
     }
 }

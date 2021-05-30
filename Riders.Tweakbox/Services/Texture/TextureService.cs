@@ -6,7 +6,10 @@ using Reloaded.Memory;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Services.Interfaces;
+using Riders.Tweakbox.Services.Texture.Animation;
+using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Headers;
+using Riders.Tweakbox.Services.Texture.Structs;
 using Standart.Hash.xxHash;
 using Unsafe = System.Runtime.CompilerServices.Unsafe;
 
@@ -19,7 +22,7 @@ namespace Riders.Tweakbox.Services.Texture
     {
         // DO NOT CHANGE, TEXTUREDICTIONARY DEPENDS ON THIS.
         private const string HashStringFormat = "X8";
-
+        
         private List<TextureDictionary> _dictionaries = new List<TextureDictionary>();
         private IModLoader _modLoader;
 
@@ -77,29 +80,24 @@ namespace Riders.Tweakbox.Services.Texture
         /// </summary>
         /// <param name="xxHash">Hash of the texture that was loaded.</param>
         /// <param name="data">The loaded texture data.</param>
-        /// <param name="filePath">File path of the texture that was loaded.</param>
+        /// <param name="info">Info about the returned texture.</param>
         /// <returns>Whether texture data was found.</returns>
-        public bool TryGetData(string xxHash, out TextureRef data, out string filePath)
+        public bool TryGetData(string xxHash, out TextureRef data, out TextureInfo info)
         {
             // Doing this in reverse because mods with highest priority get loaded last.
             // We want to look at those mods first.
             for (int i = _dictionaries.Count - 1; i >= 0; i--)
             {
-                if (_dictionaries[i].TryGetTexture(xxHash, out data, out filePath))
+                if (_dictionaries[i].TryGetTexture(xxHash, out data, out info))
                     return true;
             }
 
-            filePath = default;
-            data     = default;
-            return false; 
-
+            info = default;
+            data = default;
+            return false;
         }
 
-        private void Add(IModConfigV1 config)
-        {
-            _dictionaries.Add(new TextureDictionary(GetRedirectFolder(config.ModId)));
-        }
-
+        private void Add(IModConfigV1 config) => _dictionaries.Add(new TextureDictionary(GetRedirectFolder(config.ModId)));
         private void Remove(IModConfigV1 config)
         {
             var redirectFolder = GetRedirectFolder(config.ModId);
