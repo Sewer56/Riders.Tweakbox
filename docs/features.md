@@ -9,18 +9,6 @@
 
 ![Screenshot](./Images/SingleScreen.png)
 
-At the current moment in time, Netplay works in the following manner:
-
-- Host enters Free Race/Grand Prix/Tag/Battle Mode.
-- Host presses `Host` in Track Select Mode, waits for everyone to connect.
-- Client enters same mode as host (Free Race/Grand Prix/Tag/Battle Mode).
-- Client connects to the host by entering their IP & Port combination. 
-- Host and Client select stage & characters together.
-- After race finishes, Host and Client manually go back to stage select.
-
-If you don't know the host's IP, ask the host to use a website such as [WhatIsMyIp](https://whatismyip.host).  
-You're interested in IPv4.
-
 ### 🚀 General Features
 ✔ Single-Screen Mode  
 ✔ Split-Screen Mode  
@@ -28,6 +16,8 @@ You're interested in IPv4.
 ✔ Multiplayer Online  
 ✔ Custom Jitter Buffer (Reduced Player Stuttering)  
 ✔ NAT Punching (No Port Forwarding Required)  
+✔ Server Browser  
+✔ Texture Injection  
 💢 Custom Game Modes (Relay, Hide & Seek)
 
 ### 💫 Menu Synchronization
