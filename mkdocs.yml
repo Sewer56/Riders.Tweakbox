@@ -28,3 +28,7 @@ pages:
   - Installation: installation.md
   - Reporting Issues: reporting-issues.md
   - Building: building.md
+  - Customization: 
+    - Textures: textures.md
+    - Optimizing Textures: optimizing-textures.md
+    - Animated Textures: animated-textures.md
