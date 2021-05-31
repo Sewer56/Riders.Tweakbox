@@ -11,6 +11,7 @@ using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Reloaded.Mod.Interfaces;
+using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
@@ -34,6 +35,7 @@ namespace Riders.Tweakbox
         public ImguiHook Hook { get; private set; }
         public IReloadedHooks Hooks { get; private set; }
         public IReloadedHooksUtilities HooksUtilities { get; private set; }
+        public IRedirectorController Redirector { get; private set; }
 
         public bool InputsEnabled { get; private set; } = true;
         public bool IsEnabled { get; private set; } = true;
@@ -52,7 +54,7 @@ namespace Riders.Tweakbox
         /// <summary>
         /// Creates a new instance of Riders Tweakbox.
         /// </summary>
-        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IModLoader modLoader)
+        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IRedirectorController redirector, IModLoader modLoader)
         {
             var modFolder       = modLoader.GetDirectoryForModId("Riders.Tweakbox");
             var tweakBox        = new Tweakbox();
@@ -61,6 +63,7 @@ namespace Riders.Tweakbox
             tweakBox._modLoader = modLoader;
             tweakBox.Hooks = hooks;
             tweakBox.HooksUtilities = hooksUtilities;
+            tweakBox.Redirector = redirector;
             tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
             tweakBox.InitializeIoC(modFolder);
             tweakBox.MenuBar = new MenuBar()
@@ -123,6 +126,7 @@ namespace Riders.Tweakbox
             IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
             IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
             IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
+            IoC.Kernel.Bind<IRedirectorController>().ToConstant(Redirector);
             IoC.Kernel.Bind<IReloadedHooksUtilities>().ToConstant(HooksUtilities);
             IoC.Kernel.Bind<Assembler>().ToConstant(new Assembler());
 

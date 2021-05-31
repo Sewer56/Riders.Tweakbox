@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -10,6 +11,8 @@ namespace Riders.Tweakbox.Misc
 
         public const string ConfigExtension = ".tweakbox";
         public const string ConfigSearchPattern = "*.tweakbox";
+        public static string GameFolderLocation = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+        public static string DataFolderLocation = Path.Combine(GameFolderLocation, "Data");
 
         // Configuration Directories.
         public string ConfigFolder => Path.Combine(ModFolder, "Configurations");

@@ -16,3 +16,6 @@
 [submodule "Submodules/Riders.Tweakbox.API"]
 	path = Submodules/Riders.Tweakbox.API
 	url = https://github.com/Sewer56/Riders.Tweakbox.API
+[submodule "Submodules/reloaded.universal.redirector"]
+	path = Submodules/reloaded.universal.redirector
+	url = https://github.com/Reloaded-Project/reloaded.universal.redirector.git

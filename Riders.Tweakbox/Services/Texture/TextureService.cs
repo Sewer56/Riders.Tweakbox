@@ -6,8 +6,6 @@ using Reloaded.Memory;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Services.Interfaces;
-using Riders.Tweakbox.Services.Texture.Animation;
-using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Headers;
 using Riders.Tweakbox.Services.Texture.Structs;
 using Standart.Hash.xxHash;

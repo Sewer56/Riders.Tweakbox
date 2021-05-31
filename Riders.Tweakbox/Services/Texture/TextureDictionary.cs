@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Services.Texture.Animation;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
@@ -18,7 +19,7 @@ namespace Riders.Tweakbox.Services.Texture
         /// <summary>
         /// The path to the folder where textures are sourced from.
         /// </summary>
-        public string Source;
+        public string Source { get; private set; }
 
         /// <summary>
         /// Maps texture hashes to new file paths.
@@ -95,20 +96,12 @@ namespace Riders.Tweakbox.Services.Texture
 
         private void SetupFileWatcher()
         {
-            if (Directory.Exists(Source))
+            _watcher = FileSystemWatcherExtensions.Create(Source, new []
             {
-                _watcher = new FileSystemWatcher();
-                _watcher.Path = Source;
-                _watcher.Filters.Add(TextureCommon.PngFilter);
-                _watcher.Filters.Add(TextureCommon.DdsFilter);
-                _watcher.Filters.Add(TextureCommon.DdsLz4Filter);
-
-                _watcher.EnableRaisingEvents   = true;
-                _watcher.IncludeSubdirectories = true;
-                _watcher.Created += (sender, args) => { SetupRedirects(); };
-                _watcher.Deleted += (sender, args) => { SetupRedirects(); };
-                _watcher.Renamed += (sender, args) => { SetupRedirects(); };
-            }
+                TextureCommon.PngFilter, 
+                TextureCommon.DdsFilter, 
+                TextureCommon.DdsLz4Filter
+            }, SetupRedirects);
         }
 
         private void SetupRedirects()

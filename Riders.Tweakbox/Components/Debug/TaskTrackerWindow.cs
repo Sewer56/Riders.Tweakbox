@@ -23,22 +23,22 @@ namespace Riders.Tweakbox.Components.Debug
         private unsafe void RenderStateTracker()
         {
             ImGui.Text($"Last Task: {Events.LastTask}");
-            if (Pointers.IsNotNull(Events.CharacterSelect))
+            if (PointerExtensions.IsNotNull(Events.CharacterSelect))
                 ImGui.Text($"{nameof(Events.CharacterSelect)}: {Events.CharacterSelect->TaskStatus}");
 
-            if (Pointers.IsNotNull(Events.CourseSelect))
+            if (PointerExtensions.IsNotNull(Events.CourseSelect))
                 ImGui.Text($"{nameof(Events.CourseSelect)}: {Events.CourseSelect->TaskStatus}");
 
-            if (Pointers.IsNotNull(Events.Race))
+            if (PointerExtensions.IsNotNull(Events.Race))
                 ImGui.Text($"{nameof(Events.Race)}: {Events.Race->TaskStatus}");
 
-            if (Pointers.IsNotNull(Events.RaceRules))
+            if (PointerExtensions.IsNotNull(Events.RaceRules))
                 ImGui.Text($"{nameof(Events.RaceRules)}: {Events.RaceRules->TaskStatus}");
 
-            if (Pointers.IsNotNull(Events.TitleSequence))
+            if (PointerExtensions.IsNotNull(Events.TitleSequence))
                 ImGui.Text($"{nameof(Events.TitleSequence)}: {Events.TitleSequence->TaskStatus}");
 
-            if (Pointers.IsNotNull(Events.MessageBox))
+            if (PointerExtensions.IsNotNull(Events.MessageBox))
                 ImGui.Text($"{nameof(Events.MessageBox)}: {Events.MessageBox->TaskStatus}");
         }
     }

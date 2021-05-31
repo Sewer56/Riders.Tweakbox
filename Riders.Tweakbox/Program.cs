@@ -4,6 +4,7 @@ using System.Windows;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Utilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
@@ -36,13 +37,14 @@ namespace Riders.Tweakbox
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
             _modLoader.GetController<IReloadedHooksUtilities>().TryGetTarget(out var hooksUtilities);
+            _modLoader.GetController<IRedirectorController>().TryGetTarget(out var redirector);
 
             /* Your mod code starts here. */
             Log.ConsoleListener = new ConsoleOutListener(_logger);
             Log.HudListener = new ShellTraceListener();
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
-            _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, _modLoader);
+            _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader);
 
             // Tweak Garbage Collection.
             GC.Collect();

@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.SDK", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.Application.Commands", "Submodules\Riders.Tweakbox.API\Source\Riders.Tweakbox.API.Application.Commands\Riders.Tweakbox.API.Application.Commands.csproj", "{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reloaded.Universal.Redirector.Interfaces", "Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj", "{FD6F13B0-8703-4460-A858-F0414AC3D9AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD6F13B0-8703-4460-A858-F0414AC3D9AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD6F13B0-8703-4460-A858-F0414AC3D9AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD6F13B0-8703-4460-A858-F0414AC3D9AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD6F13B0-8703-4460-A858-F0414AC3D9AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -132,6 +138,7 @@ Global
 		{9D4920C4-DE82-4CB5-BA97-D68E68B8656F} = {0730E42C-E129-4620-8F89-429EFA5FDC52}
 		{23053311-F73F-4C94-86F0-0B9F6AD4F67A} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
+		{FD6F13B0-8703-4460-A858-F0414AC3D9AE} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}
