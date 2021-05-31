@@ -66,8 +66,9 @@ namespace Riders.Tweakbox.Components.Tweaks
                 }
 
                 ImGui.Separator();
-                ImGui.TextWrapped($"Note: This functionality is experimental.\n\nTextures are injected at time of load, there is no force reload functionality currently (e.g. you must exit and re-enter stage to take effect). " +
-                                  $"If you are unsure whether your textures are being loaded, enabled {nameof(LogCategory.TextureLoad)} and/or {nameof(LogCategory.TextureDump)} in your log configuration.");
+                ImGui.TextWrapped($"This functionality is experimental.");
+                Hyperlink.CreateText($"Click here to learn more about custom textures.", "https://sewer56.dev/Riders.Tweakbox/textures/");
+                ImGui.TextWrapped($"If you are unsure whether your textures are being loaded, enable {nameof(LogCategory.TextureLoad)} and/or {nameof(LogCategory.TextureDump)} in your log configuration.");
             }
 
             ImGui.End();

@@ -50,5 +50,19 @@ namespace Sewer56.Imgui.Utilities
                 W = (hex & 0xFF) / (float) byte.MaxValue * 1.00f,
             };
         }
+
+        /// <summary>
+        /// Converts a hex RGBA colour into a <see cref="ImVec4.__Internal"/>.
+        /// </summary>
+        public static ImVec4.__Internal HexToFloatInternal(uint hex)
+        {
+            return new ImVec4.__Internal()
+            {
+                x = ((hex >> 24) & 0xFF) / (float) byte.MaxValue * 1.00f,
+                y = ((hex >> 16) & 0xFF) / (float) byte.MaxValue * 1.00f,
+                z = ((hex >> 8) & 0xFF)  / (float) byte.MaxValue * 1.00f,
+                w = (hex & 0xFF) / (float) byte.MaxValue * 1.00f,
+            };
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using DearImguiSharp;
+using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Layout;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Utilities;
@@ -17,14 +18,13 @@ namespace Riders.Tweakbox.Misc
 
         private HorizontalCenterHelper _centerHelper = new HorizontalCenterHelper();
         private ImVec4 _accentColor = Utilities.HexToFloat(0xef5350ff);
-        private ImVec4 _hyperlinkColor = Utilities.HexToFloat(0x42a5f5ff);
+        private uint _hyperlinkColor = 0x42a5f5ff;
         
         ~WelcomeScreenRenderer() => Dispose();
 
         /// <inheritdoc />
         public void Dispose()
         {
-            _hyperlinkColor?.Dispose(true);
             _accentColor?.Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -51,12 +51,7 @@ namespace Riders.Tweakbox.Misc
                 ImGui.TextWrapped("Please note that this project is an active work in progress (alpha build). Features like Netplay can be incomplete, buggy and prone to crashing.");
                 ImGui.Spacing();
 
-                ImGui.PushStyleColorVec4((int) ImGuiCol.ImGuiColText, _hyperlinkColor);
-                ImGui.TextWrapped("Please report crashes and issues using the guidelines provided in the documentation.");
-                if (ImGui.IsItemClicked((int) ImGuiMouseButton.ImGuiMouseButtonLeft))
-                    Process.Start(new ProcessStartInfo("cmd", $"/c start https://sewer56.dev/Riders.Tweakbox/") { CreateNoWindow = true });
-
-                ImGui.PopStyleColor(1);
+                Hyperlink.CreateText("Please report crashes and issues using the guidelines provided in the documentation.", "https://sewer56.dev/Riders.Tweakbox/", _hyperlinkColor);
 
                 // Footer
                 ImGui.Spacing();
