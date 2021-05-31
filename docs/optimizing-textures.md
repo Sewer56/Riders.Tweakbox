@@ -11,10 +11,10 @@ It is recommended that you scale your texture resolutions using powers of 2 comp
 
 The original game was optimized around displaying on a 480p screen, as such, if you are targeting a 960p screen and your texture was `128x128`, your texture should be `256x256`.
 
-**As a general rule of thumb:**
-- For up to 720p target 2x original Resolution (960p)
-- For up to 1440p target 4x original Resolution (1920p) 
-- For up to 5K target 8x original Resolution (3840p)
+**As a general rule of thumb:**  
+- For up to 720p target 2x original Resolution (960p)  
+- For up to 1440p target 4x original Resolution (1920p)  
+- For up to 5K target 8x original Resolution (3840p)  
 
 Ideally, you should provide separate downloads for the first two options above.
 
