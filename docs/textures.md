@@ -6,7 +6,7 @@ Riders.Tweakbox allows you to replace textures in real-time by hijacking functio
 
 You can add/replace textures by creating Reloaded II mods.
 
-This is a short summary of how o create a mod; for a more in-depth guide on creating mods, please refer to the [Reloaded-II documentation](https://reloaded-project.github.io/Reloaded-II/GettingStartedMods/).
+This is a short summary of how to create a mod; for a more in-depth guide on creating mods, please refer to the [Reloaded-II documentation](https://reloaded-project.github.io/Reloaded-II/GettingStartedMods/).
 
 ### 1. Make a new Mod
 
