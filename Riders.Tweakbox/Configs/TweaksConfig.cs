@@ -37,6 +37,8 @@ namespace Riders.Tweakbox.Configs
             public bool TagReturnToTrackSelect = true;
             public bool SurvivalReturnToTrackSelect = true;
             public float MaxSpeedupTimeMillis = 2000f;
+
+            public bool IncludeVanillaMusic = true;
         }
         #endregion
     }

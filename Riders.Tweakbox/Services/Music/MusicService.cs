@@ -46,13 +46,15 @@ namespace Riders.Tweakbox.Services.Music
         public unsafe string GetRandomTrack(string fileName, bool includeVanilla, bool includePerStageTracks)
         {
             var options = new List<string>();
-            if (includeVanilla && _vanillaDict.TryGetTrack(fileName, out var vanillaTracks))
-                options.AddRange(vanillaTracks);
 
             if (includePerStageTracks && _vanillaStageTracks.Contains(fileName))
                 GetTracksForStage(*(int*)State.Level, options);
 
             GetTracksForFileName(fileName, options);
+
+            if ((options.Count < 1 || includeVanilla) && _vanillaDict.TryGetTrack(fileName, out var vanillaTracks))
+                options.AddRange(vanillaTracks);
+
             var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count);
             return options[random];
         }

@@ -125,6 +125,9 @@ namespace Riders.Tweakbox.Components.Tweaks
 
                 ImGui.Checkbox("Force Single Player Models", ref data.SinglePlayerModels).Notify(data, nameof(data.SinglePlayerModels));
                 Tooltip.TextOnHover("Forces the game to load high quality single player models for all characters.");
+
+                ImGui.Checkbox("Include Vanilla Music", ref data.IncludeVanillaMusic).Notify(data, nameof(data.IncludeVanillaMusic));
+                Tooltip.TextOnHover("When playing custom music tracks, allow Vanilla tracks to still be played.");
             }
 
             // Restore item width
