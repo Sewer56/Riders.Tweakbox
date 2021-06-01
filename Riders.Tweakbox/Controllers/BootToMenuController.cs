@@ -4,6 +4,7 @@ using EnumsNET;
 using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
+using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -28,9 +29,17 @@ namespace Riders.Tweakbox.Controllers
 
             _bootToMenu = hooks.CreateAsmHook(bootToMain, 0x46AD01).Activate();
             _config.ConfigUpdated += OnConfigUpdated;
+            _config.Data.AddPropertyUpdatedHandler(OnPropertyUpdated);
+        }
+
+        private void OnPropertyUpdated(string propertyname)
+        {
+            if (propertyname == nameof(_config.Data.BootToMenu))
+                _bootToMenu.Toggle(_config.Data.BootToMenu);
         }
 
         private void OnConfigUpdated() => _bootToMenu.Toggle(_config.Data.BootToMenu);
+
         private unsafe void UnlockAllAndDisableBootToMenu()
         {
             // Unlock All
