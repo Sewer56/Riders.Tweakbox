@@ -20,7 +20,6 @@ namespace Riders.Tweakbox.Services.Music
         private List<MusicDictionary> _dictionaries = new List<MusicDictionary>();
         private MusicDictionary _vanillaDict;
         private IModLoader _modLoader;
-        private Random _random = new Random();
 
         public MusicService(IModLoader modLoader)
         {
@@ -54,7 +53,7 @@ namespace Riders.Tweakbox.Services.Music
                 GetTracksForStage(*(int*)State.Level, options);
 
             GetTracksForFileName(fileName, options);
-            var random = _random.Next(0, options.Count);
+            var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count);
             return options[random];
         }
 

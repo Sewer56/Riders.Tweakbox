@@ -16,6 +16,7 @@ using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs;
+using Riders.Tweakbox.Misc.Extensions;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -100,6 +101,8 @@ namespace Riders.Tweakbox.Controllers
                 CpuUsage = _cpuCounter.NextValue();
             }
 
+            // Seed number generator.
+            SharedRandom.Instance.Next(); 
             if (_config.Data.FramePacing)
             {
                 try
