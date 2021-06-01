@@ -74,3 +74,9 @@ If you have multiple music tracks which you wish to include to replace a single 
 
 In this example, each of the folders has a file called `S20.adx` inside.  
 In this example, we add 16 menu themes to the game.
+
+## Customizing Behaviour
+
+You can customize the music injection behaviour inside Tweakbox Settings.
+
+![Screenshot](./Images/Music_Tutorial_Settings.png)
