@@ -10,7 +10,7 @@ namespace Riders.Tweakbox.Controllers
     public unsafe class SinglePlayerStageController : IController
     {
         // Settings
-        private TweaksConfig _config = IoC.Get<TweaksConfig>();
+        private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
 
         private IHook<Functions.CdeclReturnIntFn> _loadWorldAssetsHook;
 

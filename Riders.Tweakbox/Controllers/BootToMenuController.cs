@@ -12,10 +12,10 @@ namespace Riders.Tweakbox.Controllers
 {
     public class BootToMenuController : IController
     {
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private IAsmHook _bootToMenu;
 
-        public BootToMenuController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils)
+        public BootToMenuController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils)
         {
             _config = config;
 

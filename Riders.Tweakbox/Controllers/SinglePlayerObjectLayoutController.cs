@@ -21,10 +21,10 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event AsmFunc CheckIfForceSinglePlayerObjectLayout;
 
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private IAsmHook _initializeObjectLayoutHook;
 
-        public SinglePlayerObjectLayoutController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utilities)
+        public SinglePlayerObjectLayoutController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utilities)
         {
             _config = config;
 

@@ -10,9 +10,9 @@ namespace Riders.Tweakbox.Controllers
     public class StageSelectFromSurvivalController : IController
     {
         public IAsmHook Hook { get; }
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
 
-        public unsafe StageSelectFromSurvivalController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils, MenuReturnTargetService menuReturn)
+        public unsafe StageSelectFromSurvivalController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils, MenuReturnTargetService menuReturn)
         {
             _config = config;
 

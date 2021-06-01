@@ -45,7 +45,7 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public PresentParameters LastPresentParameters { get; private set; }
 
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private IFunction<Direct3dCreate9Wrapper> _d3dCreate9Wrapper = SDK.ReloadedHooks.CreateFunction<Direct3dCreate9Wrapper>(0x005253B0);
 
         // Hooks
@@ -59,7 +59,7 @@ namespace Riders.Tweakbox.Controllers
         private IHook<CreateCubeTexture> _createCubeTextureHook;
         private IHook<CreateOffscreenPlainSurface> _createOffscreenPlainSurfaceHook;
 
-        public Direct3DController(TweaksConfig config, IReloadedHooks hooks)
+        public Direct3DController(TweakboxConfig config, IReloadedHooks hooks)
         {
             _config = config;
             var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;

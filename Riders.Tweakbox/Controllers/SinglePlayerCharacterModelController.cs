@@ -15,9 +15,9 @@ namespace Riders.Tweakbox.Controllers
     public class SinglePlayerCharacterModelController : IController
     {
         public IAsmHook Hook;
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
 
-        public SinglePlayerCharacterModelController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils)
+        public SinglePlayerCharacterModelController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils)
         {
             _config = config;
 

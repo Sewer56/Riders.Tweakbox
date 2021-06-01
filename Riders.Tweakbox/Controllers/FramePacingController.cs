@@ -53,7 +53,7 @@ namespace Riders.Tweakbox.Controllers
         private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
         
         private bool _resetSpeedup = false;
-        private TweaksConfig _config = IoC.Get<TweaksConfig>();
+        private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
 
         // Hooks
         private IHook<TimeBeginPeriod> _beginPeriodHook;

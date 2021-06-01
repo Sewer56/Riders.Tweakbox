@@ -18,7 +18,7 @@ namespace Riders.Tweakbox.Controllers
     public unsafe class CenteredWidescreenHackController : IController
     {
         private static CenteredWidescreenHackController _controller;
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private AspectConverter _aspectConverter = new AspectConverter(4 / 3f);
 
         private IHook<RenderTexture2DFnPtr> _renderTexture2dHook;
@@ -26,7 +26,7 @@ namespace Riders.Tweakbox.Controllers
 
         private float _originalAspectRatio2dResX = *AspectRatio2dResolutionX;
 
-        public CenteredWidescreenHackController(TweaksConfig config)
+        public CenteredWidescreenHackController(TweakboxConfig config)
         {
             _config = config;
 

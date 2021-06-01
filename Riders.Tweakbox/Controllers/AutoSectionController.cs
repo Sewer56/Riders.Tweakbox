@@ -20,11 +20,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event AsmFunc OnCheckIfQtePressRight;
 
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private IAsmHook _onCheckIfQtePressLeftHook;
         private IAsmHook _onCheckIfQtePressRightHook;
 
-        public AutoSectionController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utilities)
+        public AutoSectionController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utilities)
         {
             _config = config;
 

@@ -14,9 +14,9 @@ using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Tweaks
 {
-    public class TweaksEditor : ComponentBase<TweaksConfig>, IComponent
+    public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
     {
-        public override string Name { get; set; } = "Various Fixes";
+        public override string Name { get; set; } = "Tweakbox Settings";
 
         private FramePacingController _pacingController = IoC.Get<FramePacingController>();
         private Direct3DController _d3dController = IoC.Get<Direct3DController>();
@@ -25,7 +25,7 @@ namespace Riders.Tweakbox.Components.Tweaks
         private DisplayMode? _currentMode;
         private List<string> _modes;
 
-        public TweaksEditor(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
+        public TweakboxSettings(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
         {
 
             Config.Data.AddPropertyUpdatedHandler(ResolutionUpdated);

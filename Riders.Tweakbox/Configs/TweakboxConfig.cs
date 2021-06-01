@@ -12,7 +12,7 @@ using Riders.Tweakbox.Misc.Extensions;
 
 namespace Riders.Tweakbox.Configs
 {
-    public class TweaksConfig : JsonConfigBase<TweaksConfig, TweaksConfig.Internal>
+    public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Internal>
     {
         #region Internal
         public class Internal : NotifyPropertyChangedBase

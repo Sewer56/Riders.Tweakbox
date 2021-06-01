@@ -76,7 +76,7 @@ namespace Riders.Tweakbox
                     }),
                     new MenuBarItem("Tweaks", new List<IComponent>()
                     {
-                        IoC.GetSingleton<TweaksEditor>(),
+                        IoC.GetSingleton<TweakboxSettings>(),
                         IoC.GetSingleton<TextureEditor>(),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()

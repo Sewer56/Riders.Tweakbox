@@ -18,7 +18,7 @@ namespace Riders.Tweakbox.Controllers
     public class ResolutionController : IController
     {
         private IHook<Functions.CdeclReturnIntFn> _readConfigHook;
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private WindowService _windowService;
         private readonly ImguiHook _hook;
         private FramePacingController _pacingController;
@@ -26,7 +26,7 @@ namespace Riders.Tweakbox.Controllers
         private Patch _disableGameWindowAdjustment = new Patch(0x00518680, new byte[] { 0xC3 }, true);
         private Patch _disableSetWindowStyleOnReset = new Patch(0x00517BE0, new byte[] { 0xC3 }, true);
 
-        public ResolutionController(TweaksConfig config, WindowService service)
+        public ResolutionController(TweakboxConfig config, WindowService service)
         {
             _config = config;
             _windowService = service;

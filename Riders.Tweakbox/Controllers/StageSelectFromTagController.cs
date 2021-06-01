@@ -11,9 +11,9 @@ namespace Riders.Tweakbox.Controllers
     public class StageSelectFromTagController : IController
     {
         public IAsmHook Hook { get; }
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
 
-        public unsafe StageSelectFromTagController(TweaksConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils, MenuReturnTargetService menuReturn)
+        public unsafe StageSelectFromTagController(TweakboxConfig config, IReloadedHooks hooks, IReloadedHooksUtilities utils, MenuReturnTargetService menuReturn)
         {
             _config = config;
             

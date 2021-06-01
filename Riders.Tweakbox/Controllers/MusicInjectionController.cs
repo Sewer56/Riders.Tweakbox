@@ -17,13 +17,13 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.PlayMusicFn> _playMusicHook;
         private readonly IRedirectorController _redirector;
         private MusicService _musicService;
-        private TweaksConfig _tweaksConfig;
+        private TweakboxConfig _config;
         
-        public MusicInjectionController(IReloadedHooks hooks, IRedirectorController redirector, MusicService musicService, TweaksConfig tweaksConfig)
+        public MusicInjectionController(IReloadedHooks hooks, IRedirectorController redirector, MusicService musicService, TweakboxConfig config)
         {
             _redirector = redirector;
             _musicService = musicService;
-            _tweaksConfig = tweaksConfig;
+            _config = config;
             _playMusicHook = Functions.PlayMusic.Hook(PlayMusicImpl).Activate();
         }
 
@@ -31,7 +31,7 @@ namespace Riders.Tweakbox.Controllers
         {
             var fileName   = Path.GetFileName(song);
             var sourceFile = Path.Combine(IO.DataFolderLocation, song);
-            var target     = _musicService.GetRandomTrack(fileName, _tweaksConfig.Data.IncludeVanillaMusic, true);
+            var target     = _musicService.GetRandomTrack(fileName, _config.Data.IncludeVanillaMusic, true);
             _redirector.AddRedirect(sourceFile, target);
             return _playMusicHook.OriginalFunction(maybeBuffer, song);
         }

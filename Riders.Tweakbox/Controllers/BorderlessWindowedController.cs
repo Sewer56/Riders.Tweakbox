@@ -14,10 +14,10 @@ namespace Riders.Tweakbox.Controllers
 {
     public class BorderlessWindowedController : IController
     {
-        private TweaksConfig _config;
+        private TweakboxConfig _config;
         private WindowService _windowService;
 
-        public BorderlessWindowedController(TweaksConfig config, WindowService windowService)
+        public BorderlessWindowedController(TweakboxConfig config, WindowService windowService)
         {
             _config = config;
             _windowService = windowService;
