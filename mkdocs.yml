@@ -29,6 +29,7 @@ pages:
   - Reporting Issues: reporting-issues.md
   - Building: building.md
   - Customization: 
+    - Custom Music: custom-music.md
     - Textures: textures.md
     - Optimizing Textures: optimizing-textures.md
     - Animated Textures: animated-textures.md
