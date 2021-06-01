@@ -38,7 +38,6 @@ namespace Riders.Tweakbox.Services.RichPresence
         private bool _enableRpc = true;
         private EventController _event;
         private NetplayController _netplayController;
-        private NetplayMenu _netplayMenu;
         private TitleSequenceTaskState _titleSequenceTaskState;
 
         private WeakReference<Socket> _last = new WeakReference<Socket>(null);
@@ -55,8 +54,15 @@ namespace Riders.Tweakbox.Services.RichPresence
 
             _discordRpc.RegisterUriScheme(null, null);
             _discordRpc.Subscribe(EventType.Join);
+            _discordRpc.OnJoinRequested += OnJoinRequested;
             _discordRpc.OnJoin += OnJoin;
             box.OnInitialized  += OnInitialized;
+        }
+
+        private void OnJoinRequested(object sender, JoinRequestMessage args)
+        {
+            Log.WriteLine("Auto-accepting Join Request");
+            _discordRpc.Respond(args, true);
         }
 
         private async void OnJoin(object sender, JoinMessage args)
@@ -67,16 +73,16 @@ namespace Riders.Tweakbox.Services.RichPresence
             _isJoining = true;
             try
             {
-                Log.WriteLine($"Joining Lobby via Discord: {args.Secret}");
+                Log.WriteLine($"Joining Lobby via Discord");
                 var decrypted = Crypto.Decrypt(args.Secret, PassPhrase);
                 var details   = LobbyDetails.FromBytes(decrypted);
                 try
                 {
-                    await _netplayMenu.ConnectAsync(IPAddress.Parse(details.IPv4.ToString()).ToString(), details.Port, details.HasPassword);
+                    await _netplayController.ConnectAsync(IPAddress.Parse(details.IPv4.ToString()).ToString(), details.Port, details.HasPassword);
                 }
                 catch (Exception e)
                 {
-                    Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
+                    await Shell.AddDialogAsync("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
                 }
             }
             finally
@@ -89,7 +95,6 @@ namespace Riders.Tweakbox.Services.RichPresence
         {
             _event = IoC.Get<EventController>();
             _netplayController = IoC.Get<NetplayController>();
-            _netplayMenu = IoC.Get<NetplayMenu>();
             _timer = new System.Threading.Timer(OnTick, null, 0, 5000);
             _event.OnTitleSequence += OnTitleSequence;
             _enableRpc = true;

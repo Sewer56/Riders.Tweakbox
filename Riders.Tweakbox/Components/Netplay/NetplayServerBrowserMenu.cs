@@ -22,7 +22,7 @@ namespace Riders.Tweakbox.Components.Netplay
         public ServerBrowserMenu BrowserMenu;
         public NetplayMenu Owner;
         
-        public TweakboxApi Api              => Owner.Api;
+        public TweakboxApi Api              => Controller.Api;
         public NetplayController Controller => Owner.Controller;
         public NetplayEditorConfig  Config  => Owner.Config;
 
@@ -60,7 +60,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                await Owner.ConnectAsync(result.Address, result.Port, result.HasPassword);
+                await Controller.ConnectAsync(result.Address, result.Port, result.HasPassword);
                 IsEnabled() = false;
             }
             catch (Exception e)

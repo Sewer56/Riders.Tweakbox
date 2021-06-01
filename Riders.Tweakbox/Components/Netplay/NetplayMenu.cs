@@ -28,7 +28,6 @@ namespace Riders.Tweakbox.Components.Netplay
         // Sub-menus.
         public NetplayLobbyMenu LobbyMenu { get; set; }
         public NetplayServerBrowserMenu ServerBrowserMenu { get; set; }
-        public TweakboxApi Api { get; private set; }
 
         private Task _loginTask    = Task.CompletedTask;
         private Task _registerTask = Task.CompletedTask;
@@ -38,7 +37,6 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             LobbyMenu = new NetplayLobbyMenu(this);
             ServerBrowserMenu = new NetplayServerBrowserMenu(this);
-            Task.Run(CreateApiObject);
         }
 
         public override void Render()
@@ -54,44 +52,6 @@ namespace Riders.Tweakbox.Components.Netplay
                 RenderMainMenu();
 
             ImGui.End();
-        }
-
-        /// <summary>
-        /// Allows you to connect to an arbitrary server without using the values
-        /// from the default configuration.
-        /// </summary>
-        /// <param name="address">The IP Address</param>
-        /// <param name="port">The Port</param>
-        /// <param name="hasPassword">Whether the lobby has a password.</param>
-        /// <returns></returns>
-        public async Task<bool> ConnectAsync(string address, int port, bool hasPassword)
-        {
-            string password = String.Empty;
-            
-            // Get Password if Lobby Defines one is Needed.
-            if (hasPassword)
-            {
-                // TODO: Query for Password
-                var inputData = new TextInputData(NetplayEditorConfig.TextLength);
-                await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
-                {
-                    inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                    if (ImGui.Button("Ok", Constants.Zero))
-                        opened = false;
-                });
-
-                password = inputData;
-            }
-
-            var configCopy = Mapping.Mapper.Map<NetplayEditorConfig>(Config); // Deep Copy
-            var data                     = configCopy.Data;
-            data.ClientSettings.Password = password;
-            data.ClientSettings.Port     = port;
-            data.ClientSettings.IP       = address;
-
-            Controller.Socket = new Client(configCopy, Controller, Api);
-            IsEnabled() = true;
-            return true;
         }
 
         private unsafe void RenderMainMenu()
@@ -127,18 +87,18 @@ namespace Riders.Tweakbox.Components.Netplay
                 serverSettings.Username.Render("Username");
                 serverSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
 
-                if (Api.IsAuthenticated)
+                if (Controller.Api.IsAuthenticated)
                 {
                     ImGui.TextWrapped("You are currently signed in.");
                     if (ImGui.Button("Logout", Constants.ButtonSize))
-                        Api.SignOut();
+                        Controller.Api.SignOut();
                 }
                 else
                 {
                     if (_loginTask.IsCompleted)
                     {
                         if (ImGui.Button("Login", Constants.ButtonSize))
-                            _loginTask = Task.Run(Authenticate);
+                            _loginTask = Task.Run(Controller.Authenticate);
                     }
                     else
                     {
@@ -157,7 +117,7 @@ namespace Riders.Tweakbox.Components.Netplay
                 if (_registerTask.IsCompleted)
                 {
                     if (ImGui.Button("Register", Constants.ButtonSize))
-                        _registerTask = Task.Run(Register);
+                        _registerTask = Task.Run(Controller.Register);
                 }
                 else
                 {
@@ -233,7 +193,7 @@ namespace Riders.Tweakbox.Components.Netplay
             Tooltip.TextOnHover("Address of the central server used for server browser, account system and matchmaking.");
 
             if (ImGui.Button("Apply", Constants.ButtonSize))
-                Task.Run(CreateApiObject);
+                Task.Run(Controller.InitializeApi);
 
             ImGui.TreePop();
         }
@@ -314,71 +274,11 @@ namespace Riders.Tweakbox.Components.Netplay
             ImGui.TreePop();
         }
 
-        private async Task Register()
-        {
-            var serverSettings = Config.Data.ServerSettings;
-            if (!string.IsNullOrEmpty(serverSettings.Username) && 
-                !string.IsNullOrEmpty(serverSettings.Password) &&
-                !string.IsNullOrEmpty(serverSettings.Email))
-            {
-                var authResult = (await Api.IdentityApi.Register(new UserRegistrationRequest()
-                {
-                    Email = serverSettings.Email,
-                    UserName = serverSettings.Username,
-                    Password = serverSettings.Password,
-
-                })).AsOneOf();
-
-                if (authResult.IsT1)
-                    Shell.AddDialog("Registration Failed", $"Here's what went wrong:\n{string.Join('\n', authResult.AsT1.Errors)}");
-                else
-                {
-                    Shell.AddDialog("Successfully Registered", "Check your email for some extra nifty details!");
-                    await Authenticate();
-                }
-            }
-            else
-            {
-                Shell.AddDialog("Register Failed", "Username, password and/or email were empty.");
-            }
-        }
-
-        private async Task Authenticate()
-        {
-            var serverSettings = Config.Data.ServerSettings;
-            if (!string.IsNullOrEmpty(serverSettings.Username) && !string.IsNullOrEmpty(serverSettings.Password))
-            {
-                var authResult = await Api.TryAuthenticate(serverSettings.Username, serverSettings.Password);
-                if (authResult.IsT1)
-                    Shell.AddDialog("Failed to Authenticate", $"Here's what went wrong:\n{string.Join('\n', authResult.AsT1.Errors)}");
-            }
-            else
-            {
-                Shell.AddDialog("Login Failed", "Username and/or password was empty.");
-            }
-        }
-
-        private async Task CreateApiObject()
-        {
-            Api = new TweakboxApi(Config.Data.ServerSettings.Host);
-
-            // For convenience, silently try authenticate.
-            var serverSettings = Config.Data.ServerSettings;
-            if (!string.IsNullOrEmpty(serverSettings.Username) && !string.IsNullOrEmpty(serverSettings.Password))
-            {
-                Log.WriteLine("Silently Authenticating");
-                var authResult = await Api.TryAuthenticate(serverSettings.Username, serverSettings.Password);
-                Log.WriteLine(authResult.IsT1
-                    ? $"Failed to Silently Authenticate:\n{string.Join('\n', authResult.AsT1.Errors)}"
-                    : "Successful Silent Authenticate");
-            }
-        }
-
         private void HostServer()
         {
             try
             {
-                Controller.Socket = new Host(Config, Controller, Api);
+                Controller.Socket = new Host(Config, Controller, Controller.Api);
                 ServerBrowserMenu.IsEnabled() = false;
             }
             catch (Exception e)
@@ -391,7 +291,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                Controller.Socket = new Client(Config, Controller, Api);
+                Controller.Socket = new Client(Config, Controller, Controller.Api);
                 ServerBrowserMenu.IsEnabled() = false;
             }
             catch (Exception e)
