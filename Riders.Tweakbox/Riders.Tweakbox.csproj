@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" Version="33.0.2" />
+    <PackageReference Include="DiscordRichPresence" Version="1.0.175" />
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.2" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
@@ -44,6 +45,7 @@
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.8.0" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.7.1" />
     <PackageReference Include="Reloaded.WPF.Animations" Version="1.2.2" />
+    <PackageReference Include="SimpleBase" Version="3.1.0" />
     <PackageReference Include="Standart.Hash.xxHash" Version="3.1.0" />
     <PackageReference Include="StructLinq" Version="0.25.3" />
   </ItemGroup>

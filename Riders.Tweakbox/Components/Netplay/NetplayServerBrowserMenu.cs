@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DearImguiSharp;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Menus.Models;
-using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
-using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -28,7 +24,7 @@ namespace Riders.Tweakbox.Components.Netplay
         
         public TweakboxApi Api              => Owner.Api;
         public NetplayController Controller => Owner.Controller;
-        public NetplayEditorConfig     Config     => Owner.Config;
+        public NetplayEditorConfig  Config  => Owner.Config;
 
         // Re-route to internal window.
         public override ref bool IsEnabled() => ref BrowserMenu.IsEnabled();
@@ -64,30 +60,7 @@ namespace Riders.Tweakbox.Components.Netplay
         {
             try
             {
-                string password = Config.Data.ClientSettings.Password;
-
-                // Get Password if Lobby Defines one is Needed.
-                if (result.HasPassword)
-                {
-                    // TODO: Query for Password
-                    var inputData = new TextInputData(NetplayEditorConfig.TextLength);
-                    await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
-                    {
-                        inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
-                        if (ImGui.Button("Ok", Constants.Zero))
-                            opened = false;
-                    });
-
-                    password = inputData;
-                }
-
-                var configCopy = Mapping.Mapper.Map<NetplayEditorConfig>(Config); // Deep Copy
-                var data = configCopy.Data;
-                data.ClientSettings.Password = password;
-                data.ClientSettings.Port = result.Port;
-                data.ClientSettings.IP = result.Address;
-
-                Controller.Socket = new Client(configCopy, Controller, Api);
+                await Owner.ConnectAsync(result.Address, result.Port, result.HasPassword);
                 IsEnabled() = false;
             }
             catch (Exception e)

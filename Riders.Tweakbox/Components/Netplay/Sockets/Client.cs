@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net;
+using System.Threading.Tasks;
+using DearImguiSharp;
 using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
 using Riders.Tweakbox.API.SDK;
@@ -7,18 +9,21 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Controls;
+using Sewer56.Imgui.Shell;
 using Sewer56.SonicRiders.Utility;
+using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
     /// <inheritdoc />
-    public unsafe class Client : Socket
+    public class Client : Socket
     {
         public override SocketType GetSocketType() => SocketType.Client;
 
         public Client(NetplayEditorConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
         {
-            if (Event.LastTask != Tasks.CourseSelect)
+            if (!CanJoin)
                 throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
             Manager.StartInManualMode(0);
@@ -53,6 +58,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
                 ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
             }
 
+            HostIp = clientSettings.IP;
             Initialize();
         }
 

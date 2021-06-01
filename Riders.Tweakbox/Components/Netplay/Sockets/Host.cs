@@ -33,7 +33,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
         public Host(NetplayEditorConfig config, NetplayController controller, TweakboxApi tweakboxApi) : base(controller, config, tweakboxApi)
         {
-            if (Event.LastTask != Tasks.CourseSelect)
+            if (!CanJoin)
                 throw new Exception("You are only allowed to start hosting in the Course Select Menu");
 
             var hostSettings   = config.Data.HostSettings;

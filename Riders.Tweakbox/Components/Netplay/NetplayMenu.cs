@@ -16,6 +16,9 @@ using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
+    /// <summary>
+    /// TODO: Refactor this to move out the logic (e.g. setting API) to NetplayController.
+    /// </summary>
     public class NetplayMenu : ComponentBase<NetplayEditorConfig>
     {
         public NetplayController Controller = IoC.Get<NetplayController>();
@@ -51,6 +54,43 @@ namespace Riders.Tweakbox.Components.Netplay
                 RenderMainMenu();
 
             ImGui.End();
+        }
+
+        /// <summary>
+        /// Allows you to connect to an arbitrary server without using the values
+        /// from the default configuration.
+        /// </summary>
+        /// <param name="address">The IP Address</param>
+        /// <param name="port">The Port</param>
+        /// <param name="hasPassword">Whether the lobby has a password.</param>
+        /// <returns></returns>
+        public async Task<bool> ConnectAsync(string address, int port, bool hasPassword)
+        {
+            string password = String.Empty;
+            
+            // Get Password if Lobby Defines one is Needed.
+            if (hasPassword)
+            {
+                // TODO: Query for Password
+                var inputData = new TextInputData(NetplayEditorConfig.TextLength);
+                await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
+                {
+                    inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                    if (ImGui.Button("Ok", Constants.Zero))
+                        opened = false;
+                });
+
+                password = inputData;
+            }
+
+            var configCopy = Mapping.Mapper.Map<NetplayEditorConfig>(Config); // Deep Copy
+            var data                     = configCopy.Data;
+            data.ClientSettings.Password = password;
+            data.ClientSettings.Port     = port;
+            data.ClientSettings.IP       = address;
+
+            Controller.Socket = new Client(configCopy, Controller, Api);
+            return true;
         }
 
         private unsafe void RenderMainMenu()

@@ -43,7 +43,8 @@ namespace Riders.Tweakbox
         public MenuBar MenuBar { get; private set; }
         public List<IController> Controllers { get; private set; } = new List<IController>();
         public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
-       
+        public event Action OnInitialized;
+
         private WelcomeScreenRenderer _welcomeScreenRenderer;
         private DllNotifier _notifier;
         private IModLoader _modLoader;
@@ -112,6 +113,7 @@ namespace Riders.Tweakbox
             tweakBox.EnableCrashDumps();
             tweakBox.DisplayFirstTimeDialog();
             tweakBox.IsReady = true;
+            tweakBox.OnInitialized?.Invoke();
             return tweakBox;
         }
 

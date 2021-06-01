@@ -13,11 +13,31 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Utility;
 
 namespace Riders.Tweakbox.Components.Netplay.Sockets
 {
     public abstract class Socket : IDisposable
     {
+        /// <summary>
+        /// The IP of the current game host.
+        /// </summary>
+        public string HostIp { get; set; }
+
+        /// <summary>
+        /// The Port of the current game host.
+        /// </summary>
+        public int HostPort => GetSocketType() == SocketType.Host ? 
+            Config.Data.HostSettings.Port : 
+            Config.Data.ClientSettings.Port;
+
+        /// <summary>
+        /// Password of the current game host.
+        /// </summary>
+        public string Password => GetSocketType() == SocketType.Host ? 
+            Config.Data.HostSettings.Password : 
+            Config.Data.ClientSettings.Password;
+
         /// <summary>
         /// Instance of the network manager.
         /// </summary>
@@ -72,6 +92,11 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
         /// Provides access to the Tweakbox Online Service.
         /// </summary>
         public TweakboxApi Api { get; set; }
+
+        /// <summary>
+        /// True if other players can join, else false.
+        /// </summary>
+        public bool CanJoin => Event.LastTask == Tasks.CourseSelect;
 
         private Stopwatch _stopWatch = new Stopwatch();
         private bool _isDisposed = false;

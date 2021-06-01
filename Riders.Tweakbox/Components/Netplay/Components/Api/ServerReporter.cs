@@ -68,7 +68,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
 
         private async void PostServerRequest(bool force = false)
         {
-            if (!force && Event.LastTask != Tasks.CourseSelect)
+            if (!force && !Socket.CanJoin)
                 return;
 
             var state   = Socket.State;
@@ -98,6 +98,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Api
             else
             {
                 _guid = result.AsT0.Id;
+                Socket.HostIp = result.AsT0.Address;
             }
         }
 
