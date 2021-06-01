@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -214,11 +215,15 @@ namespace Riders.Tweakbox.Controllers
 
 #if DEBUG
         [UnmanagedCallersOnly]
+#else
+        [MethodImpl(MethodImplOptions.NoOptimization)]
 #endif
         private static IntPtr SetTextureHook(IntPtr devicepointer, int stage, void* texture) => _controller.SetTextureHookInstance(devicepointer, stage, texture);
 
 #if DEBUG
         [UnmanagedCallersOnly]
+#else
+        [MethodImpl(MethodImplOptions.NoOptimization)]
 #endif
         private static IntPtr TextureRelease(IntPtr texturePtr) => _controller.ReleaseTexture(texturePtr);
 
