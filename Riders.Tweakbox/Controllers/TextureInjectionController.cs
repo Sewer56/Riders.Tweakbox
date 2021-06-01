@@ -216,14 +216,14 @@ namespace Riders.Tweakbox.Controllers
 #if DEBUG
         [UnmanagedCallersOnly]
 #else
-        [MethodImpl(MethodImplOptions.NoOptimization)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
 #endif
         private static IntPtr SetTextureHook(IntPtr devicepointer, int stage, void* texture) => _controller.SetTextureHookInstance(devicepointer, stage, texture);
 
 #if DEBUG
         [UnmanagedCallersOnly]
 #else
-        [MethodImpl(MethodImplOptions.NoOptimization)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
 #endif
         private static IntPtr TextureRelease(IntPtr texturePtr) => _controller.ReleaseTexture(texturePtr);
 
