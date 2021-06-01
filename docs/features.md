@@ -18,14 +18,15 @@
 ✔ NAT Punching (No Port Forwarding Required)  
 ✔ Server Browser  
 ✔ Texture Injection  
+✔ Music Injection  
 💢 Custom Game Modes (Relay, Hide & Seek)
 
 ### 💫 Menu Synchronization
 ✔ Stage Select Menu  
 ✔ Character Select Menu  
 ✔ Race Settings Menu  
-❌ Return Straight to Stage Select Post Race  
-❌ Disconnect Clients Leaving Stage Select Post Race  
+✔ Return Straight to Stage Select Post Race  
+✔ Disconnect Clients Leaving Stage Select Post Race  
 
 ### 💥 In-Race
 ✔ Accurate Physics (Speed, Rotation, Position, Turning, AnalogInput)  
@@ -41,8 +42,8 @@
 ⚠ Random Number Generator\*  
 ⚠ Separate Item Random Number Generator\*\*  
 
-❌ Pauseless Pause Menu  
-❌ Post-Race Pause/Results Menu Synchronization  
+✔ Pauseless Pause Menu  
+✔ Post-Race Pause/Results Menu Synchronization  
 ❌ Ramp/Trick Synchronization  
 💢 Player Indicators in Split Screen  
 💢 Player Indicators for 5P/6P/7P/8P  
