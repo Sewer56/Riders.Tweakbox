@@ -90,6 +90,7 @@ namespace Riders.Tweakbox.Components.Netplay
             data.ClientSettings.IP       = address;
 
             Controller.Socket = new Client(configCopy, Controller, Api);
+            IsEnabled() = true;
             return true;
         }
 
