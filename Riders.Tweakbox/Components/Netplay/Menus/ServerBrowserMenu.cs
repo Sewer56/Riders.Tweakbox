@@ -33,6 +33,7 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         // Actions
         public Func<GetServerResultEx, Task> Connect;
         public Func<Task> Refresh;
+        private Task _currentConnectTask = Task.CompletedTask;
 
         /// <inheritdoc />
         public ServerBrowserMenu(Func<GetServerResultEx, Task> connect, Func<Task> refresh)
@@ -152,18 +153,18 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
             _centerHelperCurrentServerPlayerCount.End();
 
             // Connect
-            if (_currentSelection != null)
+            if (_currentSelection != null && _currentConnectTask.IsCompleted)
             {
                 _centerHelperButton.Begin(availableWidth);
                 if (ImGui.Button("Connect", Constants.ButtonSize))
-                    Connect?.Invoke(_currentSelection);
+                    _currentConnectTask = Task.Run(() => Connect?.Invoke(_currentSelection));
 
                 _centerHelperButton.End();
             }
 
             _centerHelperButton.Begin(availableWidth);
             if (ImGui.Button("Refresh", Constants.ButtonSize))
-                Refresh?.Invoke();
+                Task.Run(() => Refresh?.Invoke());
 
             _centerHelperButton.End();
             ImGui.EndGroup();
