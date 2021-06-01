@@ -6,6 +6,7 @@ using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Interfaces;
+using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Services.Music
 {
@@ -14,6 +15,8 @@ namespace Riders.Tweakbox.Services.Music
     /// </summary>
     public class MusicService : ISingletonService
     {
+        private static HashSet<string> _vanillaStageTracks = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "S1.adx", "S2.adx", "S3.adx", "S4.adx", "S5.adx", "S6.adx", "S7.adx", "S8.adx", "SV1.adx" };
+
         private List<MusicDictionary> _dictionaries = new List<MusicDictionary>();
         private MusicDictionary _vanillaDict;
         private IModLoader _modLoader;
@@ -39,21 +42,41 @@ namespace Riders.Tweakbox.Services.Music
         /// </summary>
         /// <param name="fileName">The file name for which to get a replacement track.</param>
         /// <param name="includeVanilla">Whether to include vanilla tracks or not.</param>
-        /// <returns>Path to the replacement track..</returns>
-        public string GetRandomTrack(string fileName, bool includeVanilla)
+        /// <param name="includePerStageTracks">Whether to include stage-specific tracks.</param>
+        /// <returns>Path to the replacement track.</returns>
+        public unsafe string GetRandomTrack(string fileName, bool includeVanilla, bool includePerStageTracks)
         {
             var options = new List<string>();
             if (includeVanilla && _vanillaDict.TryGetTrack(fileName, out var vanillaTracks))
                 options.AddRange(vanillaTracks);
 
+            if (includePerStageTracks && _vanillaStageTracks.Contains(fileName))
+                GetTracksForStage(*(int*)State.Level, options);
+
+            GetTracksForFileName(fileName, options);
+            var random = _random.Next(0, options.Count);
+            return options[random];
+        }
+
+        /// <summary>
+        /// Obtains all potential candidate tracks for a given stage.
+        /// </summary>
+        /// <param name="stageId">The stage index.</param>
+        /// <param name="files">List of files to add the candidates to.</param>
+        public void GetTracksForStage(int stageId, List<string> files) => GetTracksForFileName($"STG{stageId:00}.adx", files);
+
+        /// <summary>
+        /// Obtains all potential candidate tracks for a given file name.
+        /// </summary>
+        /// <param name="fileName">The name of the file to get the tracks for</param>
+        /// <param name="files">List of files to add the candidates to.</param>
+        public void GetTracksForFileName(string fileName, List<string> files)
+        {
             foreach (var dictionary in _dictionaries)
             {
                 if (dictionary.TryGetTrack(fileName, out var modTracks))
-                    options.AddRange(modTracks);
+                    files.AddRange(modTracks);
             }
-
-            var random = _random.Next(0, options.Count);
-            return options[random];
         }
 
         private void Add(IModConfigV1 config) => _dictionaries.Add(new MusicDictionary(GetRedirectFolder(config.ModId)));

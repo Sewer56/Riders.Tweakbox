@@ -28,7 +28,7 @@ namespace Riders.Tweakbox.Controllers
         {
             var fileName   = Path.GetFileName(song);
             var sourceFile = Path.Combine(IO.DataFolderLocation, song);
-            var target     = _musicService.GetRandomTrack(fileName, true);
+            var target     = _musicService.GetRandomTrack(fileName, true, true);
             _redirector.AddRedirect(sourceFile, target);
             return _playMusicHook.OriginalFunction(maybeBuffer, song);
         }
