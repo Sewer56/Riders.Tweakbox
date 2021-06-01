@@ -16,6 +16,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Configs;
+using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Sewer56.SonicRiders;
@@ -35,7 +36,7 @@ namespace Riders.Tweakbox.Controllers
         private static TextureInjectionController _controller;
 
         private IO _io;
-        private IHook<D3DXCreateTextureFromFileInMemoryEx> _createTextureHook;
+        private IHook<D3DXCreateTextureFromFileInMemoryExPtr> _createTextureHook;
         private IHook<SetTexturePtr> _setTextureHook;
         private IHook<ComReleasePtr> _releaseTextureHook;
 
@@ -45,7 +46,7 @@ namespace Riders.Tweakbox.Controllers
             _controller = this;
             var d3dx9Handle  = PInvoke.LoadLibrary("d3dx9_25.dll");
             var createTextureFromFileInMemoryEx = Native.GetProcAddress(d3dx9Handle, "D3DXCreateTextureFromFileInMemoryEx");
-            _createTextureHook = SDK.ReloadedHooks.CreateHook<D3DXCreateTextureFromFileInMemoryEx>(CreateTextureFromFileInMemoryHook, (long) createTextureFromFileInMemoryEx).Activate();
+            _createTextureHook = hooks.CreateHook<D3DXCreateTextureFromFileInMemoryExPtr>(typeof(TextureInjectionController), nameof(CreateTextureFromFileInMemoryHook), (long) createTextureFromFileInMemoryEx).Activate();
 
             var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
             var releaseTextureRefAddress = (long) dx9Hook.Texture9VTable[(int) IDirect3DTexture9.Release].FunctionPointer;
@@ -73,11 +74,12 @@ namespace Riders.Tweakbox.Controllers
             }
         }
 
-        private unsafe int CreateTextureFromFileInMemoryHook(void* deviceref, void* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, void* srcinforef, PaletteEntry* paletteref, void** textureout)
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        private unsafe int CreateTextureFromFileInMemoryHookInstance(byte* deviceref, byte* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
         {
             // If not enabled, don't do anything.
             if (!_config.Data.LoadTextures && !_config.Data.DumpTextures)
-                return _createTextureHook.OriginalFunction(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+                return _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
             
             // Hash the texture,
             var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
@@ -89,7 +91,7 @@ namespace Riders.Tweakbox.Controllers
                 Log.WriteLine($"Loading Custom Texture: {info.Path}", LogCategory.TextureLoad);
                 fixed (byte* dataPtr = &data.Data[0])
                 {
-                    var texture = _createTextureHook.OriginalFunction(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+                    var texture = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
                     if (info.Type == TextureType.Animated)
                         _animatedTextureService.TrackAnimatedTexture(*textureout, info.Animated);
 
@@ -97,7 +99,7 @@ namespace Riders.Tweakbox.Controllers
                 }
             }
 
-            var result = _createTextureHook.OriginalFunction(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
+            var result = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
             
             // Dump texture if successfully loaded.
             if (result == Result.Ok && _config.Data.DumpTextures)
@@ -106,6 +108,7 @@ namespace Riders.Tweakbox.Controllers
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
         {
             if (_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
@@ -115,6 +118,8 @@ namespace Riders.Tweakbox.Controllers
         }
 
         private bool _isReleasing;
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private IntPtr ReleaseTexture(IntPtr thisptr)
         {
             if (_isReleasing)
@@ -215,22 +220,33 @@ namespace Riders.Tweakbox.Controllers
 
 #if DEBUG
         [UnmanagedCallersOnly]
-#else
-        [MethodImpl(MethodImplOptions.NoInlining)]
 #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private static IntPtr SetTextureHook(IntPtr devicepointer, int stage, void* texture) => _controller.SetTextureHookInstance(devicepointer, stage, texture);
 
 #if DEBUG
         [UnmanagedCallersOnly]
-#else
-        [MethodImpl(MethodImplOptions.NoInlining)]
 #endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private static IntPtr TextureRelease(IntPtr texturePtr) => _controller.ReleaseTexture(texturePtr);
 
+        
+        [UnmanagedCallersOnly]
+        private static unsafe int CreateTextureFromFileInMemoryHook(byte* deviceref, byte* srcdataref, int srcdatasize,
+            int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter,
+            RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
+        {
+            return _controller.CreateTextureFromFileInMemoryHookInstance(deviceref, srcdataref, srcdatasize, width,
+                height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref,
+                textureout);
+        }
+
         [Function(CallingConventions.Stdcall)]
-        public unsafe delegate int D3DXCreateTextureFromFileInMemoryEx(void* deviceRef, void* srcDataRef, int srcDataSize, int width, int height,
-            int mipLevels, Usage usage, Format format, Pool pool, int filter, int mipFilter, 
-            RawColorBGRA colorKey, void* srcInfoRef, PaletteEntry* paletteRef, void** textureOut);
+        public struct D3DXCreateTextureFromFileInMemoryExPtr
+        {
+            public FuncPtr<BlittablePointer<byte>, BlittablePointer<byte>, int, int, int, int, Usage, Format, Pool, int, int, 
+                           RawColorBGRA, BlittablePointer<byte>, BlittablePointer<PaletteEntry>, BlittablePointer<BlittablePointer<byte>>, int> Ptr;
+        }
 
 #if !DEBUG
         [ManagedFunction(CallingConventions.ClrCall)]
