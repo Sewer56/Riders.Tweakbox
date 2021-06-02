@@ -28,10 +28,39 @@ namespace Riders.Tweakbox.Services.RichPresence
 {
     public class RidersRichPresence : ISingletonService
     {
+        /*
+            Note: 
+            
+            1. It is intended for Join/Spectate feature to work regardless of whether
+            the central Tweakbox server is running.
+
+            Therefore, the join secret must store the host details for joining to become possible.
+            As such, the client must know the key ahead of time; making encryption meaningless.
+         
+            2. Discord party IDs require determinism. 
+
+            In other to associate players with themselves, they must all use the same id.
+            Sure the host can autogenerate an id and send it to the clients but users 
+            still have to be able to join from the Discord client.
+
+            3. IP Addresses are Exposed via the Tweakbox API Server regardless.
+            Even if they weren't; you could just query the server for a client's address.
+        
+            =====
+            That's why I didn't bother with proper encryption.
+            It's not possible under the constraints wanted.
+
+            The code can produce encrypted messages though... 
+            if you use a custom key and let it autogeenrate the Salt + IV (pass null).
+        */
+
         // Encryption key for party & lobby id.
         // Do not change.
         private const string PassPhrase = "Argie's The Best Girl <3" +
                                           "I love her very very much!";
+
+        private static readonly byte[] Salt = new byte[] { 0x49, 0x20, 0x6c, 0x6f, 0x76, 0x65, 0x20, 0x79, 0x6f, 0x75, 0x20, 0x75, 0x77, 0x75, 0x3c, 0x33 };
+        private static readonly byte[] Iv   = new byte[] { 0x6d, 0x2d, 0x6d, 0x2d, 0x6d, 0x61, 0x79, 0x62, 0x65, 0x20, 0x6f, 0x6e, 0x65, 0x64, 0x61, 0x79 };
 
         private DiscordRpcClient _discordRpc;
         private System.Threading.Timer _timer;
@@ -185,7 +214,7 @@ namespace Riders.Tweakbox.Services.RichPresence
         private string TryGetLobbyId(Socket socket)
         {
             return TryGetLobbyBytes(socket, out var bytes) 
-                ? Crypto.Encrypt(bytes, PassPhrase) 
+                ? Crypto.Encrypt(bytes, PassPhrase, Salt, Iv) 
                 : null;
         }
 

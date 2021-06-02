@@ -27,12 +27,15 @@ namespace Riders.Tweakbox.Misc.Extensions
         // This constant determines the number of iterations for the password bytes generation function.
         private const int DerivationIterations = 128;
 
-        public static string Encrypt(byte[] plainBytes, string passPhrase)
+        public static string Encrypt(byte[] plainBytes, string passPhrase, byte[] saltBytes, byte[] ivBytes)
         {
+            if ((saltBytes != null && saltBytes.Length != KeyBytes) || (ivBytes != null && ivBytes.Length != KeyBytes))
+                throw new Exception("Bad Salt or IV Length passed to encryption function.");
+
             // Salt and IV is randomly generated each time, but is preprended to encrypted cipher text
             // so that the same Salt and IV values can be used when decrypting.  
-            var saltBytes  = GenerateRandomKey();
-            var ivBytes    = GenerateRandomKey();
+            saltBytes  ??= GenerateRandomKey();
+            ivBytes    ??= GenerateRandomKey();
 
             using var password  = new Rfc2898DeriveBytes(passPhrase, saltBytes, DerivationIterations);
             var keyBytes        = password.GetBytes(KeyBytes);
