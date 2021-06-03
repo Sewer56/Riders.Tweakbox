@@ -4,10 +4,14 @@ using Microsoft.Windows.Sdk;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Services;
+using Sewer56.SonicRiders.API;
+using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using static Riders.Tweakbox.Misc.Native;
 
 namespace Riders.Tweakbox.Controllers
@@ -16,13 +20,15 @@ namespace Riders.Tweakbox.Controllers
     {
         private TweakboxConfig _config;
         private WindowService _windowService;
+        private IHook<InitializeGameWindow> _initGameWindow;
 
-        public BorderlessWindowedController(TweakboxConfig config, WindowService windowService)
+        public BorderlessWindowedController(TweakboxConfig config, WindowService windowService, IReloadedHooks hooks)
         {
             _config = config;
             _windowService = windowService;
 
             _config.Data.AddPropertyUpdatedHandler(PropertyUpdated);
+            _initGameWindow = hooks.CreateHook<InitializeGameWindow>(InitWindowImpl, 0x0051B800).Activate();
         }
 
         private void PropertyUpdated(string propertyname)
@@ -40,41 +46,21 @@ namespace Riders.Tweakbox.Controllers
             // Reset Game Window
             var handle = Sewer56.SonicRiders.API.Window.WindowHandle;
             if (handle != IntPtr.Zero)
-            {
-                const int GWL_STYLE = -16;
-                var style = PInvoke.GetWindowLong(new HWND(handle), GWL_STYLE);
-
-                if (style == 0) 
-                    return;
-
-                var flags = (WindowStyles) style;
-                if (borderless) 
-                    RemoveBorder(ref flags);
-                else
-                    AddBorder(ref flags);
-                
-                PInvoke.SetWindowLong(new HWND(handle), GWL_STYLE, (int) flags);
-                Task.Delay(100).ContinueWith((x) => _windowService.ResizeWindow(*Sewer56.SonicRiders.API.Misc.ResolutionX, *Sewer56.SonicRiders.API.Misc.ResolutionY, handle));
-            }
+                _windowService.SetBorderless(borderless, handle);
 
             // Remove Border from Hardcoded Game style
             ref var hardcodedStyle = ref Unsafe.AsRef<WindowStyles>((void*) 0x005119EC);
-            if (borderless)
-                RemoveBorder(ref hardcodedStyle);
-            else
-                AddBorder(ref hardcodedStyle);
+            _windowService.ToggleBorder(borderless, ref hardcodedStyle);
         }
 
-        public void RemoveBorder(ref WindowStyles flags)
+        private int InitWindowImpl(IntPtr lpwindowname, IntPtr hinstance, int a3, IntPtr hmenu, int x, int y, int dwstyle, int xright, int ybottom)
         {
-            flags &= ~WindowStyles.WS_CAPTION;
-            flags &= ~WindowStyles.WS_MINIMIZEBOX;
+            var result = _initGameWindow.OriginalFunction(lpwindowname, hinstance, a3, hmenu, x, y, dwstyle, xright, ybottom);
+            _windowService.SetBorderless(_config.Data.Borderless, Window.WindowHandle);
+            return result;
         }
 
-        public void AddBorder(ref WindowStyles flags)
-        {
-            flags |= WindowStyles.WS_CAPTION;
-            flags |= WindowStyles.WS_MINIMIZEBOX;
-        }
+        [Function(CallingConventions.Cdecl)]
+        public delegate int InitializeGameWindow(IntPtr lpWindowName, IntPtr hInstance, int a3, IntPtr hMenu, int x, int y, int dwStyle, int xRight, int yBottom);
     }
 }

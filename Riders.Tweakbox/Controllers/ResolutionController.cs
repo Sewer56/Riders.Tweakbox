@@ -111,11 +111,10 @@ namespace Riders.Tweakbox.Controllers
             _pacingController.AfterEndFrame -= AfterEndFrame;
         }
 
-
         private void ResizeWindow()
         {
             if (Window.WindowHandle != IntPtr.Zero)
-                _windowService.ResizeWindow(_config.Data.ResolutionX, _config.Data.ResolutionY, Window.WindowHandle);
+                _windowService.SetBorderless(_config.Data.Borderless, Window.WindowHandle);
         }
     }
 }
