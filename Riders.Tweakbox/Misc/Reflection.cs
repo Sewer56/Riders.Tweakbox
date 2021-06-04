@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Reloaded.Memory;
 
 namespace Riders.Tweakbox.Misc
 {
@@ -29,7 +30,18 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Swaps the endianness of a given struct using reflection.
         /// </summary>
-        public static void SwapStructEndianness(Type type, byte[] data, int startOffset = 0)
+        public static unsafe T SwapStructEndianness<T>(T value, int startOffset = 0) where T : unmanaged
+        {
+            var type = value.GetType();
+            var span = new Span<byte>(&value, sizeof(T));
+            SwapStructEndianness(type, span, startOffset);
+            return value;
+        }
+
+        /// <summary>
+        /// Swaps the endianness of a given struct using reflection.
+        /// </summary>
+        public static void SwapStructEndianness(Type type, Span<byte> data, int startOffset = 0)
         {
             foreach (var field in type.GetFields())
             {
@@ -50,7 +62,7 @@ namespace Riders.Tweakbox.Misc
                 var effectiveOffset = startOffset + fieldOffset;
 
                 if (subFields.Length == 0)
-                    Array.Reverse(data, effectiveOffset, Marshal.SizeOf(fieldType));
+                    data.Slice(effectiveOffset, Marshal.SizeOf(fieldType)).Reverse();
                 else
                     SwapStructEndianness(fieldType, data, effectiveOffset);
             }

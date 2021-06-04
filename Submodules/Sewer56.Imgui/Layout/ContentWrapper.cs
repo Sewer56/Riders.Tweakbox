@@ -10,55 +10,44 @@ namespace Sewer56.Imgui.Layout
     /// </summary>
     public class ContentWrapper
     {
-        public int? InitialX { get; private set; }
-        public int CurrentX { get; private set; } = 0;
-        public Vector2 BottomRight { get; private set; }
+        public float CurrentWidth { get; private set; } = 0;
+        public float WidthAvailable { get; private set; }
         public int ItemWidth { get; private set; }
+        public float ItemOffset { get; private set; }
 
         /// <summary>
         /// Initializes the content wrapper.
         /// </summary>
-        public unsafe ContentWrapper(int itemWidth)
+        public unsafe ContentWrapper(int itemWidth, float availableWidth = -1, float itemItemOffset = 20)
         {
-            var vec2 = new Vector2();
-            ImGui.__Internal.GetContentRegionAvail((IntPtr) (&vec2));
+            WidthAvailable = availableWidth != -1 
+                ? availableWidth 
+                : ImGui.GetWindowContentRegionWidth();
 
-            BottomRight = vec2;
+            ItemOffset = itemItemOffset;
             ItemWidth   = itemWidth;
+            CurrentWidth = 0;
         }
 
         /// <summary>
         /// Execute this function after placing an item.
         /// </summary>
         /// <param name="lastItem">Set true if the item is the last item to be placed.</param>
-        public void AfterPlaceItem(bool lastItem)
+        public unsafe void AfterPlaceItem(bool lastItem)
         {
-            SetInitialX();
-            
+            Vector2 lastItemSize;
+            ImGui.__Internal.GetItemRectSize((IntPtr) (&lastItemSize));
+
             // Set current/next line.
-            CurrentX += ItemWidth;
-            if (CurrentX + ItemWidth < BottomRight.X && !lastItem)
-                ImGui.SameLine(CurrentX, 0);
+            var offset = ItemWidth - lastItemSize.X;
+            CurrentWidth += ItemWidth;
+            if (CurrentWidth + ItemWidth < WidthAvailable && !lastItem)
+            {
+                ImGui.SameLine(0, offset + ItemOffset);
+                CurrentWidth += (ItemOffset);
+            }
             else
-                CurrentX = InitialX.Value;
-        }
-
-        /// <summary>
-        /// Sets <see cref="InitialX"/> if it is not set.
-        /// </summary>
-        private unsafe void SetInitialX()
-        {
-            if (InitialX.HasValue) 
-                return;
-
-            var windowPos = new Vector2();
-            var rectMin = new Vector2();
-
-            ImGui.__Internal.GetWindowPos((IntPtr)(&windowPos));
-            ImGui.__Internal.GetItemRectMin((IntPtr)(&rectMin));
-
-            InitialX = (int)(rectMin.X - windowPos.X);
-            CurrentX = InitialX.Value;
+                CurrentWidth = 0;
         }
     }
 }

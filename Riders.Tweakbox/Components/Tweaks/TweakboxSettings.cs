@@ -111,6 +111,20 @@ namespace Riders.Tweakbox.Components.Tweaks
             if (ImGui.CollapsingHeaderTreeNodeFlags("Startup", 0))
             {
                 ImGui.Checkbox("Boot to Menu & Unlock All", ref data.BootToMenu).Notify(data, nameof(data.BootToMenu));
+                if (data.BootToMenu && ImGui.TreeNodeStr("Boot to Menu Settings"))
+                {
+                    ImGui.Checkbox("Boot to Race", ref data.BootToRace).Notify(data, nameof(data.BootToRace));
+
+                    if (data.BootToRace && ImGui.TreeNodeStr("Boot to Race Settings"))
+                    {
+                        Reflection.MakeControlEnum(ref data.BootToRaceLevel, "Stage");
+                        Reflection.MakeControlEnum(ref data.BootToRaceCharacter, "Character");
+                        Reflection.MakeControlEnum(ref data.BootToRaceGear, "Gear");
+                        ImGui.TreePop();
+                    }
+
+                    ImGui.TreePop();
+                }
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
@@ -128,6 +142,8 @@ namespace Riders.Tweakbox.Components.Tweaks
 
                 ImGui.Checkbox("Include Vanilla Music", ref data.IncludeVanillaMusic).Notify(data, nameof(data.IncludeVanillaMusic));
                 Tooltip.TextOnHover("When playing custom music tracks, allow Vanilla tracks to still be played.");
+
+                ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
             }
 
             // Restore item width

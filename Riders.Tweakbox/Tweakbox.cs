@@ -15,6 +15,7 @@ using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
+using Riders.Tweakbox.Components.Editors.Layout;
 using Riders.Tweakbox.Components.Editors.Physics;
 using Riders.Tweakbox.Components.Netplay;
 using Riders.Tweakbox.Components.Tweaks;
@@ -83,7 +84,8 @@ namespace Riders.Tweakbox
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
                         IoC.GetSingleton<GearEditor>(),
-                        IoC.GetSingleton<PhysicsEditor>()
+                        IoC.GetSingleton<PhysicsEditor>(),
+                        IoC.GetSingleton<LayoutEditor>(),
                     }),
                     new MenuBarItem("Debug", new List<IComponent>()
                     {

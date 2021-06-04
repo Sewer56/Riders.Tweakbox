@@ -9,6 +9,7 @@ using Task = System.Threading.Tasks.Task;
 using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
+using Sewer56.SonicRiders.Structures.Enums;
 
 namespace Riders.Tweakbox.Configs
 {
@@ -39,6 +40,12 @@ namespace Riders.Tweakbox.Configs
             public float MaxSpeedupTimeMillis = 2000f;
 
             public bool IncludeVanillaMusic = true;
+            public bool AllowBackwardsDriving = true;
+
+            public bool BootToRace = false;
+            public Levels BootToRaceLevel = Levels.MetalCity;
+            public Characters BootToRaceCharacter = Characters.Sonic;
+            public ExtremeGear BootToRaceGear = ExtremeGear.Default;
         }
         #endregion
     }

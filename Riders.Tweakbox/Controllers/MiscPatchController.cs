@@ -23,5 +23,10 @@ namespace Riders.Tweakbox.Controllers
         /// Allows the player to always start a race in character select.
         /// </summary>
         public Patch AlwaysCanStartRaceInCharacterSelect = new Patch(0x004634B8, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, });
+
+        /// <summary>
+        /// Allows the player to go backwards.
+        /// </summary>
+        public Patch EnableGoingBackwards = new Patch(0x4BC751, new byte[] { 0xEB, 0x48 });
     }
 }

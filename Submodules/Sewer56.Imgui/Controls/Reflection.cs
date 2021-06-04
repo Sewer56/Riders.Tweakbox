@@ -82,34 +82,47 @@ namespace Sewer56.Imgui.Controls
         /// <param name="value">The value to bind to the UI.</param>
         /// <param name="name">The name of the field.</param>
         /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
-        public static bool MakeControlEnum<T>(T* value, string name, int itemWidth = 120) where T : unmanaged, Enum
+        /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
+        public static bool MakeControlEnum<T>(ref T value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
         {
             var values  = Enums.GetValues<T>();
             var names   = Enums.GetNames<T>();
             var isFlags = typeof(T).IsDefined(typeof(FlagsAttribute), false);
-            var currentItemName = Enums.AsString(typeof(T), *value);
+            var currentItemName = Enums.AsString(typeof(T), value);
 
             if (isFlags)
             {
-                return MakeControlEnumFlags<T>(value, values, names, itemWidth);
+                return MakeControlEnumFlags<T>(ref value, values, names, itemWidth, availableWidth);
             }
             else
             {
-                return MakeControlEnumComboBox<T>(name, currentItemName, value, values, names);
+                return MakeControlEnumComboBox<T>(name, currentItemName, ref value, values, names);
             }
         }
 
-        private static bool MakeControlEnumFlags<T>(T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth) where T : unmanaged, Enum
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
+        /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
+        public static bool MakeControlEnum<T>(T* value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
+        {
+            return MakeControlEnum(ref Unsafe.AsRef<T>(value), name, itemWidth, availableWidth);
+        }
+
+        private static bool MakeControlEnumFlags<T>(ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth, float availableWidth = -1) where T : unmanaged, Enum
         {
             var result = false;
-            var wrapperUtility = new ContentWrapper(itemWidth);
+            var wrapperUtility = new ContentWrapper(itemWidth, availableWidth);
             
             for (int x = 0; x < names.Count; x++)
             {
-                var hasFlag = currentValue->HasAnyFlags(values[x]);
+                var hasFlag = currentValue.HasAnyFlags(values[x]);
                 if (ImGui.Checkbox(names[x], ref hasFlag))
                 {
-                    *currentValue = FlagEnums.ToggleFlags(*currentValue, values[x]);
+                    currentValue = FlagEnums.ToggleFlags(currentValue, values[x]);
                     result = true;
                 }
 
@@ -119,17 +132,17 @@ namespace Sewer56.Imgui.Controls
             return result;
         }
 
-        private static bool MakeControlEnumComboBox<T>(string name, string currentItemName, T* currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
+        private static bool MakeControlEnumComboBox<T>(string name, string currentItemName, ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
         {
             var result = false;
             if (ImGui.BeginCombo(name, currentItemName, 0))
             {
                 for (int x = 0; x < values.Count; x++)
                 {
-                    bool isSelected = Enums.EqualsUnsafe(*currentValue, values[x]);
+                    bool isSelected = Enums.EqualsUnsafe(currentValue, values[x]);
                     if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
                     {
-                        *currentValue = values[x];
+                        currentValue = values[x];
                         result = true;
                     }
 

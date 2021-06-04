@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
@@ -54,6 +55,7 @@ namespace Riders.Tweakbox.Controllers
         
         private bool _resetSpeedup = false;
         private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
+        private bool _initialized = false;
 
         // Hooks
         private IHook<TimeBeginPeriod> _beginPeriodHook;
@@ -94,6 +96,13 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private void EndFrameImpl()
         {
+            // Setup support for UI Components
+            if (!_initialized)
+            {
+                Thread.CurrentThread.SetApartmentState(ApartmentState.STA); 
+                _initialized = true;
+            }
+
             // Sample CPU usage.
             if (_cpuLoadSampleWatch.Elapsed.TotalMilliseconds > CpuSampleIntervalMs)
             {
