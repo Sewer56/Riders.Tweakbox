@@ -8,6 +8,7 @@ using EnumsNET;
 using Microsoft.Win32;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Controllers.ObjectLayoutController;
+using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
@@ -194,7 +195,10 @@ namespace Riders.Tweakbox.Components.Editors.Layout
             {
                 var nearest = _layoutController.FindNearestItem(item, item->Position, false, out float distance, out _);
                 if (nearest != (void*) 0)
+                {
                     item->PortalChar = nearest->PortalChar;
+                    _layoutController.SetPortalChar(item, item->PortalChar);
+                }
             }
 
             // Row 2

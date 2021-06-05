@@ -247,7 +247,7 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
                     }
 
                     // Check distance.
-                    if (distSquared < nearestDistanceSquared)
+                    if (distSquared < nearestDistanceSquared && &objects.Pointer[x] != ignore)
                     {
                         result = &objects.Pointer[x];
                         nearestDistanceSquared = distSquared;
