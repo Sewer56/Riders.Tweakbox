@@ -162,7 +162,7 @@ namespace Riders.Tweakbox.Services.Texture.Animation
 
                 foreach (var file in texture.Files)
                 {
-                    var path  = Path.GetFileNameWithoutExtension(file.RelativePath);
+                    var path  = Path.GetFileName(file.RelativePath.Substring(0, file.RelativePath.IndexOf('.')));
                     int minId = Int32.Parse(path);
                     texture._minId.Add(minId);
                 }
