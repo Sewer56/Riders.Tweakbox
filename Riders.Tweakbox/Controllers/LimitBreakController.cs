@@ -1,6 +1,10 @@
-﻿using Reloaded.Hooks.Definitions;
+﻿using System;
+using System.Runtime.InteropServices;
+using Reloaded.Hooks.Definitions;
+using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Functions;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -9,8 +13,13 @@ namespace Riders.Tweakbox.Controllers
     /// </summary>
     public class LimitBreakController : IController
     {
+        private IHook<Functions.FreeFnPtr> _freeFrameHook;
+        private static LimitBreakController _this;
+
         public unsafe LimitBreakController(IReloadedHooks hooks)
         {
+            _this = this;
+
             // 2GB Heap
             var characteristics    = (short*)0x40013E;
             bool largeAddressAware = (*characteristics & 0x20) != 0;
@@ -43,6 +52,25 @@ namespace Riders.Tweakbox.Controllers
             *(int*) 0x441954 = 0x420000; // Memory Allocated
             *(int*) 0x4419AD = 0x2000; // Init Loop Iterations
             *(int*) 0x441990 = 0x2000; // Init Loop Iterations
+
+            _freeFrameHook = Functions.FreeFrame.HookAs<Functions.FreeFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
         }
+
+        private unsafe BlittablePointer<byte> FreeFrame(void* address)
+        {
+            uint currentHeader = *(uint*)0x017B8DA8;
+            uint newHeader     = (uint) address;
+            int bytesFreed     = (int) (currentHeader - newHeader); 
+
+            var result = _freeFrameHook.OriginalFunction.Value.Invoke(new BlittablePointer<byte>((byte*) address));
+
+            if (bytesFreed > 0)
+                Native.VirtualUnlock((IntPtr) newHeader, (UIntPtr) bytesFreed);
+
+            return result;
+        }
+
+        [UnmanagedCallersOnly]
+        private static unsafe void* FreeFrameStatic(void* address) => _this.FreeFrame(address).Pointer;
     }
 }

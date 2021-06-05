@@ -4,7 +4,10 @@ using System.Runtime.InteropServices;
 namespace Riders.Tweakbox.Misc
 {
     public static class Native
-    {
+    { 
+        [DllImport("kernel32.dll")]
+        public static extern bool VirtualUnlock(IntPtr lpAddress, UIntPtr dwSize);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtSetTimerResolution(int desiredResolution, bool setResolution, out int currentResolution);
 
