@@ -313,13 +313,16 @@ namespace Riders.Tweakbox.Components.Editors.Layout
 
         private void TeleportPlayer(Vector3 position, Vector3 rotation)
         {
-            ref var player = ref Player.Players[0]; 
+            ref var player = ref Player.Players[0];
             player.Position = position;
+            player.PositionAlt = position;
+            player.Rotation = rotation;
             player.Speed = 0;
             player.VSpeed = 0;
             player.Acceleration = 0;
             player.FallingMode = FallingMode.Ground;
-            player.Rotation = rotation;
+            player.LastMovementFlags = 0;
+            player.MovementFlags = 0;
         }
     }
 }
