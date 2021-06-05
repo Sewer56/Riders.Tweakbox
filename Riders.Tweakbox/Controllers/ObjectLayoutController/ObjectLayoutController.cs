@@ -11,6 +11,7 @@ using Reloaded.Memory.Streams.Writers;
 using Riders.Tweakbox.Controllers.ObjectLayoutController.Struct;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Misc.Pointers;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Parser.Layout;
@@ -48,6 +49,34 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
         /// Skips map portal initialisation.
         /// </summary>
         private Patch _skipPortalInit = new Patch(0x41bcb5, new byte[] { 0xE9, 0x81, 0x01, 0x00, 0x00 });
+
+        // Used to determine if items are loaded.
+        // Done to allow Battle Mode in regular stages and vice versa.
+        // Gathering these wasn't fun!
+        // If you want to contribute to this list, look at 004032B0 inside IDA.
+        private Dictionary<ushort, VoidPtrPtr> _itemIdToSomeLoadedPtrMap = new Dictionary<ushort, VoidPtrPtr>()
+        {
+            // Mission
+            { 44100, new VoidPtrPtr((void**) 0x017DF400) },
+            { 44110, new VoidPtrPtr((void**) 0x017DF404) }, // Unused?
+            { 44120, new VoidPtrPtr((void**) 0x017DF490) }, // Unused?
+            { 44160, new VoidPtrPtr((void**) 0x017DF4D0) },
+            { 44170, new VoidPtrPtr((void**) 0x017DF494) },
+            { 44180, new VoidPtrPtr((void**) 0x017DEF1C) },
+
+            // SurvivalRace & SurvivalBattle
+            { 48000, new VoidPtrPtr((void**) 0x017DF524) },
+            { 48010, new VoidPtrPtr((void**) 0x017DF530) },
+            { 48020, new VoidPtrPtr((void**) 0x017DF51C) },
+            { 48030, new VoidPtrPtr((void**) 0x017DF550) },
+            { 48040, new VoidPtrPtr((void**) 0x0696EBC) },
+            { 48050, new VoidPtrPtr((void**) 0x017DF564) },
+            { 48060, new VoidPtrPtr((void**) 0x017DF574) },
+            { 48070, new VoidPtrPtr((void**) 0x017DF5B8) },
+            { 48071, new VoidPtrPtr((void**) 0x017DF5BC) },
+            { 48072, new VoidPtrPtr((void**) 0x017DF5C0) },
+            { 48073, new VoidPtrPtr((void**) 0x017DF5C4) },
+        };
 
         public ObjectLayoutController(EventController @event, IReloadedHooks hooks)
         {
@@ -306,6 +335,7 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
 
             // Initialise original.
             Event.AfterSetTask += CollectObjectTask;
+            RemoveUnloadedItemsFromCurrentLayout();
             var result = _initializeObjectLayoutOriginal();
             Event.AfterSetTask -= CollectObjectTask;
 
@@ -315,6 +345,20 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
                 LoadExtraLayoutFile(LoadedLayouts[x]);
 
             return result;
+        }
+
+        private void RemoveUnloadedItemsFromCurrentLayout()
+        {
+            var objects = _currentLayoutFile.LayoutFile.Objects;
+            for (int x = 0; x < objects.Count; x++)
+            {
+                ref var obj = ref objects[x];
+                if (_itemIdToSomeLoadedPtrMap.TryGetValue((ushort) obj.Type, out var ptr))
+                {
+                    if (*ptr.Ptr == (void*) 0x0)
+                        obj.Type = ObjectId.oInvalid;
+                }
+            }
         }
 
         private void LoadExtraLayoutFile(LoadedLayoutFile targetFile)
@@ -327,8 +371,8 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
 
             _currentLayoutFile = targetFile;
             *State.CurrentStageObjectLayout = targetFile.LayoutFile.Header;
+            RemoveUnloadedItemsFromCurrentLayout();
             _initializeObjectLayoutOriginal();
-
             _skipPortalInit.Disable();
             Event.AfterSetTask -= CollectObjectTask;
 
@@ -343,5 +387,20 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
 
         [UnmanagedCallersOnly]
         private static int CheckResetTaskImplStatic(int a1, int a2) => _this.CheckResetTaskImpl(a1, a2);
+
+        #region Obsolete but still cool
+        private PatchCollection _alwaysLoadAllGameModeSpecificItems = new PatchCollection(new Patch[]
+        {
+            // Disable Branches to Specific Modes & Out of Switch
+            // Currently disabled, in favour of excluding items based on loaded pointer check.
+            new Patch(0x00409084, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }),
+            new Patch(0x0040908D, new byte[] { 0x90, 0x90 }), 
+            new Patch(0x00409092, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }), 
+
+            // Disable branches from end of switch cases
+            new Patch(0x004090EC, new byte[] { 0x90, 0x90 }),
+            new Patch(0x00409142, new byte[] { 0x90, 0x90 }),
+        });
+        #endregion
     }
 }
