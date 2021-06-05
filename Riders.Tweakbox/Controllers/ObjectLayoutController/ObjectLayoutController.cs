@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
-using Reloaded.Memory.Streams.Writers;
 using Riders.Tweakbox.Controllers.ObjectLayoutController.Struct;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Misc.Pointers;
 using Sewer56.SonicRiders.API;
-using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Parser.Layout;
 using Sewer56.SonicRiders.Parser.Layout.Enums;
 using Sewer56.SonicRiders.Parser.Layout.Structs;
@@ -304,15 +303,37 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
             return stream.ToArray();
         }
 
+        /// <summary>
+        /// Disposes of all layouts and imports a new layout from file.
+        /// </summary>
+        public void Import(byte[] data)
+        {
+            // Copy layout data.
+            var alloc = Marshal.AllocHGlobal(data.Length);
+            fixed(byte* dataPtr = &data[0])
+                Unsafe.CopyBlockUnaligned((void*) alloc, dataPtr, (uint) data.Length);
+
+            // Open layout data
+            var loadedLayout = new LoadedLayoutFile(new InMemoryLayoutFile((void*) alloc), true);
+            loadedLayout.LayoutFile.Header->Magic = 0; // Loaded.
+
+            // Kill all existing layouts.
+            DisposeAllLayouts();
+            *State.CurrentStageObjectLayout = loadedLayout.LayoutFile.Header;
+        }
+
+        private void DisposeAllLayouts()
+        {
+            foreach (var layout in LoadedLayouts)
+                layout.Dispose();
+
+            LoadedLayouts.Clear();
+        }
+
         private int CheckResetTaskImpl(int a1, int a2)
         {
             if (*State.ResetTask != (void*) 0 && *State.EndOfGameMode != EndOfGameMode.Restart)
-            {
-                foreach (var layout in LoadedLayouts)
-                    layout.Dispose();
-
-                LoadedLayouts.Clear();
-            }
+                DisposeAllLayouts();
 
             return _checkResetTaskHook.OriginalFunction.Value.Invoke(a1, a2);
         }

@@ -278,6 +278,20 @@ namespace Riders.Tweakbox.Components.Editors.Layout
                     }
                 });
             }
+
+            ImGui.SameLine(0, Constants.Spacing);
+            if (ImGui.Button("Import from File & Restart", Constants.Zero))
+            {
+                var saveFileDialog      = new OpenFileDialog();
+                saveFileDialog.Title    = "Save to Path";
+                saveFileDialog.FileName = "00000.bin";
+                var result = saveFileDialog.ShowDialog();
+                if (result == true && !string.IsNullOrEmpty(saveFileDialog.FileName))
+                {
+                    _layoutController.Import(File.ReadAllBytes(saveFileDialog.FileName));
+                    _layoutController.FastRestart();
+                }
+            }
             
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Fast Restart", Constants.Zero))
@@ -306,7 +320,6 @@ namespace Riders.Tweakbox.Components.Editors.Layout
             player.Acceleration = 0;
             player.FallingMode = FallingMode.Ground;
             player.Rotation = rotation;
-            player.PlayerControlFlags &= ~(PlayerControlFlags) (0x10000000);
         }
     }
 }
