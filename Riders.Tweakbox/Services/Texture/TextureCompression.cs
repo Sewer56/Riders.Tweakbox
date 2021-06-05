@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.IO;
 using System.Runtime.InteropServices;
+using DotNext;
 using DotNext.Buffers;
 using K4os.Compression.LZ4;
 
@@ -9,8 +10,6 @@ namespace Riders.Tweakbox.Services.Texture
 {
     public class TextureCompression
     {
-        private static ArrayPool<byte> _texturePool = ArrayPool<byte>.Create(16_777_345, 1);
-
         /// <summary>
         /// Reads a DDS.LZ4 from a given file path.
         /// </summary>
@@ -28,12 +27,12 @@ namespace Riders.Tweakbox.Services.Texture
             var numEncoded      = intSpan[0];
             
             // Read Data
-            using var compressedData = new ArrayRental<byte>(_texturePool, numEncoded, false);
-            var uncompressedData = _texturePool.Rent(numUncompressed);
+            var compressedData = GC.AllocateUninitializedArray<byte>(numEncoded);
+            fileStream.Read(compressedData.AsSpan());
 
-            fileStream.Read(compressedData.Span);
-            LZ4Codec.Decode(compressedData.Span, uncompressedData);
-            return new TextureRef(uncompressedData, _texturePool);
+            var uncompressedData = GC.AllocateUninitializedArray<byte>(numUncompressed);
+            LZ4Codec.Decode(compressedData.AsSpan(), uncompressedData.AsSpan());
+            return new TextureRef(uncompressedData);
         }
     }
 }
