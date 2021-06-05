@@ -34,6 +34,7 @@ namespace Riders.Tweakbox.Components.Editors.Layout
         private int _currentIndex;
         private bool _freezePlayerToItem;
         private bool _freezeItemToPlayer;
+        private bool _autoRenderRegion = true;
         private MiscPatchController _patchController;
         private ObjectLayoutController _layoutController;
 
@@ -137,6 +138,7 @@ namespace Riders.Tweakbox.Components.Editors.Layout
         private void RenderObject(SetObject* item, float availableWidth)
         {
             const float spacing = 20;
+            const float renderRegionOffset = -240;
             ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
 
             ImGui.SameLine(0, spacing);
@@ -154,11 +156,19 @@ namespace Riders.Tweakbox.Components.Editors.Layout
                                 "e.g. 1 = 1 Player Only\n" +
                                 "2 = 1 & 2 Player Only");
 
+            ImGui.PushItemWidth(renderRegionOffset);
             if (Reflection.MakeControl(&item->PortalChar, "Map Portal (Render Region)"))
                 _layoutController.SetPortalChar(item, item->PortalChar);
 
             Tooltip.TextOnHover("The ASCII character used to denote the \"portal\" the object belongs to.\n" +
                                 "Portals are bounding box regions. If the object is outside the portal, it is not rendered.");
+            
+            ImGui.SameLine(0, Constants.Spacing);
+            ImGui.Checkbox("Auto", ref _autoRenderRegion);
+            if (_autoRenderRegion)
+                CopyNearestRenderRegion();
+            
+            ImGui.PopItemWidth();
 
             ImGui.Text("Availability");
             Reflection.MakeControlEnum(&item->Visibility, "Visibility", 100, availableWidth);
@@ -192,14 +202,7 @@ namespace Riders.Tweakbox.Components.Editors.Layout
 
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Copy Portal (Render Region) of Nearest Item", Constants.Zero))
-            {
-                var nearest = _layoutController.FindNearestItem(item, item->Position, false, out float distance, out _);
-                if (nearest != (void*) 0)
-                {
-                    item->PortalChar = nearest->PortalChar;
-                    _layoutController.SetPortalChar(item, item->PortalChar);
-                }
-            }
+                CopyNearestRenderRegion();
 
             // Row 2
             if (ImGui.Button("Teleport to Item", Constants.Zero))
@@ -282,6 +285,16 @@ namespace Riders.Tweakbox.Components.Editors.Layout
 
             ImGui.EndGroup();
             ImGui.PopItemWidth();
+
+            void CopyNearestRenderRegion()
+            {
+                var nearest = _layoutController.FindNearestItem(item, item->Position, false, out float distance, out _);
+                if (nearest != (void*) 0)
+                {
+                    item->PortalChar = nearest->PortalChar;
+                    _layoutController.SetPortalChar(item, item->PortalChar);
+                }
+            }
         }
 
         private void TeleportPlayer(Vector3 position, Vector3 rotation)
