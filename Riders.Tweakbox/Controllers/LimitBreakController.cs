@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
+using Riders.Tweakbox.Misc;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -12,12 +9,27 @@ namespace Riders.Tweakbox.Controllers
     /// </summary>
     public class LimitBreakController : IController
     {
-        public unsafe LimitBreakController()
+        public unsafe LimitBreakController(IReloadedHooks hooks)
         {
+            // 2GB Heap
+            var characteristics    = (short*)0x40013E;
+            bool largeAddressAware = (*characteristics & 0x20) != 0;
+
             // Unmanaged Heap
-            // 3000000 (50MB) -> 4C4B400 (80MB)
-            *(int*) 0x527C24 = 0x4C4B400;
-            *(int*) 0x527C5E = 0x4C4B400;
+            // 3000000 (50MB) -> 7A120000 (2GB)
+            int heapSize = 0x7A120000;
+            if (!largeAddressAware)
+            {
+                Log.WriteLine($"EXE is not Large Address Aware, Setting Heap as 768MB.");
+                heapSize = 0x2DC6C000;
+            }
+            else
+            {
+                Log.WriteLine($"EXE is Large Address Aware, Setting Heap as 2048MB.");
+            }
+
+            *(int*) 0x527C24 = heapSize;
+            *(int*) 0x527C5E = heapSize;
 
             // Extend Task Heap
             // 1024 -> 40960 Total Tasks
