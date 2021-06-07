@@ -8,8 +8,13 @@ using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
-using Sewer56.Imgui.Controls;
-using Sewer56.Imgui.Misc;
+using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Extensions;
+using Sewer56.Imgui.Utilities;
+using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Utility;
+using Constants = Sewer56.Imgui.Misc.Constants;
+using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Netplay
 {
@@ -18,6 +23,7 @@ namespace Riders.Tweakbox.Components.Netplay
         public NetplayMenu Owner { get; set; }
         public NetplayController Controller => Owner.Controller;
         public NetplayEditorConfig Config => Owner.Config;
+        public EventController Event;
 
         /// <inheritdoc />
         public override string Name { get; set; } = "Netplay Lobby";
@@ -25,6 +31,7 @@ namespace Riders.Tweakbox.Components.Netplay
         public NetplayLobbyMenu(NetplayMenu netplayMenu)
         {
             Owner = netplayMenu;
+            Event = IoC.Get<EventController>();
         }
 
         /// <inheritdoc />
@@ -41,21 +48,48 @@ namespace Riders.Tweakbox.Components.Netplay
 
         private void RenderConnectedWindow()
         {
-            var client = Controller.Socket;
-            foreach (var player in client.State.PlayerInfo)
+            var socket = Controller.Socket;
+            foreach (var player in socket.State.PlayerInfo)
                 ImGui.Text($"{player.Name} | {player.PlayerIndex} | {player.Latency}ms");
 
             if (ImGui.Button("Disconnect", Constants.ButtonSize))
                 Controller.Socket?.Dispose();
 
+            var hasModifiers = socket.TryGetComponent(out GameModifiers modifiers);
+            if (hasModifiers && ImGui.TreeNodeStr("Lobby Options"))
+            {
+                bool canEdit = Event.LastTask == Tasks.CourseSelect && socket.GetSocketType() == SocketType.Host;
+                ref var mods = ref modifiers.Modifiers;
+                if (!canEdit)
+                    Utilities.PushDisabled();
+
+                ImGui.TextWrapped("Only changeable in Track Select.");
+                ImGui.TextWrapped("Time Trials with Friends");
+                ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdatedSettings);
+                ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdatedSettings);
+
+                ImGui.TextWrapped("Fun");
+                ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdatedSettings);
+                ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdatedSettings);
+
+                if (!canEdit)
+                    Utilities.PopDisabled();
+
+                ImGui.TreePop();
+
+                void SendUpdatedSettings() => modifiers.HostSendSettingsToAll();
+            }
+
             if (ImGui.TreeNodeStr("Bandwidth Statistics"))
             {
-                RenderBandwidthUsage(client);
+                RenderBandwidthUsage(socket);
                 ImGui.TreePop();
             }
 
             RenderDebugOptions();
         }
+
+        
 
         private void RenderBandwidthUsage(Socket socket)
         {

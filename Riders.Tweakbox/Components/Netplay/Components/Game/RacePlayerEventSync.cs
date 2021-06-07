@@ -9,6 +9,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using StructLinq;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
@@ -30,6 +31,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// Contains available events for each player.
         /// </summary>
         private BoostTornado[] _events = new BoostTornado[Constants.MaxNumberOfPlayers + 1];
+        private GameModifiers _modifiers;
 
         private const DeliveryMethod _eventDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
@@ -38,6 +40,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Socket = socket;
             Event = @event;
             State = socket.State;
+            Socket.TryGetComponent(out _modifiers);
 
             Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
         }
@@ -57,6 +60,10 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         {
             // ReSharper disable once VariableHidesOuterVariable
             bool IsLastPlayer(int playerIndex) => playerIndex == *Sewer56.SonicRiders.API.State.NumberOfRacers - 1;
+
+            // Remove Tornadoes if Modifier is set.
+            if (_modifiers != null && _modifiers.Modifiers.DisableTornadoes)
+                player->MovementFlags &= ~MovementFlags.Tornado;
 
             Socket.Update();
             int playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);

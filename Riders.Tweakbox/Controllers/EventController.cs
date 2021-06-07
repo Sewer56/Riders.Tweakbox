@@ -2,6 +2,7 @@
 using System.Numerics;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -16,6 +17,7 @@ using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
+using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 using Void = Reloaded.Hooks.Definitions.Structs.Void;
 
@@ -172,6 +174,21 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event SetEndOfRaceDialogHandlerFn SetEndOfRaceDialog;
 
+        /// <summary>
+        /// Allows you to determine whether the game should spawn turbulence based off of player parameters.
+        /// </summary>
+        public event ShouldSpawnTurbulenceHandlerFn ShouldSpawnTurbulence;
+
+        /// <summary>
+        /// Allows you to determine whether the game should NOT spawn turbulence based off of player parameters.
+        /// </summary>
+        public event ShouldKillTurbulenceHandlerFn ShouldKillTurbulence;
+
+        /// <summary>
+        /// Allows you to force a specific turbulence type.
+        /// </summary>
+        public event ForceTurbulenceTypeFn ForceTurbulenceType;
+
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -185,6 +202,8 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
         private IHook<Functions.PauseGameFn> _pauseGameHook;
         private IHook<Functions.SetEndOfRaceDialogTaskFn> _setEndOfRaceDialogTask;
+        private IHook<Functions.ShouldGenerateTurbulenceFn> _shouldGenerateTurbulenceHook;
+        private IHook<Functions.ShouldKillTurbulenceFn> _shouldKillTurbulenceHook;
 
         private IAsmHook _onStartRaceHook;
         private IAsmHook _onCheckIfStartRaceHook;
@@ -194,6 +213,7 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIsHumanInputHook;
         private IAsmHook _onCheckIfSkipRenderGaugeFill;
         private IAsmHook _onCheckIfHumanInputIndicatorHook;
+        private IAsmHook _forceTurbulenceTypeHook;
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
 
@@ -254,6 +274,18 @@ namespace Riders.Tweakbox.Controllers
             _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
             _pauseGameHook = Functions.PauseGame.Hook(PauseGameHook).Activate();
             _setEndOfRaceDialogTask = Functions.SetEndOfRaceDialogTask.Hook(SetEndOfRaceDialogHandlerHook).Activate();
+            _shouldGenerateTurbulenceHook = Functions.ShouldSpawnTurbulence.Hook(ShouldGenerateTurbulenceHook).Activate();
+            _shouldKillTurbulenceHook = Functions.ShouldNotGenerateTurbulence.Hook(ShouldKillTurbulenceHook).Activate();
+            _forceTurbulenceTypeHook = hooks.CreateAsmHook(new string[]
+            {
+                // Goal: Modify `ax` register
+                "use32",
+                "push ecx", // Caller Save Registers
+                "push edx",
+                $"{utilities.AssembleAbsoluteCall<ForceTurbulenceTypeFn>((type) => ForceTurbulenceType?.Invoke(type) ?? type, out _, false)}",
+                "pop edx", // Caller Restore Registers
+                "pop ecx"
+            }, 0x0045617F, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
         /// <summary>
@@ -334,6 +366,8 @@ namespace Riders.Tweakbox.Controllers
         private int PauseGameHook(int a1, int a2, byte a3) => PauseGame?.Invoke(a1, a2, a3, _pauseGameHook) ?? _pauseGameHook.OriginalFunction(a1, a2, a3);
 
         private Task* SetEndOfRaceDialogHandlerHook(EndOfRaceDialogMode mode) => SetEndOfRaceDialog != null ? SetEndOfRaceDialog.Invoke(mode, _setEndOfRaceDialogTask) : _setEndOfRaceDialogTask.OriginalFunction(mode);
+        private bool ShouldGenerateTurbulenceHook(Player* player) => ShouldSpawnTurbulence?.Invoke(player, _shouldGenerateTurbulenceHook) ?? _shouldGenerateTurbulenceHook.OriginalFunction(player);
+        private bool ShouldKillTurbulenceHook(Player* player) => ShouldKillTurbulence?.Invoke(player, _shouldKillTurbulenceHook) ?? _shouldKillTurbulenceHook.OriginalFunction(player);
 
         public delegate int PauseGameHandlerFn(int a1, int a2, byte a3, IHook<Functions.PauseGameFn> hook);
         public delegate Task* SetEndOfRaceDialogHandlerFn(EndOfRaceDialogMode mode, IHook<Functions.SetEndOfRaceDialogTaskFn> hook);
@@ -347,7 +381,12 @@ namespace Riders.Tweakbox.Controllers
         public delegate byte CdeclReturnByteFnFn(IHook<Functions.CdeclReturnByteFn> hook);
         public delegate int CdeclReturnIntFn(IHook<Functions.CdeclReturnIntFn> hook);
         public delegate int RunPlayerPhysicsSimulationFn(IHook<Functions.RunPlayerPhysicsSimulationFn> hook, void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex);
+        public unsafe delegate bool ShouldSpawnTurbulenceHandlerFn(Player* player, IHook<Functions.ShouldGenerateTurbulenceFn> hook);
+        public unsafe delegate bool ShouldKillTurbulenceHandlerFn(Player* player, IHook<Functions.ShouldKillTurbulenceFn> hook);
 
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
+
+        [Function(eax, eax, FunctionAttribute.StackCleanup.Caller)]
+        public delegate int ForceTurbulenceTypeFn(byte currentType);
     }
 }

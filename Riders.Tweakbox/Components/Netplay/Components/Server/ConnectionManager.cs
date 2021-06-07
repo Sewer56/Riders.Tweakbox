@@ -8,6 +8,7 @@ using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
@@ -85,6 +86,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Server
                 using var courseSelectSync = CourseSelectSync.FromGame(Event.CourseSelect);
                 Socket.SendAndFlush(peer, ReliablePacket.Create(gameData), DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
                 Socket.SendAndFlush(peer, ReliablePacket.Create(courseSelectSync), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
+                
+                if (Socket.TryGetComponent(out GameModifiers mod))
+                    mod.HostSendSettingsToSinglePeer(peer);
             }
         }
 

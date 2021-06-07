@@ -45,6 +45,7 @@ namespace Riders.Tweakbox.Components.Netplay
             LobbyMenu.Render();
             ServerBrowserMenu.Render();
 
+            // Do not render main if in-game.
             if (Controller.Socket != null)
                 return;
 

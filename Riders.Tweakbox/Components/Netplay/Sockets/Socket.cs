@@ -129,6 +129,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             // Server
             AddComponent(IoC.Get<Components.Server.ConnectionManager>());
+            AddComponent(IoC.Get<Components.Game.GameModifiers>());
 
             // Menus
             AddComponent(IoC.Get<Components.Menu.CourseSelect>());

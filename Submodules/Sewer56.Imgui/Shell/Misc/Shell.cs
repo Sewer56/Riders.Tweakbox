@@ -11,27 +11,37 @@ namespace Sewer56.Imgui.Shell
 {
     public static partial class Shell
     {
+        /// <summary>
+        /// Provides access to the current ImGui style.
+        /// </summary>
+        public static ImGuiStyle Style;
+
+        /// <summary>
+        /// Provides access to the current ImGui IO.
+        /// </summary>
+        public static ImGuiIO IO;
+
         public static unsafe void SetupImGuiConfig(string configFolder)
         {
-            using var io = ImGui.GetIO();
-            io.BackendFlags |= (int)ImGuiBackendFlags.ImGuiBackendFlagsHasSetMousePos;
-            io.ConfigFlags |= (int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableKeyboard;
-            io.ConfigFlags &= ~(int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableSetMousePos;
-            ((ImGuiIO.__Internal*)io.__Instance)->IniFilename = Marshal.StringToHGlobalAnsi("tweakbox.imgui.ini");
+            IO = ImGui.GetIO();
+            IO.BackendFlags |= (int)ImGuiBackendFlags.ImGuiBackendFlagsHasSetMousePos;
+            IO.ConfigFlags |= (int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableKeyboard;
+            IO.ConfigFlags &= ~(int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableSetMousePos;
+            ((ImGuiIO.__Internal*)IO.__Instance)->IniFilename = Marshal.StringToHGlobalAnsi("tweakbox.imgui.ini");
             
             var fontPath = Path.Combine(configFolder, "Assets/Fonts/Ruda-Bold.ttf");
-            using var font = ImGui.ImFontAtlasAddFontFromFileTTF(io.Fonts, fontPath, 15.0f, null, ref Constants.NullReference<ushort>());
+            using var font = ImGui.ImFontAtlasAddFontFromFileTTF(IO.Fonts, fontPath, 15.0f, null, ref Constants.NullReference<ushort>());
             if (font != null)
-                io.FontDefault = font;
+                IO.FontDefault = font;
 
-            using var style = ImGui.GetStyle();
-            style.FrameRounding = 4.0f;
-            style.WindowRounding = 4.0f;
-            style.WindowBorderSize = 0.0f;
-            style.PopupBorderSize = 0.0f;
-            style.GrabRounding = 4.0f;
+            Style = ImGui.GetStyle();
+            Style.FrameRounding = 4.0f;
+            Style.WindowRounding = 4.0f;
+            Style.WindowBorderSize = 0.0f;
+            Style.PopupBorderSize = 0.0f;
+            Style.GrabRounding = 4.0f;
 
-            using var colors = new FinalizedList<ImVec4[], ImVec4>(style.Colors);
+            using var colors = new FinalizedList<ImVec4[], ImVec4>(Style.Colors);
             colors.Instance[(int)ImGuiCol.ImGuiColText] = new Vector4(1.00f, 1.00f, 1.00f, 1.00f).ToImVec();
             colors.Instance[(int)ImGuiCol.ImGuiColTextDisabled] = new Vector4(0.73f, 0.75f, 0.74f, 1.00f).ToImVec();
             colors.Instance[(int)ImGuiCol.ImGuiColWindowBg] = new Vector4(0.09f, 0.09f, 0.09f, 0.94f).ToImVec();
@@ -80,7 +90,7 @@ namespace Sewer56.Imgui.Shell
             colors.Instance[(int)ImGuiCol.ImGuiColNavWindowingHighlight] = new Vector4(1.00f, 1.00f, 1.00f, 0.70f).ToImVec();
             colors.Instance[(int)ImGuiCol.ImGuiColNavWindowingDimBg] = new Vector4(0.80f, 0.80f, 0.80f, 0.20f).ToImVec();
             colors.Instance[(int)ImGuiCol.ImGuiColModalWindowDimBg] = new Vector4(0.80f, 0.80f, 0.80f, 0.35f).ToImVec();
-            style.Colors = colors;
+            Style.Colors = colors;
         }
     }
 }

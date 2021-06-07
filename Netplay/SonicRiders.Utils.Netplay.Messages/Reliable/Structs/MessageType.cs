@@ -3,6 +3,7 @@ using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 
 namespace Riders.Netplay.Messages.Reliable.Structs
 {
@@ -41,8 +42,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs
         ClientSetPlayerData,   // Client -> Host: Sets info of the client (e.g. Name).
         HostSetPlayerData,     // Host -> Client: Redistributes info of each client (e.g. Name).
         HostUpdateClientPing,  // Host -> Client: Redistribute ping of each client.
-
-        // Anti-cheat
+        ServerGameModifiers,   // Host -> Client: Game specific settings that live in the Netplay layer as opposed to game layer.
+                               // (i.e. game code does not directly read/write these values).
 
         // Menu Synchronization
         CourseSelectLoop,     // Client -> Host
@@ -89,6 +90,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs
                 MessageType.ClientSetPlayerData  => new ClientSetPlayerData(),
                 MessageType.HostSetPlayerData    => new HostSetPlayerData(),
                 MessageType.HostUpdateClientPing => new HostUpdateClientLatency(),
+                MessageType.ServerGameModifiers  => new ServerGameModifiers(),
 
                 // Menus
                 MessageType.CourseSelectLoop     => new CourseSelectLoop(),

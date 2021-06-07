@@ -1,11 +1,31 @@
 ﻿using System.Numerics;
 using DearImguiSharp;
 using Sewer56.Imgui.Controls.Extensions;
+using static DearImguiSharp.ImGuiItemFlags;
+using static DearImguiSharp.ImGuiStyleVar;
 
 namespace Sewer56.Imgui.Utilities
 {
     public static class Utilities
     {
+        /// <summary>
+        /// Disables all controls rendered after this call.
+        /// </summary>
+        public static void PushDisabled()
+        {
+            ImGui.PushItemFlag((int) ImGuiItemFlagsDisabled, true);
+            ImGui.PushStyleVarFloat((int) ImGuiStyleVarAlpha, Shell.Shell.Style.Alpha * 0.5f);
+        }
+
+        /// <summary>
+        /// Re-enables all controls rendered after this call.
+        /// </summary>
+        public static void PopDisabled()
+        {
+            ImGui.PopItemFlag();
+            ImGui.PopStyleVar(1);
+        }
+
         /// <summary/>
         public static FinalizedImVec4 ToImVec(this Vector4 vector)
         {

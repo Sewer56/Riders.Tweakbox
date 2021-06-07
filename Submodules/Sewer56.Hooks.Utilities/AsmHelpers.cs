@@ -99,14 +99,20 @@ namespace Sewer56.Hooks.Utilities
         /// <param name="utilities"/>
         /// <param name="function">The function to execute.</param>
         /// <param name="reverseWrapper">The reverse wrapper to your function. You can discard it freely, the class will keep an instance.</param>
-        public static string AssembleAbsoluteCall<TAsmAction>(this IReloadedHooksUtilities utilities, TAsmAction function, out IReverseWrapper<TAsmAction> reverseWrapper) where TAsmAction : Delegate
+        /// <param name="callerSaveRegisters">Whether to caller save registers.</param>
+        public static string AssembleAbsoluteCall<TAsmAction>(this IReloadedHooksUtilities utilities, TAsmAction function, out IReverseWrapper<TAsmAction> reverseWrapper, bool callerSaveRegisters = true) where TAsmAction : Delegate
         {
-            var asm = new string[]
-            {
-                $"{utilities.PushCdeclCallerSavedRegisters()}",
-                $"{utilities.GetAbsoluteCallMnemonics<TAsmAction>(function, out reverseWrapper)}",
-                $"{utilities.PopCdeclCallerSavedRegisters()}",
-            };
+            var asm = callerSaveRegisters
+                ? new string[]
+                {
+                    $"{utilities.PushCdeclCallerSavedRegisters()}",
+                    $"{utilities.GetAbsoluteCallMnemonics<TAsmAction>(function, out reverseWrapper)}",
+                    $"{utilities.PopCdeclCallerSavedRegisters()}",
+                }
+                : new string[]
+                {
+                    $"{utilities.GetAbsoluteCallMnemonics<TAsmAction>(function, out reverseWrapper)}",
+                };
 
             _wrappers.Add(reverseWrapper);
             return String.Join(Environment.NewLine, asm);

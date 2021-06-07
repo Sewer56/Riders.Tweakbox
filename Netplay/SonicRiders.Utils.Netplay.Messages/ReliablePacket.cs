@@ -28,7 +28,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         /// <typeparam name="T">Unmanaged type parameter.</typeparam>
         /// <param name="value">Value to insert into the packet.</param>
-        public static ReliablePacket Create<T>(in T value) where T : struct, IReliableMessage
+        public static ReliablePacket Create<T>(in T value) where T : IReliableMessage
         {
             var packet = new ReliablePacket();
             packet.SetMessage(value);
@@ -38,7 +38,7 @@ namespace Riders.Netplay.Messages
         /// <summary>
         /// Returns the message associated with this packet.
         /// </summary>
-        public T GetMessage<T>() where T : struct, IReliableMessage
+        public T GetMessage<T>() where T : IReliableMessage
         {
             return (T) Message;
         }
@@ -48,7 +48,7 @@ namespace Riders.Netplay.Messages
         /// </summary>
         /// <param name="value">The value to assign to this class.</param>
         /// <returns>Instance of this.</returns>
-        public ReliablePacket SetMessage<T>(in T value) where T : struct, IReliableMessage
+        public ReliablePacket SetMessage<T>(in T value) where T : IReliableMessage
         {
             Message = value;
             MessageType = value.GetMessageType();

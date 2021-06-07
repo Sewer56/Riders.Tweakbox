@@ -25,7 +25,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public Socket Socket { get; set; }
         public CommonState State { get; set; }
         public EventController Event { get; set; }
-
+        
         /// <summary>
         /// True if there are any attacks to be executed.
         /// </summary>
@@ -41,12 +41,14 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         /// Contains the synchronization data for handling attacks.
         /// </summary>
         private Timestamped<SetAttack>[] _attackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
+        private GameModifiers _modifiers;
 
         public Attack(Socket socket, EventController @event)
         {
             Socket = socket;
             Event = @event;
             State = Socket.State;
+            Socket.TryGetComponent(out _modifiers);
 
             Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
             Event.OnStartAttackTask += OnStartAttackTask;
@@ -108,6 +110,9 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             // Discard attacks from other players.
             if (_isProcessingAttackPackets) 
                 return 0;
+
+            if (_modifiers != null && _modifiers.Modifiers.DisableAttacks)
+                return 1;
 
             var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);
             return !State.IsLocal(p1Index) ? 1 : 0;
