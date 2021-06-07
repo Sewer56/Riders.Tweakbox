@@ -42,9 +42,9 @@ Tweakbox detects newly added music in real time. If you add a track, it will bec
 
 ## Replacement Modes
 
-Tweakbox supports two modes of music replacement:
-- Per File
-- Per Stage
+Tweakbox supports two modes of music replacement:  
+- Per File  
+- Per Stage  
 
 ### Per File
 
