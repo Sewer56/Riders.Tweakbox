@@ -2,7 +2,10 @@
 using System.IO;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
 using Riders.Tweakbox.Definitions.Interfaces;
+using Riders.Tweakbox.Shared;
+using Riders.Tweakbox.Shared.Structs;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using static Riders.Tweakbox.Configs.PhysicsEditorConfig.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
@@ -19,7 +22,7 @@ namespace Riders.Tweakbox.Configs
         /// <summary>
         /// Internal data of the physics editor.
         /// </summary>
-        public Internal Data;
+        public Internal Data = new Internal();
 
         /// <summary>
         /// Creates a <see cref="PhysicsEditorConfig"/> from the values present in game memory.
@@ -38,7 +41,8 @@ namespace Riders.Tweakbox.Configs
 
             data.TurbulenceProperties = new TurbulenceProperties[Player.TurbulenceProperties.Count];
             Player.TurbulenceProperties.CopyTo(data.TurbulenceProperties, Player.TurbulenceProperties.Count);
-            
+
+            data.PanelProperties = Static.PanelProperties;
             return config;
         }
 
@@ -60,10 +64,12 @@ namespace Riders.Tweakbox.Configs
             
             if (Data.TurbulenceProperties != null)
                 Player.TurbulenceProperties.CopyFrom(Data.TurbulenceProperties, Data.TurbulenceProperties.Length);
+
+            Static.PanelProperties = Data.PanelProperties;
         }
 
         /* Internal representation of this config. */
-        public struct Internal
+        public class Internal
         {
             /// <summary>
             /// The data stored inside this struct.
@@ -74,6 +80,7 @@ namespace Riders.Tweakbox.Configs
             public RunningPhysics2 RunningPhysics2;
             public CharacterTypeStats[] CharacterTypeStats;
             public TurbulenceProperties[] TurbulenceProperties;
+            public DashPanelProperties PanelProperties = Static.PanelProperties;
 
             public byte[] ToBytes()
             {
@@ -83,6 +90,7 @@ namespace Riders.Tweakbox.Configs
                 extendedMemoryStream.Write(RunningPhysics2);
                 extendedMemoryStream.Write(CharacterTypeStats);
                 extendedMemoryStream.Write(TurbulenceProperties);
+                extendedMemoryStream.Write(PanelProperties);
                 return extendedMemoryStream.ToArray();
             }
 
@@ -98,6 +106,7 @@ namespace Riders.Tweakbox.Configs
                     bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
                     bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
                     bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
+                    bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelProperties);
                     numBytesRead = (int) bufferedStreamReader.Position();
                 }
             }
@@ -107,6 +116,7 @@ namespace Riders.Tweakbox.Configs
                 Running   = 1 << 0,
                 TypeStats = 1 << 1,
                 TurbulenceProperties = 1 << 2,
+                PanelProperties = 1 << 3,
             }
         }
     }

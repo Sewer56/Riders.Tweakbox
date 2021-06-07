@@ -1,7 +1,10 @@
-﻿using DearImguiSharp;
+﻿using System;
+using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Shared;
+using Riders.Tweakbox.Shared.Structs;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -73,6 +76,33 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, offset);
                         ImGui.TreePop();
                     }
+                }
+
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Dash Panel Behaviour", 0))
+                {
+                    ref var panelProps = ref Static.PanelProperties;
+                    Reflection.MakeControlEnum(ref panelProps.Mode, "Dash Panel Mode");
+                    switch (panelProps.Mode)
+                    {
+                        case DashPanelMode.Fixed:
+                            Reflection.MakeControl(ref panelProps.FixedSpeed, "Dash Panel Speed", 0.025f, $"%f ({Formula.SpeedToSpeedometer(panelProps.FixedSpeed)})");
+                            break;
+                        case DashPanelMode.Additive:
+                            Reflection.MakeControl(ref panelProps.AdditiveSpeed, "Additive Speed", 0.025f, $"%f ({Formula.SpeedToSpeedometer(panelProps.AdditiveSpeed)})");
+                            break;
+                        case DashPanelMode.Multiplicative:
+                            Reflection.MakeControl(ref panelProps.MultiplicativeSpeed, "Multiplicative Speed", 0.001f, $"%f ({panelProps.MultiplicativeSpeed * 100}%%)");
+                            break;
+                        case DashPanelMode.MultiplyOrFixed:
+                            Reflection.MakeControl(ref panelProps.MultiplicativeSpeed, "Multiplicative Speed", 0.001f, $"%f ({panelProps.MultiplicativeSpeed * 100}%%)");
+                            Reflection.MakeControl(ref panelProps.MultiplicativeMinSpeed, "Minimum Speed", 0.001f, $"%f ({Formula.SpeedToSpeedometer(panelProps.MultiplicativeMinSpeed)})");
+                            break;
+                            
+                        case DashPanelMode.Vanilla:
+                        default: break;
+                    }
+
+                    ImGui.TreePop();
                 }
 
                 ImGui.PopItemWidth();

@@ -7,6 +7,7 @@ using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Types;
 using Sewer56.Hooks.Utilities;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
@@ -189,6 +190,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event ForceTurbulenceTypeFn ForceTurbulenceType;
 
+        /// <summary>
+        /// Sets the speed acquired from dash panel.
+        /// </summary>
+        public event SetDashPanelSpeedHandlerFn SetDashPanelSpeed;
+
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -214,6 +220,7 @@ namespace Riders.Tweakbox.Controllers
         private IAsmHook _onCheckIfSkipRenderGaugeFill;
         private IAsmHook _onCheckIfHumanInputIndicatorHook;
         private IAsmHook _forceTurbulenceTypeHook;
+        private IAsmHook _setDashPanelSpeedHook;
 
         private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
 
@@ -286,6 +293,23 @@ namespace Riders.Tweakbox.Controllers
                 "pop edx", // Caller Restore Registers
                 "pop ecx"
             }, 0x0045617F, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            
+            _setDashPanelSpeedHook = hooks.CreateAsmHook(new string[]
+            {
+                // Goal: Modify `ecx` register
+                "use32",
+                "push eax", // Caller Save Registers
+                "push edx",
+                $"{utilities.AssembleAbsoluteCall<SetDashPanelSpeedHandlerFn>(SetDashPanelPlayerSpeed, out _, false)}",
+                "pop edx", // Caller Restore Registers
+                "pop eax"
+            }, 0x004C7AA5, AsmHookBehaviour.ExecuteFirst).Activate();
+        }
+
+        private IntFloat SetDashPanelPlayerSpeed(Player* player, float speed)
+        {
+            return SetDashPanelSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
         }
 
         /// <summary>
@@ -385,6 +409,9 @@ namespace Riders.Tweakbox.Controllers
         public unsafe delegate bool ShouldKillTurbulenceHandlerFn(Player* player, IHook<Functions.ShouldKillTurbulenceFn> hook);
 
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
+        
+        [Function(new []{ ebx, ecx }, ecx, FunctionAttribute.StackCleanup.Caller)]
+        public delegate IntFloat SetDashPanelSpeedHandlerFn(Player* player, float targetSpeed);
 
         [Function(eax, eax, FunctionAttribute.StackCleanup.Caller)]
         public delegate int ForceTurbulenceTypeFn(byte currentType);
