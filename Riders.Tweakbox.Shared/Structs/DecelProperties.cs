@@ -4,13 +4,13 @@ using System.Runtime.InteropServices;
 namespace Riders.Tweakbox.Shared.Structs
 {
     // Size contains extra space for future additions.
-    [StructLayout(LayoutKind.Explicit, Size = 0x20)] 
+    [StructLayout(LayoutKind.Explicit, Size = 0x40)] 
     public struct DecelProperties
     {
         [FieldOffset(0)]
         public DecelMode Mode;
 
-        [FieldOffset(1)] 
+        [FieldOffset(4)] 
         public float LinearSpeedCapOverride;
 
         public static DecelProperties GetDefault() => new DecelProperties()
@@ -24,6 +24,5 @@ namespace Riders.Tweakbox.Shared.Structs
     {
         Default,
         Linear,
-
     }
 }
