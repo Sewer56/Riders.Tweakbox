@@ -11,6 +11,12 @@ namespace Riders.Tweakbox.Shared
         /// </summary>
         public static DashPanelProperties PanelProperties = DashPanelProperties.Default();
 
+        
+        /// <summary>
+        /// The current Speed Shoe settings.
+        /// </summary>
+        public static SpeedShoeProperties SpeedShoeProperties = SpeedShoeProperties.Default();
+
         /// <summary>
         /// The current acceleration settings.sss
         /// </summary>

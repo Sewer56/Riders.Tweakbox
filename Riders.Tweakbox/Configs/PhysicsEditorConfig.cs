@@ -44,6 +44,7 @@ namespace Riders.Tweakbox.Configs
 
             data.PanelProperties = Static.PanelProperties;
             data.DecelProperties = Static.DecelProperties.Value;
+            data.SpeedShoeProperties = Static.SpeedShoeProperties;
             return config;
         }
 
@@ -68,6 +69,7 @@ namespace Riders.Tweakbox.Configs
 
             Static.PanelProperties = Data.PanelProperties;
             Static.DecelProperties.Value = Data.DecelProperties;
+            Static.SpeedShoeProperties = Data.SpeedShoeProperties;
         }
 
         /* Internal representation of this config. */
@@ -84,6 +86,7 @@ namespace Riders.Tweakbox.Configs
             public TurbulenceProperties[] TurbulenceProperties;
             public DashPanelProperties PanelProperties = Static.PanelProperties;
             public DecelProperties DecelProperties = Static.DecelProperties.Value;
+            public SpeedShoeProperties SpeedShoeProperties = Static.SpeedShoeProperties;
 
             public byte[] ToBytes()
             {
@@ -95,6 +98,7 @@ namespace Riders.Tweakbox.Configs
                 extendedMemoryStream.Write(TurbulenceProperties);
                 extendedMemoryStream.Write(PanelProperties);
                 extendedMemoryStream.Write(DecelProperties);
+                extendedMemoryStream.Write(SpeedShoeProperties);
                 return extendedMemoryStream.ToArray();
             }
 
@@ -112,6 +116,7 @@ namespace Riders.Tweakbox.Configs
                     bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
                     bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
                     bufferedStreamReader.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                    bufferedStreamReader.ReadIfHasFlags(ref SpeedShoeProperties, Contents, PhysicsEditorContents.SpeedShoeProperties);
                     numBytesRead = (int) bufferedStreamReader.Position();
                 }
             }
@@ -122,6 +127,7 @@ namespace Riders.Tweakbox.Configs
                 TypeStats = 1 << 1,
                 TurbulenceProperties = 1 << 2,
                 PanelAndDecelProperties = 1 << 3,
+                SpeedShoeProperties = 1 << 4,
             }
         }
     }

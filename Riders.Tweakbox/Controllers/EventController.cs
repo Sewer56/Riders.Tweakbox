@@ -18,6 +18,7 @@ using Sewer56.SonicRiders.Structures.Tasks;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
 using Sewer56.SonicRiders.Utility;
+using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 using Void = Reloaded.Hooks.Definitions.Structs.Void;
@@ -195,6 +196,11 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         public event SetDashPanelSpeedHandlerFn SetDashPanelSpeed;
 
+        /// <summary>
+        /// Sets the speed of the speed shoes item.
+        /// </summary>
+        public event SetSpeedShoesSpeedHandlerFn SetSpeedShoesSpeed;
+
         private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
         private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
         private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -301,16 +307,34 @@ namespace Riders.Tweakbox.Controllers
                 "use32",
                 "push eax", // Caller Save Registers
                 "push edx",
-                $"{utilities.AssembleAbsoluteCall<SetDashPanelSpeedHandlerFn>(SetDashPanelPlayerSpeed, out _, false)}",
+                $"{utilities.AssembleAbsoluteCall<SetDashPanelSpeedHandlerFn>(SetDashPanelSpeedHook, out _, false)}",
                 "pop edx", // Caller Restore Registers
                 "pop eax"
             }, 0x004C7AA5, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            
+            _setDashPanelSpeedHook = hooks.CreateAsmHook(new string[]
+            {
+                // Goal: Modify `ecx` register
+                "use32",
+                "push eax", // Caller Save Registers
+                "push edx",
+
+                "mov ecx, dword [0x005BD4C8]",
+                "push ecx",
+                "push ebx",
+                $"{utilities.AssembleAbsoluteCall<SetSpeedShoesSpeedHandlerFn>(SetSpeedShoesSpeedHook, out _, false)}",
+                $"mov dword [{(int)_dashPanelSpeed.Pointer}], ecx",
+                $"movss xmm0, [{(int)_dashPanelSpeed.Pointer}]",
+
+                "pop edx", // Caller Restore Registers
+                "pop eax"
+            }, 0x004C7323, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
         }
 
-        private IntFloat SetDashPanelPlayerSpeed(Player* player, float speed)
-        {
-            return SetDashPanelSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
-        }
+        private Pinnable<float> _dashPanelSpeed = new Pinnable<float>(0);
+        private IntFloat SetSpeedShoesSpeedHook(Player* player, float speed) => SetSpeedShoesSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
+        private IntFloat SetDashPanelSpeedHook(Player* player, float speed) => SetDashPanelSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
 
         /// <summary>
         /// Invokes the update lap counter original function.
@@ -410,10 +434,13 @@ namespace Riders.Tweakbox.Controllers
 
         public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
         
-        [Function(new []{ ebx, ecx }, ecx, FunctionAttribute.StackCleanup.Caller)]
+        [Function(new []{ ebx, ecx }, ecx, StackCleanup.Caller)]
         public delegate IntFloat SetDashPanelSpeedHandlerFn(Player* player, float targetSpeed);
 
-        [Function(eax, eax, FunctionAttribute.StackCleanup.Caller)]
+        [Function(eax, eax, StackCleanup.Caller)]
         public delegate int ForceTurbulenceTypeFn(byte currentType);
+
+        [Function(new Register[0], ecx, StackCleanup.Callee)]
+        public delegate IntFloat SetSpeedShoesSpeedHandlerFn(Player* player, float targetSpeed);
     }
 }

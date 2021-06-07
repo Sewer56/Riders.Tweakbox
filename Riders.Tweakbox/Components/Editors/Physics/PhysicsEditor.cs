@@ -107,6 +107,31 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                     }
                 }
 
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Speed Shoes Behaviour", 0))
+                {
+                    ref var shoeProps = ref Static.SpeedShoeProperties;
+                    Reflection.MakeControlEnum(ref shoeProps.Mode, "Speed Shoes Mode");
+                    switch (shoeProps.Mode)
+                    {
+                        case SpeedShoesMode.Fixed:
+                            Reflection.MakeControl(ref shoeProps.FixedSpeed, "Speed Shoe Speed", 0.025f, $"%f ({Formula.SpeedToSpeedometer(shoeProps.FixedSpeed)})");
+                            break;
+                        case SpeedShoesMode.Additive:
+                            Reflection.MakeControl(ref shoeProps.AdditiveSpeed, "Additive Speed", 0.025f, $"%f ({Formula.SpeedToSpeedometer(shoeProps.AdditiveSpeed)})");
+                            break;
+                        case SpeedShoesMode.Multiplicative:
+                            Reflection.MakeControl(ref shoeProps.MultiplicativeSpeed, "Multiplicative Speed", 0.001f, $"%f ({shoeProps.MultiplicativeSpeed * 100}%%)");
+                            break;
+                        case SpeedShoesMode.MultiplyOrFixed:
+                            Reflection.MakeControl(ref shoeProps.MultiplicativeSpeed, "Multiplicative Speed", 0.001f, $"%f ({shoeProps.MultiplicativeSpeed * 100}%%)");
+                            Reflection.MakeControl(ref shoeProps.MultiplicativeMinSpeed, "Minimum Speed", 0.001f, $"%f ({Formula.SpeedToSpeedometer(shoeProps.MultiplicativeMinSpeed)})");
+                            break;
+                            
+                        case SpeedShoesMode.Vanilla:
+                        default: break;
+                    }
+                }
+
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Deceleration Properties", 0))
                 {
                     ref var props   = ref Static.DecelProperties.Value;
