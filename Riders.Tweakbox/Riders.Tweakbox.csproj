@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<OutputPath>$(TWEAKBOX_DIR)</OutputPath>
-	<Version>0.4.0</Version>
+	<Version>0.5.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
