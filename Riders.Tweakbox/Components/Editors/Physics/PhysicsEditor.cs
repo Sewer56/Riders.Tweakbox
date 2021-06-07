@@ -18,13 +18,14 @@ namespace Riders.Tweakbox.Components.Editors.Physics
     public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, IComponent
     {
         public override string Name { get; set; } = "Physics Editor";
+        private NetplayController _netplayController = IoC.Get<NetplayController>();
 
         public PhysicsEditor(IO io) : base(io, io.PhysicsConfigFolder, io.GetPhysicsConfigFiles)
         {
             
         }
 
-        public bool IsAvailable() => !IoC.Get<NetplayController>().IsConnected();
+        public bool IsAvailable() => !_netplayController.IsConnected();
 
         public override void Render()
         {

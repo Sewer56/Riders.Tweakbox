@@ -20,13 +20,14 @@ namespace Riders.Tweakbox.Components.Editors.Gear
     public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     {
         public override string Name { get; set; } = "Gear Editor";
+        private NetplayController _netplayController = IoC.Get<NetplayController>();
 
         public GearEditor(IO io) : base(io, io.GearConfigFolder, io.GetGearConfigFiles)
         {
 
         }
 
-        public bool IsAvailable() => !IoC.Get<NetplayController>().IsConnected();
+        public bool IsAvailable() => !_netplayController.IsConnected();
 
         /// <inheritdoc />
         public override void Render()

@@ -12,6 +12,7 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
+using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Parser.Layout.Enums;
 using Sewer56.SonicRiders.Parser.Layout.Structs;
@@ -24,7 +25,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Riders.Tweakbox.Components.Editors.Layout
 {
-    public unsafe class LayoutEditor : ComponentBase
+    public unsafe class LayoutEditor : ComponentBase, IComponent
     {
         /// <inheritdoc />
         public override string Name { get; set; } = "Layout Editor";
@@ -39,12 +40,15 @@ namespace Riders.Tweakbox.Components.Editors.Layout
         private ObjectLayoutController _layoutController;
 
         private bool _scrollTable;
+        private NetplayController _netplayController = IoC.Get<NetplayController>();
 
         public LayoutEditor(MiscPatchController patchController, ObjectLayoutController layoutController)
         {
             _patchController = patchController;
             _layoutController = layoutController;
         }
+
+        public bool IsAvailable() => !_netplayController.IsConnected();
 
         /// <inheritdoc />
         public override void Render()
