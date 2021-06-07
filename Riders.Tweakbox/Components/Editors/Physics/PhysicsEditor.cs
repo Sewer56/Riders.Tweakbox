@@ -34,6 +34,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         {
             if (ImGui.Begin(Name, ref IsEnabled(), 0))
             {
+                int id = 0;
                 ProfileSelector.Render();
                 ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
 
@@ -51,16 +52,19 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                 {
                     if (ImGui.TreeNodeStr("Regular Turbulence"))
                     {
+                        ImGui.PushIDInt(id++);
                         EditTurbulenceType(TurbulenceType.NoTrick, 0);
                         EditTurbulenceType(TurbulenceType.TrickOne, 0);
                         EditTurbulenceType(TurbulenceType.TrickTwo, 0);
                         EditTurbulenceType(TurbulenceType.TrickThree, 0);
                         EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, 0);
                         ImGui.TreePop();
+                        ImGui.PopID();
                     }
                     
                     if (ImGui.TreeNodeStr("Babylon Garden Turbulence"))
                     {
+                        ImGui.PushIDInt(id++);
                         var offset = (int) TurbulenceType.TrickRainbowTopPath + 1;
                         EditTurbulenceType(TurbulenceType.NoTrick, offset);
                         EditTurbulenceType(TurbulenceType.TrickOne, offset);
@@ -68,10 +72,12 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         EditTurbulenceType(TurbulenceType.TrickThree, offset);
                         EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, offset);
                         ImGui.TreePop();
+                        ImGui.PopID();
                     }
                     
                     if (ImGui.TreeNodeStr("Sky Road Turbulence"))
                     {
+                        ImGui.PushIDInt(id++);
                         var offset = ((int) TurbulenceType.TrickRainbowTopPath + 1) * 2;
                         EditTurbulenceType(TurbulenceType.NoTrick, offset);
                         EditTurbulenceType(TurbulenceType.TrickOne, offset);
@@ -79,11 +85,13 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         EditTurbulenceType(TurbulenceType.TrickThree, offset);
                         EditTurbulenceType(TurbulenceType.TrickRainbowTopPath, offset);
                         ImGui.TreePop();
+                        ImGui.PopID();
                     }
                 }
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Dash Panel Behaviour", 0))
                 {
+                    ImGui.PushIDInt(id++);
                     ref var panelProps = ref Static.PanelProperties;
                     Reflection.MakeControlEnum(ref panelProps.Mode, "Dash Panel Mode");
                     switch (panelProps.Mode)
@@ -105,10 +113,13 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         case DashPanelMode.Vanilla:
                         default: break;
                     }
+
+                    ImGui.PopID();
                 }
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Speed Shoes Behaviour", 0))
                 {
+                    ImGui.PushIDInt(id++);
                     ref var shoeProps = ref Static.SpeedShoeProperties;
                     Reflection.MakeControlEnum(ref shoeProps.Mode, "Speed Shoes Mode");
                     switch (shoeProps.Mode)
@@ -130,6 +141,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         case SpeedShoesMode.Vanilla:
                         default: break;
                     }
+                    ImGui.PopID();
                 }
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Deceleration Properties", 0))
