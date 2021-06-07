@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
@@ -26,6 +27,8 @@ namespace Riders.Tweakbox.Components.Editors.Physics
         }
 
         public bool IsAvailable() => !_netplayController.IsConnected();
+        private float _testDecelSpeed = 250;
+        private float _testMaxSpeed = 200;
 
         public override void Render()
         {
@@ -102,8 +105,28 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                         case DashPanelMode.Vanilla:
                         default: break;
                     }
+                }
 
-                    ImGui.TreePop();
+                if (ImGui.CollapsingHeaderTreeNodeFlags("Deceleration Properties", 0))
+                {
+                    ref var props   = ref Static.DecelProperties.Value;
+                    Reflection.MakeControlEnum(ref props.Mode, "Deceleration Mode");
+                    switch (props.Mode)
+                    {
+                        case DecelMode.Default: break;
+                        case DecelMode.Linear:
+                            Reflection.MakeControl(ref props.LinearSpeedCapOverride, "Speed Cap Override", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearSpeedCapOverride)})");
+
+                            ImGui.Text("Test");
+                            Reflection.MakeControl(ref _testDecelSpeed, "Current Speed", 0.1f);
+                            Reflection.MakeControl(ref _testMaxSpeed, "Speed Cap", 0.1f);
+                            float decel = (float) ((Formula.SpeedometerToFloat(_testDecelSpeed) - Formula.SpeedometerToFloat(_testMaxSpeed)) / (1.2037038 - props.LinearSpeedCapOverride));
+                            ImGui.TextWrapped($"Speed loss constant per frame {decel}.");
+
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
 
                 ImGui.PopItemWidth();

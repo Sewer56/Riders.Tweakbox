@@ -43,6 +43,7 @@ namespace Riders.Tweakbox.Configs
             Player.TurbulenceProperties.CopyTo(data.TurbulenceProperties, Player.TurbulenceProperties.Count);
 
             data.PanelProperties = Static.PanelProperties;
+            data.DecelProperties = Static.DecelProperties.Value;
             return config;
         }
 
@@ -66,6 +67,7 @@ namespace Riders.Tweakbox.Configs
                 Player.TurbulenceProperties.CopyFrom(Data.TurbulenceProperties, Data.TurbulenceProperties.Length);
 
             Static.PanelProperties = Data.PanelProperties;
+            Static.DecelProperties.Value = Data.DecelProperties;
         }
 
         /* Internal representation of this config. */
@@ -81,6 +83,7 @@ namespace Riders.Tweakbox.Configs
             public CharacterTypeStats[] CharacterTypeStats;
             public TurbulenceProperties[] TurbulenceProperties;
             public DashPanelProperties PanelProperties = Static.PanelProperties;
+            public DecelProperties DecelProperties = Static.DecelProperties.Value;
 
             public byte[] ToBytes()
             {
@@ -91,6 +94,7 @@ namespace Riders.Tweakbox.Configs
                 extendedMemoryStream.Write(CharacterTypeStats);
                 extendedMemoryStream.Write(TurbulenceProperties);
                 extendedMemoryStream.Write(PanelProperties);
+                extendedMemoryStream.Write(DecelProperties);
                 return extendedMemoryStream.ToArray();
             }
 
@@ -106,7 +110,8 @@ namespace Riders.Tweakbox.Configs
                     bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
                     bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
                     bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
-                    bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelProperties);
+                    bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                    bufferedStreamReader.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
                     numBytesRead = (int) bufferedStreamReader.Position();
                 }
             }
@@ -116,7 +121,7 @@ namespace Riders.Tweakbox.Configs
                 Running   = 1 << 0,
                 TypeStats = 1 << 1,
                 TurbulenceProperties = 1 << 2,
-                PanelProperties = 1 << 3,
+                PanelAndDecelProperties = 1 << 3,
             }
         }
     }

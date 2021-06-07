@@ -20,7 +20,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
     {
         public static readonly int StructSize = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears) +
                                                 StructArray.GetSize<TurbulenceProperties>(Player.TurbulenceProperties.Count) +
-                                                sizeof(RunningPhysics) + sizeof(RunningPhysics2) + sizeof(RaceSettings) + sizeof(DashPanelProperties);
+                                                sizeof(RunningPhysics) + sizeof(RunningPhysics2) + sizeof(RaceSettings) + sizeof(DashPanelProperties)
+                                                + sizeof(DecelProperties);
 
         public static readonly int NumGears = Player.NumberOfGears;
         public static readonly int NumTurbulenceProperties = Player.TurbulenceProperties.Count;
@@ -55,6 +56,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
         /// </summary>
         public DashPanelProperties PanelProperties;
 
+        /// <summary>
+        /// Current deceleration properties.
+        /// </summary>
+        public DecelProperties DecelProperties;
+
         /// <inheritdoc />
         public void Dispose() { }
 
@@ -69,6 +75,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
             *State.CurrentRaceSettings = RaceSettings;
             Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
             Static.PanelProperties = PanelProperties;
+            Static.DecelProperties.Value = DecelProperties;
         }
 
         public static unsafe GameData FromGame()
@@ -80,7 +87,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
                 RaceSettings = *State.CurrentRaceSettings,
                 Gears = Player.Gears.ToArray(),
                 TurbulenceProperties = Player.TurbulenceProperties.ToArray(),
-                PanelProperties = Static.PanelProperties
+                PanelProperties = Static.PanelProperties,
+                DecelProperties = Static.DecelProperties.Value
             };
 
             return data;
@@ -156,6 +164,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
                 TurbulenceProperties[x] = bitStream.ReadGeneric<TurbulenceProperties>();
 
             PanelProperties = bitStream.ReadGeneric<DashPanelProperties>();
+            DecelProperties = bitStream.ReadGeneric<DecelProperties>();
         }
 
         private ArrayRental<byte> ToBytes(out int bytesWritten)
@@ -173,6 +182,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay
                 bitStream.WriteGeneric(TurbulenceProperties[x]);
 
             bitStream.WriteGeneric(PanelProperties);
+            bitStream.WriteGeneric(DecelProperties);
             bytesWritten = bitStream.NextByteIndex;
             return rental;
         }
