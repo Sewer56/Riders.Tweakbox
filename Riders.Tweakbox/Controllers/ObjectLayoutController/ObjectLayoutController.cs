@@ -8,6 +8,7 @@ using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Memory.Interop;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Streams;
+using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Controllers.ObjectLayoutController.Struct;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
@@ -25,12 +26,17 @@ using Task = Sewer56.SonicRiders.Structures.Tasks.Base.Task;
 
 namespace Riders.Tweakbox.Controllers.ObjectLayoutController
 {
-    public unsafe class ObjectLayoutController
+    public unsafe class ObjectLayoutController : IController
     {
         /// <summary>
         /// Contains the current loaded layout files.
         /// </summary>
         public List<LoadedLayoutFile> LoadedLayouts = new List<LoadedLayoutFile>();
+
+        /// <summary>
+        /// Allows you to call another function before processing an object layout.
+        /// </summary>
+        public event OnLoadLayoutEventHandler OnLoadLayout;
 
         private LoadedLayoutFile _currentLayoutFile;
 
@@ -357,7 +363,7 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
             // Initialise original.
             Event.AfterSetTask += CollectObjectTask;
             RemoveUnloadedItemsFromCurrentLayout();
-            var result = _initializeObjectLayoutOriginal();
+            var result = LoadLayout();
             Event.AfterSetTask -= CollectObjectTask;
 
             // Initialise all added layouts.
@@ -393,12 +399,18 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
             _currentLayoutFile = targetFile;
             *State.CurrentStageObjectLayout = targetFile.LayoutFile.Header;
             RemoveUnloadedItemsFromCurrentLayout();
-            _initializeObjectLayoutOriginal();
+            LoadLayout();
             _skipPortalInit.Disable();
             Event.AfterSetTask -= CollectObjectTask;
 
             // Restore Layout Ptr
             *State.CurrentStageObjectLayout = originalPtr;
+        }
+
+        private int LoadLayout()
+        {
+            OnLoadLayout?.Invoke(ref _currentLayoutFile.LayoutFile);
+            return _initializeObjectLayoutOriginal();
         }
 
         private unsafe void CollectObjectTask(void* methodptr, uint maybemaxtaskheapsize, int taskdatasize, Task* result)
@@ -423,5 +435,7 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
             new Patch(0x00409142, new byte[] { 0x90, 0x90 }),
         });
         #endregion
+
+        public delegate void OnLoadLayoutEventHandler(ref InMemoryLayoutFile layout);
     }
 }

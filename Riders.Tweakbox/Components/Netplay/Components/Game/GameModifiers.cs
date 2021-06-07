@@ -1,12 +1,17 @@
-﻿using LiteNetLib;
+﻿using System.Security.Cryptography;
+using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
 using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Controllers.ObjectLayoutController;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Functions;
+using Sewer56.SonicRiders.Parser.Layout;
+using Sewer56.SonicRiders.Parser.Layout.Enums;
+using Sewer56.SonicRiders.Parser.Layout.Objects.ItemBox;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Game
@@ -18,15 +23,18 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
         public EventController Event { get; set; }
 
         public ServerGameModifiers Modifiers;
+        private ObjectLayoutController _layoutController;
 
-        public unsafe GameModifiers(Socket socket, EventController @event)
+        public unsafe GameModifiers(Socket socket, EventController @event, ObjectLayoutController layout)
         {
             Socket = socket;
             Event = @event;
+            _layoutController = layout;
 
             Event.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
             Event.ShouldKillTurbulence += ShouldKillTurbulence;
             Event.ForceTurbulenceType += ForceTurbulenceType;
+            _layoutController.OnLoadLayout += OnLoadLayout;
         }
 
         /// <inheritdoc />
@@ -35,6 +43,23 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Game
             Event.ShouldSpawnTurbulence -= ShouldSpawnTurbulence;
             Event.ShouldKillTurbulence -= ShouldKillTurbulence;
             Event.ForceTurbulenceType -= ForceTurbulenceType;
+            _layoutController.OnLoadLayout -= OnLoadLayout;
+        }
+
+        private void OnLoadLayout(ref InMemoryLayoutFile layout)
+        {
+            for (int x = 0; x < layout.Objects.Count; x++)
+            {
+                ref var obj = ref layout.Objects[x];
+                if (obj.Type != ObjectId.oItemBox)
+                    continue;
+
+                if (Modifiers.ReplaceAirMaxBox && obj.Attribute == (int) ItemBoxAttribute.AirMax)
+                    obj.Attribute = (int) Modifiers.AirMaxReplacement;
+
+                if (Modifiers.ReplaceRing100Box && obj.Attribute == (int) ItemBoxAttribute.Ring100)
+                    obj.Attribute = (int) Modifiers.Ring100Replacement;
+            }
         }
 
         private int ForceTurbulenceType(byte currentType)

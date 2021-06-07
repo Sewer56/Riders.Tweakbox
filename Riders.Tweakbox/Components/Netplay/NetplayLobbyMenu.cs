@@ -72,6 +72,15 @@ namespace Riders.Tweakbox.Components.Netplay
                 ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdatedSettings);
                 ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdatedSettings);
 
+                ImGui.TextWrapped("Fair Play");
+                ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdatedSettings);
+                if (mods.ReplaceRing100Box)
+                    Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdatedSettings);
+
+                ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdatedSettings);
+                if (mods.ReplaceAirMaxBox)
+                    Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdatedSettings);
+
                 if (!canEdit)
                     Utilities.PopDisabled();
 
