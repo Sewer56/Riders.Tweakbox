@@ -9,6 +9,8 @@ namespace Riders.Tweakbox.Misc
     /// </summary>
     public struct Patch
     {
+        public bool IsEnabled { get; private set; }
+
         private IntPtr _address;
         private byte[] _bytes;
         private byte[] _originalBytes;
@@ -19,6 +21,7 @@ namespace Riders.Tweakbox.Misc
             _address = address;
             _bytes   = bytes;
             _originalBytes = null;
+            IsEnabled = false;
 
             if (changePermission)
                 ChangePermission();
@@ -57,6 +60,7 @@ namespace Riders.Tweakbox.Misc
 
             var bytesSpan = _bytes.AsSpan();
             bytesSpan.CopyTo(addressSpan);
+            IsEnabled = true;
             return this;
         }
 
@@ -68,6 +72,7 @@ namespace Riders.Tweakbox.Misc
             var addressSpan = new Span<byte>((void*)_address, _originalBytes.Length);
             var bytesSpan = _originalBytes.AsSpan();
             bytesSpan.CopyTo(addressSpan);
+            IsEnabled = false;
             return this;
         }
     }
