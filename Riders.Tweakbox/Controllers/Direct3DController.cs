@@ -184,7 +184,7 @@ namespace Riders.Tweakbox.Controllers
         #region Hooks for D3D9Ex Support
         private IntPtr CreateTextureHook(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
-            if (D3dDeviceEx.NativePointer != devicePointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
                 return _createTextureHook.OriginalFunction(devicePointer, width, height, miplevels, usage, format, pool, pptexture, sharedhandle);
 
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
@@ -194,7 +194,7 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateVertexBufferHook(IntPtr devicePointer, uint length, Usage usage, VertexFormat format, Pool pool, void** ppvertexbuffer, void* psharedhandle)
         {
-            if (D3dDeviceEx.NativePointer != devicePointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
                 return _createVertexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppvertexbuffer, psharedhandle);
 
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
@@ -204,7 +204,7 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateIndexBufferHook(IntPtr devicePointer, uint length, Usage usage, Format format, Pool pool, void** ppindexbuffer, void* psharedhandle)
         {
-            if (D3dDeviceEx.NativePointer != devicePointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
                 return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
             
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
@@ -219,7 +219,7 @@ namespace Riders.Tweakbox.Controllers
         #region D3D9Ex: These APIs aren't used but just in case!!
         private IntPtr CreateVolumeTextureHook(IntPtr devicepointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
-            if (D3dDeviceEx.NativePointer != devicepointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
                 return _createVolumeTextureHook.OriginalFunction(devicepointer, width, height, depth, miplevels, usage, format, pool, pptexture, sharedhandle);
 
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
@@ -229,7 +229,7 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateCubeTextureHook(IntPtr devicepointer, int edgelength, int levels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {            
-            if (D3dDeviceEx.NativePointer != devicepointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
                 return _createCubeTextureHook.OriginalFunction(devicepointer, edgelength, levels, usage, format, pool, pptexture, sharedhandle);
 
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
@@ -239,7 +239,7 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateOffscreenPlainSurfaceHook(IntPtr devicepointer, int width, int height, Format format, Pool pool, void** ppsurface, void* sharedhandle)
         {
-            if (D3dDeviceEx.NativePointer != devicepointer)
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
                 return _createOffscreenPlainSurfaceHook.OriginalFunction(devicepointer, width, height, format, pool, ppsurface, sharedhandle);
             
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
