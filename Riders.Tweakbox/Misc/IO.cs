@@ -23,8 +23,11 @@ namespace Riders.Tweakbox.Misc
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
         public string TextureConfigFolder => Path.Combine(ConfigFolder, "TextureConfigurations");
+        public string TextureCacheFolder => Path.Combine(ConfigFolder, "TextureCache");
+        public string TextureCacheFilesFolder => Path.Combine(TextureCacheFolder, "Cache");
         public string TextureDumpFolder => Path.Combine(ConfigFolder, "TextureDumps");
         public string TextureDumpCommonFolder => Path.Combine(TextureDumpFolder, "Auto Common");
+        public string TextureCacheFilePath => Path.Combine(TextureCacheFolder, "TextureCache.msgpack");
         public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
         /// <summary>
@@ -40,6 +43,7 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(PhysicsConfigFolder);
             Directory.CreateDirectory(NetplayConfigFolder);
             Directory.CreateDirectory(LogConfigFolder);
+            Directory.CreateDirectory(TextureCacheFilesFolder);
             Directory.CreateDirectory(TextureDumpFolder);
             Directory.CreateDirectory(TextureDumpCommonFolder);
             Directory.CreateDirectory(TextureConfigFolder);

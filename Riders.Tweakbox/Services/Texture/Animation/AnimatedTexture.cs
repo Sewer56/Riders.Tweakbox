@@ -71,7 +71,14 @@ namespace Riders.Tweakbox.Services.Texture.Animation
                 var file = Files[x];
                 var fullPath = Folder + file.RelativePath;
                 var texRef   = TextureRef.FromFile(fullPath, file.Format);
-                Textures.Add(SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data));
+                var texture  = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data);
+                if (texRef.ShouldBeCached())
+                {
+                    var cache = TextureCacheService.Instance;
+                    cache?.QueueStore(fullPath, texture);
+                }
+
+                Textures.Add(texture);
             }
 
             _loaded = true;
@@ -149,7 +156,7 @@ namespace Riders.Tweakbox.Services.Texture.Animation
                 foreach (var file in files)
                 {
                     var format = file.GetTextureFormatFromFileName();
-                    if (format == TextureFormat.None)
+                    if (format == TextureFormat.Unknown)
                         continue;
 
                     var fullPath     = Path.GetFullPath(file);

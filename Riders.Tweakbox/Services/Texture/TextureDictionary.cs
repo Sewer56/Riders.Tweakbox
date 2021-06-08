@@ -121,7 +121,7 @@ namespace Riders.Tweakbox.Services.Texture
             foreach (string file in allFiles)
             {
                 var type = file.GetTextureFormatFromFileName();
-                if (type == TextureFormat.None)
+                if (type == TextureFormat.Unknown)
                     continue;
 
                 // Extract hash from filename.

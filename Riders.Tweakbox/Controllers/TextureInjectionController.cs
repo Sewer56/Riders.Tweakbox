@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
@@ -30,6 +31,7 @@ namespace Riders.Tweakbox.Controllers
     public unsafe class TextureInjectionController : IController
     {
         private TextureService _textureService = IoC.GetSingleton<TextureService>();
+        private TextureCacheService _cacheService = IoC.GetSingleton<TextureCacheService>();
         private AnimatedTextureService _animatedTextureService = IoC.GetSingleton<AnimatedTextureService>();
         private TextureInjectionConfig _config = IoC.GetSingleton<TextureInjectionConfig>();
         
@@ -92,6 +94,9 @@ namespace Riders.Tweakbox.Controllers
                 fixed (byte* dataPtr = &data.Data[0])
                 {
                     var texture = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
+                    if (data.ShouldBeCached())
+                        _cacheService.QueueStore(info.Path, new Texture((IntPtr) (*textureout)));
+
                     if (info.Type == TextureType.Animated)
                         _animatedTextureService.TrackAnimatedTexture(*textureout, info.Animated);
 
@@ -135,7 +140,7 @@ namespace Riders.Tweakbox.Controllers
         }
 
         private void DumpTexture(Texture texture, string xxHash)
-        {
+        {   
             // Hash The Texture
             var description = texture.GetLevelDescription(0);
             var fileName = $"{description.Width}x{description.Height}_{xxHash}.png"; // DO NOT PREPEND, ONLY APPEND
