@@ -125,6 +125,10 @@ namespace Riders.Tweakbox.Components.Tweaks
 
                     ImGui.TreePop();
                 }
+
+                Reflection.MakeControlEnum(ref data.MemoryLimit, "Memory Limit (MB)");
+                Tooltip.TextOnHover("Sets the max amount of memory allowed to be used by the game's internal buffer.\n" +
+                                    "This value affects maximum file sizes allowed for native game models, textures etc.");
             }
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))

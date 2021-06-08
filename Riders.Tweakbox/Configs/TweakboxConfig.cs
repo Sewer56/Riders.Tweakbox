@@ -41,11 +41,19 @@ namespace Riders.Tweakbox.Configs
 
             public bool IncludeVanillaMusic = true;
             public bool AllowBackwardsDriving = true;
-
             public bool BootToRace = false;
             public Levels BootToRaceLevel = Levels.MetalCity;
             public Characters BootToRaceCharacter = Characters.Sonic;
             public ExtremeGear BootToRaceGear = ExtremeGear.Default;
+            public MemoryLimit MemoryLimit = MemoryLimit.MB64;
+        }
+
+        public enum MemoryLimit : int
+        {
+            MB64 = 0x3D09000,
+            MB128 = 0x7A12000,
+            MB256 = 0xF424000,
+            MB512 = 0x1E848000
         }
         #endregion
     }

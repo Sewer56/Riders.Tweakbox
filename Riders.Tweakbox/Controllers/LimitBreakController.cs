@@ -4,7 +4,13 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Memory.Pointers;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Utilities;
 using Sewer56.SonicRiders.Functions;
+using Utilities = Sewer56.SonicRiders.Utilities;
+
+// ReSharper disable once RedundantUsingDirective
+using Microsoft.Windows.Sdk;
+using Riders.Tweakbox.Configs;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -13,30 +19,23 @@ namespace Riders.Tweakbox.Controllers
     /// </summary>
     public class LimitBreakController : IController
     {
+        public bool IsLargeAddressAware { get; private set; }
+
         private IHook<Functions.FreeFnPtr> _freeFrameHook;
         private static LimitBreakController _this;
+        private SYSTEM_INFO _info;
 
-        public unsafe LimitBreakController(IReloadedHooks hooks)
+        public unsafe LimitBreakController(TweakboxConfig config)
         {
             _this = this;
 
             // 2GB Heap
-            var characteristics    = (short*)0x40013E;
-            bool largeAddressAware = (*characteristics & 0x20) != 0;
+            var characteristics = (short*)0x40013E;
+            IsLargeAddressAware = (*characteristics & 0x20) != 0;
 
             // Unmanaged Heap
-            // 3000000 (50MB) -> 7A120000 (2GB)
-            int heapSize = 0x7A120000;
-            if (!largeAddressAware)
-            {
-                Log.WriteLine($"EXE is not Large Address Aware, Setting Heap as 768MB.");
-                heapSize = 0x2DC6C000;
-            }
-            else
-            {
-                Log.WriteLine($"EXE is Large Address Aware, Setting Heap as 2048MB.");
-            }
-
+            // 3000000 (50MB) -> 7A120000 (???)
+            int heapSize = (int) config.Data.MemoryLimit;
             *(int*) 0x527C24 = heapSize;
             *(int*) 0x527C5E = heapSize;
 
@@ -54,6 +53,7 @@ namespace Riders.Tweakbox.Controllers
             *(int*) 0x441990 = 0x2000; // Init Loop Iterations
 
             _freeFrameHook = Functions.FreeFrame.HookAs<Functions.FreeFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
+            PInvoke.GetSystemInfo(out _info);
         }
 
         private unsafe BlittablePointer<byte> FreeFrame(void* address)
@@ -64,10 +64,22 @@ namespace Riders.Tweakbox.Controllers
 
             var result = _freeFrameHook.OriginalFunction.Value.Invoke(new BlittablePointer<byte>((byte*) address));
 
-            if (bytesFreed > 0)
-                Native.VirtualUnlock((IntPtr) newHeader, (UIntPtr) bytesFreed);
+            var freeStart = Utilities.RoundUp((int) newHeader, (int)_info.dwPageSize);
+            int bytesRoundLess = (int) (freeStart - newHeader);
+            var freeSize  = RoundDown(bytesFreed - bytesRoundLess, (int) _info.dwPageSize);
+
+            if (freeSize > 0)
+                Native.VirtualUnlock((IntPtr) freeStart, (UIntPtr) freeSize);
 
             return result;
+        }
+
+        public static int RoundDown(int number, int multiple)
+        {
+            if (multiple == 0)
+                return number;
+
+            return number / multiple * multiple;
         }
 
         [UnmanagedCallersOnly]
