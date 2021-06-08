@@ -33,3 +33,8 @@ pages:
     - Textures: textures.md
     - Optimizing Textures: optimizing-textures.md
     - Animated Textures: animated-textures.md
+    
+  - Changelog:
+    - 0.5.0:  Changelogs/0.5.0/0.5.0.md
+    - 0.4.0:  Changelogs/0.4.0/0.4.0.md
+    - 0.3.1:  Changelogs/0.3.1/0.3.1.md
