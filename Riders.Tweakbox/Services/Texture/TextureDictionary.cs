@@ -130,7 +130,7 @@ namespace Riders.Tweakbox.Services.Texture
                 if (indexOfHash == -1)
                     continue;
 
-                string hash = file.Substring(indexOfHash + 1, HashLength);
+                string hash = fileName.Substring(indexOfHash + 1, HashLength);
                 redirects[hash] = new TextureFile() {Path = file, Format = type};
             }
 
