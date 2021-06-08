@@ -151,6 +151,9 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr ResetHook(IntPtr device, ref PresentParameters presentparameters)
         {
+            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != device)
+                return _resetHook.OriginalFunction(device, ref presentparameters);
+
             SetPresentParameters(ref presentparameters);
             LastPresentParameters = presentparameters;
             return _resetHook.OriginalFunction(device, ref presentparameters);
