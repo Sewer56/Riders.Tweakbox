@@ -150,9 +150,13 @@ namespace Riders.Tweakbox.Services.Texture
                 if (indexOfHash == -1)
                     continue;
 
-                string hash = folderName.Substring(indexOfHash + 1, HashLength);
-                if (AnimatedTexture.TryCreate(folder, out var texture))
-                    redirects[hash] = texture;
+                try
+                {
+                    string hash = folderName.Substring(indexOfHash + 1, HashLength);
+                    if (AnimatedTexture.TryCreate(folder, out var texture))
+                        redirects[hash] = texture;
+                }
+                catch (Exception) { }
             }
 
             AnimatedRedirects = redirects;
