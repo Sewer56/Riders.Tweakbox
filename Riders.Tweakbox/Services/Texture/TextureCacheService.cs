@@ -62,7 +62,7 @@ namespace Riders.Tweakbox.Services.Texture
         /// Adds texture data to the cache.
         /// </summary>
         /// <param name="filePath">The path of the file to cache.</param>
-        /// <param name="texture">The texture to store.</param>
+        /// <param name="stream">The stream containing DDS texture data.</param>
         public unsafe void Store(string filePath, DataStream stream) => Store(filePath, new Span<byte>((void*) stream.DataPointer, (int) stream.Length));
 
         /// <summary>
@@ -97,9 +97,9 @@ namespace Riders.Tweakbox.Services.Texture
             try
             {
                 var lastWriteTime = File.GetLastWriteTimeUtc(filePath);
-                if (lastWriteTime > entry.LastWriteTime)
+                if (lastWriteTime != entry.LastWriteTime)
                 {
-                    Log.WriteLine("Texture is outdated. Removing from cache.", LogCategory.TextureLoad);
+                    Log.WriteLine("Texture write time mismatch. Removing from cache.", LogCategory.TextureLoad);
                     InvalidateKey(filePath);
                     return false;
                 }
