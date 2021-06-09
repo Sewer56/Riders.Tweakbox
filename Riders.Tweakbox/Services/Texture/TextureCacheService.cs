@@ -161,7 +161,7 @@ namespace Riders.Tweakbox.Services.Texture
             {
                 var entry = cacheItem.Value;
                 var timeSince = now - entry.LastAccessTime;
-                if (timeSince <= maxDuration && File.Exists(entry.GetFullFilePath(_io))) 
+                if (timeSince <= maxDuration && File.Exists(entry.GetFullFilePath(_io)) && File.Exists(cacheItem.Key)) 
                     continue;
                 
                 toRemove.Add(cacheItem.Key);
