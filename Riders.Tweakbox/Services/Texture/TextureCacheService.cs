@@ -209,6 +209,7 @@ namespace Riders.Tweakbox.Services.Texture
             }
 
             _textureCache.Remove(filePath);
+            _isInvalidated = true;
         }
 
         private string GetRandomUniqueFilePath()
