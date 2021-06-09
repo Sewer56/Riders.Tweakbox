@@ -69,6 +69,9 @@ namespace Riders.Tweakbox.Misc
         /// </summary>
         public unsafe Patch Disable()
         {
+            if (!IsEnabled)
+                return this;
+
             var addressSpan = new Span<byte>((void*)_address, _originalBytes.Length);
             var bytesSpan = _originalBytes.AsSpan();
             bytesSpan.CopyTo(addressSpan);
