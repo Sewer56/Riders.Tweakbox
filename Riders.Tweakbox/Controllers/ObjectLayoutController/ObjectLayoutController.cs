@@ -380,7 +380,7 @@ namespace Riders.Tweakbox.Controllers.ObjectLayoutController
             for (int x = 0; x < objects.Count; x++)
             {
                 ref var obj = ref objects[x];
-                if (_itemIdToSomeLoadedPtrMap.TryGetValue((ushort) obj.Type, out var ptr))
+                if (obj.Visibility.IsVisible(*State.RaceMode) && _itemIdToSomeLoadedPtrMap.TryGetValue((ushort) obj.Type, out var ptr))
                 {
                     if (*ptr.Ptr == (void*) 0x0)
                         obj.Type = ObjectId.oInvalid;
