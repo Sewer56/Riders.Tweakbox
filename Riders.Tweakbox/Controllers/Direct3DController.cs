@@ -64,7 +64,6 @@ namespace Riders.Tweakbox.Controllers
             _config = config;
             var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
             _createDeviceHook = dx9Hook.Direct3D9VTable.CreateFunctionHook<DX9Hook.CreateDevice>((int)IDirect3D9.CreateDevice, CreateDeviceHook).Activate();
-
             _createTextureHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateTexture>((int)IDirect3DDevice9.CreateTexture, CreateTextureHook).Activate();
             _createVertexBufferHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateVertexBuffer>((int)IDirect3DDevice9.CreateVertexBuffer, CreateVertexBufferHook).Activate();
             _createIndexBufferHook = dx9Hook.DeviceVTable.CreateFunctionHook<CreateIndexBuffer>((int)IDirect3DDevice9.CreateIndexBuffer, CreateIndexBufferHook).Activate();
@@ -100,7 +99,10 @@ namespace Riders.Tweakbox.Controllers
         {
             // Do not edit if does not belong to Riders.
             if (D3dEx == null || direct3dpointer != D3dEx.NativePointer)
+            {
+                Log.WriteLine($"[{nameof(CreateDeviceHook)}] Not Riders Device, Ignoring");
                 return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
+            }
 
             if (_config.Data.D3DDeviceFlags)
             {
@@ -152,7 +154,10 @@ namespace Riders.Tweakbox.Controllers
         private IntPtr ResetHook(IntPtr device, ref PresentParameters presentparameters)
         {
             if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != device)
+            {
+                Log.WriteLine($"[{nameof(ResetHook)}] Not Riders Device, Ignoring");
                 return _resetHook.OriginalFunction(device, ref presentparameters);
+            }
 
             SetPresentParameters(ref presentparameters);
             LastPresentParameters = presentparameters;
@@ -187,9 +192,6 @@ namespace Riders.Tweakbox.Controllers
         #region Hooks for D3D9Ex Support
         private IntPtr CreateTextureHook(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
-                return _createTextureHook.OriginalFunction(devicePointer, width, height, miplevels, usage, format, pool, pptexture, sharedhandle);
-
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
             return _createTextureHook.OriginalFunction(devicePointer, width, height, miplevels, usage, format, pool, pptexture, sharedhandle);
@@ -197,9 +199,6 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateVertexBufferHook(IntPtr devicePointer, uint length, Usage usage, VertexFormat format, Pool pool, void** ppvertexbuffer, void* psharedhandle)
         {
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
-                return _createVertexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppvertexbuffer, psharedhandle);
-
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
             return _createVertexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppvertexbuffer, psharedhandle);
@@ -207,34 +206,23 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateIndexBufferHook(IntPtr devicePointer, uint length, Usage usage, Format format, Pool pool, void** ppindexbuffer, void* psharedhandle)
         {
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicePointer)
-                return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
-            
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
 
             return _createIndexBufferHook.OriginalFunction(devicePointer, length, usage, format, pool, ppindexbuffer, psharedhandle);
         }
-        
-
         #endregion
         
         #region D3D9Ex: These APIs aren't used but just in case!!
         private IntPtr CreateVolumeTextureHook(IntPtr devicepointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
         {
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
-                return _createVolumeTextureHook.OriginalFunction(devicepointer, width, height, depth, miplevels, usage, format, pool, pptexture, sharedhandle);
-
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
             return _createVolumeTextureHook.OriginalFunction(devicepointer, width, height, depth, miplevels, usage, format, pool, pptexture, sharedhandle);
         }
 
         private IntPtr CreateCubeTextureHook(IntPtr devicepointer, int edgelength, int levels, Usage usage, Format format, Pool pool, void** pptexture, void* sharedhandle)
-        {            
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
-                return _createCubeTextureHook.OriginalFunction(devicepointer, edgelength, levels, usage, format, pool, pptexture, sharedhandle);
-
+        {
             usage |= (pool == Pool.Managed ? Usage.Dynamic : 0);
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
             return _createCubeTextureHook.OriginalFunction(devicepointer, edgelength, levels, usage, format, pool, pptexture, sharedhandle);
@@ -242,9 +230,6 @@ namespace Riders.Tweakbox.Controllers
 
         private IntPtr CreateOffscreenPlainSurfaceHook(IntPtr devicepointer, int width, int height, Format format, Pool pool, void** ppsurface, void* sharedhandle)
         {
-            if (D3dDeviceEx == null || D3dDeviceEx.NativePointer != devicepointer)
-                return _createOffscreenPlainSurfaceHook.OriginalFunction(devicepointer, width, height, format, pool, ppsurface, sharedhandle);
-            
             pool = (pool == Pool.Managed) ? Pool.Default : pool;
             return _createOffscreenPlainSurfaceHook.OriginalFunction(devicepointer, width, height, format, pool, ppsurface, sharedhandle);
         }
@@ -270,6 +255,5 @@ namespace Riders.Tweakbox.Controllers
 
         [Function(CallingConventions.Stdcall)]
         public unsafe delegate IntPtr CreateOffscreenPlainSurface(IntPtr devicePointer, int width, int height, Format format, Pool pool, void** ppSurface, void* sharedHandle);
-
     }
 }
