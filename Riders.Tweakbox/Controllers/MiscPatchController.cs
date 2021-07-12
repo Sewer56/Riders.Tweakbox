@@ -38,10 +38,17 @@ namespace Riders.Tweakbox.Controllers
             new Patch(0x00595BE0, new byte[] { 0x00, 0x00, 0x11, 0x00 }),
         });
 
+        /// <summary>
+        /// Disables some sort of file info collection/cache made by CRI.
+        /// This is separate from their PC File Table patched by the CriFsHook mod.
+        /// </summary>
+        public Patch DisableCriCacheInit = new Patch(0x00420E52, new byte[] { 0x90, 0x90, 0x90, 0x90, 0x90 });
+
         public MiscPatchController()
         {
             SkipLoadingRenderLoop.Enable();
             LargerSoundEffectBuffer.Enable();
+            DisableCriCacheInit.Enable();
         }
     }
 }
