@@ -1,11 +1,5 @@
-﻿using System;
-using Reloaded.Hooks.Definitions;
-using Reloaded.Hooks.Definitions.Enums;
-using Riders.Tweakbox.Components.Tweaks;
-using Riders.Tweakbox.Configs;
-using Riders.Tweakbox.Controllers.Interfaces;
+﻿using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -28,5 +22,26 @@ namespace Riders.Tweakbox.Controllers
         /// Allows the player to go backwards.
         /// </summary>
         public Patch EnableGoingBackwards = new Patch(0x4BC751, new byte[] { 0xEB, 0x48 });
+
+        /// <summary>
+        /// Skips a 10 frame loading render loop during game state reset used to smoothen the presentation.
+        /// </summary>
+        public Patch SkipLoadingRenderLoop = new Patch(0x00417019, new byte[] { 0xE9, 0x8B, 0x00, 0x00, 0x00 });
+
+        /// <summary>
+        /// Increases the sound effect buffer used to load sound effect files, which improves load times.
+        /// </summary>
+        public PatchCollection LargerSoundEffectBuffer = new PatchCollection(new Patch[]
+        {
+            // Increase to 0x00110000
+            new Patch(0x004ED534, new byte[] { 0x00, 0x00, 0x11, 0x00 }),
+            new Patch(0x00595BE0, new byte[] { 0x00, 0x00, 0x11, 0x00 }),
+        });
+
+        public MiscPatchController()
+        {
+            SkipLoadingRenderLoop.Enable();
+            LargerSoundEffectBuffer.Enable();
+        }
     }
 }
