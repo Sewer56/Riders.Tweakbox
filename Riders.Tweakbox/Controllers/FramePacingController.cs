@@ -123,7 +123,9 @@ namespace Riders.Tweakbox.Controllers
                     /* Game is Stupid */
                 }
 
-                Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
+                if (!_config.Data.FpsCap)
+                    Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold);
+                
                 *State.TotalFrameCounter += 1;
 
                 if (_resetSpeedup)

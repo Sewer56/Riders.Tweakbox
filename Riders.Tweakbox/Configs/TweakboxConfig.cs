@@ -46,6 +46,8 @@ namespace Riders.Tweakbox.Configs
             public Characters BootToRaceCharacter = Characters.Sonic;
             public ExtremeGear BootToRaceGear = ExtremeGear.Default;
             public MemoryLimit MemoryLimit = MemoryLimit.MB64;
+
+            public bool FpsCap = false;
         }
 
         public enum MemoryLimit : int
