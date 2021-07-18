@@ -69,7 +69,7 @@ namespace Sewer56.Hooks.Utilities
         /// </summary>
         public static string PopXmmRegister(this IReloadedHooksUtilities utilities, string register = "xmm0")
         {
-            return $"vmovdqu {register}, [{_esp}+{SizeOfXmmRegister}]\nadd {_esp}, {SizeOfXmmRegister}";
+            return $"movdqu {register}, [{_esp}+{SizeOfXmmRegister}]\nadd {_esp}, {SizeOfXmmRegister}";
         }
 
         /// <summary>
