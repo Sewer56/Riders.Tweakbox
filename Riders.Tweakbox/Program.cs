@@ -65,10 +65,5 @@ namespace Riders.Tweakbox
 
         /* Automatically called by the mod loader when the mod is about to be unloaded. */
         public Action Disposing { get; }
-
-        /* This is a dummy for R2R (ReadyToRun) deployment.
-           For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
-        */
-        public static void Main() { }
     }
 }

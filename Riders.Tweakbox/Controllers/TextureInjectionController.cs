@@ -223,15 +223,11 @@ namespace Riders.Tweakbox.Controllers
             public List<string> FullPaths;
         }
 
-#if DEBUG
         [UnmanagedCallersOnly]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private static IntPtr SetTextureHook(IntPtr devicepointer, int stage, void* texture) => _controller.SetTextureHookInstance(devicepointer, stage, texture);
-
-#if DEBUG
+        
         [UnmanagedCallersOnly]
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private static IntPtr TextureRelease(IntPtr texturePtr) => _controller.ReleaseTexture(texturePtr);
 
@@ -253,15 +249,9 @@ namespace Riders.Tweakbox.Controllers
                            RawColorBGRA, BlittablePointer<byte>, BlittablePointer<PaletteEntry>, BlittablePointer<BlittablePointer<byte>>, int> Ptr;
         }
 
-#if !DEBUG
-        [ManagedFunction(CallingConventions.ClrCall)]
-#endif
         [Function(CallingConventions.Stdcall)]
         public struct ComReleasePtr { public FuncPtr<IntPtr, IntPtr> Value; }
 
-#if !DEBUG
-        [ManagedFunction(CallingConventions.ClrCall)]
-#endif
         [Function(CallingConventions.Stdcall)]
         public struct SetTexturePtr { public FuncPtr<IntPtr, int, BlittablePointer<Void>, IntPtr> Value; }
     }
