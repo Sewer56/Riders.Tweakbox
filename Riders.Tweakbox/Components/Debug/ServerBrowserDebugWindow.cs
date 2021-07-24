@@ -28,7 +28,7 @@ namespace Riders.Tweakbox.Components.Debug
         public ServerBrowserDebugWindow()
         {
             BrowserMenu = new ServerBrowserMenu(FakeConnect, FakeRefresh);
-            GenerateData(NumServers);
+            Task.Run(() => GenerateData(NumServers)).ConfigureAwait(false);
             BrowserMenu.IsEnabled() = true;
         }
 

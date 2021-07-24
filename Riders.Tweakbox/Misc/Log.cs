@@ -22,6 +22,7 @@ namespace Riders.Tweakbox.Misc
         JitterCalc = 1 << 9,
         TextureDump = 1 << 10,
         TextureLoad = 1 << 11,
+        Benchmark = 1 << 12,
     }
 
     /// <summary>
@@ -44,7 +45,7 @@ namespace Riders.Tweakbox.Misc
                                                             LogCategory.Race | LogCategory.Menu |
                                                             LogCategory.PlayerEvent | LogCategory.Socket |
                                                             LogCategory.Random | LogCategory.JitterCalc |
-                                                            LogCategory.TextureDump | LogCategory.TextureLoad;
+                                                            LogCategory.TextureDump | LogCategory.TextureLoad | LogCategory.Benchmark;
 
         /// <summary>
         /// Declares whether each log type is declared or not.

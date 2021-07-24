@@ -18,6 +18,8 @@ using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
 using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc.Extensions;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
+using Task = System.Threading.Tasks.Task;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -51,7 +53,7 @@ namespace Riders.Tweakbox.Controllers
         /// </summary>
         private Stopwatch _cpuLoadSampleWatch = Stopwatch.StartNew();
 
-        private PerformanceCounter _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        private PerformanceCounter _cpuCounter;
         
         private bool _resetSpeedup = false;
         private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
@@ -65,6 +67,9 @@ namespace Riders.Tweakbox.Controllers
 
         public FramePacingController()
         {
+            // Set this field in background because it's slow and blocking.
+            Task.Run(() => _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")).ConfigureAwait(false);
+
             // Hook and disable frequency adjusting functions.
             var winmm             = PInvoke.LoadLibrary("winmm.dll");
             var timeBeginPeriod   = SDK.ReloadedHooks.CreateFunction<TimeBeginPeriod>((long)Native.GetProcAddress(winmm, "timeBeginPeriod"));
@@ -107,7 +112,8 @@ namespace Riders.Tweakbox.Controllers
             if (_cpuLoadSampleWatch.Elapsed.TotalMilliseconds > CpuSampleIntervalMs)
             {
                 _cpuLoadSampleWatch.Restart();
-                CpuUsage = _cpuCounter.NextValue();
+                if (_cpuCounter != null)
+                    CpuUsage = _cpuCounter.NextValue();
             }
 
             // Seed number generator.
