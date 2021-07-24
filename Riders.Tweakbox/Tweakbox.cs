@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -26,6 +27,7 @@ using Riders.Tweakbox.Services.Interfaces;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Functions;
+using static Riders.Tweakbox.Misc.BenchmarkUtilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox
@@ -68,52 +70,60 @@ namespace Riders.Tweakbox
             tweakBox.Redirector = redirector;
             tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
             tweakBox.InitializeIoC(modFolder);
-            tweakBox.MenuBar = new MenuBar()
+
+#pragma warning disable 4014
+            var setupMenuTask = Task.Run(() =>
             {
-                Menus = new List<MenuBarItem>()
+                tweakBox.MenuBar = new MenuBar()
+                {
+                    Menus = new List<MenuBarItem>()
                 {
                     new MenuBarItem("Netplay", new List<IComponent>()
                     {
-                        IoC.GetSingleton<NetplayMenu>()
+                        Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu))
                     }),
                     new MenuBarItem("Tweaks", new List<IComponent>()
                     {
-                        IoC.GetSingleton<TweakboxSettings>(),
-                        IoC.GetSingleton<TextureEditor>(),
+                        Benchmark(() => IoC.GetSingleton<TweakboxSettings>(), nameof(TweakboxSettings)),
+                        Benchmark(() => IoC.GetSingleton<TextureEditor>(), nameof(TextureEditor)),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
-                        IoC.GetSingleton<GearEditor>(),
-                        IoC.GetSingleton<PhysicsEditor>(),
-                        IoC.GetSingleton<LayoutEditor>(),
+                        Benchmark(() => IoC.GetSingleton<GearEditor>(), nameof(GearEditor)),
+                        Benchmark(() => IoC.GetSingleton<PhysicsEditor>(), nameof(PhysicsEditor)),
+                        Benchmark(() => IoC.GetSingleton<LayoutEditor>(), nameof(LayoutEditor)),
                     }),
                     new MenuBarItem("Debug", new List<IComponent>()
                     {
-                        IoC.GetSingleton<DemoWindow>(),
-                        IoC.GetSingleton<UserGuideWindow>(),
-                        IoC.GetSingleton<ShellTestWindow>(),
-                        IoC.GetSingleton<TaskTrackerWindow>(),
-                        IoC.GetSingleton<MemoryDebugWindow>(),
-                        IoC.GetSingleton<LogWindow>(),
-                        IoC.GetSingleton<RaceSettingsWindow>(),
-                        IoC.GetSingleton<DolphinDumperWindow>(),
-                        IoC.GetSingleton<LapCounterWindow>(),
-                        IoC.GetSingleton<ServerBrowserDebugWindow>(),
+                        Benchmark(() => IoC.GetSingleton<DemoWindow>(), nameof(DemoWindow)),
+                        Benchmark(() => IoC.GetSingleton<UserGuideWindow>(), nameof(UserGuideWindow)),
+                        Benchmark(() => IoC.GetSingleton<ShellTestWindow>(), nameof(ShellTestWindow)),
+                        Benchmark(() => IoC.GetSingleton<TaskTrackerWindow>(), nameof(TaskTrackerWindow)),
+                        Benchmark(() => IoC.GetSingleton<MemoryDebugWindow>(), nameof(MemoryDebugWindow)),
+                        Benchmark(() => IoC.GetSingleton<LogWindow>(), nameof(LogWindow)),
+                        Benchmark(() => IoC.GetSingleton<RaceSettingsWindow>(), nameof(RaceSettingsWindow)),
+                        Benchmark(() => IoC.GetSingleton<DolphinDumperWindow>(), nameof(DolphinDumperWindow)),
+                        Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
+                        Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                     })
                 },
-                Text = new List<string>()
+                    Text = new List<string>()
                 {
                     "F11: Show/Hide Menus",
                     "F10: Enable/Disable Game Input"
                 }
-            };
-
+                };
+            }).ConfigureAwait(false);
+#pragma warning restore 4014
+            
             tweakBox.Hook = await ImguiHook.Create(tweakBox.Render);
 
             // Post-setup steps
             Shell.SetupImGuiConfig(modFolder);
             tweakBox.EnableCrashDumps();
             tweakBox.DisplayFirstTimeDialog();
+
+            await setupMenuTask;
             tweakBox.IsReady = true;
             tweakBox.OnInitialized?.Invoke();
             return tweakBox;
@@ -139,17 +149,17 @@ namespace Riders.Tweakbox
             // Initialize all configs.
             var configTypes = types.Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in configTypes)
-                IoC.GetSingleton(type);
+                Benchmark(() => IoC.GetSingleton(type), type.FullName);
 
             // Initialize all services.
             var serviceTypes = types.Where(x => typeof(ISingletonService).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in serviceTypes)
-                IoC.GetSingleton(type);
+                Benchmark(() => IoC.GetSingleton(type), type.FullName);
 
             // Initialize all controllers.
             var controllerTypes = types.Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
             foreach (var type in controllerTypes)
-                Controllers.Add(IoC.GetSingleton<IController>(type));
+                Benchmark(() => Controllers.Add(IoC.GetSingleton<IController>(type)), type.FullName);
         }
         
         private void DisplayFirstTimeDialog()
