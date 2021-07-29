@@ -2,7 +2,7 @@
   "ModId": "Riders.Tweakbox",
   "ModName": "Sonic Riders Tweakbox",
   "ModAuthor": "Sewer56",
-  "ModVersion": "0.5.9",
+  "ModVersion": "0.5.10",
   "ModDescription": "The all-in-one Riders mod. Like Heroes Tweakbox but on steroids.",
   "ModDll": "Riders.Tweakbox.dll",
   "ModIcon": "Preview.png",
@@ -11,6 +11,6 @@
   "ModNativeDll32": "",
   "ModNativeDll64": "",
   "ModDependencies": [ "reloaded.sharedlib.hooks", "Reloaded.Universal.DInputPleaseCooperate", "reloaded.universal.redirector", "criware.filesystem.hook" ],
-  "OptionalDependencies": [ ],
+  "OptionalDependencies": [],
   "SupportedAppId": [ "sonicriders.exe" ]
 }
