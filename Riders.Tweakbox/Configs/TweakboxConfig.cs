@@ -48,6 +48,8 @@ namespace Riders.Tweakbox.Configs
             public MemoryLimit MemoryLimit = MemoryLimit.MB64;
 
             public bool FpsCap = false;
+            public VoiceLanguage VoiceLanguage = VoiceLanguage.English;
+            public MessageLanguage Language = MessageLanguage.English;
         }
 
         public enum MemoryLimit : int

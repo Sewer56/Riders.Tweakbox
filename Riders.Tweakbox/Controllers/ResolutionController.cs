@@ -79,7 +79,7 @@ namespace Riders.Tweakbox.Controllers
             if (data.Fullscreen)
                 *Sewer56.SonicRiders.API.Misc.MultiSampleType = 0;
 
-            *Sewer56.SonicRiders.API.Misc.Fullscreen = data.Fullscreen;
+            *Sewer56.SonicRiders.API.Misc.ConfigFullscreen = data.Fullscreen;
             Resize();
         }
 

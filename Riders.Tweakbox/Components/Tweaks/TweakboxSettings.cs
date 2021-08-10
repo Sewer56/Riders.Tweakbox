@@ -149,6 +149,9 @@ namespace Riders.Tweakbox.Components.Tweaks
                 Tooltip.TextOnHover("When playing custom music tracks, allow Vanilla tracks to still be played.");
 
                 ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
+
+                Reflection.MakeControlEnum(ref data.Language, "Message Language").Notify(data, nameof(data.Language));
+                Reflection.MakeControlEnum(ref data.VoiceLanguage, "Voice Language").Notify(data, nameof(data.VoiceLanguage));
             }
 
             // Restore item width
