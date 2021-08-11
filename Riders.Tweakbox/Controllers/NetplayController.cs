@@ -42,6 +42,12 @@ namespace Riders.Tweakbox.Controllers
             Task.Run(InitializeApi);
         }
 
+
+        /// <summary>
+        /// True if Netplay Mode is currently Active
+        /// </summary>
+        public bool IsActive() => Socket != null;
+
         /// <summary>
         /// True is currently connected, else false.
         /// </summary>

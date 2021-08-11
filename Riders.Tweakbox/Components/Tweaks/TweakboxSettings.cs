@@ -24,10 +24,11 @@ namespace Riders.Tweakbox.Components.Tweaks
         private string _currentModeString;
         private DisplayMode? _currentMode;
         private List<string> _modes;
+        private NetplayController _netplayController;
 
-        public TweakboxSettings(IO io) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
+        public TweakboxSettings(IO io, NetplayController netController) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
         {
-
+            _netplayController = netController;
             Config.Data.AddPropertyUpdatedHandler(ResolutionUpdated);
         }
 
@@ -107,8 +108,11 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ImGui.Checkbox("Disable VSync", ref data.DisableVSync).Notify(data, nameof(data.DisableVSync));
                 Tooltip.TextOnHover("Applies on boot.");
 
-                ImGui.Checkbox("Remove FPS Cap", ref data.RemoveFpsCap).Notify(data, nameof(data.RemoveFpsCap));
-                Tooltip.TextOnHover("Intended for testing only.");
+                if (!_netplayController.IsActive())
+                {
+                    ImGui.Checkbox("Remove FPS Cap", ref data.RemoveFpsCap).Notify(data, nameof(data.RemoveFpsCap));
+                    Tooltip.TextOnHover("Intended for testing only.");
+                }
 
                 ImGui.Checkbox("Frame Pacing Fix", ref data.FramePacing).Notify(data, nameof(data.FramePacing));
                 Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
@@ -141,9 +145,9 @@ namespace Riders.Tweakbox.Components.Tweaks
             }
         }
 
-        private static void RenderMiscMenu(TweakboxConfig.Internal data)
+        private void RenderMiscMenu(TweakboxConfig.Internal data)
         {
-            if (ImGui.TreeNodeStr("Main Menu Behaviour"))
+            if (!_netplayController.IsActive() && ImGui.TreeNodeStr("Main Menu Behaviour"))
             {
                 ImGui.Checkbox("Return to Stage Select from Race", ref data.NormalRaceReturnToTrackSelect).Notify(data, nameof(data.NormalRaceReturnToTrackSelect));
                 ImGui.Checkbox("Return to Stage Select from Tag", ref data.TagReturnToTrackSelect).Notify(data, nameof(data.TagReturnToTrackSelect));
@@ -151,7 +155,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ImGui.TreePop();
             }
 
-            if (ImGui.TreeNodeStr("Race Tweaks"))
+            if (!_netplayController.IsActive() && ImGui.TreeNodeStr("Race Tweaks"))
             {
                 ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref data.AutoQTE).Notify(data, nameof(data.AutoQTE));
                 ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
