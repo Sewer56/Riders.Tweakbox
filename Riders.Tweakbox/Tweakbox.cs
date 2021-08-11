@@ -16,6 +16,7 @@ using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
+using Riders.Tweakbox.Components.Editors.Info;
 using Riders.Tweakbox.Components.Editors.Layout;
 using Riders.Tweakbox.Components.Editors.Physics;
 using Riders.Tweakbox.Components.Netplay;
@@ -82,10 +83,11 @@ namespace Riders.Tweakbox
                     {
                         Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu))
                     }),
-                    new MenuBarItem("Tweaks", new List<IComponent>()
+                    new MenuBarItem("Settings", new List<IComponent>()
                     {
                         Benchmark(() => IoC.GetSingleton<TweakboxSettings>(), nameof(TweakboxSettings)),
                         Benchmark(() => IoC.GetSingleton<TextureEditor>(), nameof(TextureEditor)),
+                        Benchmark(() => IoC.GetSingleton<InfoEditor>(), nameof(InfoEditor)),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {

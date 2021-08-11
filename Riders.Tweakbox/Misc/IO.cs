@@ -23,6 +23,7 @@ namespace Riders.Tweakbox.Misc
         public string PhysicsConfigFolder => Path.Combine(ConfigFolder, "PhysicsConfigurations");
         public string LogConfigFolder => Path.Combine(ConfigFolder, "LogConfigurations");
         public string TextureConfigFolder => Path.Combine(ConfigFolder, "TextureConfigurations");
+        public string InfoConfigFolder => Path.Combine(ConfigFolder, "InfoConfigurations");
         public string TextureCacheFolder => Path.Combine(ConfigFolder, "TextureCache");
         public string TextureCacheFilesFolder => Path.Combine(TextureCacheFolder, "Cache");
         public string TextureDumpFolder => Path.Combine(ConfigFolder, "TextureDumps");
@@ -47,6 +48,7 @@ namespace Riders.Tweakbox.Misc
             Directory.CreateDirectory(TextureDumpFolder);
             Directory.CreateDirectory(TextureDumpCommonFolder);
             Directory.CreateDirectory(TextureConfigFolder);
+            Directory.CreateDirectory(InfoConfigFolder);
         }
 
         public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
@@ -55,5 +57,6 @@ namespace Riders.Tweakbox.Misc
         public string[] GetTextureConfigFiles() => Directory.GetFiles(TextureConfigFolder, JsonSearchPattern);
         public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, JsonSearchPattern);
         public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
+        public string[] GetInfoConfigFiles() => Directory.GetFiles(InfoConfigFolder, JsonSearchPattern);
     }
 }

@@ -37,6 +37,12 @@ namespace Sewer56.Imgui.Shell
         public Vector2 Padding = new Vector2(5, 5);
 
         /// <summary>
+        /// Minimum size of the window.
+        /// A value of 0 in an axis indicates infinite.
+        /// </summary>
+        public ImVec2 Size = new ImVec2();
+
+        /// <summary>
         /// Position in the window against which the rest of the window pivots.
         /// </summary>
         public ImVec2 WindowPivot;
@@ -45,6 +51,11 @@ namespace Sewer56.Imgui.Shell
         /// Corner/edge relative to which the window is positioned.
         /// </summary>
         public Pivots.Pivot PositionPivot;
+
+        /// <summary>
+        /// Contains the size of the last window/frame.
+        /// </summary>
+        public ImVec2 LastWindowSize { get; private set; } = new ImVec2();
 
         private bool _isOpen;
         private ImVec2 _nextWindowPos = new ImVec2();
@@ -56,8 +67,7 @@ namespace Sewer56.Imgui.Shell
         public InformationWindow(string name, Pivots.Pivot positionPivot, Pivots.Pivot windowPivot, bool isOpen = true)
         {
             Name = name;
-            PositionPivot = positionPivot;
-            WindowPivot = Pivots.GetPoint(windowPivot);
+            SetPivot(positionPivot, windowPivot);
             _isOpen = isOpen;
         }
 
@@ -72,6 +82,17 @@ namespace Sewer56.Imgui.Shell
             WindowPivot = windowPivot;
             _isOpen = isOpen;
         }
+        
+        /// <summary>
+        /// Adjusts the pivot of the current window.
+        /// </summary>
+        /// <param name="positionPivot">Corner/edge relative to which the window is positioned.</param>
+        /// <param name="windowPivot">Position in the window against which the rest of the window pivots.</param>
+        public void SetPivot(Pivots.Pivot positionPivot, Pivots.Pivot windowPivot)
+        {
+            PositionPivot = positionPivot;
+            WindowPivot = Pivots.GetPoint(windowPivot);
+        }
 
         /// <summary>
         /// Call this to begin rendering the window.
@@ -79,14 +100,18 @@ namespace Sewer56.Imgui.Shell
         public void Begin()
         {
             SetWindowPosition();
-            ImGui.SetNextWindowSize(Constants.DefaultVector2, (int) ImGuiCond.ImGuiCondAlways);
+            ImGui.SetNextWindowSize(Size, (int) ImGuiCond.ImGuiCondAlways);
             ImGui.Begin(Name, ref _isOpen, LogWindowFlags);
         }
 
         /// <summary>
         /// Call this to end rendering the window.
         /// </summary>
-        public void End() => ImGui.End();
+        public void End()
+        {
+            ImGui.End();
+            ImGui.GetWindowSize(LastWindowSize);
+        }
 
         private void SetWindowPosition()
         {
@@ -146,6 +171,8 @@ namespace Sewer56.Imgui.Shell
         /// <inheritdoc />
         public void Dispose()
         {
+            Size?.Dispose();
+            LastWindowSize?.Dispose();
             WindowPivot?.Dispose();
             _nextWindowPos?.Dispose();
             GC.SuppressFinalize(this);
