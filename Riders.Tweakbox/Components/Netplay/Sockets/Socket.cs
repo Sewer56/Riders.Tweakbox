@@ -127,6 +127,9 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets
 
             IoC.Kernel.Rebind<Socket>().ToConstant(this);
 
+            // Integrity
+            AddComponent(IoC.Get<Components.Misc.TweakboxSettingChanger>());
+
             // Server
             AddComponent(IoC.Get<Components.Server.ConnectionManager>());
             AddComponent(IoC.Get<Components.Game.GameModifiers>());
