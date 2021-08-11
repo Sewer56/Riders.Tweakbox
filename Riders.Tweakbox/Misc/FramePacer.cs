@@ -151,8 +151,8 @@ namespace Riders.Tweakbox.Misc
         ///     If true allows the thread to yield when spinning.
         ///     Only set this to false if the CPU is maxed out (>95% usage).
         /// </param>
-        public void EndFrame(float maxSpeedupTimeMillis = 2000, bool spin = false, bool allowSpeedup = true,
-            bool spinAllowThreadYield = true)
+        /// <param name="dontSleep">Does not sleep if true, only collects framerate information.</param>
+        public void EndFrame(float maxSpeedupTimeMillis = 2000, bool spin = false, bool allowSpeedup = true, bool spinAllowThreadYield = true, bool dontSleep = false)
         {
             // Summarize stats for the current frame.
             StatRenderTime = _frameTimeWatch.Elapsed.TotalMilliseconds;
@@ -166,7 +166,8 @@ namespace Riders.Tweakbox.Misc
                 StatSleepTime = -maxSpeedupTimeMillis;
 
             // Sleep
-            Sleep(spin, spinAllowThreadYield);
+            if (!dontSleep)
+                Sleep(spin, spinAllowThreadYield);
 
             // Restart calculation for new frame.
             StartFrame();

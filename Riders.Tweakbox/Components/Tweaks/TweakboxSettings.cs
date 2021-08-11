@@ -107,7 +107,7 @@ namespace Riders.Tweakbox.Components.Tweaks
                 ImGui.Checkbox("Disable VSync", ref data.DisableVSync).Notify(data, nameof(data.DisableVSync));
                 Tooltip.TextOnHover("Applies on boot.");
 
-                ImGui.Checkbox("Remove FPS Cap", ref data.FpsCap).Notify(data, nameof(data.FpsCap));
+                ImGui.Checkbox("Remove FPS Cap", ref data.RemoveFpsCap).Notify(data, nameof(data.RemoveFpsCap));
                 Tooltip.TextOnHover("Intended for testing only.");
 
                 ImGui.Checkbox("Frame Pacing Fix", ref data.FramePacing).Notify(data, nameof(data.FramePacing));

@@ -36,13 +36,13 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             _oldReturnToStageSelFromSurvival = _stageSelSurv.Hook.IsEnabled;
             _oldReturnToStageSelFromTag      = _stageSelTag.Hook.IsEnabled;
             _miscPatchEnableBackwards        = _miscPatch.EnableGoingBackwards.IsEnabled;
-            _hasFpsCap = _tweakboxConfig.Data.FpsCap;
+            _hasFpsCap = _tweakboxConfig.Data.RemoveFpsCap;
 
             _stageSelRace.Hook.Enable();
             _stageSelSurv.Hook.Enable();
             _stageSelTag.Hook.Enable();
             _miscPatch.EnableGoingBackwards.Enable();
-            _tweakboxConfig.Data.FpsCap = true;
+            _tweakboxConfig.Data.RemoveFpsCap = false;
         }
 
         /// <inheritdoc />
@@ -52,7 +52,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc
             _stageSelSurv.Hook.Toggle(_oldReturnToStageSelFromSurvival);
             _stageSelTag.Hook.Toggle(_oldReturnToStageSelFromTag);
             _miscPatch.EnableGoingBackwards.Set(_miscPatchEnableBackwards);
-            _tweakboxConfig.Data.FpsCap = _hasFpsCap;
+            _tweakboxConfig.Data.RemoveFpsCap = _hasFpsCap;
         }
 
         /// <inheritdoc />
