@@ -4,6 +4,7 @@ using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Shell.Interfaces;
+using Constants = Sewer56.Imgui.Misc.Constants;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
 
 namespace Riders.Tweakbox.Components.Editors.Info
@@ -31,54 +32,81 @@ namespace Riders.Tweakbox.Components.Editors.Info
         private void RenderInfoEditor()
         {
             var data = Config.Data;
+            if (ImGui.Button("Add", Constants.ButtonSize))
+                data.Widgets.Add(new InfoEditorConfig.WidgetConfig());
+
+            for (var x = data.Widgets.Count - 1; x >= 0; x--)
+            {
+                if (ImGui.CollapsingHeaderTreeNodeFlags($"Widget {x}", 0))
+                {
+                    ImGui.PushIDInt(x);
+                    if (!RenderWidgetEditor(data.Widgets[x]))
+                        data.Widgets.RemoveAt(x);
+
+                    ImGui.PopID();
+                }
+            }
+        }
+
+        private bool RenderWidgetEditor(InfoEditorConfig.WidgetConfig data)
+        {
             var showPercent = "Show %";
-            var showNumber = "Show Number";
-            var showGraph = "Show Graph";
+            var showNumber  = "Show Number";
+            var showGraph   = "Show Graph";
 
-            Reflection.MakeControlEnum(ref data.Position, "Position").Notify(data, nameof(data.Position));
-            ImGui.DragInt("Window Width", ref data.Width, 1, 0, 16384, null, 0).Notify(data, nameof(data.Width));
-            ImGui.DragInt("Window Height", ref data.Height, 1, 0, 16384, null, 0).Notify(data, nameof(data.Height));
+            if (ImGui.TreeNodeStr("Position & Style"))
+            {
+                Reflection.MakeControlEnum(ref data.Position, "Position");
+                ImGui.DragInt("Window Width", ref data.Width, 1, 0, 16384, null, 0);
+                ImGui.DragInt("Window Height", ref data.Height, 1, 0, 16384, null, 0);
 
-            ImGui.DragInt("Graph Width", ref data.GraphWidth, 1, 0, 16384, null, 0).Notify(data, nameof(data.GraphWidth));
-            ImGui.DragInt("Graph Height", ref data.GraphHeight, 1, 0, 16384, null, 0).Notify(data, nameof(data.GraphHeight));
+                ImGui.DragInt("Graph Width", ref data.GraphWidth, 1, 0, 16384, null, 0);
+                ImGui.DragInt("Graph Height", ref data.GraphHeight, 1, 0, 16384, null, 0);
+                ImGui.TreePop();
+            }
 
             if (ImGui.TreeNodeStr("CPU Usage"))
             {
-                Reflection.MakeControl(ref data.ShowCpuNumber, showPercent).Notify(data, nameof(data.ShowCpuNumber));
-                Reflection.MakeControl(ref data.ShowCpuGraph, showGraph).Notify(data, nameof(data.ShowCpuGraph));
+                Reflection.MakeControl(ref data.ShowCpuNumber, showPercent);
+                Reflection.MakeControl(ref data.ShowCpuGraph, showGraph);
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNodeStr("FPS"))
             {
-                Reflection.MakeControl(ref data.ShowFpsNumber, showNumber).Notify(data, nameof(data.ShowFpsNumber));
-                Reflection.MakeControl(ref data.ShowFpsGraph, showGraph).Notify(data, nameof(data.ShowFpsGraph));
+                Reflection.MakeControl(ref data.ShowFpsNumber, showNumber);
+                Reflection.MakeControl(ref data.ShowFpsGraph, showGraph);
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNodeStr("Frame Time"))
             {
-                Reflection.MakeControl(ref data.ShowFrameTimeNumber, showNumber).Notify(data, nameof(data.ShowFrameTimeNumber));
-                Reflection.MakeControl(ref data.ShowFrameTimeGraph, showGraph).Notify(data, nameof(data.ShowFrameTimeGraph));
+                Reflection.MakeControl(ref data.ShowFrameTimeNumber, showNumber);
+                Reflection.MakeControl(ref data.ShowFrameTimeGraph, showGraph);
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNodeStr("Render Time"))
             {
                 ImGui.TextWrapped("Shows the amount of time taken to process an individual frame (i.e. non-idle time).");
-                Reflection.MakeControl(ref data.ShowRenderTimeNumber, showNumber).Notify(data, nameof(data.ShowRenderTimeNumber));
-                Reflection.MakeControl(ref data.ShowRenderTimeGraph, showGraph).Notify(data, nameof(data.ShowRenderTimeGraph));
-                Reflection.MakeControl(ref data.ShowRenderTimePercent, showPercent).Notify(data, nameof(data.ShowRenderTimePercent));
+                Reflection.MakeControl(ref data.ShowRenderTimeNumber, showNumber);
+                Reflection.MakeControl(ref data.ShowRenderTimeGraph, showGraph);
+                Reflection.MakeControl(ref data.ShowRenderTimePercent, showPercent);
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNodeStr("Potential FPS"))
             {
                 ImGui.TextWrapped("Shows an estimate of the achievable FPS should the framerate be uncapped.");
-                Reflection.MakeControl(ref data.ShowMaxFpsNumber, showNumber).Notify(data, nameof(data.ShowMaxFpsNumber));
-                Reflection.MakeControl(ref data.ShowMaxFpsGraph, showGraph).Notify(data, nameof(data.ShowMaxFpsGraph));
+                Reflection.MakeControl(ref data.ShowMaxFpsNumber, showNumber);
+                Reflection.MakeControl(ref data.ShowMaxFpsGraph, showGraph);
                 ImGui.TreePop();
             }
+
+            if (ImGui.Button("Delete", Constants.ButtonSize))
+                return false;
+
+            return true;
         }
     }
 }
