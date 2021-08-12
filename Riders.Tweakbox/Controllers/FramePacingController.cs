@@ -68,7 +68,8 @@ namespace Riders.Tweakbox.Controllers
         public FramePacingController()
         {
             // Set this field in background because it's slow and blocking.
-            Task.Run(() => _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")).ConfigureAwait(false);
+            try { Task.Run(() => _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")).ConfigureAwait(false); }
+            catch (Exception e) { /* Fails on some machines. */ }
 
             // Hook and disable frequency adjusting functions.
             var winmm             = PInvoke.LoadLibrary("winmm.dll");
