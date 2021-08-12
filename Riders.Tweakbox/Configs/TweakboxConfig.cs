@@ -47,7 +47,7 @@ namespace Riders.Tweakbox.Configs
             public ExtremeGear BootToRaceGear = ExtremeGear.Default;
             public MemoryLimit MemoryLimit = MemoryLimit.MB64;
 
-            public bool RemoveFpsCap = true;
+            public bool RemoveFpsCap = false;
             public VoiceLanguage VoiceLanguage = VoiceLanguage.English;
             public MessageLanguage Language = MessageLanguage.English;
         }
