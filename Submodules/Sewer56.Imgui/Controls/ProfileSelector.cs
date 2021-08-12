@@ -127,11 +127,11 @@ namespace Sewer56.Imgui.Controls
                 });
 
             if (ImGui.Button("New", Constants.DefaultVector2))
-                ImGui.OpenPopup(NewDialogId, 0);
+                ImGui.OpenPopupStr(NewDialogId, 0);
 
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Delete", Constants.DefaultVector2))
-                ImGui.OpenPopup(DeleteDialogId, 0);
+                ImGui.OpenPopupStr(DeleteDialogId, 0);
 
             ImGui.SameLine(0, Constants.Spacing);
             if (ImGui.Button("Load", Constants.DefaultVector2))

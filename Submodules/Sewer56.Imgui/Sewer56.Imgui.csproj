@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DearImguiSharp" Version="1.81.3" />
+    <PackageReference Include="DearImguiSharp" Version="1.83.0" />
     <PackageReference Include="Enums.NET" Version="3.0.3" />
-    <PackageReference Include="Reloaded.Imgui.Hook" Version="1.1.2" />
+    <PackageReference Include="Reloaded.Imgui.Hook" Version="1.2.2" />
     <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
   </ItemGroup>
 

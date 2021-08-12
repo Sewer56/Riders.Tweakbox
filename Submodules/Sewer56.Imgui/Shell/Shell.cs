@@ -187,7 +187,7 @@ namespace Sewer56.Imgui.Shell
         private static unsafe bool DialogHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
         {
             bool isOpened = true;
-            ImGui.OpenPopup(name, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
+            ImGui.OpenPopupStr(name, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
 
             bool beginSuccess = showClose ? 
                 ImGui.BeginPopupModal(name, ref isOpened, (int) flags) : 

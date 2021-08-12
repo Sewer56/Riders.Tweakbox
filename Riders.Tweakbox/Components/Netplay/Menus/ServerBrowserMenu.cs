@@ -127,7 +127,7 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
                     {
                         // Setup
                         var item = _currentSelection.Players[x];
-                        ImGui.PushIDInt(x);
+                        ImGui.PushID_Int(x);
                         ImGui.TableNextRow(0, 0);
 
                         // Name
@@ -207,7 +207,7 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
                     var item = results[x];
                     bool isSelected = item == _currentSelection;
 
-                    ImGui.PushIDInt(x);
+                    ImGui.PushID_Int(x);
                     ImGui.TableNextRow(0, 0);
                     int columnIndex = 0;
 

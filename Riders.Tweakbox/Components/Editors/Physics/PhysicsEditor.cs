@@ -52,7 +52,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                 {
                     if (ImGui.TreeNodeStr("Regular Turbulence"))
                     {
-                        ImGui.PushIDInt(id++);
+                        ImGui.PushID_Int(id++);
                         EditTurbulenceType(TurbulenceType.NoTrick, 0);
                         EditTurbulenceType(TurbulenceType.TrickOne, 0);
                         EditTurbulenceType(TurbulenceType.TrickTwo, 0);
@@ -64,7 +64,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                     
                     if (ImGui.TreeNodeStr("Babylon Garden Turbulence"))
                     {
-                        ImGui.PushIDInt(id++);
+                        ImGui.PushID_Int(id++);
                         var offset = (int) TurbulenceType.TrickRainbowTopPath + 1;
                         EditTurbulenceType(TurbulenceType.NoTrick, offset);
                         EditTurbulenceType(TurbulenceType.TrickOne, offset);
@@ -77,7 +77,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
                     
                     if (ImGui.TreeNodeStr("Sky Road Turbulence"))
                     {
-                        ImGui.PushIDInt(id++);
+                        ImGui.PushID_Int(id++);
                         var offset = ((int) TurbulenceType.TrickRainbowTopPath + 1) * 2;
                         EditTurbulenceType(TurbulenceType.NoTrick, offset);
                         EditTurbulenceType(TurbulenceType.TrickOne, offset);
@@ -91,7 +91,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Dash Panel Behaviour", 0))
                 {
-                    ImGui.PushIDInt(id++);
+                    ImGui.PushID_Int(id++);
                     ref var panelProps = ref Static.PanelProperties;
                     Reflection.MakeControlEnum(ref panelProps.Mode, "Dash Panel Mode");
                     switch (panelProps.Mode)
@@ -119,7 +119,7 @@ namespace Riders.Tweakbox.Components.Editors.Physics
 
                 if (ImGui.CollapsingHeaderTreeNodeFlags("Speed Shoes Behaviour", 0))
                 {
-                    ImGui.PushIDInt(id++);
+                    ImGui.PushID_Int(id++);
                     ref var shoeProps = ref Static.SpeedShoeProperties;
                     Reflection.MakeControlEnum(ref shoeProps.Mode, "Speed Shoes Mode");
                     switch (shoeProps.Mode)

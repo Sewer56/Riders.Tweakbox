@@ -89,7 +89,7 @@ namespace Riders.Tweakbox.Components.Editors.Layout
             {
                 if (_scrollTable)
                 {
-                    ImGui.SetScrollYFloat(ImGui.GetTextLineHeightWithSpacing() * _currentIndex);
+                    ImGui.SetScrollY_Float(ImGui.GetTextLineHeightWithSpacing() * _currentIndex);
                     _scrollTable = false;
                 }
 
@@ -111,7 +111,7 @@ namespace Riders.Tweakbox.Components.Editors.Layout
                         var item = &loaded.LayoutFile.Objects.Pointer[x];
                         bool isSelected = item == _currentObject;
 
-                        ImGui.PushIDInt(totalIndex);
+                        ImGui.PushID_Int(totalIndex);
                         ImGui.TableNextRow(0, 0);
                         int columnIndex = 0;
 

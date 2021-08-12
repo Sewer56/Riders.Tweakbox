@@ -56,7 +56,7 @@ namespace Riders.Tweakbox.Components.Debug
         private bool TestManualDialog()
         {
             bool isOpened = true;
-            ImGui.OpenPopup(TestDialogId, 0);
+            ImGui.OpenPopupStr(TestDialogId, 0);
             if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
             {
                 ImGui.Text("Test Manual Dialog");

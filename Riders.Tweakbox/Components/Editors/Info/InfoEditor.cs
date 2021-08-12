@@ -39,7 +39,7 @@ namespace Riders.Tweakbox.Components.Editors.Info
             {
                 if (ImGui.CollapsingHeaderTreeNodeFlags($"Widget {x}", 0))
                 {
-                    ImGui.PushIDInt(x);
+                    ImGui.PushID_Int(x);
                     if (!RenderWidgetEditor(data.Widgets[x]))
                         data.Widgets.RemoveAt(x);
 

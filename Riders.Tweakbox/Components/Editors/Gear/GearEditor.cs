@@ -51,7 +51,7 @@ namespace Riders.Tweakbox.Components.Editors.Gear
                 var headerName = ((ExtremeGearEnum)x).GetName();
                 if (ImGui.CollapsingHeaderTreeNodeFlags(headerName, 0))
                 {
-                    ImGui.PushIDInt(x);
+                    ImGui.PushID_Int(x);
                     EditGear((ExtremeGear*) Player.Gears.GetPointerToElement(x));
                     ImGui.PopID();
                 }

@@ -36,7 +36,7 @@ namespace Riders.Tweakbox.Misc
         {
             bool isOpened = true;
             
-            ImGui.OpenPopup(Title, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
+            ImGui.OpenPopupStr(Title, (int) ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
             ImGui.__Internal.SetNextWindowSize(new ImVec2.__Internal() { x = 400, y = 0 }, (int) ImGuiCond.ImGuiCondAlways);
             if (ImGui.BeginPopupModal(Title, ref isOpened, (int) (ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlagsNoSavedSettings)))
             {
