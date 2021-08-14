@@ -20,7 +20,6 @@ namespace Riders.Tweakbox.Controllers
         private IHook<Functions.CdeclReturnIntFn> _readConfigHook;
         private TweakboxConfig _config;
         private WindowService _windowService;
-        private readonly ImguiHook _hook;
         private FramePacingController _pacingController;
 
         private Patch _disableGameWindowAdjustment = new Patch(0x00518680, new byte[] { 0xC3 }, true);

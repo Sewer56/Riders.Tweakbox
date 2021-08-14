@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime;
 using System.Threading;
 using System.Windows;
@@ -45,6 +45,9 @@ namespace Riders.Tweakbox
             Log.HudListener = new ShellTraceListener();
             Sewer56.SonicRiders.SDK.Init(hooks);
             Reloaded.Imgui.Hook.SDK.Init(hooks);
+#if DEBUG
+            Reloaded.Imgui.Hook.SDK.Debug += s => Log.WriteLine(s);
+#endif
             _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader);
 
             // Tweak Garbage Collection.
