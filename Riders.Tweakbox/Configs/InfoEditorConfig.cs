@@ -37,13 +37,18 @@ namespace Riders.Tweakbox.Configs
             public bool ShowCpuNumber = false;
             public bool ShowCpuGraph = false;
 
+            public bool ShowHeapPercent = false;
+            public bool ShowHeapNumber = false;
+            public bool ShowHeapGraph = false;
+
             public bool HasAnythingToShow()
             {
                 return ShowFpsNumber || ShowFpsGraph
                                      || ShowFrameTimeNumber || ShowFrameTimeGraph
                                      || ShowMaxFpsNumber || ShowMaxFpsGraph
                                      || ShowCpuNumber || ShowCpuGraph
-                                     || ShowRenderTimeNumber || ShowRenderTimeGraph || ShowRenderTimePercent;
+                                     || ShowRenderTimeNumber || ShowRenderTimeGraph || ShowRenderTimePercent
+                                     || ShowHeapNumber || ShowHeapGraph || ShowHeapPercent;
             }
         }
     }

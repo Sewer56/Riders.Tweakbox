@@ -103,6 +103,15 @@ namespace Riders.Tweakbox.Components.Editors.Info
                 ImGui.TreePop();
             }
 
+            if (ImGui.TreeNodeStr("Memory Heap"))
+            {
+                ImGui.TextWrapped("Shows the amount of memory used in the game's internal heap.");
+                Reflection.MakeControl(ref data.ShowHeapNumber, showNumber);
+                Reflection.MakeControl(ref data.ShowHeapGraph, showGraph);
+                Reflection.MakeControl(ref data.ShowHeapPercent, showPercent);
+                ImGui.TreePop();
+            }
+
             if (ImGui.Button("Delete", Constants.ButtonSize))
                 return false;
 
