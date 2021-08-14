@@ -11,6 +11,7 @@ using Utilities = Sewer56.SonicRiders.Utilities;
 // ReSharper disable once RedundantUsingDirective
 using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs;
+using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -21,7 +22,7 @@ namespace Riders.Tweakbox.Controllers
     {
         public bool IsLargeAddressAware { get; private set; }
 
-        private IHook<Functions.FreeFnPtr> _freeFrameHook;
+        private IHook<Heap.FreeFnPtr> _freeFrameHook;
         private static LimitBreakController _this;
         private SYSTEM_INFO _info;
 
@@ -52,7 +53,7 @@ namespace Riders.Tweakbox.Controllers
             *(int*) 0x4419AD = 0x2000; // Init Loop Iterations
             *(int*) 0x441990 = 0x2000; // Init Loop Iterations
 
-            _freeFrameHook = Functions.FreeFrame.HookAs<Functions.FreeFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
+            _freeFrameHook = Heap.FreeFrame.HookAs<Heap.FreeFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
             PInvoke.GetSystemInfo(out _info);
         }
 
