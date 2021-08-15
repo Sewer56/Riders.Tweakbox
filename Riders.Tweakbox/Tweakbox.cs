@@ -106,8 +106,8 @@ namespace Riders.Tweakbox
                             Benchmark(() => IoC.GetSingleton<RaceSettingsWindow>(), nameof(RaceSettingsWindow)),
                             Benchmark(() => IoC.GetSingleton<DolphinDumperWindow>(), nameof(DolphinDumperWindow)),
                             Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
-                            Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(),
-                                nameof(ServerBrowserDebugWindow)),
+                            Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
+                            Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                         })
                     },
                     Text = new List<string>()

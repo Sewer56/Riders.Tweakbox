@@ -23,6 +23,7 @@ namespace Riders.Tweakbox.Misc
         TextureDump = 1 << 10,
         TextureLoad = 1 << 11,
         Benchmark = 1 << 12,
+        Heap = 1 << 13,
     }
 
     /// <summary>
@@ -60,16 +61,21 @@ namespace Riders.Tweakbox.Misc
         /// <summary>
         /// Checks if a given category is enabled.
         /// </summary>
-        public static bool IsEnabled(ListenerType listenerType, LogCategory category)
+        public static bool IsEnabled(ListenerType listenerType = ListenerType.Any, LogCategory category = LogCategory.Default)
         {
-            switch (listenerType)
+            return listenerType switch
             {
-                case ListenerType.Hud: return HudCategories.HasAnyFlags(category);
-                case ListenerType.Console: return ConsoleCategories.HasAnyFlags(category);
-            }
-
-            return false;
+                ListenerType.Any => HudCategories.HasAnyFlags(category) || ConsoleCategories.HasAnyFlags(category),
+                ListenerType.Hud => HudCategories.HasAnyFlags(category),
+                ListenerType.Console => ConsoleCategories.HasAnyFlags(category),
+                _ => false
+            };
         }
+
+        /// <summary>
+        /// Checks if a given category is enabled.
+        /// </summary>
+        public static bool IsEnabled(LogCategory category = LogCategory.Default, ListenerType listenerType = ListenerType.Any) => IsEnabled(listenerType, category);
 
         /// <summary>
         /// Logs a given piece of text onto a new line.
@@ -101,6 +107,7 @@ namespace Riders.Tweakbox.Misc
 
         public enum ListenerType
         {
+            Any,
             Hud,
             Console
         }

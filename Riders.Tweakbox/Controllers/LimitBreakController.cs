@@ -12,6 +12,7 @@ using Utilities = Sewer56.SonicRiders.Utilities;
 using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Structures.Functions;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -22,7 +23,7 @@ namespace Riders.Tweakbox.Controllers
     {
         public bool IsLargeAddressAware { get; private set; }
 
-        private IHook<Heap.FreeFnPtr> _freeFrameHook;
+        private IHook<Heap.FreeFrameFnPtr> _freeFrameHook;
         private static LimitBreakController _this;
         private SYSTEM_INFO _info;
 
@@ -53,17 +54,17 @@ namespace Riders.Tweakbox.Controllers
             *(int*) 0x4419AD = 0x2000; // Init Loop Iterations
             *(int*) 0x441990 = 0x2000; // Init Loop Iterations
 
-            _freeFrameHook = Heap.FreeFrame.HookAs<Heap.FreeFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
+            _freeFrameHook = Heap.FreeFrame.HookAs<Heap.FreeFrameFnPtr>(typeof(LimitBreakController), nameof(FreeFrameStatic)).Activate();
             PInvoke.GetSystemInfo(out _info);
         }
 
-        private unsafe BlittablePointer<byte> FreeFrame(void* address)
+        private unsafe int FreeFrame(MallocResult* address)
         {
             uint currentHeader = *(uint*)0x017B8DA8;
             uint newHeader     = (uint) address;
             int bytesFreed     = (int) (currentHeader - newHeader); 
 
-            var result = _freeFrameHook.OriginalFunction.Value.Invoke(new BlittablePointer<byte>((byte*) address));
+            var result = _freeFrameHook.OriginalFunction.Value.Invoke(address);
 
             var freeStart = Utilities.RoundUp((int) newHeader, (int)_info.dwPageSize);
             int bytesRoundLess = (int) (freeStart - newHeader);
@@ -84,6 +85,6 @@ namespace Riders.Tweakbox.Controllers
         }
 
         [UnmanagedCallersOnly]
-        private static unsafe void* FreeFrameStatic(void* address) => _this.FreeFrame(address).Pointer;
+        private static unsafe int FreeFrameStatic(MallocResult* address) => _this.FreeFrame(address);
     }
 }
