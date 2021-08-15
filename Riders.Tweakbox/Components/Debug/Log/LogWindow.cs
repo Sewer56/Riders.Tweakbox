@@ -2,6 +2,7 @@
 using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
 namespace Riders.Tweakbox.Components.Debug.Log;
 

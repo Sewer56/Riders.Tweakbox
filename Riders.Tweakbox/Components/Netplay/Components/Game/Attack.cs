@@ -8,7 +8,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
@@ -41,6 +41,7 @@ public unsafe class Attack : INetplayComponent
     /// </summary>
     private Timestamped<SetAttack>[] _attackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
     private GameModifiers _modifiers;
+    private Logger _log = new Logger(LogCategory.Race);
 
     public Attack(Socket socket, EventController @event)
     {
@@ -78,7 +79,7 @@ public unsafe class Attack : INetplayComponent
         if (packet.MessageType != MessageType.Attack)
             return;
 
-        Log.WriteLine($"[{nameof(Attack)}] Received Attack Packet", LogCategory.Race);
+        _log.WriteLine($"[{nameof(Attack)}] Received Attack Packet");
         var attackPacked = packet.GetMessage<AttackPacked>();
 
         // Index of first player to fill.
@@ -99,7 +100,7 @@ public unsafe class Attack : INetplayComponent
 
             attack.Target = (byte)State.GetLocalPlayerIndex(attack.Target);
 
-            Log.WriteLine($"[{nameof(Attack)}] Received Attack from {playerIndex} [{x}] to hit {attack.Target}", LogCategory.Race);
+            _log.WriteLine($"[{nameof(Attack)}] Received Attack from {playerIndex} [{x}] to hit {attack.Target}");
             _attackSync[playerIndex + x] = attack;
         }
     }
@@ -132,14 +133,14 @@ public unsafe class Attack : INetplayComponent
         switch (Socket.GetSocketType())
         {
             case SocketType.Host:
-                Log.WriteLine($"[{nameof(Attack)} / Host] Set Attack by {attackerIndex} on {attackedIndex}", LogCategory.Race);
+                _log.WriteLine($"[{nameof(Attack)} / Host] Set Attack by {attackerIndex} on {attackedIndex}");
                 _attackSync[attackerIndex] = new Timestamped<SetAttack>(new SetAttack((byte)attackedIndex));
                 break;
 
             case SocketType.Client when State.NumLocalPlayers > 0:
                 {
                     var hostIndex = Socket.State.GetHostPlayerIndex(attackedIndex);
-                    Log.WriteLine($"[{nameof(Attack)} / Client] Send Attack by {attackerIndex} on {attackedIndex} [Host Index: {hostIndex}]", LogCategory.Race);
+                    _log.WriteLine($"[{nameof(Attack)} / Client] Send Attack by {attackerIndex} on {attackedIndex} [Host Index: {hostIndex}]");
 
                     // Make Packet
                     using var attack = new AttackPacked().CreatePooled(State.NumLocalPlayers);
@@ -178,7 +179,7 @@ public unsafe class Attack : INetplayComponent
                 for (var y = 0; y < attacks.Length; y++)
                 {
                     if (attacks[y].IsValid)
-                        Log.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({y}), Target {attacks[y].Target}", LogCategory.Race);
+                        _log.WriteLine($"[{nameof(Attack)} / Host] Send Attack Source ({y}), Target {attacks[y].Target}");
                 }
 #endif
 
@@ -188,7 +189,7 @@ public unsafe class Attack : INetplayComponent
                 Socket.Send(peer, ReliablePacket.Create(attack), DeliveryMethod.ReliableOrdered);
             }
 
-            Log.WriteLine($"[{nameof(Attack)} / Host] Attack Matrix Sent", LogCategory.Race);
+            _log.WriteLine($"[{nameof(Attack)} / Host] Attack Matrix Sent");
             Socket.Update();
         }
 
@@ -212,7 +213,7 @@ public unsafe class Attack : INetplayComponent
             if (!value.IsValid)
                 continue;
 
-            Log.WriteLine($"[State] Execute Attack by {x} on {value.Target}", LogCategory.Race);
+            _log.WriteLine($"[State] Execute Attack by {x} on {value.Target}");
             StartAttackTask(x, value.Target);
         }
 

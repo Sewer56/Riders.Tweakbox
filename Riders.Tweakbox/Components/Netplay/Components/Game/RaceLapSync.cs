@@ -10,6 +10,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
@@ -63,6 +64,7 @@ public unsafe class RaceLapSync : INetplayComponent
 
     private void* _goalRaceFinishTaskPtr;
     private bool _isRaceFinishTaskEnabled;
+    private Logger _log = new Logger(LogCategory.LapSync);
 
     public RaceLapSync(Socket socket, EventController @event)
     {
@@ -106,7 +108,7 @@ public unsafe class RaceLapSync : INetplayComponent
     private unsafe int SetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player)
     {
         // Suppress task creation; we will decide ourselves when it's time.
-        Log.WriteLine($"[{nameof(RaceLapSync)}] OnSetGoalRaceFinishTask P{GetPlayerIndex(player)}", LogCategory.LapSync);
+        _log.WriteLine($"[{nameof(RaceLapSync)}] OnSetGoalRaceFinishTask P{GetPlayerIndex(player)}");
         return 0;
     }
 
@@ -126,7 +128,7 @@ public unsafe class RaceLapSync : INetplayComponent
 
         // Update lap counters for local clients.
         _lapSync[playerIndex] = new LapCounter(player);
-        Log.WriteLine($"[{nameof(RaceLapSync)}] Set: {playerIndex} | Lap {_lapSync[playerIndex].Counter} Timer {_lapSync[playerIndex].Timer}", LogCategory.LapSync);
+        _log.WriteLine($"[{nameof(RaceLapSync)}] Set: {playerIndex} | Lap {_lapSync[playerIndex].Counter} Timer {_lapSync[playerIndex].Timer}");
 
         switch (Socket.GetSocketType())
         {
@@ -176,7 +178,7 @@ public unsafe class RaceLapSync : INetplayComponent
         if (Socket.GetSocketType() == SocketType.Host)
             HostSendLapCounters(source);
 
-        Log.WriteLine($"[{nameof(RaceLapSync)}] Applying Sync on Receive", LogCategory.LapSync);
+        _log.WriteLine($"[{nameof(RaceLapSync)}] Applying Sync on Receive");
         ApplyLapSync();
     }
 
@@ -223,7 +225,7 @@ public unsafe class RaceLapSync : INetplayComponent
             var laps = lap.Counter - player->LapCounter;
             for (int y = 0; y < laps; y++)
             {
-                Log.WriteLine($"[{nameof(RaceLapSync)}] Sync: Set Lap for {x} | Lap {lap.Counter} | Timer {lap.Timer}", LogCategory.LapSync);
+                _log.WriteLine($"[{nameof(RaceLapSync)}] Sync: Set Lap for {x} | Lap {lap.Counter} | Timer {lap.Timer}");
 
                 // Copy stage timer (lap increment will use this value for lap time math!)
                 var stageTimerBackup = *StageTimer;
@@ -262,7 +264,7 @@ public unsafe class RaceLapSync : INetplayComponent
         if (*CurrentTask != _goalRaceFinishTaskPtr)
             return;
 
-        Log.WriteLine($"[{nameof(RaceLapSync)}] Kill Results Task", LogCategory.LapSync);
+        _log.WriteLine($"[{nameof(RaceLapSync)}] Kill Results Task");
         _isRaceFinishTaskEnabled = false;
         _goalRaceFinishTaskPtr = (void*)-1;
         Reset();
@@ -270,7 +272,7 @@ public unsafe class RaceLapSync : INetplayComponent
 
     private void RemoveAllTasks()
     {
-        Log.WriteLine($"[{nameof(RaceLapSync)}] Kill All Tasks", LogCategory.LapSync);
+        _log.WriteLine($"[{nameof(RaceLapSync)}] Kill All Tasks");
         _isRaceFinishTaskEnabled = false;
         _goalRaceFinishTaskPtr = (void*)-1;
         Reset();
@@ -303,7 +305,7 @@ public unsafe class RaceLapSync : INetplayComponent
         // TODO: Local Multiplayer support.
         if (allFinished)
         {
-            Log.WriteLine($"[{nameof(RaceLapSync)}] Trigger GoalRaceFinishTask", LogCategory.LapSync);
+            _log.WriteLine($"[{nameof(RaceLapSync)}] Trigger GoalRaceFinishTask");
             Reset();
             Event.InvokeSetGoalRaceFinishTask(Players.Pointer);
         }

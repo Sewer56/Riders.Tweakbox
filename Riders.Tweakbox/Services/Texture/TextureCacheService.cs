@@ -7,6 +7,7 @@ using System.Threading;
 using MessagePack;
 using MessagePack.Resolvers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
@@ -28,6 +29,7 @@ public class TextureCacheService : ISingletonService
     private bool _isInvalidated;
     private IO _io;
     private Timer _timer;
+    private Logger _log = new Logger(LogCategory.TextureLoad);
 
     public TextureCacheService(IO io)
     {
@@ -98,7 +100,7 @@ public class TextureCacheService : ISingletonService
             var lastWriteTime = File.GetLastWriteTimeUtc(filePath);
             if (lastWriteTime != entry.LastWriteTime)
             {
-                Log.WriteLine("Texture write time mismatch. Removing from cache.", LogCategory.TextureLoad);
+                _log.WriteLine("Texture write time mismatch. Removing from cache.");
                 InvalidateKey(filePath);
                 return false;
             }
@@ -112,7 +114,7 @@ public class TextureCacheService : ISingletonService
         }
         catch (Exception e)
         {
-            Log.WriteLine("Failed to fetch texture from cache. " + e.Message, LogCategory.TextureLoad);
+            _log.WriteLine("Failed to fetch texture from cache. " + e.Message);
             return false;
         }
     }
@@ -130,7 +132,7 @@ public class TextureCacheService : ISingletonService
         }
         catch (Exception e)
         {
-            Log.WriteLine("Failed to load Texture Cache File. " + e.Message, LogCategory.TextureLoad);
+            _log.WriteLine("Failed to load Texture Cache File. " + e.Message);
         }
 
         DeleteLooseFiles();
@@ -142,11 +144,11 @@ public class TextureCacheService : ISingletonService
         {
             var data = MessagePackSerializer.Serialize<Dictionary<string, TextureCacheEntry>>(_textureCache, ContractlessStandardResolver.Options);
             File.WriteAllBytes(_io.TextureCacheFilePath, data);
-            Log.WriteLine("Saved Texture Cache. ", LogCategory.TextureLoad);
+            _log.WriteLine("Saved Texture Cache.");
         }
         catch (Exception e)
         {
-            Log.WriteLine("Failed to save Texture Cache File. " + e.Message, LogCategory.TextureLoad);
+            _log.WriteLine("Failed to save Texture Cache File. " + e.Message);
         }
     }
 
@@ -188,7 +190,7 @@ public class TextureCacheService : ISingletonService
             }
             catch (Exception e)
             {
-                Log.WriteLine("Texture Cache: Failed to delete loose file. " + e.Message, LogCategory.TextureLoad);
+                _log.WriteLine("Texture Cache: Failed to delete loose file. " + e.Message);
             }
         }
     }
@@ -203,7 +205,7 @@ public class TextureCacheService : ISingletonService
             }
             catch (Exception e)
             {
-                Log.WriteLine("Texture Cache: Failed to delete old item. " + e.Message, LogCategory.TextureLoad);
+                _log.WriteLine("Texture Cache: Failed to delete old item. " + e.Message);
             }
         }
 

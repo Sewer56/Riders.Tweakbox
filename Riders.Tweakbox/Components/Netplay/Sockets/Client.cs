@@ -6,7 +6,8 @@ using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Components.Netplay.Sockets;
 
 /// <inheritdoc />
@@ -29,7 +30,7 @@ public class Client : Socket
 
         if (punchSettings.IsEnabled)
         {
-            Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host}:{punchSettings.Port}", LogCategory.Socket);
+            _log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host}:{punchSettings.Port}");
             using PuncherClient connectPeer = new PuncherClient(punchSettings.Host, (ushort)punchSettings.Port);
             connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
             connectPeer.ServerRegisterResponseTimeout = punchSettings.ServerTimeout;
@@ -37,12 +38,12 @@ public class Client : Socket
 
             if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP), out IPEndPoint connectResult))
             {
-                Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);
+                _log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}");
                 Manager.Connect(connectResult, socketSettings.Password);
             }
             else
             {
-                Log.WriteLine($"[{nameof(Client)}] NAT Punch Failed, Trying Direct IP", LogCategory.Socket);
+                _log.WriteLine($"[{nameof(Client)}] NAT Punch Failed, Trying Direct IP");
                 ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
             }
         }
@@ -57,7 +58,7 @@ public class Client : Socket
 
     private void ConnectToIp(string ip, int port, string password)
     {
-        Log.WriteLine($"[{nameof(Client)}] Connecting via Direct IP: {ip}:{port}", LogCategory.Socket);
+        _log.WriteLine($"[{nameof(Client)}] Connecting via Direct IP: {ip}:{port}");
         Manager.Connect(ip, port, password);
     }
 }

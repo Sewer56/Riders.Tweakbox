@@ -7,7 +7,8 @@ using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Components.Netplay.Sockets;
 
 public unsafe class Host : Socket
@@ -38,7 +39,7 @@ public unsafe class Host : Socket
         var socketSettings = hostSettings.SocketSettings;
         var punchServer = config.Data.PunchingServer;
 
-        Log.WriteLine($"[Host] Hosting Server on {socketSettings.Port} with password {socketSettings.Password}", LogCategory.Socket);
+        _log.WriteLine($"[Host] Hosting Server on {socketSettings.Port} with password {socketSettings.Password}");
         base.State = new HostState(config.ToPlayerData(), this);
         Manager.StartInManualMode(socketSettings.Port);
 
@@ -59,17 +60,17 @@ public unsafe class Host : Socket
 
         try
         {
-            Log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host}:{punchServerSettings.Port}", LogCategory.Socket);
+            _log.WriteLine($"[{nameof(Host)}] Connecting to NAT Punch Server: {punchServerSettings.Host}:{punchServerSettings.Port}");
             host.NatPunchClient = new PuncherClient(punchServerSettings.Host, (ushort)punchServerSettings.Port);
             host.NatPunchClient.Transport = new LiteNetLibUdpTransport(Manager, Listener);
 
-            Log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches... Port: {host.Manager.LocalPort}", LogCategory.Socket);
-            host.NatPunchClient.OnConnectorPunchSuccessful += endpoint => { Log.WriteLine($"[{nameof(Host)}] Successful NAT Punch from Client: {endpoint}", LogCategory.Socket); };
+            _log.WriteLine($"[{nameof(Host)}] Listening for NAT Punches... Port: {host.Manager.LocalPort}");
+            host.NatPunchClient.OnConnectorPunchSuccessful += endpoint => { _log.WriteLine($"[{nameof(Host)}] Successful NAT Punch from Client: {endpoint}"); };
             host.NatPunchClient.ListenForPunches(new IPEndPoint(IPAddress.Any, host.Manager.LocalPort));
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(Host)}] NAT Punch Server Failure: {e.Message}", LogCategory.Socket);
+            _log.WriteLine($"[{nameof(Host)}] NAT Punch Server Failure: {e.Message}");
             host.NatPunchClient.Dispose();
         }
     }

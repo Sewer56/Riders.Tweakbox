@@ -6,6 +6,7 @@ using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Utilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 

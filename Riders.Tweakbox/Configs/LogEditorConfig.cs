@@ -1,5 +1,6 @@
 ﻿using Riders.Tweakbox.Configs.Json;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Configs;
 
 public class LogEditorConfig : JsonConfigBase<LogEditorConfig, LogEditorConfig.Internal>

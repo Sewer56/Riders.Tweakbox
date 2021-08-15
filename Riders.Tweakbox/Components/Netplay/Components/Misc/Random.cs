@@ -13,6 +13,8 @@ using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc;
 
 public class Random : INetplayComponent
@@ -28,6 +30,8 @@ public class Random : INetplayComponent
     private DeliveryMethod _randomDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
     private SRandSync? _currentSync;
+    private Logger _logRandom = new Logger(LogCategory.Random);
+    private Logger _logRandomSeed = new Logger(LogCategory.RandomSeed);
 
     public Random(Socket socket, EventController @event)
     {
@@ -68,39 +72,39 @@ public class Random : INetplayComponent
 
     private Enum<AsmFunctionResult> OnCheckIfGiveAiRandomItems()
     {
-        Log.WriteLine($"[{nameof(Random)}] Overwriting to Give AI Random Item", LogCategory.RandomSeed);
+        _logRandomSeed.WriteLine($"[{nameof(Random)}] Overwriting to Give AI Random Item");
         return true;
     }
 
     private void OnPeerConnected(NetPeer peer)
     {
-        Log.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Adding Entry.", LogCategory.Random);
+        _logRandom.WriteLine($"[{nameof(Random)} / Host] Peer Connected, Adding Entry.");
         _syncReady[peer.Id] = false;
     }
 
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
-        Log.WriteLine($"[{nameof(Random)} / Host] Peer Disconnected, Removing Entry.", LogCategory.Random);
+        _logRandom.WriteLine($"[{nameof(Random)} / Host] Peer Disconnected, Removing Entry.");
         _syncReady.Remove(peer.Id);
     }
 
     private int OnItemPickupRandom(IHook<Functions.RandFn> hook)
     {
         var result = _itemPickupRandom.Next();
-        Log.WriteLine($"[{nameof(Random)}] Item Pickup Seed: {result}", LogCategory.RandomSeed);
+        _logRandomSeed.WriteLine($"[{nameof(Random)}] Item Pickup Seed: {result}");
         return result;
     }
 
     private int OnRandom(IHook<Functions.RandFn> hook)
     {
         var result = hook.OriginalFunction();
-        Log.WriteLine($"[{nameof(Random)}] Current Seed: {result}", LogCategory.RandomSeed);
+        _logRandomSeed.WriteLine($"[{nameof(Random)}] Current Seed: {result}");
         return result;
     }
 
     private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
     {
-        Log.WriteLine($"[{nameof(Random)}] Calling Random Number Generator", LogCategory.Random);
+        _logRandom.WriteLine($"[{nameof(Random)}] Calling Random Number Generator");
 
         if (Socket.GetSocketType() == SocketType.Host)
             HostOnSeedRandom(seed, hook);
@@ -135,7 +139,7 @@ public class Random : INetplayComponent
             _syncReady[key] = false;
 
         // Seed a new random value for item pickups.
-        Log.WriteLine($"[{nameof(Random)} / Host] Seeding: {(int)seed}", LogCategory.Random);
+        _logRandom.WriteLine($"[{nameof(Random)} / Host] Seeding: {(int)seed}");
         _itemPickupRandom = new System.Random((int)seed);
 
         // TODO: Handle error when time component is not available.
@@ -145,7 +149,7 @@ public class Random : INetplayComponent
         if (Socket.HostState.PlayerInfo.Length > 0)
         {
             var timeOffset = (Socket.HostState.PlayerInfo.Max(x => x.RecentLatencies.Max(y => y.Value + 0.5)) * 2) * 2;
-            Log.WriteLine($"[{nameof(Random)} / Host] Time Offset: {timeOffset}ms");
+            _logRandom.WriteLine($"[{nameof(Random)} / Host] Time Offset: {timeOffset}ms");
             var startTime = DateTime.UtcNow.AddMilliseconds(timeOffset);
             Socket.SendToAllAndFlush(ReliablePacket.Create(new SRandSync(startTime, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);
             Socket.WaitWithSpin(startTime, $"[{nameof(Random)} / Host] SRand Synchronized.", LogCategory.Random, 32);
@@ -159,7 +163,7 @@ public class Random : INetplayComponent
         Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new SRandSync(default, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
         if (!Socket.PollUntil(SyncAvailable, Socket.State.DisconnectTimeout))
         {
-            Log.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.", LogCategory.Random);
+            _logRandom.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.");
             hook.OriginalFunction(seed);
             Socket.Dispose();
             return;
@@ -169,7 +173,7 @@ public class Random : INetplayComponent
         var srand = _currentSync.Value;
         _currentSync = null;
 
-        Log.WriteLine($"[{nameof(Random)} / Client] Seeding: {srand.Seed}", LogCategory.Random);
+        _logRandom.WriteLine($"[{nameof(Random)} / Client] Seeding: {srand.Seed}");
         Event.InvokeSeedRandom(srand.Seed);
         _itemPickupRandom = new System.Random(srand.Seed);
 
@@ -188,7 +192,7 @@ public class Random : INetplayComponent
         if (Socket.GetSocketType() == SocketType.Host)
         {
             // Packet contents ignored.
-            Log.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.", LogCategory.Random);
+            _logRandom.WriteLine($"[{nameof(Random)} / Host] Received Ready from Client.");
             _syncReady[source.Id] = true;
         }
         else

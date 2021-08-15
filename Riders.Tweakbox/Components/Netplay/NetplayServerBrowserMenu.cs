@@ -7,6 +7,7 @@ using Riders.Tweakbox.Components.Netplay.Menus.Models;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Shell;
 namespace Riders.Tweakbox.Components.Netplay;
 

@@ -11,6 +11,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -54,6 +55,7 @@ public unsafe class Race : INetplayComponent
     private const DeliveryMethod RaceDeliveryMethod = DeliveryMethod.Unreliable;
     private readonly byte _raceChannel;
     private bool _isRacing;
+    private Logger _log = new Logger(LogCategory.Race);
 
     public Race(Socket socket, EventController @event)
     {
@@ -155,8 +157,7 @@ public unsafe class Race : INetplayComponent
         }
         catch (Exception ex)
         {
-            Log.WriteLine($"[{nameof(Race)}] Warning: Failed to Dequeue from Jitter Buffer | {ex.Message}",
-                LogCategory.Race);
+            _log.WriteLine($"[{nameof(Race)}] Warning: Failed to Dequeue from Jitter Buffer | {ex.Message}");
         }
         finally
         {
@@ -295,7 +296,7 @@ public unsafe class Race : INetplayComponent
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}", LogCategory.Race);
+            _log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}");
         }
 
         return player;
@@ -319,7 +320,7 @@ public unsafe class Race : INetplayComponent
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}", LogCategory.Race);
+            _log.WriteLine($"[{nameof(Race)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}");
         }
 
         return player;

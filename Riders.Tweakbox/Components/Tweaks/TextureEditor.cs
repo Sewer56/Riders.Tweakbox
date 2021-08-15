@@ -3,6 +3,7 @@ using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;

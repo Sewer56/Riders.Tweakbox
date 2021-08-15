@@ -10,6 +10,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
@@ -36,6 +37,8 @@ public unsafe class CharacterSelect : INetplayComponent
     private ExitKind _exit = ExitKind.Null;
     private readonly byte _sequencedChannel;
     private Task<Sewer56.SonicRiders.Structures.Tasks.CharacterSelect, CharacterSelectTaskState>* _lastTaskPtr;
+
+    private Logger _log = new Logger(LogCategory.Menu);
 
     public CharacterSelect(Socket socket, EventController @event)
     {
@@ -198,7 +201,7 @@ public unsafe class CharacterSelect : INetplayComponent
     {
         var charaSelectExit = packet.GetMessage<CharaSelectExit>();
 
-        Log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag", LogCategory.Menu);
+        _log.WriteLine($"[{nameof(CharacterSelect)}] Got Start/Exit Request Flag");
         if (Socket.GetSocketType() == SocketType.Host)
             Socket.SendToAllExceptAndFlush(source, ReliablePacket.Create(new CharaSelectExit(charaSelectExit.Type)), DeliveryMethod.ReliableOrdered);
 
@@ -224,7 +227,7 @@ public unsafe class CharacterSelect : INetplayComponent
     private void SetRandomForUnjoinedPlayers()
     {
         var random = new Random();
-        Log.WriteLine($"[{nameof(CharacterSelect)}] Setting Random for Unjoined Players");
+        _log.WriteLine($"[{nameof(CharacterSelect)}] Setting Random for Unjoined Players");
         for (int x = 0; x < State.NumLocalPlayers; x++)
         {
             ref var element = ref _sync.Value.Elements[x];

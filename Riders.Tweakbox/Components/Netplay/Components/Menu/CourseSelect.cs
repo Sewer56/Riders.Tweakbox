@@ -7,7 +7,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Tweakbox.Components.Netplay.Helpers;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;

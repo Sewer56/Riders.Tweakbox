@@ -8,7 +8,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using StructLinq;
@@ -31,6 +31,7 @@ public unsafe class RacePlayerEventSync : INetplayComponent
     /// </summary>
     private BoostTornado[] _events = new BoostTornado[Constants.MaxNumberOfPlayers + 1];
     private GameModifiers _modifiers;
+    private Logger _log = new Logger(LogCategory.PlayerEvent);
 
     private const DeliveryMethod _eventDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
@@ -97,7 +98,7 @@ public unsafe class RacePlayerEventSync : INetplayComponent
                 Socket.Send(peer, ReliablePacket.Create(boostTornado), _eventDeliveryMethod);
             }
 
-            Log.WriteLine($"[{nameof(RacePlayerEventSync)} / Host] Player Event Matrix Sent", LogCategory.PlayerEvent);
+            _log.WriteLine($"[{nameof(RacePlayerEventSync)} / Host] Player Event Matrix Sent");
             Socket.Update();
         }
         else if (Socket.GetSocketType() == SocketType.Client && State.IsLocal(playerIndex) && _events[playerIndex].HasValue())
@@ -107,7 +108,7 @@ public unsafe class RacePlayerEventSync : INetplayComponent
             packed.Elements[playerIndex] = _events[playerIndex];
             Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(packed), _eventDeliveryMethod);
 
-            Log.WriteLine($"[{nameof(RacePlayerEventSync)} / Client] Player Event Matrix Sent", LogCategory.PlayerEvent);
+            _log.WriteLine($"[{nameof(RacePlayerEventSync)} / Client] Player Event Matrix Sent");
         }
 
         // Synchronize with Host/Client
@@ -140,7 +141,7 @@ public unsafe class RacePlayerEventSync : INetplayComponent
         }
         catch (Exception ex)
         {
-            Log.WriteLine($"[{nameof(RacePlayerEventSync)}] Warning: Failed to update Boost/Tornado/Event Sync | {ex.Message}", LogCategory.PlayerEvent);
+            _log.WriteLine($"[{nameof(RacePlayerEventSync)}] Warning: Failed to update Boost/Tornado/Event Sync | {ex.Message}");
         }
     }
 
@@ -160,7 +161,7 @@ public unsafe class RacePlayerEventSync : INetplayComponent
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(RacePlayerEventSync)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}", LogCategory.PlayerEvent);
+            _log.WriteLine($"[{nameof(RacePlayerEventSync)}] Failed to Apply Movement Flags {e.Message} {e.StackTrace}");
         }
 
         return player;

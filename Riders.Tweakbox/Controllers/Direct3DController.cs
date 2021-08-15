@@ -12,6 +12,8 @@ using SharpDX;
 using Riders.Tweakbox.Configs;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Controllers;
 
 public unsafe class Direct3DController : IController

@@ -13,7 +13,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Shell;
 using Sewer56.SonicRiders.Utility;
 namespace Riders.Tweakbox.Components.Netplay.Components.Server;
@@ -37,6 +37,7 @@ public class ConnectionManager : INetplayComponent
     private Dictionary<int, VersionInformationEx> _versionExMap = new Dictionary<int, VersionInformationEx>();
 
     private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());
+    private Logger _log = new Logger(LogCategory.Socket);
 
     public ConnectionManager(Socket socket, EventController @event)
     {
@@ -65,7 +66,7 @@ public class ConnectionManager : INetplayComponent
     {
         bool HasReceivedPlayerData() => HostState.ClientMap.TryGetPlayerData(peer, out _);
 
-        Log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.", LogCategory.Socket);
+        _log.WriteLine($"[Host] Client {peer.EndPoint.Address} | {peer.Id}, waiting for message.");
 
         if (await HostValidateVersionInformation(peer))
             return;
@@ -178,18 +179,18 @@ public class ConnectionManager : INetplayComponent
     {
         void Reject(string message)
         {
-            Log.WriteLine(message, LogCategory.Socket);
+            _log.WriteLine(message);
             request.RejectForce();
         }
 
-        Log.WriteLine($"[Host] Received Connection Request", LogCategory.Socket);
+        _log.WriteLine($"[Host] Received Connection Request");
         if (Event.LastTask != Tasks.CourseSelect)
         {
             Reject("[Host] Rejected Connection | Not on Course Select");
         }
         else
         {
-            Log.WriteLine($"[Host] Accepting if Password Matches", LogCategory.Socket);
+            _log.WriteLine($"[Host] Accepting if Password Matches");
             request.AcceptIfKey(HostSettings.Password);
         }
     }
@@ -222,7 +223,7 @@ public class ConnectionManager : INetplayComponent
         if (packet.MessageType == MessageType.HostSetPlayerData)
         {
             var data = packet.GetMessage<HostSetPlayerData>();
-            Log.WriteLine($"[Client] Received Player Info", LogCategory.Socket);
+            _log.WriteLine($"[Client] Received Player Info");
             State.PlayerInfo = data.Data.Slice(0, data.NumElements);
             State.SelfInfo.PlayerIndex = data.Index;
         }

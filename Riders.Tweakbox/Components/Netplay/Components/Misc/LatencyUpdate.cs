@@ -7,7 +7,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using StructLinq;
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc;
 
@@ -19,6 +19,8 @@ public class LatencyUpdate : INetplayComponent
     public Socket Socket { get; set; }
     public NetManager Manager { get; set; }
     private Timer _synchronizeTimer;
+
+    private Logger _log = new Logger(LogCategory.Menu);
 
     public LatencyUpdate(Socket socket)
     {
@@ -60,7 +62,7 @@ public class LatencyUpdate : INetplayComponent
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(LatencyUpdate)} / Host] Failed to send updated client latency. {e.Message} | {e.StackTrace}", LogCategory.Socket);
+            _log.WriteLine($"[{nameof(LatencyUpdate)} / Host] Failed to send updated client latency. {e.Message} | {e.StackTrace}");
         }
     }
 
@@ -83,7 +85,7 @@ public class LatencyUpdate : INetplayComponent
         }
         catch (Exception e)
         {
-            Log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}", LogCategory.Socket);
+            _log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}");
         }
     }
 
@@ -106,7 +108,7 @@ public class LatencyUpdate : INetplayComponent
                 }
                 catch (Exception e)
                 {
-                    Log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}", LogCategory.Socket);
+                    _log.WriteLine($"[{nameof(LatencyUpdate)}] Failed to update client latency. Index out of bounds? {e.Message} | {e.StackTrace}");
                 }
                 break;
             }

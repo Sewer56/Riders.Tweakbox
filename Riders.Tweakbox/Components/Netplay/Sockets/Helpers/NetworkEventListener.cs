@@ -1,13 +1,14 @@
 ﻿using System;
 using LiteNetLib;
 using Riders.Netplay.Messages;
-using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 
 public class NetworkEventListener : EventBasedNetListener, IDisposable
 {
     public Socket Socket;
+    private Logger _log = new Logger(LogCategory.Socket);
 
     public NetworkEventListener(Socket socket)
     {
@@ -35,7 +36,7 @@ public class NetworkEventListener : EventBasedNetListener, IDisposable
             catch (Exception e)
             {
                 packet.Dispose();
-                Log.WriteLine($"Exception Processing Unreliable Packet: {e.Message}");
+                _log.WriteLine($"Exception Processing Unreliable Packet: {e.Message}");
                 throw;
             }
         }
@@ -50,7 +51,7 @@ public class NetworkEventListener : EventBasedNetListener, IDisposable
             catch (Exception e)
             {
                 packet.Dispose();
-                Log.WriteLine($"Exception Processing Reliable Packet: {e.Message}");
+                _log.WriteLine($"Exception Processing Reliable Packet: {e.Message}");
                 throw;
             }
         }

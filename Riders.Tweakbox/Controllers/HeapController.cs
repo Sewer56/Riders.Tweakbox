@@ -2,9 +2,10 @@
 using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Functions;
-using static Riders.Tweakbox.Misc.Log;
+using static Riders.Tweakbox.Misc.Log.Log;
 namespace Riders.Tweakbox.Controllers;
 
 public class HeapController : IController
@@ -19,6 +20,7 @@ public class HeapController : IController
     private IHook<Heap.AllocFnPtr> _callocHook;
     private IHook<Heap.FreeFnPtr> _freeHook;
     private IHook<Heap.FreeFrameFnPtr> _freeFrameHook;
+    private Logger _heapLogger = new Logger(LogCategory.Heap);
 
     public HeapController(IReloadedHooks hooks)
     {
@@ -31,7 +33,7 @@ public class HeapController : IController
 
     private unsafe int FreeFrameImpl(MallocResult* address)
     {
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"FreeFrame: {(long)address:X}", LogCategory.Heap);
+        _heapLogger.WriteLine($"FreeFrame: {(long)address:X}");
         var result = _freeFrameHook.OriginalFunction.Value.Invoke(address);
 
         return result;
@@ -39,7 +41,7 @@ public class HeapController : IController
 
     private unsafe MallocResult* FreeImpl(MallocResult* address)
     {
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"Free: {(long)address:X}", LogCategory.Heap);
+        _heapLogger.WriteLine($"Free: {(long)address:X}");
         var result = _freeHook.OriginalFunction.Value.Invoke(address).Pointer;
 
         // Erase the contents of the allocation header.
@@ -58,8 +60,8 @@ public class HeapController : IController
         if (header->Base == *Heap.FirstHeaderFront)
             FirstAllocResult = result;
 
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"Calloc: {(long)result:X} | Alignment {alignment}, Size {size}", LogCategory.Heap);
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}", LogCategory.Heap);
+        _heapLogger.WriteLine($"Calloc: {(long)result:X} | Alignment {alignment}, Size {size}");
+        _heapLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
         return result;
     }
 
@@ -70,8 +72,8 @@ public class HeapController : IController
         if (header->Base == *Heap.FirstHeaderFront)
             FirstAllocResult = result;
 
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"Malloc: {(long)result:X} | Alignment {alignment}, Size {size}", LogCategory.Heap);
-        if (IsEnabled(LogCategory.Heap)) WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}", LogCategory.Heap);
+        _heapLogger.WriteLine($"Malloc: {(long)result:X} | Alignment {alignment}, Size {size}");
+        _heapLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
         return result;
     }
 

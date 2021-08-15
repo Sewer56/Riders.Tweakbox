@@ -21,6 +21,7 @@ using Sewer56.SonicRiders.Utility;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
+using Task = Sewer56.SonicRiders.Structures.Tasks.Base.Task;
 using Void = Reloaded.Hooks.Definitions.Structs.Void;
 namespace Riders.Tweakbox.Controllers;
 

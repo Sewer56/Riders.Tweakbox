@@ -4,6 +4,8 @@ using Reloaded.Hooks.Definitions;
 using Microsoft.Windows.Sdk;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox;
 
 /// <summary>

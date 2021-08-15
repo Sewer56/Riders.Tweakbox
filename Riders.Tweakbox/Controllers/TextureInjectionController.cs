@@ -21,6 +21,8 @@ using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX;
 using Void = Reloaded.Hooks.Definitions.Structs.Void;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Controllers;
 
 public unsafe class TextureInjectionController : IController
@@ -36,6 +38,9 @@ public unsafe class TextureInjectionController : IController
     private IHook<D3DXCreateTextureFromFileInMemoryExPtr> _createTextureHook;
     private IHook<SetTexturePtr> _setTextureHook;
     private IHook<ComReleasePtr> _releaseTextureHook;
+
+    private Logger _logDump = new Logger(LogCategory.TextureDump);
+    private Logger _logLoad = new Logger(LogCategory.TextureLoad);
 
     public TextureInjectionController(IO io, IReloadedHooks hooks)
     {
@@ -65,7 +70,7 @@ public unsafe class TextureInjectionController : IController
             var fileName = Path.GetFileName(file);
             if (dictionary.ContainsKey(fileName))
             {
-                Log.WriteLine($"Removing Duplicate in Auto Common: {fileName}", LogCategory.TextureDump);
+                _logDump.WriteLine($"Removing Duplicate in Auto Common: {fileName}");
                 File.Delete(file);
             }
         }
@@ -85,7 +90,7 @@ public unsafe class TextureInjectionController : IController
         if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
         {
             using var textureRef = data;
-            Log.WriteLine($"Loading Custom Texture: {info.Path}", LogCategory.TextureLoad);
+            _logLoad.WriteLine($"Loading Custom Texture: {info.Path}");
             fixed (byte* dataPtr = &data.Data[0])
             {
                 var texture = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
@@ -147,7 +152,7 @@ public unsafe class TextureInjectionController : IController
                 var dictionary = BuildDumpFolderFileNameDictionary();
                 if (dictionary.ContainsKey(fileName))
                 {
-                    Log.WriteLine($"Skipped Texture [Only New]: {fileName}", LogCategory.TextureDump);
+                    _logDump.WriteLine($"Skipped Texture [Only New]: {fileName}");
                     return;
                 }
 
@@ -162,7 +167,7 @@ public unsafe class TextureInjectionController : IController
                     var entry = dictionary[fileName];
                     if (entry.NumAppearances > _config.Data.DeduplicationMaxFiles)
                     {
-                        Log.WriteLine($"Deduplicating Texture [{entry.NumAppearances} Duplicates]: {fileName}", LogCategory.TextureDump);
+                        _logDump.WriteLine($"Deduplicating Texture [{entry.NumAppearances} Duplicates]: {fileName}");
                         File.Move(entry.FullPaths[0], Path.Combine(_io.TextureDumpCommonFolder, fileName), true);
                         for (int x = 1; x < entry.FullPaths.Count; x++)
                             File.Delete(entry.FullPaths[x]);
@@ -183,7 +188,7 @@ public unsafe class TextureInjectionController : IController
 
             case TextureInjectionConfig.DumpingMode.All:
                 BaseTexture.ToFile(texture, Path.Combine(_io.TextureDumpFolder, fileName), ImageFileFormat.Png);
-                Log.WriteLine($"Dumped Texture: {fileName}", LogCategory.TextureDump);
+                _logDump.WriteLine($"Dumped Texture: {fileName}");
                 break;
         }
     }

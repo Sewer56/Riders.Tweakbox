@@ -1,29 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using EnumsNET;
-namespace Riders.Tweakbox.Misc;
-
-/// <summary>
-/// Different categories that can be used for logging.
-/// </summary>
-[Flags]
-public enum LogCategory : short
-{
-    Default = 1 << 0,
-    Memory = 1 << 1,
-    Race = 1 << 2,
-    Menu = 1 << 3,
-    Random = 1 << 4,
-    PlayerEvent = 1 << 5,
-    Socket = 1 << 6,
-    RandomSeed = 1 << 7,
-    LapSync = 1 << 8,
-    JitterCalc = 1 << 9,
-    TextureDump = 1 << 10,
-    TextureLoad = 1 << 11,
-    Benchmark = 1 << 12,
-    Heap = 1 << 13,
-}
+namespace Riders.Tweakbox.Misc.Log;
 
 /// <summary>
 /// Provides logging support for Tweakbox.
@@ -36,7 +14,7 @@ public static class Log
     /// <summary>
     /// Default enabled logging categories
     /// </summary>
-    public const LogCategory DefaultHudCategories = LogCategory.Default | LogCategory.Socket;
+    public const LogCategory DefaultHudCategories = LogCategory.Default | LogCategory.Socket | LogCategory.NetplayChat;
 
     /// <summary>
     /// Default enabled logging categories
@@ -45,7 +23,8 @@ public static class Log
                                                         LogCategory.Race | LogCategory.Menu |
                                                         LogCategory.PlayerEvent | LogCategory.Socket |
                                                         LogCategory.Random | LogCategory.JitterCalc |
-                                                        LogCategory.TextureDump | LogCategory.TextureLoad | LogCategory.Benchmark;
+                                                        LogCategory.TextureDump | LogCategory.TextureLoad | LogCategory.Benchmark |
+                                                        LogCategory.CustomGear | LogCategory.NetplayChat;
 
     /// <summary>
     /// Declares whether each log type is declared or not.
@@ -103,11 +82,41 @@ public static class Log
         if (IsEnabled(ListenerType.Console, category))
             ConsoleListener?.Write(text);
     }
+}
 
-    public enum ListenerType
-    {
-        Any,
-        Hud,
-        Console
-    }
+
+/// <summary>
+/// Different categories that can be used for logging.
+/// </summary>
+[Flags]
+public enum LogCategory : int
+{
+    Default = 1 << 0,
+    Memory = 1 << 1,
+    Race = 1 << 2,
+    Menu = 1 << 3,
+    Random = 1 << 4,
+    PlayerEvent = 1 << 5,
+    Socket = 1 << 6,
+    RandomSeed = 1 << 7,
+    LapSync = 1 << 8,
+    JitterCalc = 1 << 9,
+    TextureDump = 1 << 10,
+    TextureLoad = 1 << 11,
+    Benchmark = 1 << 12,
+    HeapFront = 1 << 13,
+    HeapBack = 1 << 14,
+    CustomGear = 1 << 15,
+    TextureDebug = 1 << 16,
+    NetplayChat = 1 << 17,
+}
+
+/// <summary>
+/// Different output targets that can be used for logging.
+/// </summary>
+public enum ListenerType
+{
+    Any,
+    Hud,
+    Console
 }

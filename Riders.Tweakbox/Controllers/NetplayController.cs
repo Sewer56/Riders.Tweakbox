@@ -8,6 +8,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
 using Sewer56.SonicRiders.API;

@@ -19,6 +19,8 @@ using Sewer56.SonicRiders.Structures.Input.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Managed;
 using Constants = Sewer56.Imgui.Misc.Constants;
+using Task = Sewer56.SonicRiders.Structures.Tasks.Base.Task;
+
 namespace Riders.Tweakbox.Components.Netplay.Components.Game;
 
 public class PauseDialogOverride : INetplayComponent

@@ -2,8 +2,8 @@
 using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
-using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Enums;
 namespace Riders.Tweakbox.Controllers;

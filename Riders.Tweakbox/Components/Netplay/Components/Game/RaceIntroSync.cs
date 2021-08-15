@@ -8,6 +8,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Sewer56.SonicRiders.API;
@@ -31,6 +32,7 @@ public class RaceIntroSync : INetplayComponent
     private FramePacingController _framePacingController;
     private Dictionary<int, bool> _hostReadyToStartRaceMap;
     private bool _clientReadyToStartRace;
+    private Logger _log = new Logger(LogCategory.Race);
 
     public RaceIntroSync(Socket socket, EventController @event)
     {
@@ -65,13 +67,13 @@ public class RaceIntroSync : INetplayComponent
 
     private void OnPeerConnected(NetPeer peer)
     {
-        Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Connected, Adding Entry.", LogCategory.Random);
+        _log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Connected, Adding Entry.");
         _hostReadyToStartRaceMap[peer.Id] = false;
     }
 
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
-        Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Disconnected, Removing Entry.", LogCategory.Random);
+        _log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Peer Disconnected, Removing Entry.");
         _hostReadyToStartRaceMap.Remove(peer.Id);
     }
 
@@ -115,7 +117,7 @@ public class RaceIntroSync : INetplayComponent
             }
 
             case StartSyncType.Ready when Socket.GetSocketType() == SocketType.Host:
-                Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(StartSyncType.Ready)} from Client.", LogCategory.Race);
+                _log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Received {nameof(StartSyncType.Ready)} from Client.");
                 _hostReadyToStartRaceMap[source.Id] = true;
                 break;
 
@@ -148,7 +150,7 @@ public class RaceIntroSync : INetplayComponent
 
         if (!Socket.PollUntil(IsGoSignal, Socket.State.DisconnectTimeout))
         {
-            Log.WriteLine($"[{nameof(RaceIntroSync)} / Client] No Go Signal Received, Bailing Out!.", LogCategory.Race);
+            _log.WriteLine($"[{nameof(RaceIntroSync)} / Client] No Go Signal Received, Bailing Out!.");
             Dispose();
             return false;
         }
@@ -170,12 +172,12 @@ public class RaceIntroSync : INetplayComponent
             Socket.SendToAllAndFlush(ReliablePacket.Create(message), DeliveryMethod.ReliableOrdered, $"[{nameof(RaceIntroSync)} / Host] Broadcasting Skip Signal.", LogCategory.Race);
 
         _skipRequested = false;
-        Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Waiting for ready messages.", LogCategory.Race);
+        _log.WriteLine($"[{nameof(RaceIntroSync)} / Host] Waiting for ready messages.");
 
         // Note: Don't use wait for all clients, because the messages may have already been sent by the clients.
         if (!Socket.PollUntil(TestAllReady, state.DisconnectTimeout))
         {
-            Log.WriteLine($"[{nameof(RaceIntroSync)} / Host] It's no use, let's get outta here!.", LogCategory.Race);
+            _log.WriteLine($"[{nameof(RaceIntroSync)} / Host] It's no use, let's get outta here!.");
             Dispose();
             return false;
         }

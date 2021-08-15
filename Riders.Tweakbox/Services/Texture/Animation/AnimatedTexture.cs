@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
 using SharpDX.Direct3D9;

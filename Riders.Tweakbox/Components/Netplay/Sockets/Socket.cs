@@ -13,6 +13,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Utility;
 namespace Riders.Tweakbox.Components.Netplay.Sockets;
 
@@ -99,6 +100,7 @@ public abstract class Socket : IDisposable
 
     private Stopwatch _stopWatch = new Stopwatch();
     private bool _isDisposed = false;
+    protected Logger _log = new Logger(LogCategory.Socket);
 
     /// <summary>
     /// Constructs the current socket.
@@ -414,7 +416,7 @@ public abstract class Socket : IDisposable
     /// <param name="message">The message to send.</param>
     public void DisconnectWithMessage(NetPeer peer, string message)
     {
-        Log.WriteLine($"[Socket] Disconnecting peer with message: {message}", LogCategory.Socket);
+        _log.WriteLine($"[Socket] Disconnecting peer with message: {message}");
         using var packet = ReliablePacket.Create(new Disconnect(message)).Serialize(out int numBytes);
         peer.Disconnect(packet.Segment.Array, 0, numBytes);
     }
