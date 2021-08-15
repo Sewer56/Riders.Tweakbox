@@ -117,16 +117,29 @@ public static class Utilities
     /// <param name="number">The number to round up.</param>
     /// <param name="multiple">The multiple the number should be rounded to.</param>
     /// <returns></returns>
-    public static int RoundUp(int number, int multiple)
+    public static long RoundUp(long number, long multiple)
     {
         if (multiple == 0)
             return number;
 
-        int remainder = number % multiple;
+        long remainder = number % multiple;
         if (remainder == 0)
             return number;
 
         return number + multiple - remainder;
+    }
+
+    /// <summary>
+    /// Rounds a number down to the previous multiple unless it is already a multiple.
+    /// </summary>
+    /// <param name="number">The number.</param>
+    /// <param name="multiple">The multiple.</param>
+    public static int RoundDown(int number, int multiple)
+    {
+        if (multiple == 0)
+            return number;
+
+        return number / multiple * multiple;
     }
 
     /// <summary>

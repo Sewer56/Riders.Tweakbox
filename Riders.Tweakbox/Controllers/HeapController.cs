@@ -5,7 +5,11 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Functions;
+using Microsoft.Windows.Sdk;
 using static Riders.Tweakbox.Misc.Log.Log;
+using Riders.Netplay.Messages.Misc;
+using System;
+
 namespace Riders.Tweakbox.Controllers;
 
 public class HeapController : IController
@@ -21,10 +25,13 @@ public class HeapController : IController
     private IHook<Heap.FreeFnPtr> _freeHook;
     private IHook<Heap.FreeFrameFnPtr> _freeFrameHook;
     private Logger _heapLogger = new Logger(LogCategory.Heap);
+    private SYSTEM_INFO _info;
 
     public HeapController(IReloadedHooks hooks)
     {
         _instance = this;
+        PInvoke.GetSystemInfo(out _info);
+
         _mallocHook = Heap.Malloc.HookAs<Heap.AllocFnPtr>(typeof(HeapController), nameof(MallocImplStatic)).Activate();
         _callocHook = Heap.Calloc.HookAs<Heap.AllocFnPtr>(typeof(HeapController), nameof(CallocImplStatic)).Activate();
         _freeHook = Heap.Free.HookAs<Heap.FreeFnPtr>(typeof(HeapController), nameof(FreeImplStatic)).Activate();
@@ -33,8 +40,33 @@ public class HeapController : IController
 
     private unsafe int FreeFrameImpl(MallocResult* address)
     {
+        /*
+            In our FreeFrame hook, we evict the freed memory from
+            physical RAM; allowing it to be swapped out if necessary.
+
+            This is an optimisation in the case where e.g. 
+            - A large custom map is being unloaded.
+            - Then a regular map is being loaded.
+
+            Normally the remainder of the old map would still be in RAM
+            in the unused region of the buffer; but since that region
+            will be unused, we tell the OS it's free to put something
+            else in that physical RAM area.
+         */
+
+        var currentHeader = *Heap.FrameHeadFront;
+        var newHeader = address;
+        int bytesFreed = (int)(currentHeader - newHeader);
+
         _heapLogger.WriteLine($"FreeFrame: {(long)address:X}");
         var result = _freeFrameHook.OriginalFunction.Value.Invoke(address);
+
+        var freeStart = Utilities.RoundUp((long)newHeader, _info.dwPageSize);
+        int bytesRoundLess = (int)(freeStart - (long)newHeader);
+        var freeSize = Utilities.RoundDown(bytesFreed - bytesRoundLess, (int)_info.dwPageSize);
+
+        if (freeSize > 0)
+            Native.VirtualUnlock((IntPtr)freeStart, (UIntPtr)freeSize);
 
         return result;
     }
@@ -45,7 +77,7 @@ public class HeapController : IController
         var result = _freeHook.OriginalFunction.Value.Invoke(address).Pointer;
 
         // Erase the contents of the allocation header.
-        // This is necessary for our heap walker.
+        // This is necessary for our heap walker in the Heap Debug window.
         var header = result->GetHeader(result);
         header->Base = (MallocResult*)0;
         header->AllocationSize = 0;
