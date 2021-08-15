@@ -10,7 +10,6 @@ public class HeapViewerWindow : ComponentBase
 {
     public override string Name { get; set; } = "Heap Viewer";
     private HeapController _controller = IoC.GetSingleton<HeapController>();
-    private bool _frontOpen;
 
     public override void Render()
     {
@@ -23,7 +22,7 @@ public class HeapViewerWindow : ComponentBase
     private unsafe void RenderHeapViewer()
     {
         ImGui.TextWrapped("This utility allows you to view objects allocated on the game's native heap. It's a work in progress, sometimes it doesn't work quite right :/");
-        if (ImGui.CollapsingHeaderBoolPtr("Front", ref _frontOpen, 0))
+        if (ImGui.CollapsingHeaderTreeNodeFlags("Front", 0))
             IterateFront(_controller.FirstAllocResult);
     }
 
