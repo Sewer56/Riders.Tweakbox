@@ -1,10 +1,9 @@
-﻿namespace Riders.Tweakbox.Services.Interfaces
+﻿namespace Riders.Tweakbox.Services.Interfaces;
+
+/// <summary>
+/// Represents an individual service which is instantiated at boot time.
+/// </summary>
+public interface ISingletonService
 {
-    /// <summary>
-    /// Represents an individual service which is instantiated at boot time.
-    /// </summary>
-    public interface ISingletonService
-    {
-        
-    }
+
 }

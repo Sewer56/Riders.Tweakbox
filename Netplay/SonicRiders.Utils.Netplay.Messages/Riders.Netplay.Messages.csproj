@@ -4,7 +4,8 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

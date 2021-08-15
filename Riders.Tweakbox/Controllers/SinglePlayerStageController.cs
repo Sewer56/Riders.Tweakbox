@@ -4,36 +4,34 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Functions;
+namespace Riders.Tweakbox.Controllers;
 
-namespace Riders.Tweakbox.Controllers
+public unsafe class SinglePlayerStageController : IController
 {
-    public unsafe class SinglePlayerStageController : IController
+    // Settings
+    private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
+
+    private IHook<Functions.CdeclReturnIntFn> _loadWorldAssetsHook;
+
+    // Hooks Persistent Data
+
+    public SinglePlayerStageController()
     {
-        // Settings
-        private TweakboxConfig _config = IoC.Get<TweakboxConfig>();
+        // Now for our hooks.
+        _loadWorldAssetsHook = Functions.LoadWorldAssets.Hook(LoadWorldAssetsHook).Activate();
+    }
 
-        private IHook<Functions.CdeclReturnIntFn> _loadWorldAssetsHook;
+    private int LoadWorldAssetsHook()
+    {
+        var forceSinglePlayer = _config.Data.SinglePlayerStageData;
+        int originalNumCameras = *State.NumberOfCameras;
 
-        // Hooks Persistent Data
+        if (forceSinglePlayer)
+            *State.NumberOfCameras = 1;
 
-        public SinglePlayerStageController()
-        {
-            // Now for our hooks.
-            _loadWorldAssetsHook = Functions.LoadWorldAssets.Hook(LoadWorldAssetsHook).Activate();
-        }
+        var result = _loadWorldAssetsHook.OriginalFunction();
 
-        private int LoadWorldAssetsHook()
-        {
-            var forceSinglePlayer = _config.Data.SinglePlayerStageData;
-            int originalNumCameras = *State.NumberOfCameras;
-
-            if (forceSinglePlayer)
-                *State.NumberOfCameras = 1;
-
-            var result = _loadWorldAssetsHook.OriginalFunction();
-
-            *State.NumberOfCameras = originalNumCameras;
-            return result;
-        }
+        *State.NumberOfCameras = originalNumCameras;
+        return result;
     }
 }

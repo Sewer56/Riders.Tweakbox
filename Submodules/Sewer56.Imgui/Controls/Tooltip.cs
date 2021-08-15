@@ -1,22 +1,20 @@
 ﻿using DearImguiSharp;
+namespace Sewer56.Imgui.Controls;
 
-namespace Sewer56.Imgui.Controls
+public static class Tooltip
 {
-    public static class Tooltip
+    /// <summary>
+    /// Displays a tooltip if the last item was hovered over.
+    /// </summary>
+    /// <param name="text">The text to display.</param>
+    /// <param name="flags">Item hover flags.</param>
+    public static void TextOnHover(string text, ImGuiHoveredFlags flags = ImGuiHoveredFlags.ImGuiHoveredFlagsNone)
     {
-        /// <summary>
-        /// Displays a tooltip if the last item was hovered over.
-        /// </summary>
-        /// <param name="text">The text to display.</param>
-        /// <param name="flags">Item hover flags.</param>
-        public static void TextOnHover(string text, ImGuiHoveredFlags flags = ImGuiHoveredFlags.ImGuiHoveredFlagsNone)
-        {
-            if (!ImGui.IsItemHovered((int) flags)) 
-                return;
+        if (!ImGui.IsItemHovered((int)flags))
+            return;
 
-            ImGui.BeginTooltip();
-            ImGui.Text(text);
-            ImGui.EndTooltip();
-        }
+        ImGui.BeginTooltip();
+        ImGui.Text(text);
+        ImGui.EndTooltip();
     }
 }

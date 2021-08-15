@@ -8,65 +8,63 @@ using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
+namespace Riders.Tweakbox.Components.Netplay;
 
-namespace Riders.Tweakbox.Components.Netplay
+/// <summary>
+/// Abstracts the functionality to power the server browser.
+/// </summary>
+public class NetplayServerBrowserMenu : ComponentBase
 {
-    /// <summary>
-    /// Abstracts the functionality to power the server browser.
-    /// </summary>
-    public class NetplayServerBrowserMenu : ComponentBase
+    /// <inheritdoc />
+    public override string Name { get; set; } = "Server Browser";
+
+    public ServerBrowserMenu BrowserMenu;
+    public NetplayMenu Owner;
+
+    public TweakboxApi Api => Controller.Api;
+    public NetplayController Controller => Owner.Controller;
+    public NetplayEditorConfig Config => Owner.Config;
+
+    // Re-route to internal window.
+    public override ref bool IsEnabled() => ref BrowserMenu.IsEnabled();
+
+    public NetplayServerBrowserMenu(NetplayMenu owner)
     {
-        /// <inheritdoc />
-        public override string Name { get; set; } = "Server Browser";
+        Owner = owner;
+        BrowserMenu = new ServerBrowserMenu(Connect, Refresh);
+    }
 
-        public ServerBrowserMenu BrowserMenu;
-        public NetplayMenu Owner;
-        
-        public TweakboxApi Api              => Controller.Api;
-        public NetplayController Controller => Owner.Controller;
-        public NetplayEditorConfig  Config  => Owner.Config;
+    public override void Render()
+    {
+        BrowserMenu.Render();
+    }
 
-        // Re-route to internal window.
-        public override ref bool IsEnabled() => ref BrowserMenu.IsEnabled();
+    internal async Task Refresh()
+    {
+        Log.WriteLine("Fetching Server List");
+        var serverResult = (await Api.BrowserApi.GetAll()).AsOneOf();
 
-        public NetplayServerBrowserMenu(NetplayMenu owner)
+        if (serverResult.IsT1)
         {
-            Owner = owner;
-            BrowserMenu = new ServerBrowserMenu(Connect, Refresh);
+            Shell.AddDialog("Failed to Get Server List", $"Error: \n{string.Join('\n', serverResult.AsT1.Errors)}");
+            return;
         }
 
-        public override void Render()
+        var results = Mapping.Mapper.Map<List<GetServerResultEx>>(serverResult.AsT0.Results);
+        BrowserMenu.SetResults(results);
+        Log.WriteLine("Fetch Success");
+    }
+
+    internal async Task Connect(GetServerResultEx result)
+    {
+        try
         {
-            BrowserMenu.Render();
+            await Controller.ConnectAsync(result.Address, result.Port, result.HasPassword);
+            IsEnabled() = false;
         }
-
-        internal async Task Refresh()
+        catch (Exception e)
         {
-            Log.WriteLine("Fetching Server List");
-            var serverResult = (await Api.BrowserApi.GetAll()).AsOneOf();
-
-            if (serverResult.IsT1)
-            {
-                Shell.AddDialog("Failed to Get Server List", $"Error: \n{string.Join('\n', serverResult.AsT1.Errors)}");
-                return;
-            }
-
-            var results = Mapping.Mapper.Map<List<GetServerResultEx>>(serverResult.AsT0.Results);
-            BrowserMenu.SetResults(results);
-            Log.WriteLine("Fetch Success");
-        }
-
-        internal async Task Connect(GetServerResultEx result)
-        {
-            try
-            {
-                await Controller.ConnectAsync(result.Address, result.Port, result.HasPassword);
-                IsEnabled() = false;
-            }
-            catch (Exception e)
-            {
-                Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
-            }
+            Shell.AddDialog("Join Server Failed", $"{e.Message}\n{e.StackTrace}");
         }
     }
 }

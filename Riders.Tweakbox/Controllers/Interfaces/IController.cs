@@ -1,4 +1,3 @@
-﻿namespace Riders.Tweakbox.Controllers.Interfaces
-{
-    public interface IController { }
-}
+﻿namespace Riders.Tweakbox.Controllers.Interfaces;
+
+public interface IController { }

@@ -1,35 +1,33 @@
 ﻿using System;
+namespace Sewer56.Imgui.Shell.Structures;
 
-namespace Sewer56.Imgui.Shell.Structures
+/// <summary>
+/// Encapsulates an individual log item.
+/// </summary>
+public struct LogItem
 {
+    public string Text { get; set; }
+    public int Timeout { get; set; }
+    public DateTime CreationDate { get; private set; }
+
     /// <summary>
-    /// Encapsulates an individual log item.
+    /// Contains an individual item to be displayed by the log.
     /// </summary>
-    public struct LogItem
+    /// <param name="text">The text to display.</param>
+    /// <param name="timeout">The timeout in millseconds.</param>
+    public LogItem(string text, int timeout = 5000)
     {
-        public string Text { get; set; }
-        public int Timeout { get; set; }
-        public DateTime CreationDate { get; private set; }
+        Text = text;
+        Timeout = timeout;
+        CreationDate = DateTime.UtcNow;
+    }
 
-        /// <summary>
-        /// Contains an individual item to be displayed by the log.
-        /// </summary>
-        /// <param name="text">The text to display.</param>
-        /// <param name="timeout">The timeout in millseconds.</param>
-        public LogItem(string text, int timeout = 5000)
-        {
-            Text = text;
-            Timeout = timeout;
-            CreationDate = DateTime.UtcNow;
-        }
-
-        /// <summary>
-        /// True if the log has expired, else false.
-        /// </summary>
-        public bool HasExpired()
-        {
-            var delta = DateTime.UtcNow - CreationDate;
-            return delta.TotalMilliseconds > Timeout;
-        }
+    /// <summary>
+    /// True if the log has expired, else false.
+    /// </summary>
+    public bool HasExpired()
+    {
+        var delta = DateTime.UtcNow - CreationDate;
+        return delta.TotalMilliseconds > Timeout;
     }
 }

@@ -1,9 +1,8 @@
-﻿namespace Riders.Tweakbox.Services.Texture.Enums
+﻿namespace Riders.Tweakbox.Services.Texture.Enums;
+
+public enum TextureType
 {
-    public enum TextureType
-    {
-        None,
-        Normal,
-        Animated
-    }
+    None,
+    Normal,
+    Animated
 }

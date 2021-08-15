@@ -2,30 +2,28 @@
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+namespace Riders.Tweakbox.Components.Netplay.Components.Anticheat;
 
-namespace Riders.Tweakbox.Components.Netplay.Components.Anticheat
+public class AntiTeleport : INetplayComponent
 {
-    public class AntiTeleport : INetplayComponent
+    /// <inheritdoc />
+    public Socket Socket { get; set; }
+
+    /// <inheritdoc />
+    public void Dispose()
     {
-        /// <inheritdoc />
-        public Socket Socket { get; set; }
+        throw new NotImplementedException();
+    }
 
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+    /// <inheritdoc />
+    public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
+    {
+        throw new NotImplementedException();
+    }
 
-        /// <inheritdoc />
-        public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
-        {
-            throw new NotImplementedException();
-        }
+    /// <inheritdoc />
+    public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
+    {
+        throw new NotImplementedException();
     }
 }

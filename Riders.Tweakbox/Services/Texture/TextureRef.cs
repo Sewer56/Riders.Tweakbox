@@ -1,53 +1,50 @@
 ﻿using System.Buffers;
 using System.IO;
-using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Texture.Enums;
+namespace Riders.Tweakbox.Services.Texture;
 
-namespace Riders.Tweakbox.Services.Texture
+/// <summary>
+/// References texture data.
+/// </summary>
+public ref struct TextureRef
 {
-    /// <summary>
-    /// References texture data.
-    /// </summary>
-    public ref struct TextureRef
+    public byte[] Data;
+    public ArrayPool<byte> Owner;
+    public bool NeedsDispose;
+
+    public TextureFormat Format;
+    public bool IsCached;
+
+    /// <inheritdoc />
+    public TextureRef(byte[] data, TextureFormat format, bool isCached = false) : this()
     {
-        public byte[] Data;
-        public ArrayPool<byte> Owner;
-        public bool NeedsDispose;
+        Data = data;
+        Format = format;
+        IsCached = isCached;
+    }
 
-        public TextureFormat Format;
-        public bool IsCached;
+    public void Dispose()
+    {
+        if (NeedsDispose)
+            Owner.Return(Data);
+    }
 
-        /// <inheritdoc />
-        public TextureRef(byte[] data, TextureFormat format, bool isCached = false) : this()
-        {
-            Data   = data;
-            Format = format;
-            IsCached = isCached;
-        }
+    /// <summary>
+    /// Returns true if a texture should be cached, else false.
+    /// </summary>
+    public bool ShouldBeCached() => Format.ShouldBeCached() && !IsCached;
 
-        public void Dispose()
-        {
-            if (NeedsDispose)
-                Owner.Return(Data);
-        }
+    /// <summary>
+    /// Gets a texture reference from file.
+    /// </summary>
+    /// <param name="filePath">The file path to the texture.</param>
+    /// <param name="type">The texture type.</param>
+    public static TextureRef FromFile(string filePath, TextureFormat type)
+    {
+        var cache = TextureCacheService.Instance;
+        if (type.ShouldBeCached() && cache != null && cache.TryFetch(filePath, out var result))
+            return result;
 
-        /// <summary>
-        /// Returns true if a texture should be cached, else false.
-        /// </summary>
-        public bool ShouldBeCached() => Format.ShouldBeCached() && !IsCached;
-
-        /// <summary>
-        /// Gets a texture reference from file.
-        /// </summary>
-        /// <param name="filePath">The file path to the texture.</param>
-        /// <param name="type">The texture type.</param>
-        public static TextureRef FromFile(string filePath, TextureFormat type)
-        {
-            var cache = TextureCacheService.Instance;
-            if (type.ShouldBeCached() && cache != null && cache.TryFetch(filePath, out var result))
-                return result;
-            
-            return type == TextureFormat.DdsLz4 ? TextureCompression.PickleFromFileToRef(filePath) : new TextureRef(File.ReadAllBytes(filePath), type);
-        }
+        return type == TextureFormat.DdsLz4 ? TextureCompression.PickleFromFileToRef(filePath) : new TextureRef(File.ReadAllBytes(filePath), type);
     }
 }

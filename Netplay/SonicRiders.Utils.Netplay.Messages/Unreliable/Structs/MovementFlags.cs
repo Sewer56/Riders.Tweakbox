@@ -5,84 +5,82 @@ using Riders.Netplay.Messages.Misc.Interfaces;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
+namespace Riders.Netplay.Messages.Unreliable.Structs;
 
-namespace Riders.Netplay.Messages.Unreliable.Structs
+/// <summary>
+/// Stores the movement flags for an individual player.
+/// </summary>
+public struct MovementFlags : IEquatable<MovementFlags>, Misc.Interfaces.IBitPackable<MovementFlags>, IMergeable<MovementFlags>
 {
+    public Reliable.Structs.Gameplay.Shared.MovementFlags Modes;
+
+    /// <param name="modes">The modes of attack.</param>
+    public MovementFlags(Reliable.Structs.Gameplay.Shared.MovementFlags modes) { Modes = modes; }
+
+    /// <param name="player">The player to get flags from.</param>
+    public unsafe MovementFlags(Player* player) : this(player->MovementFlags) { }
+
     /// <summary>
-    /// Stores the movement flags for an individual player.
+    /// Create movement flags based on player's existing flags.
     /// </summary>
-    public struct MovementFlags : IEquatable<MovementFlags>, Misc.Interfaces.IBitPackable<MovementFlags>, IMergeable<MovementFlags>
+    public MovementFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags flags)
     {
-        public Reliable.Structs.Gameplay.Shared.MovementFlags Modes;
+        Modes = Reliable.Structs.Gameplay.Shared.MovementFlags.None;
+        if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.Braking))
+            Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.Braking;
 
-        /// <param name="modes">The modes of attack.</param>
-        public MovementFlags(Reliable.Structs.Gameplay.Shared.MovementFlags modes) { Modes = modes; }
+        if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.ChargingJump))
+            Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.ChargingJump;
 
-        /// <param name="player">The player to get flags from.</param>
-        public unsafe MovementFlags(Player* player) : this(player->MovementFlags) { }
+        if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.Drifting))
+            Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.Drifting;
 
-        /// <summary>
-        /// Create movement flags based on player's existing flags.
-        /// </summary>
-        public MovementFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags flags)
-        {
-            Modes = Reliable.Structs.Gameplay.Shared.MovementFlags.None;
-            if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.Braking))
-                Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.Braking;
-
-            if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.ChargingJump))
-                Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.ChargingJump;
-
-            if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.Drifting))
-                Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.Drifting;
-
-            if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.AttachToRail))
-                Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.AttachToRail;
-        }
-
-        /// <summary>
-        /// Applies the movement flags to a given player by appending the flags to the new movement flags for this frame.
-        /// </summary>
-        /// <param name="player">Pointer to the player to apply the flags to.</param>
-        public unsafe void ToGame(Player* player)
-        {
-            if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.Braking))
-                player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Braking;
-
-            if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.ChargingJump))
-                player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.ChargingJump;
-
-            if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.Drifting))
-                player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Drifting;
-
-            if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.AttachToRail))
-                player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.AttachToRail;
-        }
-
-        /// <summary>
-        /// Merges a new set of flags with the current set.
-        /// </summary>
-        /// <param name="packetSetMovementFlags"></param>
-        public void Merge(in MovementFlags packetSetMovementFlags)
-        {
-            this.Modes |= packetSetMovementFlags.Modes;
-        }
-
-        /// <inheritdoc />
-        public MovementFlags FromStream<T>(ref BitStream<T> stream) where T : IByteStream => new MovementFlags(stream.ReadGeneric<Reliable.Structs.Gameplay.Shared.MovementFlags> (EnumNumBits<Reliable.Structs.Gameplay.Shared.MovementFlags>.Number));
-
-        /// <inheritdoc />
-        public void ToStream<T>(ref BitStream<T> stream) where T : IByteStream => stream.WriteGeneric(Modes, EnumNumBits<Reliable.Structs.Gameplay.Shared.MovementFlags>.Number);
-
-        #region Autogenerated by R#
-        /// <inheritdoc />
-        public bool Equals(MovementFlags other) => Modes == other.Modes;
-
-        /// <inheritdoc />
-        public override bool Equals(object obj) => obj is MovementFlags other && Equals(other);
-
-        /// <inheritdoc />
-        public override int GetHashCode() => HashCode.Combine((int)Modes);
-        #endregion
+        if (flags.HasAllFlags(Sewer56.SonicRiders.Structures.Enums.MovementFlags.AttachToRail))
+            Modes |= Reliable.Structs.Gameplay.Shared.MovementFlags.AttachToRail;
     }
+
+    /// <summary>
+    /// Applies the movement flags to a given player by appending the flags to the new movement flags for this frame.
+    /// </summary>
+    /// <param name="player">Pointer to the player to apply the flags to.</param>
+    public unsafe void ToGame(Player* player)
+    {
+        if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.Braking))
+            player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Braking;
+
+        if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.ChargingJump))
+            player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.ChargingJump;
+
+        if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.Drifting))
+            player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.Drifting;
+
+        if (Modes.HasAllFlags(Reliable.Structs.Gameplay.Shared.MovementFlags.AttachToRail))
+            player->MovementFlags |= Sewer56.SonicRiders.Structures.Enums.MovementFlags.AttachToRail;
+    }
+
+    /// <summary>
+    /// Merges a new set of flags with the current set.
+    /// </summary>
+    /// <param name="packetSetMovementFlags"></param>
+    public void Merge(in MovementFlags packetSetMovementFlags)
+    {
+        this.Modes |= packetSetMovementFlags.Modes;
+    }
+
+    /// <inheritdoc />
+    public MovementFlags FromStream<T>(ref BitStream<T> stream) where T : IByteStream => new MovementFlags(stream.ReadGeneric<Reliable.Structs.Gameplay.Shared.MovementFlags>(EnumNumBits<Reliable.Structs.Gameplay.Shared.MovementFlags>.Number));
+
+    /// <inheritdoc />
+    public void ToStream<T>(ref BitStream<T> stream) where T : IByteStream => stream.WriteGeneric(Modes, EnumNumBits<Reliable.Structs.Gameplay.Shared.MovementFlags>.Number);
+
+    #region Autogenerated by R#
+    /// <inheritdoc />
+    public bool Equals(MovementFlags other) => Modes == other.Modes;
+
+    /// <inheritdoc />
+    public override bool Equals(object obj) => obj is MovementFlags other && Equals(other);
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine((int)Modes);
+    #endregion
 }

@@ -10,55 +10,51 @@ using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders.Structures.Enums;
+namespace Riders.Tweakbox.Configs;
 
-namespace Riders.Tweakbox.Configs
+public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Internal>
 {
-    public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Internal>
+    public class Internal : NotifyPropertyChangedBase
     {
-        #region Internal
-        public class Internal : NotifyPropertyChangedBase
-        {
-            public bool BootToMenu = true;
-            public bool FramePacing = true;
-            public bool FramePacingSpeedup = true; // Speed up game to compensate for lag.
-            public float DisableYieldThreshold = 80;
-            public bool D3DDeviceFlags = true;
-            public bool DisableVSync = true;
-            public bool AutoQTE = true;
-            public int ResolutionX = 1280;
-            public int ResolutionY = 720;
-            public bool Fullscreen = false;
-            public bool Blur = false;
-            public bool WidescreenHack = false;
-            public bool Borderless = false;
-            public bool SinglePlayerStageData = true;
-            public bool SinglePlayerModels = true;
+        public bool BootToMenu = true;
+        public bool FramePacing = true;
+        public bool FramePacingSpeedup = true; // Speed up game to compensate for lag.
+        public float DisableYieldThreshold = 80;
+        public bool D3DDeviceFlags = true;
+        public bool DisableVSync = true;
+        public bool AutoQTE = true;
+        public int ResolutionX = 1280;
+        public int ResolutionY = 720;
+        public bool Fullscreen = false;
+        public bool Blur = false;
+        public bool WidescreenHack = false;
+        public bool Borderless = false;
+        public bool SinglePlayerStageData = true;
+        public bool SinglePlayerModels = true;
 
-            public bool NormalRaceReturnToTrackSelect = true;
-            public bool TagReturnToTrackSelect = true;
-            public bool SurvivalReturnToTrackSelect = true;
-            public float MaxSpeedupTimeMillis = 2000f;
+        public bool NormalRaceReturnToTrackSelect = true;
+        public bool TagReturnToTrackSelect = true;
+        public bool SurvivalReturnToTrackSelect = true;
+        public float MaxSpeedupTimeMillis = 2000f;
 
-            public bool IncludeVanillaMusic = true;
-            public bool AllowBackwardsDriving = true;
-            public bool BootToRace = false;
-            public Levels BootToRaceLevel = Levels.MetalCity;
-            public Characters BootToRaceCharacter = Characters.Sonic;
-            public ExtremeGear BootToRaceGear = ExtremeGear.Default;
-            public MemoryLimit MemoryLimit = MemoryLimit.MB64;
+        public bool IncludeVanillaMusic = true;
+        public bool AllowBackwardsDriving = true;
+        public bool BootToRace = false;
+        public Levels BootToRaceLevel = Levels.MetalCity;
+        public Characters BootToRaceCharacter = Characters.Sonic;
+        public ExtremeGear BootToRaceGear = ExtremeGear.Default;
+        public MemoryLimit MemoryLimit = MemoryLimit.MB64;
 
-            public bool RemoveFpsCap = false;
-            public VoiceLanguage VoiceLanguage = VoiceLanguage.English;
-            public MessageLanguage Language = MessageLanguage.English;
-        }
+        public bool RemoveFpsCap = false;
+        public VoiceLanguage VoiceLanguage = VoiceLanguage.English;
+        public MessageLanguage Language = MessageLanguage.English;
+    }
 
-        public enum MemoryLimit : int
-        {
-            MB64 = 0x3D09000,
-            MB128 = 0x7A12000,
-            MB256 = 0xF424000,
-            MB512 = 0x1E848000
-        }
-        #endregion
+    public enum MemoryLimit : int
+    {
+        MB64 = 0x3D09000,
+        MB128 = 0x7A12000,
+        MB256 = 0xF424000,
+        MB512 = 0x1E848000
     }
 }

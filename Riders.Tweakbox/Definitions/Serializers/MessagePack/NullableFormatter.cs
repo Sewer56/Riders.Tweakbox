@@ -1,33 +1,31 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
+namespace Riders.Tweakbox.Definitions.Serializers.MessagePack;
 
-namespace Riders.Tweakbox.Definitions.Serializers.MessagePack
+public unsafe class NullableFormatter<T> : IMessagePackFormatter<Nullable<T>> where T : unmanaged
 {
-    public unsafe class NullableFormatter<T> : IMessagePackFormatter<Nullable<T>> where T : unmanaged
+    /// <inheritdoc />
+    public void Serialize(ref MessagePackWriter writer, Nullable<T> value, MessagePackSerializerOptions options)
     {
-        /// <inheritdoc />
-        public void Serialize(ref MessagePackWriter writer, Nullable<T> value, MessagePackSerializerOptions options)
+        if (!value.HasValue)
         {
-            if (!value.HasValue)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                var formatter = options.Resolver.GetFormatter<T>();
-                formatter.Serialize(ref writer, value.Value, options);
-            }
+            writer.WriteNil();
         }
-
-        /// <inheritdoc />
-        public Nullable<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        else
         {
-            // If not Binary/Nullable type, fall back to reading primitives.
-            if (reader.TryReadNil())
-                return new Nullable<T>();
-
             var formatter = options.Resolver.GetFormatter<T>();
-            return formatter.Deserialize(ref reader, options);
+            formatter.Serialize(ref writer, value.Value, options);
         }
+    }
+
+    /// <inheritdoc />
+    public Nullable<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        // If not Binary/Nullable type, fall back to reading primitives.
+        if (reader.TryReadNil())
+            return new Nullable<T>();
+
+        var formatter = options.Resolver.GetFormatter<T>();
+        return formatter.Deserialize(ref reader, options);
     }
 }

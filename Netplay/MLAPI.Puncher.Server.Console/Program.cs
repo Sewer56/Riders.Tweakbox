@@ -2,19 +2,17 @@
 using LiteNetLib;
 using MLAPI.Puncher.LiteNetLib;
 
-namespace MLAPI.Puncher.Server.Console
+namespace MLAPI.Puncher.Server.Console;
+class Program
 {
-    class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            PuncherServer server = new PuncherServer();
-            var listener = new EventBasedNetListener();
-            var manager  = new NetManager(listener);
-            manager.UnsyncedEvents = true;
+        PuncherServer server = new PuncherServer();
+        var listener = new EventBasedNetListener();
+        var manager = new NetManager(listener);
+        manager.UnsyncedEvents = true;
 
-            server.Transport = new LiteNetLibUdpTransport(manager, listener);
-            server.Start(new IPEndPoint(IPAddress.Any, 6776));
-        }
+        server.Transport = new LiteNetLibUdpTransport(manager, listener);
+        server.Start(new IPEndPoint(IPAddress.Any, 6776));
     }
 }

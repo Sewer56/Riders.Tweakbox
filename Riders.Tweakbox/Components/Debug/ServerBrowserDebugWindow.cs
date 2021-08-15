@@ -13,103 +13,102 @@ using Riders.Tweakbox.Components.Netplay.Menus.Models;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell;
 using Constants = Sewer56.Imgui.Misc.Constants;
+namespace Riders.Tweakbox.Components.Debug;
 
-namespace Riders.Tweakbox.Components.Debug
+public class ServerBrowserDebugWindow : ComponentBase
 {
-    public class ServerBrowserDebugWindow : ComponentBase
+    /// <inheritdoc />
+    public override string Name { get; set; } = "Server Browser Test Window";
+
+    public ServerBrowserMenu BrowserMenu;
+    public int NumServers = 50;
+
+    /// <inheritdoc />
+    public ServerBrowserDebugWindow()
     {
-        /// <inheritdoc />
-        public override string Name { get; set; } = "Server Browser Test Window";
+        BrowserMenu = new ServerBrowserMenu(FakeConnect, FakeRefresh);
+        Task.Run(() => GenerateData(NumServers)).ConfigureAwait(false);
+        BrowserMenu.IsEnabled() = true;
+    }
 
-        public ServerBrowserMenu BrowserMenu;
-        public int NumServers = 50;
-
-        /// <inheritdoc />
-        public ServerBrowserDebugWindow()
+    /// <inheritdoc />
+    public override void Render()
+    {
+        ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
+        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
         {
-            BrowserMenu = new ServerBrowserMenu(FakeConnect, FakeRefresh);
-            Task.Run(() => GenerateData(NumServers)).ConfigureAwait(false);
-            BrowserMenu.IsEnabled() = true;
+            BrowserMenu.Render();
+
+            ImGui.SliderInt("Number of Servers", ref NumServers, 1, 1000, null, 0);
+            if (ImGui.Button("Generate", Constants.ButtonSize))
+                GenerateData(NumServers);
+
+            if (!BrowserMenu.IsEnabled() && ImGui.Button("Show Menu", Constants.ButtonSize))
+                BrowserMenu.IsEnabled() = true;
         }
 
-        /// <inheritdoc />
-        public override void Render()
-        {
-            ImGui.PushItemWidth(ImGui.GetFontSize() * - 12);
-            if (ImGui.Begin(Name, ref IsEnabled(), (int) ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
-            {
-                BrowserMenu.Render();
+        ImGui.End();
+        ImGui.PopItemWidth();
+    }
 
-                ImGui.SliderInt("Number of Servers", ref NumServers, 1, 1000, null, 0);
-                if (ImGui.Button("Generate", Constants.ButtonSize))
-                    GenerateData(NumServers);
+    private void GenerateData(int numServers)
+    {
+        var faker = GetPostServerRequestFaker();
+        BrowserMenu.SetResults(Mapping.Mapper.Map<List<GetServerResultEx>>(faker.Generate(numServers)));
+    }
 
-                if (!BrowserMenu.IsEnabled() && ImGui.Button("Show Menu", Constants.ButtonSize))
-                    BrowserMenu.IsEnabled() = true;
-            }
+    // Sample Events
+    private Task FakeConnect(GetServerResultEx arg)
+    {
+        Shell.AddDialog("Connecting", "Just try to pretend this code is\n" +
+                                      "connecting to a server, okay?");
+        return Task.CompletedTask;
+    }
 
-            ImGui.End();
-            ImGui.PopItemWidth();
-        }
+    private Task FakeRefresh()
+    {
+        return Task.Run(() => GenerateData(NumServers));
+    }
 
-        private void GenerateData(int numServers)
-        {
-            var faker = GetPostServerRequestFaker();
-            BrowserMenu.SetResults(Mapping.Mapper.Map<List<GetServerResultEx>>(faker.Generate(numServers)));
-        }
+    #region Test Data Generation
+    private static Random _random = new Random();
+    private static Faker<GetServerResult> GetPostServerRequestFaker()
+    {
+        return new Faker<GetServerResult>()
+            .StrictMode(true)
+            .RuleFor(x => x.Port, x => x.Random.Int(0, 65535))
+            .RuleFor(x => x.Name, x => x.Internet.UserName() + "'s Game")
+            .RuleFor(x => x.HasPassword, x => x.Random.Bool(0.5f))
+            .RuleFor(x => x.Type, x => x.PickRandom<MatchTypeDto>())
+            .RuleFor(x => x.GameMode, x => x.PickRandom<GameModeDto>())
+            .RuleFor(x => x.Country, x => x.PickRandom<CountryDto>())
+            .RuleFor(x => x.Mods, GetRandomModString)
+            .RuleFor(x => x.Address, x => x.Internet.IpAddress().ToString())
+            .RuleFor(x => x.Players, MakeValidPlayerData);
+    }
 
-        // Sample Events
-        private Task FakeConnect(GetServerResultEx arg)
-        {
-            Shell.AddDialog("Connecting", "Just try to pretend this code is\n" +
-                                          "connecting to a server, okay?");
-            return Task.CompletedTask;
-        }
+    private static List<ServerPlayerInfoResult> MakeValidPlayerData(Faker faker, GetServerResult request)
+    {
+        var playerFaker = GetPlayerInfoResult();
+        var numPlayers = faker.Random.Int(0, request.Type.GetNumTeams() * request.Type.GetNumPlayersPerTeam());
+        var result = new List<ServerPlayerInfoResult>();
 
-        private Task FakeRefresh()
-        {
-            return Task.Run(() => GenerateData(NumServers));
-        }
+        for (int x = 0; x < numPlayers; x++)
+            result.Add(playerFaker.Generate());
 
-        #region Test Data Generation
-        private static Random _random = new Random();
-        private static Faker<GetServerResult> GetPostServerRequestFaker()
-        {
-            return new Faker<GetServerResult>()
-                .StrictMode(true)
-                .RuleFor(x => x.Port, x => x.Random.Int(0, 65535))
-                .RuleFor(x => x.Name, x => x.Internet.UserName() + "'s Game")
-                .RuleFor(x => x.HasPassword, x => x.Random.Bool(0.5f))
-                .RuleFor(x => x.Type, x => x.PickRandom<MatchTypeDto>())
-                .RuleFor(x => x.GameMode, x => x.PickRandom<GameModeDto>())
-                .RuleFor(x => x.Country, x => x.PickRandom<CountryDto>())
-                .RuleFor(x => x.Mods, GetRandomModString)
-                .RuleFor(x => x.Address, x => x.Internet.IpAddress().ToString())
-                .RuleFor(x => x.Players, MakeValidPlayerData);
-        }
+        return result;
+    }
 
-        private static List<ServerPlayerInfoResult> MakeValidPlayerData(Faker faker, GetServerResult request)
-        {
-            var playerFaker = GetPlayerInfoResult();
-            var numPlayers  = faker.Random.Int(0, request.Type.GetNumTeams() * request.Type.GetNumPlayersPerTeam());
-            var result      = new List<ServerPlayerInfoResult>();
+    private static Faker<ServerPlayerInfoResult> GetPlayerInfoResult()
+    {
+        return new Faker<ServerPlayerInfoResult>()
+            .StrictMode(true)
+            .RuleFor(x => x.Name, x => x.Internet.UserName())
+            .RuleFor(x => x.Latency, x => x.Random.Int(0, 180));
+    }
 
-            for (int x = 0; x < numPlayers; x++)
-                result.Add(playerFaker.Generate());
-
-            return result;
-        }
-
-        private static Faker<ServerPlayerInfoResult> GetPlayerInfoResult()
-        {
-            return new Faker<ServerPlayerInfoResult>()
-                .StrictMode(true)
-                .RuleFor(x => x.Name, x => x.Internet.UserName())
-                .RuleFor(x => x.Latency, x => x.Random.Int(0, 180));
-        }
-
-        private static string[] _sampleMods =
-        {
+    private static string[] _sampleMods =
+    {
             "ToiletEdition1.0.0",
             "ToiletEdition1.1.0",
             "ToiletEdition2.0.0",
@@ -122,43 +121,42 @@ namespace Riders.Tweakbox.Components.Debug
             "DX3.0.0",
         };
 
-        private static string GetRandomModString()
+    private static string GetRandomModString()
+    {
+        var number = _random.Next(0, 3);
+        var uniqueIntegers = GetUniqueIntegers(0, _sampleMods.Length, number);
+        var builder = new StringBuilder(128);
+
+        for (int x = 0; x < number; x++)
         {
-            var number = _random.Next(0, 3);
-            var uniqueIntegers = GetUniqueIntegers(0, _sampleMods.Length, number);
-            var builder = new StringBuilder(128);
+            var index = uniqueIntegers[x];
+            builder.Append(_sampleMods[index]);
 
-            for (int x = 0; x < number; x++)
-            {
-                var index = uniqueIntegers[x];
-                builder.Append(_sampleMods[index]);
-
-                if (x != number - 1)
-                    builder.Append(GetServerResult.ModsDelimiter);
-            }
-
-            return builder.ToString();
+            if (x != number - 1)
+                builder.Append(GetServerResult.ModsDelimiter);
         }
 
-        /// <summary>
-        /// Gets a list of unique integers between the specified min and max value.
-        /// Note: Optimized for tiny collections only.
-        /// </summary>
-        /// <param name="min">Inclusive</param>
-        /// <param name="max">Exclusive</param>
-        /// <param name="number">Number of IDs to generate.</param>
-        private static List<int> GetUniqueIntegers(int min, int max, int number)
-        {
-            var ids = new List<int>(number);
-            while (ids.Count < number)
-            {
-                var random = _random.Next(min, max);
-                if (!ids.Contains(random))
-                    ids.Add(random);
-            }
-
-            return ids;
-        }
-        #endregion
+        return builder.ToString();
     }
+
+    /// <summary>
+    /// Gets a list of unique integers between the specified min and max value.
+    /// Note: Optimized for tiny collections only.
+    /// </summary>
+    /// <param name="min">Inclusive</param>
+    /// <param name="max">Exclusive</param>
+    /// <param name="number">Number of IDs to generate.</param>
+    private static List<int> GetUniqueIntegers(int min, int max, int number)
+    {
+        var ids = new List<int>(number);
+        while (ids.Count < number)
+        {
+            var random = _random.Next(min, max);
+            if (!ids.Contains(random))
+                ids.Add(random);
+        }
+
+        return ids;
+    }
+    #endregion
 }

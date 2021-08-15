@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
-	<IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
+	  <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>WinExe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<OutputPath>$(TWEAKBOX_DIR)</OutputPath>
-	<Version>0.5.10</Version>
+	  <OutputPath>$(TWEAKBOX_DIR)</OutputPath>
+	  <Version>0.5.10</Version>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

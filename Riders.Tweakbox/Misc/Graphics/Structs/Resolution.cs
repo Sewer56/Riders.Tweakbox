@@ -1,8 +1,7 @@
-﻿namespace Riders.Tweakbox.Misc.Graphics.Structs
+﻿namespace Riders.Tweakbox.Misc.Graphics.Structs;
+
+public struct Resolution
 {
-    public struct Resolution
-    {
-        public int Width ;
-        public int Height;
-    }
+    public int Width;
+    public int Height;
 }

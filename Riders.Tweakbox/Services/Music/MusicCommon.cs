@@ -1,8 +1,7 @@
-﻿namespace Riders.Tweakbox.Services.Music
+﻿namespace Riders.Tweakbox.Services.Music;
+
+public static class MusicCommon
 {
-    public static class MusicCommon
-    {
-        public const string AdxExtension  = ".adx";
-        public const string AdxFilter = "*.adx";
-    }
+    public const string AdxExtension = ".adx";
+    public const string AdxFilter = "*.adx";
 }

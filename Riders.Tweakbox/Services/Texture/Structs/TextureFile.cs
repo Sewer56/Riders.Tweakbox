@@ -1,20 +1,18 @@
 ﻿using Riders.Tweakbox.Services.Texture.Enums;
+namespace Riders.Tweakbox.Services.Texture.Structs;
 
-namespace Riders.Tweakbox.Services.Texture.Structs
+/// <summary>
+/// Represents an individual texture file.
+/// </summary>
+public struct TextureFile
 {
     /// <summary>
-    /// Represents an individual texture file.
+    /// Path to the texture.
     /// </summary>
-    public struct TextureFile
-    {
-        /// <summary>
-        /// Path to the texture.
-        /// </summary>
-        public string Path;
+    public string Path;
 
-        /// <summary>
-        /// The texture format.
-        /// </summary>
-        public TextureFormat Format;
-    }
+    /// <summary>
+    /// The texture format.
+    /// </summary>
+    public TextureFormat Format;
 }

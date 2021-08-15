@@ -30,55 +30,54 @@ using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Functions;
 using static Riders.Tweakbox.Misc.BenchmarkUtilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
+namespace Riders.Tweakbox;
 
-namespace Riders.Tweakbox
+public class Tweakbox
 {
-    public class Tweakbox
+    /* Class Declarations */
+    public IReloadedHooks Hooks { get; private set; }
+    public IReloadedHooksUtilities HooksUtilities { get; private set; }
+    public IRedirectorController Redirector { get; private set; }
+
+    public bool InputsEnabled { get; private set; } = true;
+    public bool IsEnabled { get; private set; } = true;
+    public bool IsReady { get; private set; } = false;
+    public MenuBar MenuBar { get; private set; }
+    public List<IController> Controllers { get; private set; } = new List<IController>();
+    public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
+    public event Action OnInitialized;
+
+    private WelcomeScreenRenderer _welcomeScreenRenderer;
+    private DllNotifier _notifier;
+    private IModLoader _modLoader;
+
+    /* Creation & Disposal */
+    private Tweakbox() { }
+
+    /// <summary>
+    /// Creates a new instance of Riders Tweakbox.
+    /// </summary>
+    public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities,
+        IRedirectorController redirector, IModLoader modLoader)
     {
-        /* Class Declarations */
-        public IReloadedHooks Hooks { get; private set; }
-        public IReloadedHooksUtilities HooksUtilities { get; private set; }
-        public IRedirectorController Redirector { get; private set; }
+        var modFolder = modLoader.GetDirectoryForModId("Riders.Tweakbox");
+        var tweakBox = new Tweakbox();
 
-        public bool InputsEnabled { get; private set; } = true;
-        public bool IsEnabled { get; private set; } = true;
-        public bool IsReady { get; private set; } = false;
-        public MenuBar MenuBar { get; private set; }
-        public List<IController> Controllers { get; private set; } = new List<IController>();
-        public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
-        public event Action OnInitialized;
-
-        private WelcomeScreenRenderer _welcomeScreenRenderer;
-        private DllNotifier _notifier;
-        private IModLoader _modLoader;
-
-        /* Creation & Disposal */
-        private Tweakbox(){}
-
-        /// <summary>
-        /// Creates a new instance of Riders Tweakbox.
-        /// </summary>
-        public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities,
-            IRedirectorController redirector, IModLoader modLoader)
-        {
-            var modFolder = modLoader.GetDirectoryForModId("Riders.Tweakbox");
-            var tweakBox = new Tweakbox();
-
-            tweakBox._notifier = new DllNotifier(hooks);
-            tweakBox._modLoader = modLoader;
-            tweakBox.Hooks = hooks;
-            tweakBox.HooksUtilities = hooksUtilities;
-            tweakBox.Redirector = redirector;
-            tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
-            tweakBox.InitializeIoC(modFolder);
+        tweakBox._notifier = new DllNotifier(hooks);
+        tweakBox._modLoader = modLoader;
+        tweakBox.Hooks = hooks;
+        tweakBox.HooksUtilities = hooksUtilities;
+        tweakBox.Redirector = redirector;
+        tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
+        tweakBox.InitializeIoC(modFolder);
 
 #pragma warning disable 4014
-            var setupMenuTask = Task.Run(() =>
+        var setupMenuTask = Task.Run(() =>
+        {
+            tweakBox.MenuBar = new MenuBar()
             {
-                tweakBox.MenuBar = new MenuBar()
+                Menus = new List<MenuBarItem>()
                 {
-                    Menus = new List<MenuBarItem>()
-                    {
                         new MenuBarItem("Netplay", new List<IComponent>()
                         {
                             Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu))
@@ -109,136 +108,135 @@ namespace Riders.Tweakbox
                             Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                             Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                         })
-                    },
-                    Text = new List<string>()
-                    {
+                },
+                Text = new List<string>()
+                {
                         "F11: Show/Hide Menus",
                         "F10: Enable/Disable Game Input"
-                    }
-                };
-            }).ConfigureAwait(false);
+                }
+            };
+        }).ConfigureAwait(false);
 #pragma warning restore 4014
 
-            await ImguiHook.Create(tweakBox.Render, new ImguiHookOptions() { EnableViewports = false });
+        await ImguiHook.Create(tweakBox.Render, new ImguiHookOptions() { EnableViewports = false });
 
-            // Post-setup steps
-            Shell.SetupImGuiConfig(modFolder);
-            tweakBox.EnableCrashDumps();
-            tweakBox.DisplayFirstTimeDialog();
+        // Post-setup steps
+        Shell.SetupImGuiConfig(modFolder);
+        tweakBox.EnableCrashDumps();
+        tweakBox.DisplayFirstTimeDialog();
 
-            await setupMenuTask;
-            tweakBox.IsReady = true;
-            tweakBox.OnInitialized?.Invoke();
-            return tweakBox;
-        }
+        await setupMenuTask;
+        tweakBox.IsReady = true;
+        tweakBox.OnInitialized?.Invoke();
+        return tweakBox;
+    }
 
-        /// <summary>
-        /// Initializes global bindings.
-        /// </summary>
-        private void InitializeIoC(string modFolder)
+    /// <summary>
+    /// Initializes global bindings.
+    /// </summary>
+    private void InitializeIoC(string modFolder)
+    {
+        var io = new IO(modFolder);
+        IoC.Kernel.Bind<IO>().ToConstant(io);
+        IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
+        IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
+        IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
+        IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
+        IoC.Kernel.Bind<IRedirectorController>().ToConstant(Redirector);
+        IoC.Kernel.Bind<IReloadedHooksUtilities>().ToConstant(HooksUtilities);
+        IoC.Kernel.Bind<Assembler>().ToConstant(new Assembler());
+
+        var types = Assembly.GetExecutingAssembly().GetTypes();
+
+        // Initialize all configs.
+        var configTypes = types.Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
+        foreach (var type in configTypes)
+            Benchmark(() => IoC.GetSingleton(type), type.FullName);
+
+        // Initialize all services.
+        var serviceTypes = types.Where(x => typeof(ISingletonService).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
+        foreach (var type in serviceTypes)
+            Benchmark(() => IoC.GetSingleton(type), type.FullName);
+
+        // Initialize all controllers.
+        var controllerTypes = types.Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
+        foreach (var type in controllerTypes)
+            Benchmark(() => Controllers.Add(IoC.GetSingleton<IController>(type)), type.FullName);
+    }
+
+    private void DisplayFirstTimeDialog()
+    {
+        var io = IoC.Get<IO>();
+        _welcomeScreenRenderer = new WelcomeScreenRenderer();
+
+        // First time message
+        if (!File.Exists(io.FirstTimeFlagPath))
         {
-            var io = new IO(modFolder);
-            IoC.Kernel.Bind<IO>().ToConstant(io);
-            IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
-            IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
-            IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
-            IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
-            IoC.Kernel.Bind<IRedirectorController>().ToConstant(Redirector);
-            IoC.Kernel.Bind<IReloadedHooksUtilities>().ToConstant(HooksUtilities);
-            IoC.Kernel.Bind<Assembler>().ToConstant(new Assembler());
-
-            var types = Assembly.GetExecutingAssembly().GetTypes();
-
-            // Initialize all configs.
-            var configTypes = types.Where(x => typeof(IConfiguration).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
-            foreach (var type in configTypes)
-                Benchmark(() => IoC.GetSingleton(type), type.FullName);
-
-            // Initialize all services.
-            var serviceTypes = types.Where(x => typeof(ISingletonService).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
-            foreach (var type in serviceTypes)
-                Benchmark(() => IoC.GetSingleton(type), type.FullName);
-
-            // Initialize all controllers.
-            var controllerTypes = types.Where(x => typeof(IController).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
-            foreach (var type in controllerTypes)
-                Benchmark(() => Controllers.Add(IoC.GetSingleton<IController>(type)), type.FullName);
+            File.Create(io.FirstTimeFlagPath);
+            Shell.AddCustom(_welcomeScreenRenderer.RenderFirstTimeDialog);
         }
-        
-        private void DisplayFirstTimeDialog()
+    }
+
+    /// <summary>
+    /// Enables crash dumps for Sonic Riders.
+    /// </summary>
+    public void EnableCrashDumps()
+    {
+        const string dumpsConfigRegkeyPath = @"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps";
+
+        try
         {
-            var io = IoC.Get<IO>();
-            _welcomeScreenRenderer = new WelcomeScreenRenderer();
-
-            // First time message
-            if (!File.Exists(io.FirstTimeFlagPath))
-            {
-                File.Create(io.FirstTimeFlagPath);
-                Shell.AddCustom(_welcomeScreenRenderer.RenderFirstTimeDialog);
-            }
-        }
-
-        /// <summary>
-        /// Enables crash dumps for Sonic Riders.
-        /// </summary>
-        public void EnableCrashDumps()
-        {
-            const string dumpsConfigRegkeyPath = @"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps";
-
-            try
-            {
-                var localMachineKey = Environment.Is64BitOperatingSystem ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32); 
-                var key = localMachineKey.OpenSubKey(dumpsConfigRegkeyPath, false);
-                if (key != null) 
-                    return;
-                
-                if (localMachineKey.CreateSubKey(dumpsConfigRegkeyPath) == null)
-                    ShowFailureDialog();
-            }
-            catch (Exception e)
-            {
-                ShowFailureDialog();
-            }
-
-            void ShowFailureDialog() => Shell.AddDialog("About Crash Dumps", "Tweakbox couldn't enable crash dumps necessary for reporting Netplay Crashes.\n" +
-                                                                             "Please run from Reloaded as admin at least once, thanks!");
-        }
-
-        private int BlockGameInputsIfEnabled()
-        {
-            // Skips game controller input obtain function is menu is open.
-            if (InputsEnabled)
-                return BlockInputsHook.OriginalFunction();
-
-            return 0;
-        }
-
-        /* Implementation */
-        private void Render()
-        { 
-            if (!IsReady)
+            var localMachineKey = Environment.Is64BitOperatingSystem ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+            var key = localMachineKey.OpenSubKey(dumpsConfigRegkeyPath, false);
+            if (key != null)
                 return;
 
-            // This works because the keys sent to imgui in WndProc follow
-            // the Windows key code order.
-            if (ImGui.IsKeyPressed((int) Keys.F11, false))
-                IsEnabled = !IsEnabled;
-
-            if (ImGui.IsKeyPressed((int)Keys.F10, false))
-                InputsEnabled = !InputsEnabled;
-
-            // Update Menu Bar Text
-            if (InputsEnabled)
-                MenuBar.Text[1] = "F10: Disable Game Input";
-            else
-                MenuBar.Text[1] = "F10: Enable Game Input";
-
-            // Render MenuBar and Menus
-            if (IsEnabled) 
-                MenuBar.Render();
-
-            // Render Shell
-            Shell.Render();
+            if (localMachineKey.CreateSubKey(dumpsConfigRegkeyPath) == null)
+                ShowFailureDialog();
         }
+        catch (Exception e)
+        {
+            ShowFailureDialog();
+        }
+
+        void ShowFailureDialog() => Shell.AddDialog("About Crash Dumps", "Tweakbox couldn't enable crash dumps necessary for reporting Netplay Crashes.\n" +
+                                                                         "Please run from Reloaded as admin at least once, thanks!");
+    }
+
+    private int BlockGameInputsIfEnabled()
+    {
+        // Skips game controller input obtain function is menu is open.
+        if (InputsEnabled)
+            return BlockInputsHook.OriginalFunction();
+
+        return 0;
+    }
+
+    /* Implementation */
+    private void Render()
+    {
+        if (!IsReady)
+            return;
+
+        // This works because the keys sent to imgui in WndProc follow
+        // the Windows key code order.
+        if (ImGui.IsKeyPressed((int)Keys.F11, false))
+            IsEnabled = !IsEnabled;
+
+        if (ImGui.IsKeyPressed((int)Keys.F10, false))
+            InputsEnabled = !InputsEnabled;
+
+        // Update Menu Bar Text
+        if (InputsEnabled)
+            MenuBar.Text[1] = "F10: Disable Game Input";
+        else
+            MenuBar.Text[1] = "F10: Enable Game Input";
+
+        // Render MenuBar and Menus
+        if (IsEnabled)
+            MenuBar.Render();
+
+        // Render Shell
+        Shell.Render();
     }
 }

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Net;
-using System.Threading.Tasks;
-using DearImguiSharp;
 using MLAPI.Puncher.Client;
 using MLAPI.Puncher.LiteNetLib;
 using Riders.Tweakbox.API.SDK;
@@ -9,63 +7,57 @@ using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Sewer56.Imgui.Controls;
-using Sewer56.Imgui.Shell;
-using Sewer56.SonicRiders.Utility;
-using Constants = Sewer56.Imgui.Misc.Constants;
+namespace Riders.Tweakbox.Components.Netplay.Sockets;
 
-namespace Riders.Tweakbox.Components.Netplay.Sockets
+/// <inheritdoc />
+public class Client : Socket
 {
-    /// <inheritdoc />
-    public class Client : Socket
+    public override SocketType GetSocketType() => SocketType.Client;
+
+    public Client(NetplayEditorConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
     {
-        public override SocketType GetSocketType() => SocketType.Client;
+        if (!CanJoin)
+            throw new Exception("You are only allowed to join the host in the Course Select Menu");
 
-        public Client(NetplayEditorConfig config, NetplayController controller, TweakboxApi api) : base(controller, config, api)
+        Manager.StartInManualMode(0);
+        State = new CommonState(config.ToPlayerData(), this);
+
+        // Connect to host.
+        var punchSettings = config.Data.PunchingServer;
+        var clientSettings = config.Data.ClientSettings;
+        var socketSettings = clientSettings.SocketSettings;
+
+        if (punchSettings.IsEnabled)
         {
-            if (!CanJoin)
-                throw new Exception("You are only allowed to join the host in the Course Select Menu");
+            Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host}:{punchSettings.Port}", LogCategory.Socket);
+            using PuncherClient connectPeer = new PuncherClient(punchSettings.Host, (ushort)punchSettings.Port);
+            connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
+            connectPeer.ServerRegisterResponseTimeout = punchSettings.ServerTimeout;
+            connectPeer.PunchResponseTimeout = punchSettings.PunchTimeout;
 
-            Manager.StartInManualMode(0);
-            State = new CommonState(config.ToPlayerData(), this);
-
-            // Connect to host.
-            var punchSettings  = config.Data.PunchingServer;
-            var clientSettings = config.Data.ClientSettings;
-            var socketSettings = clientSettings.SocketSettings;
-
-            if (punchSettings.IsEnabled)
+            if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP), out IPEndPoint connectResult))
             {
-                Log.WriteLine($"[{nameof(Client)}] Connecting via NAT Punch Server: {punchSettings.Host}:{punchSettings.Port}", LogCategory.Socket);
-                using PuncherClient connectPeer = new PuncherClient(punchSettings.Host, (ushort) punchSettings.Port);
-                connectPeer.Transport = new LiteNetLibUdpTransport(Manager, Listener);
-                connectPeer.ServerRegisterResponseTimeout = punchSettings.ServerTimeout;
-                connectPeer.PunchResponseTimeout = punchSettings.PunchTimeout;
-
-                if (connectPeer.TryPunch(IPAddress.Parse(clientSettings.IP), out IPEndPoint connectResult))
-                {
-                    Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);
-                    Manager.Connect(connectResult, socketSettings.Password);
-                }
-                else
-                {
-                    Log.WriteLine($"[{nameof(Client)}] NAT Punch Failed, Trying Direct IP", LogCategory.Socket);
-                    ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
-                }
+                Log.WriteLine($"[{nameof(Client)}] NAT Punch Success! Connecting {connectResult}", LogCategory.Socket);
+                Manager.Connect(connectResult, socketSettings.Password);
             }
             else
             {
+                Log.WriteLine($"[{nameof(Client)}] NAT Punch Failed, Trying Direct IP", LogCategory.Socket);
                 ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
             }
-
-            HostIp = clientSettings.IP;
-            Initialize();
         }
-
-        private void ConnectToIp(string ip, int port, string password)
+        else
         {
-            Log.WriteLine($"[{nameof(Client)}] Connecting via Direct IP: {ip}:{port}", LogCategory.Socket);
-            Manager.Connect(ip, port, password);
+            ConnectToIp(clientSettings.IP, socketSettings.Port, socketSettings.Password);
         }
+
+        HostIp = clientSettings.IP;
+        Initialize();
+    }
+
+    private void ConnectToIp(string ip, int port, string password)
+    {
+        Log.WriteLine($"[{nameof(Client)}] Connecting via Direct IP: {ip}:{port}", LogCategory.Socket);
+        Manager.Connect(ip, port, password);
     }
 }

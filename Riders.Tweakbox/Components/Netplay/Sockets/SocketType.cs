@@ -1,11 +1,10 @@
-﻿namespace Riders.Tweakbox.Components.Netplay.Sockets
+﻿namespace Riders.Tweakbox.Components.Netplay.Sockets;
+
+/// <summary>
+/// The type assigned to the current socket.
+/// </summary>
+public enum SocketType
 {
-    /// <summary>
-    /// The type assigned to the current socket.
-    /// </summary>
-    public enum SocketType
-    {
-        Host,
-        Client,
-    }
+    Host,
+    Client,
 }

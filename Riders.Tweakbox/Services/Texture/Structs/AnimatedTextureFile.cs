@@ -1,26 +1,24 @@
 ﻿using Riders.Tweakbox.Services.Texture.Enums;
+namespace Riders.Tweakbox.Services.Texture.Structs;
 
-namespace Riders.Tweakbox.Services.Texture.Structs
+/// <summary>
+/// Represents an individual texture file inside an animated texture.
+/// </summary>
+public struct AnimatedTextureFile
 {
     /// <summary>
-    /// Represents an individual texture file inside an animated texture.
+    /// Path relative to the animated texture folder.
     /// </summary>
-    public struct AnimatedTextureFile
+    public string RelativePath;
+
+    /// <summary>
+    /// The texture format.
+    /// </summary>
+    public TextureFormat Format;
+
+    public AnimatedTextureFile(string relativePath, TextureFormat format)
     {
-        /// <summary>
-        /// Path relative to the animated texture folder.
-        /// </summary>
-        public string RelativePath;
-
-        /// <summary>
-        /// The texture format.
-        /// </summary>
-        public TextureFormat Format;
-
-        public AnimatedTextureFile(string relativePath, TextureFormat format)
-        {
-            RelativePath = relativePath;
-            Format = format;
-        }
+        RelativePath = relativePath;
+        Format = format;
     }
 }

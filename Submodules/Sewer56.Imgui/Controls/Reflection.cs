@@ -6,154 +6,152 @@ using DearImguiSharp;
 using EnumsNET;
 using Sewer56.Imgui.Layout;
 using Sewer56.Imgui.Misc;
+namespace Sewer56.Imgui.Controls;
 
-namespace Sewer56.Imgui.Controls
+public unsafe partial class Reflection
 {
-    public unsafe partial class Reflection
+    /// <summary>
+    /// Adds a Dear Imgui Control to the scene for a specified type.
+    /// </summary>
+    /// <param name="value">The value to bind to the UI.</param>
+    /// <param name="name">The name of the field.</param>
+    public static bool MakeControl(Vector3* value, string name)
     {
-        /// <summary>
-        /// Adds a Dear Imgui Control to the scene for a specified type.
-        /// </summary>
-        /// <param name="value">The value to bind to the UI.</param>
-        /// <param name="name">The name of the field.</param>
-        public static bool MakeControl(Vector3* value, string name)
-        {
-            return ImGui.Custom.DragFloat3(name, value, 1.0f);
-        }
+        return ImGui.Custom.DragFloat3(name, value, 1.0f);
+    }
 
-        /// <summary>
-        /// Adds a Dear Imgui Control to the scene for a specified type.
-        /// </summary>
-        /// <param name="value">The value to bind to the UI.</param>
-        /// <param name="name">The name of the field.</param>
-        public static bool MakeControl(ref bool value, string name)
-        {
-            return ImGui.Checkbox(name, ref value);
-        }
+    /// <summary>
+    /// Adds a Dear Imgui Control to the scene for a specified type.
+    /// </summary>
+    /// <param name="value">The value to bind to the UI.</param>
+    /// <param name="name">The name of the field.</param>
+    public static bool MakeControl(ref bool value, string name)
+    {
+        return ImGui.Checkbox(name, ref value);
+    }
 
-        /// <summary>
-        /// Adds a Dear Imgui Control to the scene for a specified type.
-        /// </summary>
-        /// <param name="value">The value to bind to the UI.</param>
-        /// <param name="name">The name of the field.</param>
-        public static bool MakeControl(bool* value, string name)
-        {
-            return ImGui.Checkbox(name, ref Unsafe.AsRef<bool>(value));
-        }
+    /// <summary>
+    /// Adds a Dear Imgui Control to the scene for a specified type.
+    /// </summary>
+    /// <param name="value">The value to bind to the UI.</param>
+    /// <param name="name">The name of the field.</param>
+    public static bool MakeControl(bool* value, string name)
+    {
+        return ImGui.Checkbox(name, ref Unsafe.AsRef<bool>(value));
+    }
 
-        /// <summary>
-        /// Creates a ComboBox given a set of values, names, and the name of the current item.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="name">Name of the ComboBox</param>
-        /// <param name="currentValue">The currently selected item.</param>
-        /// <param name="currentName">Name of the current item.</param>
-        /// <param name="values">The available items.</param>
-        /// <param name="names">The names of the available items.</param>
-        /// <param name="itemSelected">Executed when a new item is selected. Returns the selected value.</param>
-        public static bool MakeControlComboBox<T>(string name, T currentValue, string currentName, IReadOnlyList<T> values, IReadOnlyList<string> names, Action<T> itemSelected)
+    /// <summary>
+    /// Creates a ComboBox given a set of values, names, and the name of the current item.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="name">Name of the ComboBox</param>
+    /// <param name="currentValue">The currently selected item.</param>
+    /// <param name="currentName">Name of the current item.</param>
+    /// <param name="values">The available items.</param>
+    /// <param name="names">The names of the available items.</param>
+    /// <param name="itemSelected">Executed when a new item is selected. Returns the selected value.</param>
+    public static bool MakeControlComboBox<T>(string name, T currentValue, string currentName, IReadOnlyList<T> values, IReadOnlyList<string> names, Action<T> itemSelected)
+    {
+        bool returnValue = false;
+        if (ImGui.BeginCombo(name, currentName, 0))
         {
-            bool returnValue = false;
-            if (ImGui.BeginCombo(name, currentName, 0))
+            for (int x = 0; x < values.Count; x++)
             {
-                for (int x = 0; x < values.Count; x++)
+                bool isSelected = currentValue.Equals(values[x]);
+                if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
                 {
-                    bool isSelected = currentValue.Equals(values[x]);
-                    if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
-                    {
-                        currentValue = values[x];
-                        itemSelected(currentValue);
-                        returnValue = true;
-                    }
-
-                    if (isSelected)
-                        ImGui.SetItemDefaultFocus();
+                    currentValue = values[x];
+                    itemSelected(currentValue);
+                    returnValue = true;
                 }
 
-                ImGui.EndCombo();
+                if (isSelected)
+                    ImGui.SetItemDefaultFocus();
             }
 
-            return returnValue;
+            ImGui.EndCombo();
         }
 
-        /// <summary>
-        /// Adds a Dear Imgui Control to the scene for a specified type.
-        /// </summary>
-        /// <param name="value">The value to bind to the UI.</param>
-        /// <param name="name">The name of the field.</param>
-        /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
-        /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
-        public static bool MakeControlEnum<T>(ref T value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
-        {
-            var values  = Enums.GetValues<T>();
-            var names   = Enums.GetNames<T>();
-            var isFlags = typeof(T).IsDefined(typeof(FlagsAttribute), false);
-            var currentItemName = Enums.AsString(typeof(T), value);
+        return returnValue;
+    }
 
-            if (isFlags)
+    /// <summary>
+    /// Adds a Dear Imgui Control to the scene for a specified type.
+    /// </summary>
+    /// <param name="value">The value to bind to the UI.</param>
+    /// <param name="name">The name of the field.</param>
+    /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
+    /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
+    public static bool MakeControlEnum<T>(ref T value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
+    {
+        var values = Enums.GetValues<T>();
+        var names = Enums.GetNames<T>();
+        var isFlags = typeof(T).IsDefined(typeof(FlagsAttribute), false);
+        var currentItemName = Enums.AsString(typeof(T), value);
+
+        if (isFlags)
+        {
+            return MakeControlEnumFlags<T>(ref value, values, names, itemWidth, availableWidth);
+        }
+        else
+        {
+            return MakeControlEnumComboBox<T>(name, currentItemName, ref value, values, names);
+        }
+    }
+
+    /// <summary>
+    /// Adds a Dear Imgui Control to the scene for a specified type.
+    /// </summary>
+    /// <param name="value">The value to bind to the UI.</param>
+    /// <param name="name">The name of the field.</param>
+    /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
+    /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
+    public static bool MakeControlEnum<T>(T* value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
+    {
+        return MakeControlEnum(ref Unsafe.AsRef<T>(value), name, itemWidth, availableWidth);
+    }
+
+    private static bool MakeControlEnumFlags<T>(ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth, float availableWidth = -1) where T : unmanaged, Enum
+    {
+        var result = false;
+        var wrapperUtility = new ContentWrapper(itemWidth, availableWidth);
+
+        for (int x = 0; x < names.Count; x++)
+        {
+            var hasFlag = currentValue.HasAnyFlags(values[x]);
+            if (ImGui.Checkbox(names[x], ref hasFlag))
             {
-                return MakeControlEnumFlags<T>(ref value, values, names, itemWidth, availableWidth);
+                currentValue = FlagEnums.ToggleFlags(currentValue, values[x]);
+                result = true;
             }
-            else
-            {
-                return MakeControlEnumComboBox<T>(name, currentItemName, ref value, values, names);
-            }
+
+            wrapperUtility.AfterPlaceItem(x == names.Count - 1);
         }
 
-        /// <summary>
-        /// Adds a Dear Imgui Control to the scene for a specified type.
-        /// </summary>
-        /// <param name="value">The value to bind to the UI.</param>
-        /// <param name="name">The name of the field.</param>
-        /// <param name="itemWidth">Width of each item if enum is a set of flags.</param>
-        /// <param name="availableWidth">The available width for the automatic checkbox wrapping.</param>
-        public static bool MakeControlEnum<T>(T* value, string name, int itemWidth = 120, float availableWidth = -1) where T : unmanaged, Enum
-        {
-            return MakeControlEnum(ref Unsafe.AsRef<T>(value), name, itemWidth, availableWidth);
-        }
+        return result;
+    }
 
-        private static bool MakeControlEnumFlags<T>(ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names, int itemWidth, float availableWidth = -1) where T : unmanaged, Enum
+    private static bool MakeControlEnumComboBox<T>(string name, string currentItemName, ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
+    {
+        var result = false;
+        if (ImGui.BeginCombo(name, currentItemName, 0))
         {
-            var result = false;
-            var wrapperUtility = new ContentWrapper(itemWidth, availableWidth);
-            
-            for (int x = 0; x < names.Count; x++)
+            for (int x = 0; x < values.Count; x++)
             {
-                var hasFlag = currentValue.HasAnyFlags(values[x]);
-                if (ImGui.Checkbox(names[x], ref hasFlag))
+                bool isSelected = Enums.EqualsUnsafe(currentValue, values[x]);
+                if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
                 {
-                    currentValue = FlagEnums.ToggleFlags(currentValue, values[x]);
+                    currentValue = values[x];
                     result = true;
                 }
 
-                wrapperUtility.AfterPlaceItem(x == names.Count - 1);
+                if (isSelected)
+                    ImGui.SetItemDefaultFocus();
             }
 
-            return result;
+            ImGui.EndCombo();
         }
 
-        private static bool MakeControlEnumComboBox<T>(string name, string currentItemName, ref T currentValue, IReadOnlyList<T> values, IReadOnlyList<string> names) where T : unmanaged, Enum
-        {
-            var result = false;
-            if (ImGui.BeginCombo(name, currentItemName, 0))
-            {
-                for (int x = 0; x < values.Count; x++)
-                {
-                    bool isSelected = Enums.EqualsUnsafe(currentValue, values[x]);
-                    if (ImGui.SelectableBool(names[x], isSelected, 0, Constants.DefaultVector2))
-                    {
-                        currentValue = values[x];
-                        result = true;
-                    }
-
-                    if (isSelected)
-                        ImGui.SetItemDefaultFocus();
-                }
-
-                ImGui.EndCombo();
-            }
-
-            return result;
-        }
+        return result;
     }
 }

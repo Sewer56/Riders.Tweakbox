@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
