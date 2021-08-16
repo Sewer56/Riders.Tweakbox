@@ -22,8 +22,12 @@ public class HeapViewerWindow : ComponentBase
     private unsafe void RenderHeapViewer()
     {
         ImGui.TextWrapped("This utility allows you to view objects allocated on the game's native heap. It's a work in progress, sometimes it doesn't work quite right :/");
+        ImGui.TextWrapped("The objects on the front of the buffer are long lived objects, while the ones at the back of the buffer are short lived objects.");
         if (ImGui.CollapsingHeaderTreeNodeFlags("Front", 0))
             IterateFront(_controller.FirstAllocResult);
+
+        if (ImGui.CollapsingHeaderTreeNodeFlags("Back", 0))
+            IterateBack(*Heap.FirstHeaderBack);
     }
 
     private unsafe void IterateFront(MallocResult* result)
@@ -52,6 +56,27 @@ public class HeapViewerWindow : ComponentBase
             if (header >= headFront)
                 break;
 
+            objectCount++;
+        }
+    }
+
+    private unsafe void IterateBack(MemoryHeapHeaderHigh* header)
+    {
+        // Check for error cases.
+        if (header == (void*)0)
+            return;
+
+        // Else iterate over all objects.
+        int objectCount = 0;
+
+        while (true)
+        {
+            ImGui.TextWrapped($"[0x{(long)header:X}] Object: {objectCount}, Next Size: {ByteSize.FromBytes(header->GetSize(header))}");
+
+            if (header->NextItem == (void*) 0)
+                break;
+
+            header = header->NextItem;
             objectCount++;
         }
     }

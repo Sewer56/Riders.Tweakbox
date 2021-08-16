@@ -9,6 +9,7 @@ using Microsoft.Windows.Sdk;
 using static Riders.Tweakbox.Misc.Log.Log;
 using Riders.Netplay.Messages.Misc;
 using System;
+using System.Threading;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -24,7 +25,8 @@ public class HeapController : IController
     private IHook<Heap.AllocFnPtr> _callocHook;
     private IHook<Heap.FreeFnPtr> _freeHook;
     private IHook<Heap.FreeFrameFnPtr> _freeFrameHook;
-    private Logger _heapLogger = new Logger(LogCategory.Heap);
+    private Logger _frontLogger = new Logger(LogCategory.HeapFront);
+    private Logger _backLogger = new Logger(LogCategory.HeapBack);
     private SYSTEM_INFO _info;
 
     public HeapController(IReloadedHooks hooks)
@@ -58,7 +60,7 @@ public class HeapController : IController
         var newHeader = address;
         int bytesFreed = (int)(currentHeader - newHeader);
 
-        _heapLogger.WriteLine($"FreeFrame: {(long)address:X}");
+        _frontLogger.WriteLine($"FreeFrame: {(long)address:X}");
         var result = _freeFrameHook.OriginalFunction.Value.Invoke(address);
 
         var freeStart = Utilities.RoundUp((long)newHeader, _info.dwPageSize);
@@ -73,7 +75,7 @@ public class HeapController : IController
 
     private unsafe MallocResult* FreeImpl(MallocResult* address)
     {
-        _heapLogger.WriteLine($"Free: {(long)address:X}");
+        _frontLogger.WriteLine($"Free: {(long)address:X}");
         var result = _freeHook.OriginalFunction.Value.Invoke(address).Pointer;
 
         // Erase the contents of the allocation header.
@@ -92,8 +94,8 @@ public class HeapController : IController
         if (header->Base == *Heap.FirstHeaderFront)
             FirstAllocResult = result;
 
-        _heapLogger.WriteLine($"Calloc: {(long)result:X} | Alignment {alignment}, Size {size}");
-        _heapLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
+        _frontLogger.WriteLine($"Calloc: {(long)result:X} | Alignment {alignment}, Size {size}");
+        _frontLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
         return result;
     }
 
@@ -104,8 +106,8 @@ public class HeapController : IController
         if (header->Base == *Heap.FirstHeaderFront)
             FirstAllocResult = result;
 
-        _heapLogger.WriteLine($"Malloc: {(long)result:X} | Alignment {alignment}, Size {size}");
-        _heapLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
+        _frontLogger.WriteLine($"Malloc: {(long)result:X} | Alignment {alignment}, Size {size}");
+        _frontLogger.WriteLine($"Header [{(long)header:X}] | Base: {(long)header->Base:X}, Size: {header->AllocationSize}");
         return result;
     }
 
