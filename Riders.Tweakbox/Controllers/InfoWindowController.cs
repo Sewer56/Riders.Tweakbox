@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ByteSizeLib;
 using DearImguiSharp;
+using EnumsNET;
 using Riders.Netplay.Messages.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -122,6 +123,20 @@ public class InfoWindowController : IController
         {
             var percent = (Heap.GetUsedSize() / (float)Heap.GetHeapSize()) * 100f;
             ImGui.Text($"Heap: {percent:00.00}%%");
+        }
+
+        if (data.ShowPlayerPos != InfoEditorConfig.Player.None)
+        {
+            var values = Enums.GetValues<InfoEditorConfig.Player>();
+            foreach (var value in values)
+            {
+                if (!data.ShowPlayerPos.HasAllFlags(value) || value == 0)
+                    continue;
+
+                var index = value.ToPlayerIndex();
+                var playerPos = Player.Players[index].Position;
+                ImGui.Text($"Pos [{index}]: ({playerPos.X:000.00000},{playerPos.Y:000.00000},{playerPos.Z:000.00000})");
+            }
         }
     }
 

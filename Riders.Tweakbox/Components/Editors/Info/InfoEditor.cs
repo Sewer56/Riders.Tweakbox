@@ -62,6 +62,17 @@ public class InfoEditor : ComponentBase<InfoEditorConfig>, IComponent
             ImGui.TreePop();
         }
 
+        if (ImGui.TreeNodeStr("Player Info"))
+        {
+            if (ImGui.TreeNodeStr("Player Position"))
+            {
+                Reflection.MakeControlEnum(ref data.ShowPlayerPos, "");
+                ImGui.TreePop();
+            }
+
+            ImGui.TreePop();
+        }
+
         if (ImGui.TreeNodeStr("CPU Usage"))
         {
             Reflection.MakeControl(ref data.ShowCpuNumber, showPercent);
