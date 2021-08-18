@@ -28,6 +28,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     private int _currentIndex;
     private bool _freezePlayerToItem;
     private bool _freezeItemToPlayer;
+    private bool _safeMode;
     private bool _autoRenderRegion = true;
     private MiscPatchController _patchController;
     private ObjectLayoutController _layoutController;
@@ -175,10 +176,10 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
 
         Tooltip.TextOnHover("What this does depends on the type of object. For item boxes, this is the item inside.");
 
-        if (Reflection.MakeControl(&item->Position, "Position"))
-            _layoutController.MoveObject(item, item->Position);
-
-        if (Reflection.MakeControl(&item->Rotation, "Rotation"))
+        if (Reflection.MakeControl(&item->Position, "Position") && !_safeMode)
+                _layoutController.MoveObject(item, item->Position);
+        
+        if (Reflection.MakeControl(&item->Rotation, "Rotation") && !_safeMode)
             _layoutController.RotateObject(item, item->Rotation);
 
         Reflection.MakeControl(&item->Scale, "Scale");
@@ -249,8 +250,11 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         {
             item->Position = Player.Players[0].Position;
             item->Rotation = Player.Players[0].Rotation.RadiansToDegrees();
-            _layoutController.MoveObject(item, item->Position);
-            _layoutController.RotateObject(item, item->Rotation);
+            if (!_safeMode)
+            {
+                _layoutController.MoveObject(item, item->Position);
+                _layoutController.RotateObject(item, item->Rotation);
+            }
         }
 
         if (ImGui.Button("Export to File", Constants.Zero))
@@ -293,6 +297,11 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         ImGui.SameLine(0, Constants.Spacing);
         if (ImGui.Button("Fast Restart", Constants.Zero))
             _layoutController.FastRestart();
+
+        ImGui.SameLine(0, Constants.Spacing);
+        ImGui.Checkbox("Safe Mode", ref _safeMode);
+        Tooltip.TextOnHover("Prevents from writing to object data when moving objects.\n" +
+                            "Use this to avoid potential crashes, at expense of no real time render position update.");
 
         ImGui.EndGroup();
         ImGui.PopItemWidth();
