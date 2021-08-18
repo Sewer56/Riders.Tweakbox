@@ -57,8 +57,7 @@ public class BootToMenuController : IController
 
         var defaultModels = Enums.GetMembers<ExtremeGearModel>();
         for (var x = 0; x < State.UnlockedGearModels.Count; x++)
-            if (defaultModels.Any(z => (int)z.Value == x))
-                State.UnlockedGearModels[x] = true;
+            State.UnlockedGearModels[x] = true;
 
         *State.IsBabylonCupUnlocked = true;
         for (int x = 0; x < Player.MaxNumberOfPlayers; x++)

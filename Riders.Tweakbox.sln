@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30104.148
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31606.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox", "Riders.Tweakbox\Riders.Tweakbox.csproj", "{98C7BCEE-7B20-46E5-9E17-C81FE537E4C0}"
 EndProject
@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.Hooks.Utilities", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiteNetLib", "Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj", "{7EB42C29-642F-4D49-9668-09D1F2D8515A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sewer56.BitStream", "Submodules\Sewer56.BitStream\Sewer56.BitStream\Sewer56.BitStream.csproj", "{0B7E0B21-C01F-416D-9909-B674FD4631BE}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLAPI.Puncher.Server.Console", "Netplay\MLAPI.Puncher.Server.Console\MLAPI.Puncher.Server.Console.csproj", "{0E5C5515-ADE4-48F2-AA80-C7FD821F99F4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MLAPI.Puncher.LiteNetLib", "Netplay\MLAPI.Puncher.LiteNetLib\MLAPI.Puncher.LiteNetLib.csproj", "{0A750973-AB0A-4520-8049-CFE04CB06994}"
@@ -43,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.Applica
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reloaded.Universal.Redirector.Interfaces", "Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj", "{FD6F13B0-8703-4460-A858-F0414AC3D9AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Riders.Tweakbox.Shared", "Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj", "{EA1F1FCA-1A9F-44BF-9819-875086C1772D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Shared", "Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj", "{EA1F1FCA-1A9F-44BF-9819-875086C1772D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,10 +81,6 @@ Global
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0B7E0B21-C01F-416D-9909-B674FD4631BE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0E5C5515-ADE4-48F2-AA80-C7FD821F99F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0E5C5515-ADE4-48F2-AA80-C7FD821F99F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E5C5515-ADE4-48F2-AA80-C7FD821F99F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -135,7 +129,6 @@ Global
 		{C5577FB0-4C96-4EBA-974F-349C7636F532} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
 		{FE39E8DA-3BBE-4AE0-AE09-C764DC9E7859} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{7EB42C29-642F-4D49-9668-09D1F2D8515A} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
-		{0B7E0B21-C01F-416D-9909-B674FD4631BE} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{0E5C5515-ADE4-48F2-AA80-C7FD821F99F4} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
 		{0A750973-AB0A-4520-8049-CFE04CB06994} = {D9DF0046-A7C7-45BE-B7E6-3ADC7A091CDF}
 		{0730E42C-E129-4620-8F89-429EFA5FDC52} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}

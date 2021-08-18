@@ -12,6 +12,7 @@ using Reloaded.Hooks.Definitions.X86;
 using System.Diagnostics;
 using Sewer56.SonicRiders.Structures.Enums;
 using System.Text;
+using Sewer56.SonicRiders.API;
 
 namespace Riders.Tweakbox.Controllers
 {
