@@ -15,7 +15,7 @@ namespace Riders.Tweakbox.Controllers
     /// <summary>
     /// This controller allows for extra gear slots in the game.
     /// </summary>
-    public unsafe class ExtraGearsController : IController
+    public unsafe class ExtraGearsController // : IController
     {
         #region Pointers
         private const int _newGearCount = 255;
