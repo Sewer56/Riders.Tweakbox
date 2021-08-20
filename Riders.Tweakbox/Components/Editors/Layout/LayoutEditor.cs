@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Numerics;
 using DearImguiSharp;
 using EnumsNET;
@@ -7,6 +8,7 @@ using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Controllers.ObjectLayoutController;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -22,6 +24,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
 {
     /// <inheritdoc />
     public override string Name { get; set; } = "Layout Editor";
+    private const int _autoSaveTimeFrames = 3600;
 
     private SetObject* _currentObject;
     private ImVec2.__Internal _rowMinHeight = new ImVec2.__Internal() { x = 0, y = 0 };
@@ -32,12 +35,16 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     private bool _autoRenderRegion = true;
     private MiscPatchController _patchController;
     private ObjectLayoutController _layoutController;
+    private IO _io;
+    private Logger _log = new Logger(LogCategory.Default);
 
     private bool _scrollTable;
     private NetplayController _netplayController = IoC.Get<NetplayController>();
+    private int _currentAutosaveFrames = 0;
 
-    public LayoutEditor(MiscPatchController patchController, ObjectLayoutController layoutController)
+    public LayoutEditor(MiscPatchController patchController, ObjectLayoutController layoutController, IO io)
     {
+        _io = io;
         _patchController = patchController;
         _layoutController = layoutController;
     }
@@ -124,6 +131,17 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
             }
 
             ImGui.EndTable();
+        }
+
+        // Autosave
+        if (IncrementAutosaveFrames())
+        {
+            var fileName = GetAutosaveFileName();
+            var filePath = Path.Combine(_io.AutosaveObjectLayoutFolder, fileName);
+            _log.WriteLine($"Autosaving: {filePath}");
+
+            var data = _layoutController.Export();
+            File.WriteAllBytesAsync(filePath, data);
         }
 
         // Render Current Item
@@ -329,5 +347,24 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         player.FallingMode = FallingMode.Ground;
         player.LastMovementFlags = 0;
         player.MovementFlags = 0;
+    }
+
+    private string GetAutosaveFileName()
+    {
+        var stage = *State.Level;
+        var stageName = stage.GetName();
+        stageName ??= "Unknown";
+
+        var currentTime = DateTime.UtcNow.ToString(@"yyyy.MM.dd.HH.mm.ss");
+        return $"{stageName}_{currentTime}";
+    }
+
+    private bool IncrementAutosaveFrames()
+    {
+        _currentAutosaveFrames += 1;
+        bool autoSave = _currentAutosaveFrames >= _autoSaveTimeFrames;
+        _currentAutosaveFrames %= _autoSaveTimeFrames;
+
+        return autoSave;
     }
 }
