@@ -60,5 +60,5 @@ public class IO
     public string[] GetTextureConfigFiles() => Directory.GetFiles(TextureConfigFolder, JsonSearchPattern);
     public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, JsonSearchPattern);
     public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
-    public string[] GetInfoConfigFiles() => Directory.GetFiles(InfoConfigFolder, JsonSearchPattern);
+    public string[] GetInfoConfigFiles() => Directory.GetFiles(InfoConfigFolder, ConfigSearchPattern);
 }
