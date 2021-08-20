@@ -32,6 +32,9 @@ public class LogWindow : ComponentBase<LogEditorConfig>
             Reflection.MakeControlEnum((LogCategory*)Unsafe.AsPointer(ref Config.Data.Console), null);
             ImGui.PopID();
             Config.Data.Apply();
+
+            ImGui.TextWrapped("Other Settings");
+            Reflection.MakeControlEnum(ref Config.Data.Position, "Position");
         }
 
         ImGui.End();

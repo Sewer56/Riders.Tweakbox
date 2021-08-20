@@ -15,6 +15,11 @@ public static partial class Shell
     public static bool EnableLog { get; set; } = true;
 
     /// <summary>
+    /// The position where the log is rendered.
+    /// </summary>
+    public static Pivots.Pivot LogPosition { get; set; } = Pivots.Pivot.BottomLeft;
+
+    /// <summary>
     /// All dialogs available for the shell.
     /// </summary>
     private static List<Func<bool>> _widgets = new List<Func<bool>>();
@@ -162,6 +167,7 @@ public static partial class Shell
             if (totalItems <= 0)
                 return;
 
+            _logWindow.SetPivot(LogPosition, LogPosition);
             _logWindow.Begin();
             int itemsRendered = 0;
             while (itemsRendered < totalItems && _logs.TryDequeue(out var logItem))
