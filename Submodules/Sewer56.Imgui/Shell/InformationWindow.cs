@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using DearImguiSharp;
+using Sewer56.Imgui.Controls.Extensions;
 using Sewer56.Imgui.Utilities;
 namespace Sewer56.Imgui.Shell;
 
@@ -38,12 +39,12 @@ public class InformationWindow : IDisposable
     /// Minimum size of the window.
     /// A value of 0 in an axis indicates infinite.
     /// </summary>
-    public ImVec2 Size = new ImVec2();
+    public FinalizedImVec2 Size = new FinalizedImVec2() { X = 0, Y = 0 };
 
     /// <summary>
     /// Position in the window against which the rest of the window pivots.
     /// </summary>
-    public ImVec2 WindowPivot;
+    public FinalizedImVec2 WindowPivot = new FinalizedImVec2() { X = 0, Y = 0 };
 
     /// <summary>
     /// Corner/edge relative to which the window is positioned.
@@ -53,7 +54,7 @@ public class InformationWindow : IDisposable
     /// <summary>
     /// Contains the size of the last window/frame.
     /// </summary>
-    public ImVec2 LastWindowSize { get; private set; } = new ImVec2();
+    public FinalizedImVec2 LastWindowSize { get; private set; } = new FinalizedImVec2();
 
     private bool _isOpen;
     private ImVec2 _nextWindowPos = new ImVec2();
@@ -77,7 +78,8 @@ public class InformationWindow : IDisposable
     {
         Name = name;
         PositionPivot = positionPivot;
-        WindowPivot = windowPivot;
+        WindowPivot.X = windowPivot.X;
+        WindowPivot.Y = windowPivot.Y;
         _isOpen = isOpen;
     }
 
@@ -89,7 +91,8 @@ public class InformationWindow : IDisposable
     public void SetPivot(Pivots.Pivot positionPivot, Pivots.Pivot windowPivot)
     {
         PositionPivot = positionPivot;
-        WindowPivot = Pivots.GetPoint(windowPivot);
+        var point = Pivots.GetPoint(windowPivot);
+        point.ToImVec(WindowPivot);
     }
 
     /// <summary>
@@ -113,7 +116,7 @@ public class InformationWindow : IDisposable
 
     private void SetWindowPosition()
     {
-        using var io = ImGui.GetIO();
+        var io = Shell.IO;
         var displaySize = io.DisplaySize;
         var frameBufferScale = io.DisplayFramebufferScale;
         var scaledPadding = new Vector2(Padding.X * frameBufferScale.X, Padding.Y * frameBufferScale.Y);

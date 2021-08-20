@@ -27,7 +27,7 @@ public static partial class Shell
     /// <summary>
     /// The log window.
     /// </summary>
-    private static InformationWindow _logWindow = new InformationWindow("Sewer56.Imgui Log", Pivots.Pivot.BottomLeft, Pivots.Pivot.BottomLeft);
+    private static InformationWindow _logWindow = new InformationWindow("Sewer56.Imgui Log", Pivots.Pivot.BottomRight, Pivots.Pivot.BottomRight);
 
     /// <summary>
     /// Adds a dialog to the current shell.

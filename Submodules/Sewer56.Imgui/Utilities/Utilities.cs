@@ -45,16 +45,15 @@ public static class Utilities
     public static Vector4 ToVector(this ImVec4 vector) => new Vector4(vector.X, vector.Y, vector.Z, vector.W);
 
     /// <summary/>
-    public static ImVec2 ToImVec(this Vector2 vector)
+    public static ImVec2 ToImVec(this Vector2 vector, ImVec2 vec2)
     {
-        var vec = new ImVec2
-        {
-            X = vector.X,
-            Y = vector.Y
-        };
-
-        return vec;
+        vec2.X = vector.X;
+        vec2.Y = vector.Y;
+        return vec2;
     }
+
+    /// <summary/>
+    public static ImVec2 ToImVec(this Vector2 vector) => ToImVec(vector, new ImVec2());
 
     /// <summary>
     /// Converts a hex RGBA colour into a <see cref="ImVec4"/>.
