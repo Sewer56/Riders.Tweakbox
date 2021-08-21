@@ -24,8 +24,8 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
 {
     /// <inheritdoc />
     public override string Name { get; set; } = "Layout Editor";
-    private const int _autoSaveTimeFrames = 3600;
 
+    private const string _layoutExtension = ".layout";
     private SetObject* _currentObject;
     private ImVec2.__Internal _rowMinHeight = new ImVec2.__Internal() { x = 0, y = 0 };
     private int _currentIndex;
@@ -41,12 +41,14 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     private bool _scrollTable;
     private NetplayController _netplayController = IoC.Get<NetplayController>();
     private int _currentAutosaveFrames = 0;
+    private Autosaver _autoSaver;
 
     public LayoutEditor(MiscPatchController patchController, ObjectLayoutController layoutController, IO io)
     {
         _io = io;
         _patchController = patchController;
         _layoutController = layoutController;
+        _autoSaver = new Autosaver(_io.AutosaveObjectLayoutFolder, TimeSpan.FromMinutes(5), TimeSpan.FromHours(1), TimeSpan.FromHours(24), $"*{_layoutExtension}");
     }
 
     public bool IsAvailable() => !_netplayController.IsConnected();
@@ -134,8 +136,11 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         }
 
         // Autosave
-        if (IncrementAutosaveFrames())
+        if (_autoSaver.Update(out bool compressionPerformed))
         {
+            if (compressionPerformed)
+                _log.WriteLine($"[Layout Editor] Old Autosaves Compressed");
+            
             var fileName = GetAutosaveFileName();
             var filePath = Path.Combine(_io.AutosaveObjectLayoutFolder, fileName);
             _log.WriteLine($"Autosaving: {filePath}");
@@ -356,15 +361,6 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         stageName ??= "Unknown";
 
         var currentTime = DateTime.UtcNow.ToString(@"yyyy.MM.dd.HH.mm.ss");
-        return $"{stageName}_{currentTime}";
-    }
-
-    private bool IncrementAutosaveFrames()
-    {
-        _currentAutosaveFrames += 1;
-        bool autoSave = _currentAutosaveFrames >= _autoSaveTimeFrames;
-        _currentAutosaveFrames %= _autoSaveTimeFrames;
-
-        return autoSave;
+        return $"{stageName}_{currentTime}{_layoutExtension}";
     }
 }
