@@ -20,6 +20,11 @@ public class HeapController : IController
     /// </summary>
     public unsafe MallocResult* FirstAllocResult { get; private set; }
 
+    /// <summary>
+    /// Executed on the <see cref="FreeFrame"/> function.
+    /// </summary>
+    public Action<IntPtr> OnFreeFrame { get; set; }
+
     private static HeapController _instance;
     private IHook<Heap.AllocFnPtr> _mallocHook;
     private IHook<Heap.AllocFnPtr> _callocHook;
@@ -55,6 +60,8 @@ public class HeapController : IController
             will be unused, we tell the OS it's free to put something
             else in that physical RAM area.
          */
+
+        OnFreeFrame?.Invoke((IntPtr) address);
 
         var currentHeader = *Heap.FrameHeadFront;
         var newHeader = address;

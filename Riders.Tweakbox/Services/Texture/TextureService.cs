@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using EnumsNET;
 using Reloaded.Memory;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.Texture.Headers;
+using Riders.Tweakbox.Services.Texture.Interfaces;
 using Riders.Tweakbox.Services.Texture.Structs;
 using Standart.Hash.xxHash;
 using Unsafe = System.Runtime.CompilerServices.Unsafe;
@@ -20,8 +22,12 @@ public class TextureService : ISingletonService
     // DO NOT CHANGE, TEXTUREDICTIONARY DEPENDS ON THIS.
     private const string HashStringFormat = "X8";
 
-    private List<TextureDictionary> _dictionaries = new List<TextureDictionary>();
+    private List<ManualTextureDictionary> _fallbackDictionaries = new List<ManualTextureDictionary>();
+    private List<AutoTextureDictionary> _autoDictionaries       = new List<AutoTextureDictionary>();
+    private List<ManualTextureDictionary> _priorityDictionaries = new List<ManualTextureDictionary>();
+
     private IModLoader _modLoader;
+    private HashSet<string> _ignoreMipmapHashes = new HashSet<string>();
 
     public TextureService(IModLoader modLoader)
     {
@@ -83,22 +89,118 @@ public class TextureService : ISingletonService
     {
         // Doing this in reverse because mods with highest priority get loaded last.
         // We want to look at those mods first.
-        for (int i = _dictionaries.Count - 1; i >= 0; i--)
-        {
-            if (_dictionaries[i].TryGetTexture(xxHash, out data, out info))
-                return true;
-        }
+        if (TryGetDataFromDictionary(_priorityDictionaries, xxHash, out data, out info))
+            return true;
+
+        if (TryGetDataFromDictionary(_autoDictionaries, xxHash, out data, out info))
+            return true;
+
+        if (TryGetDataFromDictionary(_fallbackDictionaries, xxHash, out data, out info))
+            return true;
 
         info = default;
         data = default;
         return false;
     }
 
-    private void Add(IModConfigV1 config) => _dictionaries.Add(new TextureDictionary(GetRedirectFolder(config.ModId)));
+    /// <summary>
+    /// Adds a texture dictionary that you can use for redirecting in-game textures.
+    /// Once you no longer want the dictionary used, use <see cref="RemoveDictionary"/>.
+    /// </summary>
+    /// <param name="priority">
+    ///     If true, this dictionary should take priority over textures.
+    ///     Automatically imported without code.
+    ///     If false, will be a fallback when no other texture is available.
+    /// </param>
+    public void AddDictionary(ManualTextureDictionary dict, bool priority = true)
+    {
+        if (priority)
+            _priorityDictionaries.Add(dict);
+        else
+            _fallbackDictionaries.Add(dict);
+    }
+
+    /// <summary>
+    /// Removes a dictionary from being used.
+    /// </summary>
+    /// <param name="dict">The dictionary.</param>
+    public void RemoveDictionary(ManualTextureDictionary dict)
+    {
+        _priorityDictionaries.Remove(dict);
+        _fallbackDictionaries.Remove(dict);
+    }
+
+    /// <summary>
+    /// Ensures the game does not generate a mipmap chain for a DDS
+    /// texture with a given hash.
+    /// </summary>
+    /// <param name="xxHash">Hash of the DDS.</param>
+    public void DontGenerateMipmaps(string xxHash) => _ignoreMipmapHashes.Add(xxHash);
+
+    /// <summary>
+    /// Stops ignoring a certain hash and allows it to create mipmaps on future loads.
+    /// </summary>
+    /// <param name="xxHash">Hash of the DDS.</param>
+    public void GenerateMipmaps(string xxHash) => _ignoreMipmapHashes.Remove(xxHash);
+
+    /// <summary>
+    /// Returns true if a mipmap should be generated for a given hash.
+    /// </summary>
+    /// <returns></returns>
+    public bool ShouldGenerateMipmap(string xxHash) => !_ignoreMipmapHashes.Contains(xxHash);
+
+    /// <summary>
+    /// Calculates the size of an individual texture or mipmap in a mipmap chain.
+    /// </summary>
+    /// <param name="fourCc">The DXT format used.</param>
+    /// <returns></returns>
+    public uint GetTextureSizeDxt(uint width, uint height, DdsFourCC fourCc)
+    {
+        // 1 = 1 byte per pixel (DXT5)
+        // 2 = 0.5 bytes per pixel (DXT1)
+        int oneOverBytesPerPixel = fourCc switch
+        {
+            DdsFourCC.DXT1 => 2,
+            DdsFourCC.DXT2 => 1,
+            DdsFourCC.DXT3 => 1,
+            DdsFourCC.DXT4 => 1,
+            DdsFourCC.DXT5 => 1,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        return (uint)((width * height) / oneOverBytesPerPixel);
+    }
+
+    /// <summary>
+    /// Calculates the size of an individual texture or mipmap in a mipmap chain.
+    /// </summary>
+    /// <param name="rgbBitCount">Number of bits in an RGB (possibly including alpha) format.</param>
+    /// <returns></returns>
+    public uint GetTextureSizePixel(uint width, uint height, uint rgbBitCount)
+    {
+        uint pitch = (width * rgbBitCount + 7) / 8;
+        return pitch * height;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private bool TryGetDataFromDictionary<T>(List<T> dictionaries, string xxHash, out TextureRef data, out TextureInfo info) where T : ITextureDictionary
+    {
+        for (int i = dictionaries.Count - 1; i >= 0; i--)
+        {
+            if (dictionaries[i].TryGetTexture(xxHash, out data, out info))
+                return true;
+        }
+
+        data = default;
+        info = default;
+        return false;
+    }
+
+    private void Add(IModConfigV1 config) => _autoDictionaries.Add(new AutoTextureDictionary(GetRedirectFolder(config.ModId)));
     private void Remove(IModConfigV1 config)
     {
         var redirectFolder = GetRedirectFolder(config.ModId);
-        _dictionaries = _dictionaries.Where(x => !x.Source.Equals(redirectFolder, StringComparison.OrdinalIgnoreCase)).ToList();
+        _autoDictionaries = _autoDictionaries.Where(x => !x.Source.Equals(redirectFolder, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     private void OnModUnloading(IModV1 mod, IModConfigV1 config) => Remove(config);
@@ -140,26 +242,12 @@ public class TextureService : ISingletonService
         if (ddsHeader->DwFlags.HasAllFlags(DdsFlags.Pitch) &&
             ddsHeader->DdsPf.DwFlags.HasAllFlags(DdsPixelFormatFlags.Rgb))
         {
-            // Because Riders can't calculate DwPitchOrLinearSize properly, we'll do it ourselves.
-            uint pitch = (ddsHeader->DwWidth * ddsHeader->DdsPf.DwRgbBitCount + 7) / 8;
-            textureSize = pitch * ddsHeader->DwHeight;
+            textureSize = GetTextureSizePixel(ddsHeader->DwWidth, ddsHeader->DwHeight, ddsHeader->DdsPf.DwRgbBitCount);
         }
         else if (ddsHeader->DwFlags.HasAllFlags(DdsFlags.LinearSize) &&
                  ddsHeader->DdsPf.DwFlags.HasAllFlags(DdsPixelFormatFlags.Fourcc))
         {
-            // 1 = 1 byte per pixel (DXT5)
-            // 2 = 0.5 bytes per pixel (DXT1)
-            int oneOverBytesPerPixel = ddsHeader->DdsPf.DwFourCc switch
-            {
-                DdsFourCC.DXT1 => 2,
-                DdsFourCC.DXT2 => 1,
-                DdsFourCC.DXT3 => 1,
-                DdsFourCC.DXT4 => 1,
-                DdsFourCC.DXT5 => 1,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            textureSize = (uint)((ddsHeader->DwWidth * ddsHeader->DwHeight) / oneOverBytesPerPixel);
+            textureSize = GetTextureSizeDxt(ddsHeader->DwWidth, ddsHeader->DwHeight, ddsHeader->DdsPf.DwFourCc);
         }
 
         return input.Slice(0, (int)(textureSize + headerSize));

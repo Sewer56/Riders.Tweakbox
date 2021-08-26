@@ -25,8 +25,13 @@ using Riders.Tweakbox.Misc.Log;
 
 namespace Riders.Tweakbox.Controllers;
 
+/// <summary>
+/// Note: This is implementation only.
+/// Please see <see cref="TextureService"/> for utility methods to influence the injector behaviour.
+/// </summary>
 public unsafe class TextureInjectionController : IController
 {
+    private const int D3DX_FROM_FILE = -3;
     private TextureService _textureService = IoC.GetSingleton<TextureService>();
     private TextureCacheService _cacheService = IoC.GetSingleton<TextureCacheService>();
     private AnimatedTextureService _animatedTextureService = IoC.GetSingleton<AnimatedTextureService>();
@@ -85,12 +90,13 @@ public unsafe class TextureInjectionController : IController
 
         // Hash the texture,
         var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
+        miplevels = _textureService.ShouldGenerateMipmap(xxHash) ? miplevels : D3DX_FROM_FILE; 
 
         // Load alternative texture if necessary.
         if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
         {
             using var textureRef = data;
-            _logLoad.WriteLine($"Loading Custom Texture: {info.Path}");
+            _logLoad.WriteLine($"Loading Custom Texture: [{xxHash}] {info.Path}");
             fixed (byte* dataPtr = &data.Data[0])
             {
                 var texture = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));

@@ -32,6 +32,8 @@ public class IO
     public string TextureCacheFilePath => Path.Combine(TextureCacheFolder, "TextureCache.msgpack");
     public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
 
+    public string AssetsFolder => Path.Combine(ModFolder, "Assets");
+
     /// <summary>
     /// Folder mod is stored in.
     /// </summary>

@@ -66,10 +66,17 @@
 
   <ItemGroup>
     <Folder Include="Misc\Graphics\" />
+    <Folder Include="Services\TextureGen\Structs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 	
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-	<RemoveDir Directories="$(TWEAKBOX_DIR)/x86" />
+	  <RemoveDir Directories="$(TWEAKBOX_DIR)/x86" />
   </Target>
 
 </Project>
