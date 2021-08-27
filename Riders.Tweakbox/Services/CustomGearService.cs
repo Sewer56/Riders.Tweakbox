@@ -1,19 +1,16 @@
 ﻿using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using Reloaded.Memory;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Structures.Enums;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using Riders.Tweakbox.Services.Placeholder;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 
 namespace Riders.Tweakbox.Services
 {
@@ -25,10 +22,32 @@ namespace Riders.Tweakbox.Services
         private const string _iconFileName  = "icon.png";
         private const string _titleFileName = "title.png";
         private const string _dataFileName = "data.bin";
+        private const string _instructions = "Place this inside a folder called Tweakbox/Gears Please refer to the Tweakbox wiki for more guidance.";
 
         private IO _io = IoC.GetSingleton<IO>();
         private Logger _log = new Logger(LogCategory.Default);
         private PlaceholderTextureService _placeholderService = IoC.GetSingleton<PlaceholderTextureService>();
+
+        /// <summary>
+        /// Imports a custom gear from a given folder.
+        /// </summary>
+        /// <param name="folder">Full path to the folder containing the gear.</param>
+        public AddGearRequest ImportFromFolder(string folder)
+        {
+            var result = new CustomGearData();
+            
+            result.GearName = Path.GetFileName(folder);
+            result.GearDataLocation = Path.Combine(folder, _dataFileName);
+
+            var gearData = File.ReadAllBytes(result.GearDataLocation).AsSpan();
+            Struct.FromArray(gearData, out result.GearData);
+
+            result.IconPath = Path.Combine(folder, _iconFileName);
+            result.NamePath = Path.Combine(folder, _titleFileName);
+            UpdateTexturePaths(result);
+
+            return Mapping.Mapper.Map<AddGearRequest>(result);
+        }
 
         /// <summary>
         /// Exports a full gear (incl. Icons) to a new folder.
