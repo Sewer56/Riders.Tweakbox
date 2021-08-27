@@ -60,6 +60,7 @@ public unsafe class FramePacingController : IController
     private IHook<TimeEndPeriod> _endPeriodHook;
     private IHook<ReturnVoidFnPtr> _endFrameHook;
     private Direct3DController _direct3DController = IoC.GetSingleton<Direct3DController>();
+    private int _lastFrameCounter;
 
     public FramePacingController()
     {
@@ -112,7 +113,7 @@ public unsafe class FramePacingController : IController
             if (_cpuCounter != null)
                 CpuUsage = _cpuCounter.NextValue();
         }
-
+        
         // Seed number generator.
         SharedRandom.Instance.Next();
         if (_config.Data.FramePacing)

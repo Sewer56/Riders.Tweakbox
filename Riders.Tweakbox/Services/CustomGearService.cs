@@ -11,6 +11,7 @@ using Sewer56.SonicRiders.Structures.Enums;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using Riders.Tweakbox.Services.Placeholder;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
+using Riders.Tweakbox.Misc.Extensions;
 
 namespace Riders.Tweakbox.Services
 {
@@ -43,6 +44,8 @@ namespace Riders.Tweakbox.Services
             var gearData = File.ReadAllBytes(result.GearDataLocation).AsSpan();
             Struct.FromArray(gearData, out result.GearData);
 
+            SetAnimatedTexturePath(ref result.AnimatedIconFolder, folder, _iconFileName);
+            SetAnimatedTexturePath(ref result.AnimatedNameFolder, folder, _titleFileName);
             result.IconPath = Path.Combine(folder, _iconFileName);
             result.NamePath = Path.Combine(folder, _titleFileName);
             UpdateTexturePaths(result);
@@ -75,9 +78,8 @@ namespace Riders.Tweakbox.Services
             var exportFolder = Path.Combine(_io.ExportFolder, data.GearName);
             UpdateTexturePaths(data);
             Directory.CreateDirectory(exportFolder);
-
-            File.Copy(data.IconPath, Path.Combine(exportFolder, _iconFileName), true);
-            File.Copy(data.NamePath, Path.Combine(exportFolder, _titleFileName), true);
+            CopyTexFileOrAnimatedDirectory(data.AnimatedIconFolder, data.IconPath, _iconFileName, exportFolder);
+            CopyTexFileOrAnimatedDirectory(data.AnimatedNameFolder, data.NamePath, _titleFileName, exportFolder);
             UpdateRawGearData(gear, Path.Combine(exportFolder, _dataFileName));
             File.WriteAllText(Path.Combine(exportFolder, _instructionsFileName), _instructions);
             Process.Start(new ProcessStartInfo("cmd", $"/c start explorer \"{exportFolder}\"") { CreateNoWindow = true });
@@ -150,10 +152,26 @@ namespace Riders.Tweakbox.Services
 
         internal void UpdateTexturePaths(CustomGearData data)
         {
-            data.IconPath = !string.IsNullOrEmpty(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, data.GearIndex);
-            data.NamePath = !string.IsNullOrEmpty(data.NamePath) ? data.NamePath : GetPlaceholderTitle(data.GearIndex);
+            data.IconPath = !string.IsNullOrEmpty(data.IconPath) && File.Exists(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, data.GearIndex);
+            data.NamePath = !string.IsNullOrEmpty(data.NamePath) && File.Exists(data.NamePath) ? data.NamePath : GetPlaceholderTitle(data.GearIndex);
         }
 
         private T ModuloSelectFromArray<T>(T[] items, int index) => items[index % items.Length];
+
+        private static void CopyTexFileOrAnimatedDirectory(string animatedTexFolder, string texPath, string texFileName, string exportFolder)
+        {
+            if (!Native.PathIsDirectoryEmptyW(animatedTexFolder))
+                DirectoryExtensions.DirectoryCopy(animatedTexFolder, GetAnimatedTexturePath(exportFolder, texFileName), true);
+            else
+                File.Copy(texPath, Path.Combine(exportFolder, texFileName), true);
+        }
+
+        private static string GetAnimatedTexturePath(string exportFolder, string texFileName) => Path.Combine(exportFolder, Path.GetFileNameWithoutExtension(texFileName));
+
+        private void SetAnimatedTexturePath(ref string target, string gearFolder, string texFileName)
+        {
+            var fullPath = GetAnimatedTexturePath(gearFolder, texFileName);
+            target = Directory.Exists(fullPath) && !Native.PathIsDirectoryEmptyW(fullPath) ? fullPath : null;
+        }
     }
 }

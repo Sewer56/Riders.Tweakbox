@@ -321,8 +321,17 @@ internal unsafe class CustomGearUiController
         
         // Set overrides.
         var indexOffset = data.GearIndex - _codePatcher.OriginalGearCount;
-        _redirectDictionary.TryAddTextureFromFilePath(data.IconPath, _iconAllocations.Hashes[indexOffset]);
-        _redirectDictionary.TryAddTextureFromFilePath(data.NamePath, _nameAllocations.Hashes[indexOffset]);
+
+        AddTextureOrAnimatedTexture(data.IconPath, data.AnimatedIconFolder, _iconAllocations.Hashes[indexOffset]);
+        AddTextureOrAnimatedTexture(data.NamePath, data.AnimatedNameFolder, _nameAllocations.Hashes[indexOffset]);
+    }
+
+    private void AddTextureOrAnimatedTexture(string texturePath, string animatedFolderPath, string hash)
+    {
+        if (!string.IsNullOrEmpty(animatedFolderPath) && Directory.Exists(animatedFolderPath) && !Native.PathIsDirectoryEmptyW(animatedFolderPath))
+            _redirectDictionary.TryAddAnimatedTextureFromFolder(animatedFolderPath, hash);
+        else
+            _redirectDictionary.TryAddTextureFromFilePath(texturePath, hash);
     }
 
     internal void Reset()
@@ -332,6 +341,7 @@ internal unsafe class CustomGearUiController
             foreach (var hash in allocation.Hashes)
             {
                 _redirectDictionary.TryRemoveTexture(hash);
+                _redirectDictionary.TryRemoveAnimatedTexture(hash);
             }
         }
     }

@@ -37,7 +37,17 @@ public class AddGearRequest
     /// [Optional] Path to the name texture used by the gear.
     /// </summary>
     public string NamePath;
-    
+
+    /// <summary>
+    /// [Optional] Path to the animated texture folder for the icon.
+    /// </summary>
+    public string AnimatedIconFolder;
+
+    /// <summary>
+    /// [Optional] Path to the animated texture folder for the name.
+    /// </summary>
+    public string AnimatedNameFolder;
+
     /// <summary>
     /// This is called when the index of the gear changes, for example 
     /// after joining a netplay session. Use this if you have custom code

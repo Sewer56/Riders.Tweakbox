@@ -32,6 +32,16 @@ public class CustomGearData
     public string NamePath;
 
     /// <summary>
+    /// [Optional] Path to the animated texture folder for the icon.
+    /// </summary>
+    public string AnimatedIconFolder;
+
+    /// <summary>
+    /// [Optional] Path to the animated texture folder for the name.
+    /// </summary>
+    public string AnimatedNameFolder;
+
+    /// <summary>
     /// Current index assigned to the gear.
     /// </summary>
     public int GearIndex { get; private set; }

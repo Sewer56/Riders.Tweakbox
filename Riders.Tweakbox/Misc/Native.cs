@@ -19,6 +19,9 @@ public static class Native
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
     public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
+    [DllImport("Shlwapi.dll", CharSet = CharSet.Unicode)]
+    public static extern bool PathIsDirectoryEmptyW(string directory);
+
     /// <summary>
     /// Represents a singular unicode string.
     /// </summary>
