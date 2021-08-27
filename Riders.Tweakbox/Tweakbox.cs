@@ -24,6 +24,7 @@ using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -50,6 +51,7 @@ public class Tweakbox
     private WelcomeScreenRenderer _welcomeScreenRenderer;
     private DllNotifier _notifier;
     private IModLoader _modLoader;
+    private Logger _log = new Logger(LogCategory.Default);
 
     /* Creation & Disposal */
     private Tweakbox() { }
@@ -218,25 +220,32 @@ public class Tweakbox
         if (!IsReady)
             return;
 
-        // This works because the keys sent to imgui in WndProc follow
-        // the Windows key code order.
-        if (ImGui.IsKeyPressed((int)Keys.F11, false))
-            IsEnabled = !IsEnabled;
+        try
+        {
+            // This works because the keys sent to imgui in WndProc follow
+            // the Windows key code order.
+            if (ImGui.IsKeyPressed((int)Keys.F11, false))
+                IsEnabled = !IsEnabled;
 
-        if (ImGui.IsKeyPressed((int)Keys.F10, false))
-            InputsEnabled = !InputsEnabled;
+            if (ImGui.IsKeyPressed((int)Keys.F10, false))
+                InputsEnabled = !InputsEnabled;
 
-        // Update Menu Bar Text
-        if (InputsEnabled)
-            MenuBar.Text[1] = "F10: Disable Game Input";
-        else
-            MenuBar.Text[1] = "F10: Enable Game Input";
+            // Update Menu Bar Text
+            if (InputsEnabled)
+                MenuBar.Text[1] = "F10: Disable Game Input";
+            else
+                MenuBar.Text[1] = "F10: Enable Game Input";
 
-        // Render MenuBar and Menus
-        if (IsEnabled)
-            MenuBar.Render();
+            // Render MenuBar and Menus
+            if (IsEnabled)
+                MenuBar.Render();
 
-        // Render Shell
-        Shell.Render();
+            // Render Shell
+            Shell.Render();
+        }
+        catch (Exception e)
+        {
+            _log.WriteLine($"Unhandled Exception in Tweakbox Code:\n{e.Message}\n{e.StackTrace}");
+        }
     }
 }
