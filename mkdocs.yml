@@ -31,6 +31,7 @@ pages:
   - Customization: 
     - Music: custom-music.md
     - Textures: textures.md
+    - Custom Gears: custom-gears.md
     - Optimizing Textures: optimizing-textures.md
     - Animated Textures: animated-textures.md
     

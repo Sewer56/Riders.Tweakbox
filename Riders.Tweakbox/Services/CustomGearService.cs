@@ -54,7 +54,7 @@ namespace Riders.Tweakbox.Services
         /// Exports a full gear (incl. Icons) to a new folder.
         /// </summary>
         /// <param name="gear">The gear data to write to the folder.</param>
-        /// <param name="data">Information about the added gear.</param>
+        /// <param name="gearName">The name of the gear.</param>
         /// <returns>The output folder.</returns>
         public void ExportToFolder(ExtremeGear* gear, string gearName)
         {
