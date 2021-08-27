@@ -66,7 +66,7 @@ public class AnimatedTexture : IDisposable
 
         var device = IoC.Get<Device>();
         Textures.Add(new SharpDX.Direct3D9.Texture((IntPtr)firstTexReference));
-        for (var x = 1; x < Files.Count; x++)
+        for (var x = 0; x < Files.Count - 1; x++)
         {
             var file = Files[x];
             var fullPath = Folder + file.RelativePath;
@@ -99,7 +99,7 @@ public class AnimatedTexture : IDisposable
         if (currentIndex == maxIndex)
         {
             // Check if still on last.
-            if (currentFrame == _modulo || currentFrame < _minId[0])
+            if (currentFrame < _minId[0])
                 return (void*)Textures[_lastIndex].NativePointer;
 
             // Else start from first element.
@@ -111,7 +111,7 @@ public class AnimatedTexture : IDisposable
         do
         {
             var current = _minId[currentIndex];
-            var next = _minId[currentIndex + 1];
+            var next    = _minId[currentIndex + 1];
 
             if (currentFrame >= current && currentFrame < next)
             {
