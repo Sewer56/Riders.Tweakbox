@@ -27,7 +27,7 @@ public static class DirectoryExtensions
         // Get the files in the directory and copy them to the new location.
         var files = dir.GetFiles();
         foreach (var file in files)
-            file.CopyTo(Path.Combine(destination, file.Name), false);
+            file.CopyTo(Path.Combine(destination, file.Name), true);
 
         // If copying subdirectories, copy them and their contents to new location.
         if (!recursive)
