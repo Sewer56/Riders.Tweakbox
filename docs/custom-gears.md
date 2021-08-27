@@ -58,3 +58,15 @@ After restarting, your gear should show up in the `Gear Editor`.
 If you need to make any further changes to the gear, perform them via the Gear Editor and then press the `Update Custom Gear Data` button.
 
 ![Screenshot](./Images/Gear_Tutorial_8.png)
+
+## Animated Textures
+
+In order to use animated textures for the icon and gear title, create a folder with the same name as the PNG without an extension.
+
+Inside, put your animated texture keyframes.
+
+![Screenshot](./Images/Gear_Tutorial_Animated_2.png)  
+
+![Screenshot](./Images/Gear_Tutorial_Animated_1.png)
+
+For more information refer to the [Animated Textures](./animated-textures.md) page.
