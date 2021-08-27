@@ -22,7 +22,8 @@ public unsafe class GearEditorConfig : IConfiguration
     /// </summary>
     public GearEditorConfig()
     {
-        Gears = Player.Gears.ToArray();
+        Gears = new ExtremeGear[Player.OriginalNumberOfGears];
+        Player.Gears.CopyTo(Gears, Gears.Length);
     }
 
     /// <summary>
@@ -34,7 +35,7 @@ public unsafe class GearEditorConfig : IConfiguration
     /// <summary>
     /// Updates the game information with the gear data stored in the class.
     /// </summary>
-    public unsafe void Apply() => Player.Gears.CopyFrom(Gears, Gears.Length);
+    public unsafe void Apply() => Player.Gears.CopyFrom(Gears, Player.OriginalNumberOfGears);
 
     /// <inheritdoc />
     public Action ConfigUpdated { get; set; }
@@ -42,10 +43,10 @@ public unsafe class GearEditorConfig : IConfiguration
 
     public void FromBytes(Span<byte> bytes)
     {
-        var outputArray = new byte[StructArray.GetSize<ExtremeGear>(Player.NumberOfGears)];
+        var outputArray = new byte[StructArray.GetSize<ExtremeGear>(Player.OriginalNumberOfGears)];
         var decompressed = LZ4.DecompressLZ4Stream(outputArray, bytes, out int bytesRead);
 
-        StructArray.FromArray(decompressed, out Gears, true, Player.NumberOfGears);
+        StructArray.FromArray(decompressed, out Gears, true, Player.OriginalNumberOfGears);
         ConfigUpdated?.Invoke();
     }
 

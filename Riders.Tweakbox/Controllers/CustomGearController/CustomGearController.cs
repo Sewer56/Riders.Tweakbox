@@ -6,7 +6,9 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using System.Collections.Generic;
+using EnumsNET;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
+using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -38,12 +40,30 @@ public unsafe class CustomGearController : IController
     public AddGearResult AddGear(AddGearRequest request)
     {
         // If already loaded, ignore.
-        if (IsGearLoaded(request.GearName))
+        if (string.IsNullOrEmpty(request.GearName) || IsGearLoaded(request.GearName))
             return null;
 
         var data = Mapping.Mapper.Map<CustomGearData>(request);
         _log.WriteLine($"[{nameof(CustomGearController)}] Adding Gear: {request.GearName}");
         return AddGear_Internal(data);
+    }
+
+    /// <summary>
+    /// Retrieves the name of a given gear.
+    /// </summary>
+    /// <param name="index">The index of the gear.</param>
+    public string GetGearName(int index)
+    {
+        if (index < CodePatcher.OriginalGearCount)
+            return ((ExtremeGear)index).GetName();
+        else
+        {
+            var loadedIndex = LoadedGears.FindIndex(x => x.GearIndex == index);
+            if (loadedIndex != -1)
+                return LoadedGears[loadedIndex].GearName;
+
+            return "Unknown";
+        }
     }
 
     /// <summary>

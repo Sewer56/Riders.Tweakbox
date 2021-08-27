@@ -46,7 +46,7 @@ public class HashingTests
     public static unsafe GameData Random()
     {
         var data = new GameData();
-        data.Gears = new ExtremeGear[Player.NumberOfGears];
+        data.Gears = new ExtremeGear[Player.OriginalNumberOfGears];
         data.RunningPhysics1 = new RunningPhysics();
         data.RunningPhysics2 = new RunningPhysics2();
         data.RaceSettings = new RaceSettings();
@@ -56,7 +56,7 @@ public class HashingTests
         fixed (void* gearPtr = &data.Gears[0])
         {
             var gearBytePtr = (byte*)gearPtr;
-            var gearsNumBytes = StructArray.GetSize<ExtremeGear>(Player.NumberOfGears);
+            var gearsNumBytes = StructArray.GetSize<ExtremeGear>(Player.OriginalNumberOfGears);
             for (int x = 0; x < gearsNumBytes; x++)
                 gearBytePtr[x] = (byte)random.Next();
         }

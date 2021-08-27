@@ -53,7 +53,7 @@ public class DolphinDumperWindow : ComponentBase
             return;
 
         var memory = new ExternalMemory(process);
-        var pointer = new FixedArrayPtr<ExtremeGear>((ulong)dolphinAddress, Player.NumberOfGears, true, memory);
+        var pointer = new FixedArrayPtr<ExtremeGear>((ulong)dolphinAddress, Player.OriginalNumberOfGears, true, memory);
         var nativeGearPtr = (ExtremeGear*)Player.Gears.Pointer;
 
         for (var x = 0; x < pointer.Count; x++)

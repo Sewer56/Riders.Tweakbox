@@ -2,6 +2,7 @@
 using EnumsNET;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Misc;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -20,6 +21,7 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
 {
     public override string Name { get; set; } = "Gear Editor";
     private NetplayController _netplayController = IoC.Get<NetplayController>();
+    private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
 
     public GearEditor(IO io) : base(io, io.GearConfigFolder, io.GetGearConfigFiles)
     {
@@ -45,9 +47,9 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     {
         ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
 
-        for (int x = 0; x <= (int)ExtremeGearEnum.Cannonball; x++)
+        for (int x = 0; x < (int)Player.NumberOfGears; x++)
         {
-            var headerName = ((ExtremeGearEnum)x).GetName();
+            var headerName = _customGearController.GetGearName(x);
             if (ImGui.CollapsingHeaderTreeNodeFlags(headerName, 0))
             {
                 ImGui.PushID_Int(x);

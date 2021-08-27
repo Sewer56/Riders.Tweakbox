@@ -5,6 +5,7 @@ using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
+using Player = Sewer56.SonicRiders.API.Player;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -15,8 +16,8 @@ internal unsafe class CustomGearCodePatcher
 {
     // Image Ptr 4616c3
     // Also original count for gear->model map.
-    public int OriginalGearCount { get; private set; } = Sewer56.SonicRiders.API.Player.Gears.Count;
-    public int GearCount { get; private set; } = Sewer56.SonicRiders.API.Player.Gears.Count;
+    public int OriginalGearCount { get; private set; } = Player.OriginalNumberOfGears;
+    public int GearCount { get; private set; } = Player.Gears.Count;
     public int AvailableSlots => byte.MaxValue - GearCount;
 
     // New pointer targets.
@@ -32,7 +33,7 @@ internal unsafe class CustomGearCodePatcher
     {
         // We GC.AllocateArray so stuff gets put on the pinned object heap.
         // Any fixed statement is no-op pinning, and the object will never be moved.
-        SetupNewPointers("Gear Data", ref _newGears, ref Sewer56.SonicRiders.API.Player.Gears, ExtremeGearPtrAddresses);
+        SetupNewPointers("Gear Data", ref _newGears, ref Player.Gears, ExtremeGearPtrAddresses);
         SetupNewPointers("Unlocked Gear Models", ref _unlockedGearModels, ref Sewer56.SonicRiders.API.State.UnlockedGearModels, UnlockedGearModelsCodeAddresses);
         SetupNewPointers("Gear to Model Map", ref _gearToModelMap, ref Sewer56.SonicRiders.API.State.GearIdToModelMap, GearToModelCodeAddresses);
 
@@ -54,9 +55,8 @@ internal unsafe class CustomGearCodePatcher
         _newGears[GearCount] = gear;
         _gearToModelMap[GearCount] = (byte)gear.GearModel;
 
-        GearCount++;
-
-        result.GearIndex = GearCount - 1;
+        result.GearIndex = GearCount;
+        UpdateGearCount(GearCount + 1);
         data.SetGearIndex(result.GearIndex);
         PatchMaxGearId(result.GearIndex);
     }
@@ -80,7 +80,7 @@ internal unsafe class CustomGearCodePatcher
         _log.WriteLine($"[{nameof(CustomGearCodePatcher)}] Setting Gear Count of {newCount}");
         PatchMaxGearId(newCount - 1);
         Cleanup(newCount);
-        GearCount = newCount;
+        UpdateGearCount(newCount);
     }
 
     private void Cleanup(int newCount)
@@ -135,6 +135,13 @@ internal unsafe class CustomGearCodePatcher
 
             _log.WriteLine($"[{pointerName}] New Pointer: {(long)apiEndpoint.Pointer:X} (from: {(long)originalData.Pointer:X})");
         }
+    }
+
+    private void UpdateGearCount(int newCount)
+    {
+        GearCount = newCount;
+        Player.NumberOfGears = newCount;
+        Player.Gears.Count = newCount;
     }
 
     #region Pointers

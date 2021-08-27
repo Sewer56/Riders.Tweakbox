@@ -21,7 +21,7 @@ public unsafe struct GameData : IReliableMessage
                                             sizeof(RunningPhysics) + sizeof(RunningPhysics2) + sizeof(RaceSettings) + sizeof(DashPanelProperties)
                                             + sizeof(DecelProperties) + sizeof(SpeedShoeProperties);
 
-    public static readonly int NumGears = Player.NumberOfGears;
+    public static int NumGears => Player.NumberOfGears;
     public static readonly int NumTurbulenceProperties = Player.TurbulenceProperties.Count;
 
     /// <summary>
@@ -72,6 +72,7 @@ public unsafe struct GameData : IReliableMessage
     /// </summary>
     public unsafe void ToGame()
     {
+        // TODO: Custom Gear Support
         *Player.RunPhysics = RunningPhysics1;
         *Player.RunPhysics2 = RunningPhysics2;
         Player.Gears.CopyFrom(Gears, NumGears);
