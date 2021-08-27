@@ -6,7 +6,10 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using EnumsNET;
+using Reloaded.Memory;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 
@@ -43,6 +46,10 @@ public unsafe class CustomGearController : IController
         if (string.IsNullOrEmpty(request.GearName) || IsGearLoaded(request.GearName))
             return null;
 
+        // Get gear data from file (if needed).
+        if (!request.LoadData())
+            return null;
+
         var data = Mapping.Mapper.Map<CustomGearData>(request);
         _log.WriteLine($"[{nameof(CustomGearController)}] Adding Gear: {request.GearName}");
         return AddGear_Internal(data);
@@ -51,13 +58,36 @@ public unsafe class CustomGearController : IController
     /// <summary>
     /// Retrieves the name of a given gear.
     /// </summary>
-    /// <param name="index">The index of the gear.</param>
-    public string GetGearName(int index)
+    /// <param name="name">The name of the gear.</param>
+    /// <param name="data">
+    ///     The object to receive the custom gear details.
+    ///     Must not be null.
+    /// </param>
+    /// <returns>True if the gear data was found, else false.</returns>
+    public bool TryGetGearData(string name, [NotNull] CustomGearData data)
     {
+        if (AvailableGears.TryGetValue(name, out var originalData))
+        {
+            Mapping.Mapper.From(originalData).AdaptTo(data);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Retrieves the name of a given gear.
+    /// </summary>
+    /// <param name="index">The index of the gear.</param>
+    /// <param name="isCustomGear">True if the gear is a custom gear, else false.</param>
+    public string GetGearName(int index, out bool isCustomGear)
+    {
+        isCustomGear = false;
         if (index < CodePatcher.OriginalGearCount)
             return ((ExtremeGear)index).GetName();
         else
         {
+            isCustomGear = true;
             var loadedIndex = LoadedGears.FindIndex(x => x.GearIndex == index);
             if (loadedIndex != -1)
                 return LoadedGears[loadedIndex].GearName;

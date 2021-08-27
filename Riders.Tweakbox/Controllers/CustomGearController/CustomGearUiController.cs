@@ -32,6 +32,7 @@ using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
+using Riders.Tweakbox.Services;
 using Riders.Tweakbox.Services.TextureGen.Structs;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
@@ -54,7 +55,7 @@ internal unsafe class CustomGearUiController
     // Private 
     private CustomGearCodePatcher _codePatcher;
     private TextureService _textureService;
-    private PlaceholderTextureService _placeholderService;
+    private CustomGearService _customGearService;
     private Logger _log = new Logger(LogCategory.CustomGear);
     private ManualTextureDictionary _redirectDictionary;
     private HeapController _heapController;
@@ -74,7 +75,7 @@ internal unsafe class CustomGearUiController
     internal CustomGearUiController(CustomGearCodePatcher codePatcher)
     {
         _codePatcher = codePatcher;
-        _placeholderService = IoC.GetSingleton<PlaceholderTextureService>();
+        _customGearService = IoC.GetSingleton<CustomGearService>();
         _allocatorService   = IoC.GetSingleton<PvrtTextureInjectionAllocatorService>();
         _textureService     = IoC.GetSingleton<TextureService>();
         
@@ -316,9 +317,8 @@ internal unsafe class CustomGearUiController
     internal void AddGear(CustomGearData data, AddGearResult result)
     {
         // Get icon paths.
-        data.IconPath = !string.IsNullOrEmpty(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, data.GearIndex);
-        data.NamePath = !string.IsNullOrEmpty(data.NamePath) ? data.NamePath : _placeholderService.TitleIconPlaceholders[data.GearIndex % _placeholderService.TitleIconPlaceholders.Length];
-
+        _customGearService.UpdateTexturePaths(data);
+        
         // Set overrides.
         var indexOffset = data.GearIndex - _codePatcher.OriginalGearCount;
         _redirectDictionary.TryAddTextureFromFilePath(data.IconPath, _iconAllocations.Hashes[indexOffset]);
@@ -344,19 +344,6 @@ internal unsafe class CustomGearUiController
         foreach (var hash in result.Hashes)
             _textureService.DontGenerateMipmaps(hash);
     }
-
-    private string GetPlaceholderIcon(ref Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear gear, int gearIndex)
-    {
-        return gear.GearType switch
-        {
-            GearType.Bike => ModuloSelectFromArray(_placeholderService.BikeIconPlaceholders, gearIndex),
-            GearType.Skate => ModuloSelectFromArray(_placeholderService.SkateIconPlaceholders, gearIndex),
-            GearType.Board => ModuloSelectFromArray(_placeholderService.BoardIconPlaceholders, gearIndex),
-            _ => ModuloSelectFromArray(_placeholderService.BoardIconPlaceholders, gearIndex)
-        };
-    }
-    
-    private T ModuloSelectFromArray<T>(T[] items, int index) => items[index % items.Length];
 
     #region Definitions
     [Function(new Register[] { eax, edx }, eax, StackCleanup.Callee)]

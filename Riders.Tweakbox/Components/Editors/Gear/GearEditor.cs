@@ -1,17 +1,26 @@
-﻿using DearImguiSharp;
+﻿using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using DearImguiSharp;
 using EnumsNET;
+using Reloaded.Memory;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Controllers.CustomGearController;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Services;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Utility;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
-using ExtremeGearEnum = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Player = Sewer56.SonicRiders.API.Player;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
+using static Sewer56.Imgui.Misc.Constants;
+using Sewer56.Imgui.Controls;
+using Riders.Tweakbox.Misc.Log;
+
 namespace Riders.Tweakbox.Components.Editors.Gear;
 
 /// <summary>
@@ -22,6 +31,9 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     public override string Name { get; set; } = "Gear Editor";
     private NetplayController _netplayController = IoC.Get<NetplayController>();
     private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
+    private CustomGearService _customGearService = IoC.GetSingleton<CustomGearService>();
+    private CustomGearData _customGearData = new CustomGearData();
+    private Logger _log = new Logger(LogCategory.Default);
 
     public GearEditor(IO io) : base(io, io.GearConfigFolder, io.GetGearConfigFiles)
     {
@@ -49,11 +61,14 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
 
         for (int x = 0; x < (int)Player.NumberOfGears; x++)
         {
-            var headerName = _customGearController.GetGearName(x);
+            var headerName = _customGearController.GetGearName(x, out bool isCustom);
+
             if (ImGui.CollapsingHeaderTreeNodeFlags(headerName, 0))
             {
                 ImGui.PushID_Int(x);
-                EditGear((ExtremeGear*)Player.Gears.GetPointerToElement(x));
+                bool hasCustomData = _customGearController.TryGetGearData(headerName, _customGearData);
+                var customData = hasCustomData ? _customGearData : null;
+                EditGear(x, customData);
                 ImGui.PopID();
             }
         }
@@ -61,8 +76,12 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
         ImGui.PopItemWidth();
     }
 
-    private void EditGear(ExtremeGear* gear)
+    private void EditGear(int gearIndex, CustomGearData data)
     {
+        var gear = (ExtremeGear*)Player.Gears.GetPointerToElement(gearIndex);
+        if (data != null)
+            ImGui.TextWrapped("This is a custom gear. Please note that any changes made here will be discarded should the custom gear data be enabled. e.g. Exiting/Entering Netplay. Please `Update Custom Gear` (if available) in Export menu for the data to persist.");
+
         if (ImGui.TreeNodeStr("Gear Flags"))
         {
             ImGui.Spacing();
@@ -151,6 +170,32 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
 
             Reflection.MakeControl(&gear->ExhaustTrail1TrickOffset, nameof(ExtremeGear.ExhaustTrail1TrickOffset));
             Reflection.MakeControl(&gear->ExhaustTrail2TrickOffset, nameof(ExtremeGear.ExhaustTrail2TrickOffset));
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Import/Export"))
+        {
+            // Custom Gear Stuff.
+            if (data != null)
+            {
+                // Only if imported from file.
+                if (!string.IsNullOrEmpty(data.GearDataLocation))
+                {
+                    if (ImGui.Button("Update Custom Gear Data", Zero))
+                        _customGearService.UpdateRawGearData(gear, data);
+
+                    Tooltip.TextOnHover("Updates the Custom Gear stats to the file stored on disk.");
+                }
+            }
+
+            if (ImGui.Button("Export as Custom Gear", Zero))
+            {
+                if (data != null)
+                    _customGearService.ExportToFolder(gear, data);
+                else
+                    _customGearService.ExportToFolder(gear, _customGearController.GetGearName(gearIndex, out _)); 
+            }
+
             ImGui.TreePop();
         }
     }

@@ -28,6 +28,7 @@ public class IO
     public string TextureDumpFolder => Path.Combine(ConfigFolder, "TextureDumps");
     public string AutosaveFolder => Path.Combine(ConfigFolder, "Autosave");
     public string AutosaveObjectLayoutFolder => Path.Combine(AutosaveFolder, "ObjectLayouts");
+    public string ExportFolder => Path.Combine(ConfigFolder, "Export");
     public string TextureDumpCommonFolder => Path.Combine(TextureDumpFolder, "Auto Common");
     public string TextureCacheFilePath => Path.Combine(TextureCacheFolder, "TextureCache.msgpack");
     public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
@@ -54,6 +55,7 @@ public class IO
         Directory.CreateDirectory(InfoConfigFolder);
         Directory.CreateDirectory(AutosaveFolder);
         Directory.CreateDirectory(AutosaveObjectLayoutFolder);
+        Directory.CreateDirectory(ExportFolder);
     }
 
     public string[] GetGearConfigFiles() => Directory.GetFiles(GearConfigFolder, ConfigSearchPattern);
