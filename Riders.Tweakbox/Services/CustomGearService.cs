@@ -160,7 +160,7 @@ namespace Riders.Tweakbox.Services
 
         private static void CopyTexFileOrAnimatedDirectory(string animatedTexFolder, string texPath, string texFileName, string exportFolder)
         {
-            if (!Native.PathIsDirectoryEmptyW(animatedTexFolder))
+            if (Directory.Exists(animatedTexFolder) && !Native.PathIsDirectoryEmptyW(animatedTexFolder))
                 DirectoryExtensions.DirectoryCopy(animatedTexFolder, GetAnimatedTexturePath(exportFolder, texFileName), true);
             else
                 File.Copy(texPath, Path.Combine(exportFolder, texFileName), true);
