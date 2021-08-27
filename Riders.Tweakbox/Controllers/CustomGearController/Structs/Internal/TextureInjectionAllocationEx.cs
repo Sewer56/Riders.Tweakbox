@@ -1,11 +1,6 @@
 ﻿using Riders.Tweakbox.Services.TextureGen;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Riders.Tweakbox.Controllers.CustomGearController.Structs;
+namespace Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 
 
 public class TextureInjectionAllocationEx : PvrtTextureInjectionAllocation

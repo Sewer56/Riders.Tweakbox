@@ -4,6 +4,7 @@ using System;
 using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -45,7 +46,7 @@ internal unsafe class CustomGearCodePatcher
     /// </summary>
     /// <param name="data">The gear information.</param>
     /// <returns>A pointer to your gear data.</returns>
-    internal void AddGear(AddGearData data, AddGearDataResult result)
+    internal void AddGear(CustomGearData data, AddGearResult result)
     {
         _log.WriteLine($"[{nameof(CustomGearCodePatcher)}] Adding Gear in Slot: {GearCount}");
         ref var gear = ref data.GearData;
@@ -54,7 +55,9 @@ internal unsafe class CustomGearCodePatcher
         _gearToModelMap[GearCount] = (byte)gear.GearModel;
 
         GearCount++;
+
         result.GearIndex = GearCount - 1;
+        data.SetGearIndex(result.GearIndex);
         PatchMaxGearId(result.GearIndex);
     }
 

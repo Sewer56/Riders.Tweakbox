@@ -31,6 +31,7 @@ using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Services.TextureGen.Structs;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
@@ -312,16 +313,16 @@ internal unsafe class CustomGearUiController
         }
     }
 
-    internal void AddGear(AddGearData data, int gearIndex, AddGearDataResult result)
+    internal void AddGear(CustomGearData data, AddGearResult result)
     {
         // Get icon paths.
-        var iconPath = !string.IsNullOrEmpty(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, gearIndex);
-        var textPath = !string.IsNullOrEmpty(data.NamePath) ? data.NamePath : _placeholderService.TitleIconPlaceholders[gearIndex % _placeholderService.TitleIconPlaceholders.Length];
+        data.IconPath = !string.IsNullOrEmpty(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, data.GearIndex);
+        data.NamePath = !string.IsNullOrEmpty(data.NamePath) ? data.NamePath : _placeholderService.TitleIconPlaceholders[data.GearIndex % _placeholderService.TitleIconPlaceholders.Length];
 
         // Set overrides.
-        var indexOffset = gearIndex - _codePatcher.OriginalGearCount;
-        _redirectDictionary.TryAddTextureFromFilePath(iconPath, _iconAllocations.Hashes[indexOffset]);
-        _redirectDictionary.TryAddTextureFromFilePath(textPath, _nameAllocations.Hashes[indexOffset]);
+        var indexOffset = data.GearIndex - _codePatcher.OriginalGearCount;
+        _redirectDictionary.TryAddTextureFromFilePath(data.IconPath, _iconAllocations.Hashes[indexOffset]);
+        _redirectDictionary.TryAddTextureFromFilePath(data.NamePath, _nameAllocations.Hashes[indexOffset]);
     }
 
     internal void Reset()

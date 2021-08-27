@@ -6,11 +6,11 @@ namespace Riders.Tweakbox.Controllers.CustomGearController.Structs;
 /// <summary>
 /// Parameters used in the AddGear methods of <see cref="CustomGearController"/>.
 /// </summary>
-public class AddGearData
+public class AddGearRequest
 {
     /// <summary>
     /// Name of the gear, typically derived from folder name.
-    /// MUST BE UNIQUE. DO NOT MODIFY AFTER ADDING.
+    /// MUST BE UNIQUE.
     /// </summary>
     public string GearName;
 
@@ -28,7 +28,7 @@ public class AddGearData
     /// [Optional] Path to the name texture used by the gear.
     /// </summary>
     public string NamePath;
-
+    
     /// <summary>
     /// This is called when the index of the gear changes, for example 
     /// after joining a netplay session. Use this if you have custom code

@@ -6,6 +6,7 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using System.Collections.Generic;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -19,7 +20,9 @@ public unsafe class CustomGearController : IController
 
     internal CustomGearCodePatcher CodePatcher;
     internal CustomGearUiController UiController;
-    internal Dictionary<string, AddGearData> AddedGears = new Dictionary<string, AddGearData>();
+
+    internal Dictionary<string, CustomGearData> AvailableGears = new Dictionary<string, CustomGearData>();
+    internal List<CustomGearData> LoadedGears = new List<CustomGearData>();
 
     public CustomGearController()
     {
@@ -30,35 +33,42 @@ public unsafe class CustomGearController : IController
     /// <summary>
     /// Adds a new extreme gear to the game.
     /// </summary>
-    /// <param name="data">The gear information.</param>
+    /// <param name="request">The gear information.</param>
     /// <returns>Null if the operation did not suceed, else valid result.</returns>
-    public AddGearDataResult AddGear(AddGearData data)
+    public AddGearResult AddGear(AddGearRequest request)
     {
-        if (AddedGears.ContainsKey(data.GearName))
+        // If already loaded, ignore.
+        if (IsGearLoaded(request.GearName))
             return null;
 
-        _log.WriteLine($"[{nameof(CustomGearController)}] Adding Gear: {data.GearName}");
-        var result = AddGear_Internal(data);
-        AddedGears[data.GearName] = data;
-        return result;
+        var data = Mapping.Mapper.Map<CustomGearData>(request);
+        _log.WriteLine($"[{nameof(CustomGearController)}] Adding Gear: {request.GearName}");
+        return AddGear_Internal(data);
     }
 
     /// <summary>
     /// Removes a custom gear with a specific name.
     /// </summary>
-    /// <param name="name">Name of the gear used in <see cref="AddGearData.GearName"/> when the gear was added.</param>
+    /// <param name="name">Name of the gear used in <see cref="AddGearRequest.GearName"/> when the gear was added.</param>
     /// <returns>True on success, else false.</returns>
     public bool RemoveGear(string name)
     {
-        if (!AddedGears.ContainsKey(name))
+        if (!AvailableGears.ContainsKey(name))
             return false;
 
         _log.WriteLine($"[{nameof(CustomGearController)}] Removing Gear: {name}");
-        AddedGears.Remove(name);
+        AvailableGears.Remove(name, out var value);
+        LoadedGears.Remove(value);
         Reload();
         return true;
     }
-    
+
+    /// <summary>
+    /// Returns true if the gear is loaded, else false.
+    /// </summary>
+    /// <param name="name">The name of the gear.</param>
+    public bool IsGearLoaded(string name) => LoadedGears.FindIndex(x => x.GearName == name) != -1;
+
     /// <summary>
     /// Checks if the user has all gears from a given list of names.
     /// </summary>
@@ -69,7 +79,7 @@ public unsafe class CustomGearController : IController
 
         foreach (var gearName in gearNames)
         {
-            if (!AddedGears.ContainsKey(gearName))
+            if (!AvailableGears.ContainsKey(gearName))
                 missingGears.Add(gearName);
         }
 
@@ -86,11 +96,8 @@ public unsafe class CustomGearController : IController
 
         foreach (var gearName in gearNames)
         {
-            if (AddedGears.TryGetValue(gearName, out var gear))
-            {
-                var result = AddGear_Internal(gear);
-                gear.OnIndexChanged?.Invoke(result.GearIndex);
-            }
+            if (AvailableGears.TryGetValue(gearName, out var gear))
+                AddGear_Internal(gear);
         }
     }
 
@@ -102,38 +109,52 @@ public unsafe class CustomGearController : IController
     {
         _log.WriteLine($"[{nameof(CustomGearController)}] Reloading Gears");
         Reset(false);
-        foreach (var gear in AddedGears.Values)
-        {
-            var result = AddGear_Internal(gear);
-            gear.OnIndexChanged?.Invoke(result.GearIndex);
-        }
+        foreach (var gear in AvailableGears.Values)
+            AddGear_Internal(gear);
     }
 
     /// <summary>
     /// Resets all custom gear data.
     /// </summary>
+    /// <param name="clearGears">Removes all known gears if set to true.</param>
     public void Reset(bool clearGears = true)
     {
         _log.WriteLine($"[{nameof(CustomGearController)}] Resetting Gears"); 
         CodePatcher.Reset();
         UiController.Reset();
         if (clearGears)
-            AddedGears.Clear();
+        {
+            ClearGearIndices();
+            AvailableGears.Clear();
+        }
 
-        foreach (var gear in AddedGears.Values)
-            gear.OnIndexChanged?.Invoke(-1);
+        LoadedGears.Clear();
+        ClearGearIndices();
     }
 
     /// <summary>
     /// Adds a new extreme gear to the game.
     /// </summary>
-    /// <param name="data">The gear information.</param>
+    /// <param name="data">The gear data.</param>
     /// <returns>Null if the operation did not suceed, else valid result.</returns>
-    private AddGearDataResult AddGear_Internal(AddGearData data)
+    private AddGearResult AddGear_Internal(CustomGearData data)
     {
-        var result = new AddGearDataResult();
+        var result = new AddGearResult();
+
+        // Always add to loaded gears.
+        // and/or add/replace dictionary items.
+        AvailableGears[data.GearName] = data;
+        LoadedGears.Add(data);
+        
+        // Invoke sub-handlers
         CodePatcher.AddGear(data, result);
-        UiController.AddGear(data, result.GearIndex, result);
+        UiController.AddGear(data, result);
         return result;
+    }
+
+    private void ClearGearIndices()
+    {
+        foreach (var gear in AvailableGears.Values)
+            gear.SetGearIndex(-1);
     }
 }
