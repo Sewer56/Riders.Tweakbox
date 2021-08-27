@@ -22,7 +22,8 @@ namespace Riders.Tweakbox.Services
         private const string _iconFileName  = "icon.png";
         private const string _titleFileName = "title.png";
         private const string _dataFileName = "data.bin";
-        private const string _instructions = "Place this inside a folder called Tweakbox/Gears Please refer to the Tweakbox wiki for more guidance.";
+        private const string _instructionsFileName = "instructions.txt";
+        private const string _instructions = "Create a new Reloaded mod and create the folders `Tweakbox` and inside it `Gears`. Copy the folder containing this file to that folder.\n\nPlease refer to the Tweakbox wiki for more guidance.";
 
         private IO _io = IoC.GetSingleton<IO>();
         private Logger _log = new Logger(LogCategory.Default);
@@ -78,6 +79,7 @@ namespace Riders.Tweakbox.Services
             File.Copy(data.IconPath, Path.Combine(exportFolder, _iconFileName), true);
             File.Copy(data.NamePath, Path.Combine(exportFolder, _titleFileName), true);
             UpdateRawGearData(gear, Path.Combine(exportFolder, _dataFileName));
+            File.WriteAllText(Path.Combine(exportFolder, _instructionsFileName), _instructions);
             Process.Start(new ProcessStartInfo("cmd", $"/c start explorer \"{exportFolder}\"") { CreateNoWindow = true });
             _log.WriteLine($"Created Custom Gear in {exportFolder}");
         }
