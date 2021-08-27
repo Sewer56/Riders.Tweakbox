@@ -160,7 +160,7 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
         if (ImGui.TreeNodeStr("Exhaust Trail Settings"))
         {
             Reflection.MakeControl(&gear->ExhaustTrail1Width, nameof(ExtremeGear.ExhaustTrail1Width));
-            Reflection.MakeControl(&gear->ExhaustTrail1Width, nameof(ExtremeGear.ExhaustTrail1Width));
+            Reflection.MakeControl(&gear->ExhaustTrail2Width, nameof(ExtremeGear.ExhaustTrail2Width));
 
             Reflection.MakeControl(&gear->ExhaustTrail1PositionOffset, nameof(ExtremeGear.ExhaustTrail1PositionOffset));
             Reflection.MakeControl(&gear->ExhaustTrail2PositionOffset, nameof(ExtremeGear.ExhaustTrail2PositionOffset));
