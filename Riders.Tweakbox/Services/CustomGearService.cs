@@ -48,7 +48,7 @@ namespace Riders.Tweakbox.Services
             SetAnimatedTexturePath(ref result.AnimatedNameFolder, folder, _titleFileName);
             result.IconPath = Path.Combine(folder, _iconFileName);
             result.NamePath = Path.Combine(folder, _titleFileName);
-            UpdateTexturePaths(result);
+            UpdateTexturePaths(result, ref result.GearData);
 
             return Mapping.Mapper.Map<AddGearRequest>(result);
         }
@@ -76,7 +76,7 @@ namespace Riders.Tweakbox.Services
         public void ExportToFolder(ExtremeGear* gear, CustomGearData data)
         {
             var exportFolder = Path.Combine(_io.ExportFolder, data.GearName);
-            UpdateTexturePaths(data);
+            UpdateTexturePaths(data, ref Unsafe.AsRef<ExtremeGear>(gear));
             Directory.CreateDirectory(exportFolder);
             CopyTexFileOrAnimatedDirectory(data.AnimatedIconFolder, data.IconPath, _iconFileName, exportFolder);
             CopyTexFileOrAnimatedDirectory(data.AnimatedNameFolder, data.NamePath, _titleFileName, exportFolder);
@@ -150,9 +150,9 @@ namespace Riders.Tweakbox.Services
             };
         }
 
-        internal void UpdateTexturePaths(CustomGearData data)
+        internal void UpdateTexturePaths(CustomGearData data, ref ExtremeGear gear)
         {
-            data.IconPath = !string.IsNullOrEmpty(data.IconPath) && File.Exists(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref data.GearData, data.GearIndex);
+            data.IconPath = !string.IsNullOrEmpty(data.IconPath) && File.Exists(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref gear, data.GearIndex);
             data.NamePath = !string.IsNullOrEmpty(data.NamePath) && File.Exists(data.NamePath) ? data.NamePath : GetPlaceholderTitle(data.GearIndex);
         }
 

@@ -317,7 +317,7 @@ internal unsafe class CustomGearUiController
     internal void AddGear(CustomGearData data, AddGearResult result)
     {
         // Get icon paths.
-        _customGearService.UpdateTexturePaths(data);
+        _customGearService.UpdateTexturePaths(data, ref data.GearData);
         
         // Set overrides.
         var indexOffset = data.GearIndex - _codePatcher.OriginalGearCount;
