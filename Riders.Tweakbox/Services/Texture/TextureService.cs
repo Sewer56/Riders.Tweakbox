@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using EnumsNET;
 using Reloaded.Memory;
+using Reloaded.Memory.Pointers;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Controllers;
@@ -12,9 +13,11 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
+using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Services.Texture.Headers;
 using Riders.Tweakbox.Services.Texture.Interfaces;
 using Riders.Tweakbox.Services.Texture.Structs;
+using SharpDX.Direct3D9;
 using Standart.Hash.xxHash;
 using Unsafe = System.Runtime.CompilerServices.Unsafe;
 namespace Riders.Tweakbox.Services.Texture;
@@ -26,6 +29,8 @@ public class TextureService : ISingletonService
 {
     // DO NOT CHANGE, TEXTUREDICTIONARY DEPENDS ON THIS.
     private const string HashStringFormat = "X8";
+    private const int DdsMagic = 0x20534444; // 'DDS '
+    private static int BiggestTextureSizeEncountered = 0x20000;
 
     private List<ManualTextureDictionary> _fallbackDictionaries = new List<ManualTextureDictionary>();
     private List<AutoTextureDictionary> _autoDictionaries       = new List<AutoTextureDictionary>();
@@ -33,6 +38,10 @@ public class TextureService : ISingletonService
 
     private IModLoader _modLoader;
     private HashSet<string> _ignoreMipmapHashes = new HashSet<string>();
+
+    // Internal Overrides
+    private string _forcedTextureHash;
+    private unsafe byte* _forcedHashAddress;
 
     // Tracking all textures
     private Dictionary<string, TextureCreationParameters> _texturesByHash    = new Dictionary<string, TextureCreationParameters>();
@@ -60,8 +69,13 @@ public class TextureService : ISingletonService
     /// Gets a hash for a single texture.
     /// </summary>
     /// <param name="textureData">Span which contains only the texture data.</param>
-    public string ComputeHashString(Span<byte> textureData)
+    public unsafe string ComputeHashString(Span<byte> textureData)
     {
+        // Use forced hash override if required.
+        if (TryGetForcedTextureHash(textureData, out var hash)) 
+            return hash;
+
+        // Else hash the texture data.
         textureData = TryFixDdsLength(textureData);
 
         // Alternative seed for hashing, must not be changed.
@@ -217,7 +231,7 @@ public class TextureService : ISingletonService
     public TextureCreationParameters[] GetAllD3dTextures() => _texturesByPointer.Values.ToArray();
 
     /// <summary>
-    /// Tries to force reload a texture.
+    /// Tries to force reload a custom texture.
     /// Note: Force reloading the wrong texture may result in a crash.
     /// </summary>
     /// <param name="hash">The hash.</param>
@@ -235,6 +249,26 @@ public class TextureService : ISingletonService
         }
 
         _reloadTextureQueue.Enqueue(new TextureReloadParameters(textureRef, textureInfo, texture));
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to force reload a texture.
+    /// </summary>
+    /// <param name="hash">The hash.</param>
+    /// <returns>True on success, else false.</returns>
+    internal unsafe bool TryReloadTexture(string hash)
+    {
+        // Setup force reload if not ready.
+        EnsurePacingControllerSetup();
+        bool hasTexture = TryGetD3dTexture(hash, out var texture);
+        if (!hasTexture)
+        {
+            _logLoad.WriteLine($"Reload of Texture {hash} was requested but texture is not loaded.");
+            return false;
+        }
+
+        _reloadTextureQueue.Enqueue(new TextureReloadParameters(texture));
         return true;
     }
 
@@ -259,24 +293,85 @@ public class TextureService : ISingletonService
         }
     }
 
-    // Reload all textures and/or custom textures after frame.
+    // Reload texture and/or custom texture after frame.
     private unsafe void AfterD3dEndFrame()
     {
+        byte[] buffer = null;
+        var releaseTexture = D3DFunctions.ReleaseTexture.GetWrapper().Value;
+        var createTexture = D3DFunctions.CreateTexture.GetWrapper();
+
         while (_reloadTextureQueue.TryDequeue(out var reloadTexture))
         {
             var parameters = reloadTexture.Parameters;
-            _logLoad.WriteLine($"Reloading Custom Texture xxHash: {parameters.Hash}, Pointer {(long)parameters.NativePointer:X}, ppTexture: {(long)parameters.TextureOut:X}, srcData {(long)parameters.SrcDataRef:X}, srcSize {(long)parameters.SrcDataSize}");
+            _logLoad.WriteLine($"Reloading Texture [{parameters.Hash}], Pointer {(long)parameters.NativePointer:X}, ppTexture: {(long)parameters.TextureOut:X}");
             
             // Unload 
-            var releaseTexture = D3DFunctions.ReleaseTexture.GetWrapper().Value;
-            int count = (int)releaseTexture.Invoke(parameters.NativePointer);
+            if (parameters.IsCustomTexture)
+            {
+                // Initialize custom texture data if needed.
+                if (!reloadTexture.CustomTextureDataInitialized)
+                {
+                    if (!TryGetData(parameters.Hash, out reloadTexture.Ref, out reloadTexture.Info))
+                    {
+                        _logLoad.WriteLine($"Not Reloading Custom Texture [{parameters.Hash}]. Data was Not Found!!");
+                        continue;
+                    }
+                }
 
-            _injectionController.LoadCustomTexture(parameters.Hash, reloadTexture.Info, reloadTexture.Ref,
-                (byte*)parameters.Device, parameters.SrcDataRef, parameters.SrcDataSize,
-                parameters.Width, parameters.Height, parameters.MipLevels,
-                parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
-                parameters.MipFilter, parameters.ColorKey, parameters.SrcInfoRef, parameters.PaletteRef,
-                parameters.TextureOut);
+                int count = (int)releaseTexture.Invoke(parameters.NativePointer);
+                if (count > 0)
+                    _logLoad.WriteLine($"WARNING!! Texture Reload: Custom Texture Reference Count > 0");
+                
+                _injectionController.LoadCustomTexture(parameters.Hash, reloadTexture.Info, reloadTexture.Ref,
+                    (byte*)parameters.Device, parameters.SrcDataRef, parameters.SrcDataSize,
+                    parameters.Width, parameters.Height, parameters.MipLevels,
+                    parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
+                    parameters.MipFilter, parameters.ColorKey, parameters.SrcInfoRef, parameters.PaletteRef,
+                    parameters.TextureOut);
+            }
+            else
+            {
+                if (buffer == null)
+                    buffer = GC.AllocateUninitializedArray<byte>(BiggestTextureSizeEncountered);
+
+                try
+                {
+                    // First dump using D3D since original data source was likely changed, so dump and then load again.
+                    var texture = new SharpDX.Direct3D9.Texture(parameters.NativePointer);
+                    using var stream = SharpDX.Direct3D9.Texture.ToStream(texture, ImageFileFormat.Dds);
+                    int ddsLength = (int)stream.RemainingLength;
+                    if (ddsLength > buffer.Length)
+                    {
+                        buffer = GC.AllocateUninitializedArray<byte>(ddsLength);
+                        BiggestTextureSizeEncountered = ddsLength;
+                    }
+
+                    stream.ReadRange<byte>(buffer, 0, ddsLength);
+                    fixed (byte* dataPtr = buffer)
+                    {
+                        int count = (int)releaseTexture.Invoke(parameters.NativePointer);
+                        if (count > 0)
+                            _logLoad.WriteLine($"WARNING!! Texture Reload: Custom Texture Reference Count > 0");
+
+                        ForceNextTextureHash(parameters.Hash, dataPtr);
+                        createTexture.Ptr.Invoke((byte*)parameters.Device, dataPtr, ddsLength,
+                            parameters.Width, parameters.Height, parameters.MipLevels,
+                            parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
+                            parameters.MipFilter, parameters.ColorKey, null, null,
+                            PointerExtensions.ToBlittable(parameters.TextureOut));
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logLoad.WriteLine($"Failed to Reload Texture [{parameters.Hash}]");
+                }
+            }
+        }
+
+        if (buffer != null)
+        {
+            buffer = null;
+            GC.Collect();
         }
     }
 
@@ -307,8 +402,6 @@ public class TextureService : ISingletonService
 
     private unsafe Span<byte> TryFixDdsLength(Span<byte> input)
     {
-        const int DdsMagic = 0x20534444; // 'DDS '
-
         /*
             The developers of Sonic Riders pass the right length of data for certain formats (e.g. DXT1).
             This is because they incorrectly assumed DXT1 and others use 1 byte per pixel and incorrectly 
@@ -361,5 +454,39 @@ public class TextureService : ISingletonService
 
         _injectionController = IoC.GetSingleton<TextureInjectionController>();
         _areControllersSetup = true;
+    }
+
+    /// <summary>
+    /// Forces the next texture hash to have a particular value.
+    /// </summary>
+    private unsafe void ForceNextTextureHash(string xxHash, byte* address)
+    {
+        _forcedTextureHash = xxHash;
+        _forcedHashAddress = address;
+    }
+
+    private unsafe bool TryGetForcedTextureHash(Span<byte> textureData, out string hash)
+    {
+        hash = default;
+        if (_forcedTextureHash != null && Unsafe.AsPointer(ref textureData.GetPinnableReference()) == _forcedHashAddress)
+        {
+            /*
+                What's the deal here?
+
+                Basically, the headers of dumped DDSes are inconsistent
+                with the source textures that were loaded using DirectX; 
+                which causes issues for texture injection as the resulting 
+                hashes would differ.
+             
+                Making the hashes exclude the header would break existing texture mods;
+                so sometimes when force reloading textures we just have to force a certain hash.
+            */
+            var result = _forcedTextureHash;
+            _forcedTextureHash = null;
+            hash = result;
+            return true;
+        }
+
+        return false;
     }
 }

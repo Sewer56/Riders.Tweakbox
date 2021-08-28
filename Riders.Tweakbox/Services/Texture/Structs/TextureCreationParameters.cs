@@ -34,9 +34,10 @@ namespace Riders.Tweakbox.Services.Texture.Structs
         /// Note: May no longer be valid.
         /// </summary>
         public byte* SrcDataRef;
-        
+
         /// <summary>
         /// The size of the raw data for the texture.
+        /// Note: May no longer be valid.
         /// </summary>
         public int SrcDataSize;
 

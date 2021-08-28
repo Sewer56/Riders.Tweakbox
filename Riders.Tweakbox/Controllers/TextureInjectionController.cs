@@ -77,7 +77,7 @@ public unsafe class TextureInjectionController : IController
             }
         }
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private unsafe int CreateTextureFromFileInMemoryHookInstance(byte* deviceref, byte* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
     {
@@ -89,7 +89,7 @@ public unsafe class TextureInjectionController : IController
         int result = 0;
         var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
         miplevels  = _textureService.ShouldGenerateMipmap(xxHash) ? miplevels : D3DX_FROM_FILE;
-        
+
         // Load alternative texture if necessary.
         if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
             return LoadCustomTexture(xxHash, info, data, deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
@@ -129,30 +129,22 @@ public unsafe class TextureInjectionController : IController
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
     {
-        if (!_d3dController.IsRidersDevice(devicepointer) || 
-            !_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
+        if (!_d3dController.IsRidersDevice(devicepointer) || !_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
             return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)texture);
 
         return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)newTexture);
     }
-
-    private bool _isReleasing;
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private IntPtr ReleaseTexture(IntPtr thisptr)
     {
-        if (_isReleasing)
-            return _releaseTextureHook.OriginalFunction.Value.Invoke(thisptr);
-
-        _isReleasing = true;
         var count = _releaseTextureHook.OriginalFunction.Value.Invoke(thisptr);
         if ((int)count == 0)
         {
             _animatedTextureService.ReleaseAnimatedTexture((void*)thisptr);
             _textureService.RemoveD3dTexture(thisptr);
         }
-
-        _isReleasing = false;
+        
         return count;
     }
 

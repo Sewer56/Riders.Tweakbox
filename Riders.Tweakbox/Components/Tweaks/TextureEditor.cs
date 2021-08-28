@@ -72,8 +72,7 @@ public class TextureEditor : ComponentBase<TextureInjectionConfig>, IComponent
             ImGui.TextWrapped($"This functionality is experimental.");
             Hyperlink.CreateText($"Click here to learn more about custom textures.", "https://sewer56.dev/Riders.Tweakbox/textures/");
             ImGui.TextWrapped($"If you are unsure whether your textures are being loaded, enable {nameof(LogCategory.TextureLoad)} and/or {nameof(LogCategory.TextureDump)} in your log configuration.");
-
-#if DEBUG
+            
             if (ImGui.Button("Print All Textures", Constants.Zero))
             {
                 var textures = _textureService.GetAllD3dTextures();
@@ -92,7 +91,13 @@ public class TextureEditor : ComponentBase<TextureInjectionConfig>, IComponent
                         _textureService.TryReloadCustomTexture(texture.Hash);
                 }
             }
-#endif
+
+            if (ImGui.Button("Reload All Textures", Constants.Zero))
+            {
+                var textures = _textureService.GetAllD3dTextures();
+                foreach (var texture in textures)
+                    _textureService.TryReloadTexture(texture.Hash);
+            }
         }
 
         ImGui.End();
