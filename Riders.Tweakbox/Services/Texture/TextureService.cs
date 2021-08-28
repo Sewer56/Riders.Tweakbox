@@ -301,6 +301,17 @@ public class TextureService : ISingletonService
         }
     }
 
+    /// <summary>
+    /// Retrieves a list of all texture dictionaries.
+    /// </summary>
+    /// <param name="result">The list of dictionaries to receive the results.</param>
+    internal void GetTextureDictionaries(List<TextureDictionaryBase> result)
+    {
+        result.AddRange(_autoDictionaries);
+        result.AddRange(_fallbackDictionaries);
+        result.AddRange(_priorityDictionaries);
+    }
+
     // Reload texture and/or custom texture after frame.
     private unsafe void AfterD3dEndFrame()
     {

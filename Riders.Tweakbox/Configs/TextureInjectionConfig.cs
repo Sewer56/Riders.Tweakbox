@@ -6,8 +6,6 @@ public class TextureInjectionConfig : JsonConfigBase<TextureInjectionConfig, Tex
     public class Internal
     {
         public bool DumpTextures = false;
-        public bool LoadTextures = false;
-
         public DumpingMode DumpingMode = DumpingMode.All;
         public int DeduplicationMaxFiles = 2;
     }

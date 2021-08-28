@@ -82,7 +82,7 @@ public unsafe class TextureInjectionController : IController
     private unsafe int CreateTextureFromFileInMemoryHookInstance(byte* deviceref, byte* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
     {
         // If not enabled, don't do anything.
-        if (!_d3dController.IsRidersDevice((IntPtr)deviceref) || (!_config.Data.LoadTextures && !_config.Data.DumpTextures))
+        if (!_d3dController.IsRidersDevice((IntPtr)deviceref))
             return _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
 
         // Hash the texture,
@@ -91,7 +91,7 @@ public unsafe class TextureInjectionController : IController
         miplevels  = _textureService.ShouldGenerateMipmap(xxHash) ? miplevels : D3DX_FROM_FILE;
 
         // Load alternative texture if necessary.
-        if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
+        if (_textureService.TryGetData(xxHash, out var data, out var info))
             return LoadCustomTexture(xxHash, info, data, deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
 
         result = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));

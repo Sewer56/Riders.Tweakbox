@@ -15,12 +15,12 @@ namespace Riders.Tweakbox.Services.Texture.Interfaces
         /// <summary>
         /// Maps texture hashes to new file paths.
         /// </summary>
-        protected Dictionary<string, TextureFile> Redirects { get; set; } = new Dictionary<string, TextureFile>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, TextureFile> Redirects { get; set; } = new Dictionary<string, TextureFile>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Maps texture hashes to animated textures.
         /// </summary>
-        protected Dictionary<string, AnimatedTexture> AnimatedRedirects { get; set; } = new Dictionary<string, AnimatedTexture>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, AnimatedTexture> AnimatedRedirects { get; set; } = new Dictionary<string, AnimatedTexture>(StringComparer.OrdinalIgnoreCase);
 
         /// <inheritdoc/>
         public bool TryGetTexture(string xxHash, out TextureRef data, out TextureInfo info)

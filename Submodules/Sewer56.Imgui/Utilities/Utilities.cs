@@ -40,7 +40,7 @@ public static class Utilities
         imVec4.W = vector.W;
         return imVec4;
     }
-
+    
     /// <summary/>
     public static Vector4 ToVector(this ImVec4 vector) => new Vector4(vector.X, vector.Y, vector.Z, vector.W);
 
@@ -51,6 +51,9 @@ public static class Utilities
         vec2.Y = vector.Y;
         return vec2;
     }
+
+    /// <summary/>
+    public static FinalizedImVec2 ToImVec(this Vector2 vector, FinalizedImVec2 vec2) => (FinalizedImVec2) ToImVec(vector, (ImVec2)vec2);
 
     /// <summary/>
     public static ImVec2 ToImVec(this Vector2 vector) => ToImVec(vector, new ImVec2());
