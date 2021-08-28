@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using EnumsNET;
 using Reloaded.Memory;
 using Reloaded.Memory.Pointers;
@@ -47,12 +48,13 @@ public class TextureService : ISingletonService
     private Dictionary<string, TextureCreationParameters> _texturesByHash    = new Dictionary<string, TextureCreationParameters>();
     private Dictionary<IntPtr, TextureCreationParameters> _texturesByPointer = new Dictionary<IntPtr, TextureCreationParameters>();
     private Logger _logLoad = new Logger(LogCategory.TextureLoad);
+    private Logger _logDebug = new Logger(LogCategory.TextureDebug);
 
     // Controller Related
     private bool _areControllersSetup;
     private TextureInjectionController _injectionController;
     private ConcurrentQueue<TextureReloadParameters> _reloadTextureQueue = new ConcurrentQueue<TextureReloadParameters>();
-
+    
     public TextureService(IModLoader modLoader)
     {
         _modLoader = modLoader;
@@ -277,6 +279,7 @@ public class TextureService : ISingletonService
     /// </summary>
     internal void AddD3dTexture(TextureCreationParameters parameters)
     {
+        _logDebug.WriteLine($"[{nameof(AddD3dTexture)}] Adding Texture {(long)parameters.NativePointer:X}");
         _texturesByPointer[parameters.NativePointer] = parameters;
         _texturesByHash[parameters.Hash] = parameters;
     }
@@ -290,13 +293,19 @@ public class TextureService : ISingletonService
         {
             _texturesByPointer.Remove(thisPtr);
             _texturesByHash.Remove(parameters.Hash);
+            _logDebug.WriteLine($"[{nameof(RemoveD3dTexture)}] Removed Texture {(long)thisPtr:X}");
+        }
+        else
+        {
+            _logDebug.WriteLine($"[{nameof(RemoveD3dTexture)}] Texture {(long)thisPtr:X} NOT FOUND");
         }
     }
 
     // Reload texture and/or custom texture after frame.
     private unsafe void AfterD3dEndFrame()
     {
-        byte[] buffer = null;
+        IntPtr buffer = IntPtr.Zero;
+
         var releaseTexture = D3DFunctions.ReleaseTexture.GetWrapper().Value;
         var createTexture = D3DFunctions.CreateTexture.GetWrapper();
 
@@ -331,48 +340,51 @@ public class TextureService : ISingletonService
             }
             else
             {
-                if (buffer == null)
-                    buffer = GC.AllocateUninitializedArray<byte>(BiggestTextureSizeEncountered);
+                if (buffer == IntPtr.Zero)
+                    buffer = Marshal.AllocHGlobal(BiggestTextureSizeEncountered);
 
                 try
                 {
                     // First dump using D3D since original data source was likely changed, so dump and then load again.
+                    var pTexture = (IntPtr)(*parameters.TextureOut);
+                    if (pTexture != parameters.NativePointer)
+                    {
+                        _logLoad.WriteLine($"WARNING!! pTexture does not match NativePointer. Not Reloading.");
+                        continue;
+                    }
+
                     var texture = new SharpDX.Direct3D9.Texture(parameters.NativePointer);
                     using var stream = SharpDX.Direct3D9.Texture.ToStream(texture, ImageFileFormat.Dds);
                     int ddsLength = (int)stream.RemainingLength;
-                    if (ddsLength > buffer.Length)
+                    if (ddsLength > BiggestTextureSizeEncountered)
                     {
-                        buffer = GC.AllocateUninitializedArray<byte>(ddsLength);
+                        Marshal.FreeHGlobal(buffer);
+                        buffer = Marshal.AllocHGlobal(ddsLength);
                         BiggestTextureSizeEncountered = ddsLength;
                     }
 
-                    stream.ReadRange<byte>(buffer, 0, ddsLength);
-                    fixed (byte* dataPtr = buffer)
-                    {
-                        int count = (int)releaseTexture.Invoke(parameters.NativePointer);
-                        if (count > 0)
-                            _logLoad.WriteLine($"WARNING!! Texture Reload: Custom Texture Reference Count > 0");
+                    stream.Read(new Span<byte>((void*)buffer, BiggestTextureSizeEncountered));
+                    int count = (int)releaseTexture.Invoke(parameters.NativePointer);
+                    if (count > 0)
+                        _logLoad.WriteLine($"WARNING!! Texture Reload: Custom Texture Reference Count > 0");
 
-                        ForceNextTextureHash(parameters.Hash, dataPtr);
-                        createTexture.Ptr.Invoke((byte*)parameters.Device, dataPtr, ddsLength,
-                            parameters.Width, parameters.Height, parameters.MipLevels,
-                            parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
-                            parameters.MipFilter, parameters.ColorKey, null, null,
-                            PointerExtensions.ToBlittable(parameters.TextureOut));
-                    }
+                    ForceNextTextureHash(parameters.Hash, (byte*) buffer);
+                    RemoveD3dTexture(parameters.NativePointer);
+                    createTexture.Ptr.Invoke((byte*)parameters.Device, (byte*) buffer, ddsLength,
+                        parameters.Width, parameters.Height, parameters.MipLevels,
+                        parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
+                        parameters.MipFilter, parameters.ColorKey, null, null,
+                        PointerExtensions.ToBlittable(parameters.TextureOut));
                 }
                 catch (Exception e)
                 {
-                    _logLoad.WriteLine($"Failed to Reload Texture [{parameters.Hash}]");
+                    _logLoad.WriteLine($"Failed to Reload Texture [{parameters.Hash}] {e.Message}");
                 }
             }
         }
 
-        if (buffer != null)
-        {
-            buffer = null;
-            GC.Collect();
-        }
+        if (buffer != IntPtr.Zero)
+            Marshal.FreeHGlobal(buffer);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
