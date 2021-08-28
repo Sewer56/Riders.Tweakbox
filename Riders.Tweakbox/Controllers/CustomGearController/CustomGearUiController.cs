@@ -332,6 +332,8 @@ internal unsafe class CustomGearUiController
             _redirectDictionary.TryAddAnimatedTextureFromFolder(animatedFolderPath, hash);
         else
             _redirectDictionary.TryAddTextureFromFilePath(texturePath, hash);
+
+        _textureService.GenerateMipmaps(hash);
     }
 
     internal void Reset()
@@ -342,6 +344,7 @@ internal unsafe class CustomGearUiController
             {
                 _redirectDictionary.TryRemoveTexture(hash);
                 _redirectDictionary.TryRemoveAnimatedTexture(hash);
+                _textureService.DontGenerateMipmaps(hash);
             }
         }
     }
