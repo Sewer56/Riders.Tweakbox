@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -6,6 +7,10 @@ using EnumsNET;
 using Reloaded.Memory;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.Texture.Headers;
 using Riders.Tweakbox.Services.Texture.Interfaces;
@@ -29,6 +34,16 @@ public class TextureService : ISingletonService
     private IModLoader _modLoader;
     private HashSet<string> _ignoreMipmapHashes = new HashSet<string>();
 
+    // Tracking all textures
+    private Dictionary<string, TextureCreationParameters> _texturesByHash    = new Dictionary<string, TextureCreationParameters>();
+    private Dictionary<IntPtr, TextureCreationParameters> _texturesByPointer = new Dictionary<IntPtr, TextureCreationParameters>();
+    private Logger _logLoad = new Logger(LogCategory.TextureLoad);
+
+    // Controller Related
+    private bool _areControllersSetup;
+    private TextureInjectionController _injectionController;
+    private ConcurrentQueue<TextureReloadParameters> _reloadTextureQueue = new ConcurrentQueue<TextureReloadParameters>();
+
     public TextureService(IModLoader modLoader)
     {
         _modLoader = modLoader;
@@ -38,9 +53,7 @@ public class TextureService : ISingletonService
         // Fill in textures from already loaded mods.
         var existingMods = _modLoader.GetActiveMods().Select(x => x.Generic);
         foreach (var mod in existingMods)
-        {
             Add(mod);
-        }
     }
 
     /// <summary>
@@ -182,6 +195,91 @@ public class TextureService : ISingletonService
         return pitch * height;
     }
 
+    /// <summary>
+    /// Tries to get a live Direct3D texture using an xxHash of the texture.
+    /// </summary>
+    /// <param name="hash">The hash of the textures.</param>
+    /// <param name="creation">The parameters with which the texture was created.</param>
+    /// <returns>True if found, else false.</returns>
+    public bool TryGetD3dTexture(string hash, out TextureCreationParameters creation) => _texturesByHash.TryGetValue(hash, out creation);
+
+    /// <summary>
+    /// Tries to get a live Direct3D texture using the native pointer of the texture.
+    /// </summary>
+    /// <param name="thisPtr">Pointer of the texture.</param>
+    /// <param name="creation">The parameters with which the texture was created.</param>
+    /// <returns>True if found, else false.</returns>
+    public bool TryGetD3dTexture(IntPtr thisPtr, out TextureCreationParameters creation) => _texturesByPointer.TryGetValue(thisPtr, out creation);
+
+    /// <summary>
+    /// Retrieves all d3d textures.
+    /// </summary>
+    public TextureCreationParameters[] GetAllD3dTextures() => _texturesByPointer.Values.ToArray();
+
+    /// <summary>
+    /// Tries to force reload a texture.
+    /// Note: Force reloading the wrong texture may result in a crash.
+    /// </summary>
+    /// <param name="hash">The hash.</param>
+    /// <returns>True on success, else false.</returns>
+    internal unsafe bool TryReloadCustomTexture(string hash)
+    {
+        // Setup force reload if not ready.
+        EnsurePacingControllerSetup();
+        bool hasData    = TryGetData(hash, out var textureRef, out var textureInfo);
+        bool hasTexture = TryGetD3dTexture(hash, out var texture);
+        if (!hasTexture || !hasData)
+        {
+            _logLoad.WriteLine($"Reload of Custom Texture {hash} was requested but texture is not loaded or replacement was not found.");
+            return false;
+        }
+
+        _reloadTextureQueue.Enqueue(new TextureReloadParameters(textureRef, textureInfo, texture));
+        return true;
+    }
+
+    /// <summary>
+    /// Adds an individual D3d Texture.
+    /// </summary>
+    internal void AddD3dTexture(TextureCreationParameters parameters)
+    {
+        _texturesByPointer[parameters.NativePointer] = parameters;
+        _texturesByHash[parameters.Hash] = parameters;
+    }
+
+    /// <summary>
+    /// Adds an individual D3d Texture.
+    /// </summary>
+    internal void RemoveD3dTexture(IntPtr thisPtr)
+    {
+        if (TryGetD3dTexture(thisPtr, out var parameters))
+        {
+            _texturesByPointer.Remove(thisPtr);
+            _texturesByHash.Remove(parameters.Hash);
+        }
+    }
+
+    // Reload all textures and/or custom textures after frame.
+    private unsafe void AfterD3dEndFrame()
+    {
+        while (_reloadTextureQueue.TryDequeue(out var reloadTexture))
+        {
+            var parameters = reloadTexture.Parameters;
+            _logLoad.WriteLine($"Reloading Custom Texture xxHash: {parameters.Hash}, Pointer {(long)parameters.NativePointer:X}, ppTexture: {(long)parameters.TextureOut:X}, srcData {(long)parameters.SrcDataRef:X}, srcSize {(long)parameters.SrcDataSize}");
+            
+            // Unload 
+            var releaseTexture = D3DFunctions.ReleaseTexture.GetWrapper().Value;
+            int count = (int)releaseTexture.Invoke(parameters.NativePointer);
+
+            _injectionController.LoadCustomTexture(parameters.Hash, reloadTexture.Info, reloadTexture.Ref,
+                (byte*)parameters.Device, parameters.SrcDataRef, parameters.SrcDataSize,
+                parameters.Width, parameters.Height, parameters.MipLevels,
+                parameters.Usage, parameters.Format, parameters.Pool, parameters.Filter,
+                parameters.MipFilter, parameters.ColorKey, parameters.SrcInfoRef, parameters.PaletteRef,
+                parameters.TextureOut);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool TryGetDataFromDictionary<T>(List<T> dictionaries, string xxHash, out TextureRef data, out TextureInfo info) where T : ITextureDictionary
     {
@@ -251,5 +349,17 @@ public class TextureService : ISingletonService
         }
 
         return input.Slice(0, (int)(textureSize + headerSize));
+    }
+
+    private void EnsurePacingControllerSetup()
+    {
+        if (_areControllersSetup)
+            return;
+
+        var pacingController = IoC.GetSingleton<FramePacingController>();
+        pacingController.AfterEndFrame += AfterD3dEndFrame;
+
+        _injectionController = IoC.GetSingleton<TextureInjectionController>();
+        _areControllersSetup = true;
     }
 }

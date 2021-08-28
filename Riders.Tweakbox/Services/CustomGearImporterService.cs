@@ -20,7 +20,7 @@ namespace Riders.Tweakbox.Services
         private Logger _log = new Logger(LogCategory.Default);
         private List<AddGearRequest> _requests = new List<AddGearRequest>();
         private CustomGearService _customGearService = IoC.GetSingleton<CustomGearService>();
-        private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
+        private CustomGearController _customGearController; 
 
         public CustomGearImporterService(IModLoader modLoader)
         {
@@ -31,6 +31,7 @@ namespace Riders.Tweakbox.Services
 
         private void Add(IModConfigV1 config)
         {
+            EnsureControllerAvailable();
             var folder = GetGearFolder(config.ModId);
             if (!Directory.Exists(folder))
                 return;
@@ -56,6 +57,7 @@ namespace Riders.Tweakbox.Services
 
         private void Remove(IModConfigV1 config)
         {
+            EnsureControllerAvailable();
             foreach (var request in _requests)
             {
                 _customGearController.RemoveGear(request.GearName);
@@ -65,5 +67,10 @@ namespace Riders.Tweakbox.Services
         private void OnModUnloading(IModV1 arg1, IModConfigV1 arg2) => Remove(arg2);
         private void OnModLoading(IModV1 arg1, IModConfigV1 arg2) => Add(arg2);
         private string GetGearFolder(string modId) => _modLoader.GetDirectoryForModId(modId) + @"/Tweakbox/Gears";
+
+        private void EnsureControllerAvailable()
+        {
+            _customGearController ??= IoC.GetSingleton<CustomGearController>();
+        }
     }
 }

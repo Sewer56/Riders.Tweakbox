@@ -147,7 +147,6 @@ public unsafe class Direct3DController : IController
         }
 
         return IntPtr.Zero;
-
     }
 
     private IntPtr ResetHook(IntPtr device, ref PresentParameters presentparameters)

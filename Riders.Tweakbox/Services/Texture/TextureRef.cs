@@ -1,17 +1,13 @@
-﻿using System.Buffers;
-using System.IO;
+﻿using System.IO;
 using Riders.Tweakbox.Services.Texture.Enums;
 namespace Riders.Tweakbox.Services.Texture;
 
 /// <summary>
 /// References texture data.
 /// </summary>
-public ref struct TextureRef
+public struct TextureRef
 {
     public byte[] Data;
-    public ArrayPool<byte> Owner;
-    public bool NeedsDispose;
-
     public TextureFormat Format;
     public bool IsCached;
 
@@ -22,13 +18,7 @@ public ref struct TextureRef
         Format = format;
         IsCached = isCached;
     }
-
-    public void Dispose()
-    {
-        if (NeedsDispose)
-            Owner.Return(Data);
-    }
-
+    
     /// <summary>
     /// Returns true if a texture should be cached, else false.
     /// </summary>

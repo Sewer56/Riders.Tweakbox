@@ -22,6 +22,7 @@ using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX;
 using Void = Reloaded.Hooks.Definitions.Structs.Void;
 using Riders.Tweakbox.Misc.Log;
+using Riders.Tweakbox.Services.Texture.Structs;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -40,9 +41,9 @@ public unsafe class TextureInjectionController : IController
     private static TextureInjectionController _controller;
 
     private IO _io;
-    private IHook<D3DXCreateTextureFromFileInMemoryExPtr> _createTextureHook;
-    private IHook<SetTexturePtr> _setTextureHook;
-    private IHook<ComReleasePtr> _releaseTextureHook;
+    private IHook<D3DFunctions.D3DXCreateTextureFromFileInMemoryExPtr> _createTextureHook;
+    private IHook<D3DFunctions.SetTexturePtr> _setTextureHook;
+    private IHook<D3DFunctions.ComReleasePtr> _releaseTextureHook;
     private Direct3DController _d3dController = IoC.GetSingleton<Direct3DController>();
 
     private Logger _logDump = new Logger(LogCategory.TextureDump);
@@ -52,15 +53,10 @@ public unsafe class TextureInjectionController : IController
     {
         _io = io;
         _controller = this;
-        var d3dx9Handle = PInvoke.LoadLibrary("d3dx9_25.dll");
-        var createTextureFromFileInMemoryEx = Native.GetProcAddress(d3dx9Handle, "D3DXCreateTextureFromFileInMemoryEx");
-        _createTextureHook = hooks.CreateHook<D3DXCreateTextureFromFileInMemoryExPtr>(typeof(TextureInjectionController), nameof(CreateTextureFromFileInMemoryHook), (long)createTextureFromFileInMemoryEx).Activate();
 
-        var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
-        var releaseTextureRefAddress = (long)dx9Hook.Texture9VTable[(int)IDirect3DTexture9.Release].FunctionPointer;
-        var setTexturePtrAddress = dx9Hook.DeviceVTable[(int)IDirect3DDevice9.SetTexture].FunctionPointer;
-        _releaseTextureHook = hooks.CreateHook<ComReleasePtr>(typeof(TextureInjectionController), nameof(TextureRelease), releaseTextureRefAddress).Activate();
-        _setTextureHook = hooks.CreateHook<SetTexturePtr>(typeof(TextureInjectionController), nameof(SetTextureHook), (long)setTexturePtrAddress).Activate();
+        _createTextureHook = D3DFunctions.CreateTexture.Hook(typeof(TextureInjectionController), nameof(CreateTextureFromFileInMemoryHook)).Activate();
+        _releaseTextureHook = D3DFunctions.ReleaseTexture.Hook(typeof(TextureInjectionController), nameof(TextureRelease)).Activate();
+        _setTextureHook = D3DFunctions.SetTexture.Hook(typeof(TextureInjectionController), nameof(SetTextureHook)).Activate();
     }
 
     /// <summary>
@@ -90,34 +86,44 @@ public unsafe class TextureInjectionController : IController
             return _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
 
         // Hash the texture,
+        int result = 0;
         var xxHash = _textureService.ComputeHashString(new Span<byte>(srcdataref, srcdatasize));
-        miplevels = _textureService.ShouldGenerateMipmap(xxHash) ? miplevels : D3DX_FROM_FILE; 
-
+        miplevels  = _textureService.ShouldGenerateMipmap(xxHash) ? miplevels : D3DX_FROM_FILE;
+        
         // Load alternative texture if necessary.
         if (_config.Data.LoadTextures && _textureService.TryGetData(xxHash, out var data, out var info))
-        {
-            using var textureRef = data;
-            _logLoad.WriteLine($"Loading Custom Texture: [{xxHash}] {info.Path}");
-            fixed (byte* dataPtr = &data.Data[0])
-            {
-                var texture = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, textureRef.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
-                if (data.ShouldBeCached())
-                    _cacheService.QueueStore(info.Path, new Texture((IntPtr)(*textureout)));
+            return LoadCustomTexture(xxHash, info, data, deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout);
 
-                if (info.Type == TextureType.Animated)
-                    _animatedTextureService.TrackAnimatedTexture(*textureout, info.Animated);
-
-                return texture;
-            }
-        }
-
-        var result = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
+        result = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
+        if (result == 0)
+            _textureService.AddD3dTexture(new TextureCreationParameters(xxHash, (IntPtr)deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout, false));
 
         // Dump texture if successfully loaded.
         if (result == Result.Ok && _config.Data.DumpTextures)
             DumpTexture(new Texture((IntPtr)(*textureout)), xxHash);
 
         return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    internal unsafe int LoadCustomTexture(string xxHash, TextureInfo info, TextureRef data, byte* deviceref, byte* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
+    {
+        _logLoad.WriteLine($"Loading Custom Texture: [{xxHash}] {info.Path}");
+        fixed (byte* dataPtr = &data.Data[0])
+        {
+            int result = _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, dataPtr, data.Data.Length, 0, 0, 0, usage, Format.Unknown, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
+            if (data.ShouldBeCached())
+                _cacheService.QueueStore(info.Path, new Texture((IntPtr)(*textureout)));
+
+            if (info.Type == TextureType.Animated)
+                _animatedTextureService.TrackAnimatedTexture(*textureout, info.Animated);
+
+            // Note: Adding original texture details so we can re-replace the texture here when reloading.
+            if (result == 0)
+                _textureService.AddD3dTexture(new TextureCreationParameters(xxHash, (IntPtr)deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, textureout, true));
+
+            return result;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -141,7 +147,10 @@ public unsafe class TextureInjectionController : IController
         _isReleasing = true;
         var count = _releaseTextureHook.OriginalFunction.Value.Invoke(thisptr);
         if ((int)count == 0)
+        {
             _animatedTextureService.ReleaseAnimatedTexture((void*)thisptr);
+            _textureService.RemoveD3dTexture(thisptr);
+        }
 
         _isReleasing = false;
         return count;
@@ -248,20 +257,4 @@ public unsafe class TextureInjectionController : IController
             height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref,
             textureout);
     }
-
-    [FunctionHookOptions(PreferRelativeJump = true)]
-    [Function(CallingConventions.Stdcall)]
-    public struct D3DXCreateTextureFromFileInMemoryExPtr
-    {
-        public FuncPtr<BlittablePointer<byte>, BlittablePointer<byte>, int, int, int, int, Usage, Format, Pool, int, int,
-                       RawColorBGRA, BlittablePointer<byte>, BlittablePointer<PaletteEntry>, BlittablePointer<BlittablePointer<byte>>, int> Ptr;
-    }
-
-    [FunctionHookOptions(PreferRelativeJump = true)]
-    [Function(CallingConventions.Stdcall)]
-    public struct ComReleasePtr { public FuncPtr<IntPtr, IntPtr> Value; }
-
-    [FunctionHookOptions(PreferRelativeJump = true)]
-    [Function(CallingConventions.Stdcall)]
-    public struct SetTexturePtr { public FuncPtr<IntPtr, int, BlittablePointer<Void>, IntPtr> Value; }
 }

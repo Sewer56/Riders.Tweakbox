@@ -4,6 +4,7 @@ using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
+using Riders.Tweakbox.Services.Texture;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;
@@ -16,11 +17,13 @@ public class TextureEditor : ComponentBase<TextureInjectionConfig>, IComponent
     public override string Name { get; set; } = "DirectX Texture Injection";
 
     private TextureInjectionController _injectionController;
+    private TextureService _textureService;
 
     /// <inheritdoc />
-    public TextureEditor(IO io, TextureInjectionController injectionController) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
+    public TextureEditor(IO io, TextureInjectionController injectionController, TextureService textureService) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
     {
         _injectionController = injectionController;
+        _textureService = textureService;
     }
 
     /// <inheritdoc />
@@ -69,6 +72,27 @@ public class TextureEditor : ComponentBase<TextureInjectionConfig>, IComponent
             ImGui.TextWrapped($"This functionality is experimental.");
             Hyperlink.CreateText($"Click here to learn more about custom textures.", "https://sewer56.dev/Riders.Tweakbox/textures/");
             ImGui.TextWrapped($"If you are unsure whether your textures are being loaded, enable {nameof(LogCategory.TextureLoad)} and/or {nameof(LogCategory.TextureDump)} in your log configuration.");
+
+#if DEBUG
+            if (ImGui.Button("Print All Textures", Constants.Zero))
+            {
+                var textures = _textureService.GetAllD3dTextures();
+                foreach (var texture in textures)
+                {
+                    Log.WriteLine($"xxHash: {texture.Hash}, Pointer {(long)texture.NativePointer:X}, ppTexture: {(long)texture.TextureOut:X}");
+                }
+            }
+
+            if (ImGui.Button("Reload All Custom Textures", Constants.Zero))
+            {
+                var textures = _textureService.GetAllD3dTextures();
+                foreach (var texture in textures)
+                {
+                    if (texture.IsCustomTexture)
+                        _textureService.TryReloadCustomTexture(texture.Hash);
+                }
+            }
+#endif
         }
 
         ImGui.End();
