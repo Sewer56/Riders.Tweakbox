@@ -67,6 +67,12 @@ public unsafe class Direct3DController : IController
         _createHook = _d3dCreate9Wrapper.Hook(CreateRidersDeviceImpl).Activate();
     }
 
+    /// <summary>
+    /// Checks if the D3D device belongs to Riders.
+    /// </summary>
+    /// <param name="device">The native device pointer.</param>
+    public bool IsRidersDevice(IntPtr device) => D3dDeviceEx != null && device == D3dDeviceEx.NativePointer;
+
     private IntPtr CreateRidersDeviceImpl(uint sdkversion)
     {
         D3dEx = new Direct3DEx();
@@ -228,24 +234,31 @@ public unsafe class Direct3DController : IController
     }
     #endregion
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     private delegate IntPtr Direct3dCreate9Wrapper(uint sdkVersion);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateVertexBuffer(IntPtr devicePointer, uint length, Usage usage, VertexFormat format, Pool pool, void** ppVertexBuffer, void* pSharedHandle);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateIndexBuffer(IntPtr devicePointer, uint length, Usage usage, Format format, Pool pool, void** ppIndexBuffer, void* pSharedHandle);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateTexture(IntPtr devicePointer, int width, int height, int miplevels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateVolumeTexture(IntPtr devicePointer, int width, int height, int depth, int miplevels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateCubeTexture(IntPtr devicePointer, int edgeLength, int levels, Usage usage, Format format, Pool pool, void** ppTexture, void* sharedHandle);
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public unsafe delegate IntPtr CreateOffscreenPlainSurface(IntPtr devicePointer, int width, int height, Format format, Pool pool, void** ppSurface, void* sharedHandle);
 }

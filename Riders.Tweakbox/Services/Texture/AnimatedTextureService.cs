@@ -36,9 +36,9 @@ public class AnimatedTextureService : ISingletonService
     /// <summary>
     /// Tries to get a native pointer to the animated Texture.
     /// </summary>
-    /// <param name="firstTexReference"></param>
-    /// <param name="currentFrame"></param>
-    /// <param name="newTexture"></param>
+    /// <param name="firstTexReference">Reference to the first texture.</param>
+    /// <param name="currentFrame">The current in-game frame.</param>
+    /// <param name="newTexture">The new texture reference to use.</param>
     /// <returns></returns>
     public unsafe bool TryGetAnimatedTexture(void* firstTexReference, int currentFrame, out void* newTexture)
     {

@@ -43,6 +43,7 @@ public unsafe class TextureInjectionController : IController
     private IHook<D3DXCreateTextureFromFileInMemoryExPtr> _createTextureHook;
     private IHook<SetTexturePtr> _setTextureHook;
     private IHook<ComReleasePtr> _releaseTextureHook;
+    private Direct3DController _d3dController = IoC.GetSingleton<Direct3DController>();
 
     private Logger _logDump = new Logger(LogCategory.TextureDump);
     private Logger _logLoad = new Logger(LogCategory.TextureLoad);
@@ -85,7 +86,7 @@ public unsafe class TextureInjectionController : IController
     private unsafe int CreateTextureFromFileInMemoryHookInstance(byte* deviceref, byte* srcdataref, int srcdatasize, int width, int height, int miplevels, Usage usage, Format format, Pool pool, int filter, int mipfilter, RawColorBGRA colorkey, byte* srcinforef, PaletteEntry* paletteref, byte** textureout)
     {
         // If not enabled, don't do anything.
-        if (!_config.Data.LoadTextures && !_config.Data.DumpTextures)
+        if (!_d3dController.IsRidersDevice((IntPtr)deviceref) || (!_config.Data.LoadTextures && !_config.Data.DumpTextures))
             return _createTextureHook.OriginalFunction.Ptr.Invoke(deviceref, srcdataref, srcdatasize, width, height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinforef, paletteref, PointerExtensions.ToBlittable(textureout));
 
         // Hash the texture,
@@ -122,10 +123,11 @@ public unsafe class TextureInjectionController : IController
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
     {
-        if (_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
-            return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)newTexture);
+        if (!_d3dController.IsRidersDevice(devicepointer) || 
+            !_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
+            return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)texture);
 
-        return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)texture);
+        return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)newTexture);
     }
 
     private bool _isReleasing;
@@ -247,6 +249,7 @@ public unsafe class TextureInjectionController : IController
             textureout);
     }
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public struct D3DXCreateTextureFromFileInMemoryExPtr
     {
@@ -254,9 +257,11 @@ public unsafe class TextureInjectionController : IController
                        RawColorBGRA, BlittablePointer<byte>, BlittablePointer<PaletteEntry>, BlittablePointer<BlittablePointer<byte>>, int> Ptr;
     }
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public struct ComReleasePtr { public FuncPtr<IntPtr, IntPtr> Value; }
 
+    [FunctionHookOptions(PreferRelativeJump = true)]
     [Function(CallingConventions.Stdcall)]
     public struct SetTexturePtr { public FuncPtr<IntPtr, int, BlittablePointer<Void>, IntPtr> Value; }
 }
