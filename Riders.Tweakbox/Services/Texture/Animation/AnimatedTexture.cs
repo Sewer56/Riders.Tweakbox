@@ -48,6 +48,16 @@ public class AnimatedTexture : IDisposable
     /// Gets a reference to the first texture to display.
     /// </summary>
     /// <param name="filePath">The path to the first texture.</param>
+    public void GetFirstTexturePath(out string filePath)
+    {
+        var file = Files[^1];
+        filePath = Folder + file.RelativePath;
+    }
+
+    /// <summary>
+    /// Gets a reference to the first texture to display.
+    /// </summary>
+    /// <param name="filePath">The path to the first texture.</param>
     public TextureRef GetFirstTexture(out string filePath)
     {
         var file = Files[^1];

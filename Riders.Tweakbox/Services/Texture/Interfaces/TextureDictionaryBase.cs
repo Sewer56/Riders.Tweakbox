@@ -36,36 +36,62 @@ namespace Riders.Tweakbox.Services.Texture.Interfaces
             return false;
         }
 
-        protected bool TryGetAnimatedTexture(string xxHash, out TextureRef data, out TextureInfo info)
+        /// <inheritdoc/>
+        public bool TryGetTextureInfo(string xxHash, out TextureInfo info)
         {
-            var animRedirects = AnimatedRedirects;
-
-            if (animRedirects.TryGetValue(xxHash, out var animTexture))
-            {
-                data = animTexture.GetFirstTexture(out var filePath);
-                info = new TextureInfo(filePath, TextureType.Animated, animTexture);
+            if (TryGetNormalTextureInfo(xxHash, out info))
                 return true;
-            }
+
+            if (TryGetAnimatedTextureInfo(xxHash, out info))
+                return true;
 
             info = default;
-            data = default;
             return false;
+        }
+
+        protected bool TryGetAnimatedTexture(string xxHash, out TextureRef data, out TextureInfo info)
+        {
+            info = default;
+            data = default;
+            if (!AnimatedRedirects.TryGetValue(xxHash, out var animTexture))
+                return false;
+
+            data = animTexture.GetFirstTexture(out var filePath);
+            info = new TextureInfo(filePath, TextureType.Animated, animTexture);
+            return true;
+        }
+
+        protected bool TryGetAnimatedTextureInfo(string xxHash, out TextureInfo info)
+        {
+            info = default;
+            if (!AnimatedRedirects.TryGetValue(xxHash, out var animTexture))
+                return false;
+
+            animTexture.GetFirstTexturePath(out var filePath);
+            info = new TextureInfo(filePath, TextureType.Animated, animTexture);
+            return true;
         }
 
         protected bool TryGetNormalTexture(string xxHash, out TextureRef data, out TextureInfo info)
         {
-            var fileRedirects = Redirects;
-
-            if (fileRedirects.TryGetValue(xxHash, out var redirect))
-            {
-                data = TextureRef.FromFile(redirect.Path, redirect.Format);
-                info = new TextureInfo(redirect.Path, TextureType.Normal);
-                return true;
-            }
-
             info = default;
             data = default;
-            return false;
+            if (!Redirects.TryGetValue(xxHash, out var redirect))
+                return false;
+
+            data = TextureRef.FromFile(redirect.Path, redirect.Format);
+            info = new TextureInfo(redirect.Path, TextureType.Normal);
+            return true;
+        }
+
+        protected bool TryGetNormalTextureInfo(string xxHash, out TextureInfo info)
+        {
+            info = default;
+            if (!Redirects.TryGetValue(xxHash, out var redirect))
+                return false;
+
+            info = new TextureInfo(redirect.Path, TextureType.Normal);
+            return true;
         }
 
         protected bool TryAddTextureFromFilePath(string file, out TextureFile result, out string hash)

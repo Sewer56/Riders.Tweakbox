@@ -133,6 +133,29 @@ public class TextureService : ISingletonService
     }
 
     /// <summary>
+    /// Gets information about a specific texture redirection.
+    /// </summary>
+    /// <param name="xxHash">Hash of the texture that was loaded.</param>
+    /// <param name="info">Info about the texture redirection.</param>
+    /// <returns>Whether texture redirect info was found.</returns>
+    public bool TryGetInfo(string xxHash, out TextureInfo info)
+    {
+        // Doing this in reverse because mods with highest priority get loaded last.
+        // We want to look at those mods first.
+        if (TryGetInfoFromDictionary(_priorityDictionaries, xxHash, out info))
+            return true;
+
+        if (TryGetInfoFromDictionary(_autoDictionaries, xxHash, out info))
+            return true;
+
+        if (TryGetInfoFromDictionary(_fallbackDictionaries, xxHash, out info))
+            return true;
+
+        info = default;
+        return false;
+    }
+
+    /// <summary>
     /// Adds a texture dictionary that you can use for redirecting in-game textures.
     /// Once you no longer want the dictionary used, use <see cref="RemoveDictionary"/>.
     /// </summary>
@@ -408,6 +431,19 @@ public class TextureService : ISingletonService
         }
 
         data = default;
+        info = default;
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private bool TryGetInfoFromDictionary<T>(List<T> dictionaries, string xxHash, out TextureInfo info) where T : ITextureDictionary
+    {
+        for (int i = dictionaries.Count - 1; i >= 0; i--)
+        {
+            if (dictionaries[i].TryGetTextureInfo(xxHash, out info))
+                return true;
+        }
+        
         info = default;
         return false;
     }

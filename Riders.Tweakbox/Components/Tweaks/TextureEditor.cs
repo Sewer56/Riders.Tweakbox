@@ -9,6 +9,7 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Texture;
 using Riders.Tweakbox.Services.Texture.Interfaces;
+using Riders.Tweakbox.Services.Texture.Structs;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Controls.Extensions;
 using Sewer56.Imgui.Shell.Interfaces;
@@ -28,8 +29,11 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
     private List<TextureDictionaryBase> _dictionaries = new List<TextureDictionaryBase>();
 
     private ImageRenderer _imageRenderer = new ImageRenderer();
-    private byte** _currentImage;
+
+    private TextureCreationParameters _currentTexture;
     private int _currentImageIndex;
+    private int _imageCount;
+    private bool _showNonMipmapped;
 
     /// <inheritdoc />
     public TextureEditor(IO io, TextureInjectionController injectionController, TextureService textureService) : base(io, io.TextureConfigFolder, io.GetTextureConfigFiles, IO.JsonConfigExtension)
@@ -121,15 +125,16 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
         if (textures.Length <= 0)
             return;
 
-        ImGui.TextWrapped($"Current Texture: {_currentImageIndex:000}/{textures.Length:000}");
+        ImGui.TextWrapped($"Current Texture: {_currentImageIndex:000}/{_imageCount:000}");
 
         // Display the table.
         const int tableWidth = 250;
         float remainingWidth = (contentRegionWidth - tableWidth);
         
-        var textureTableSize = new ImVec2.__Internal() { x = tableWidth, y = -20 };
+        var textureTableSize = new ImVec2.__Internal() { x = tableWidth, y = -40 };
         const int tableFlags = (int)(ImGuiTableFlagsRowBg | ImGuiTableFlagsBorders | ImGuiTableFlagsNoBordersInBody | ImGuiTableFlagsScrollY | ImGuiTableFlagsContextMenuInBody);
 
+        ImGui.BeginGroup();
         if (ImGui.__Internal.BeginTable("texture_table", 1, tableFlags, textureTableSize, 0))
         {
             // Create Headers
@@ -146,7 +151,12 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
             {
                 // Setup
                 var item = texture.TextureOut;
-                bool isSelected = item == _currentImage;
+                bool isSelected = item == (_currentTexture == null ? (byte**)0 : _currentTexture.TextureOut);
+
+                // Mipmap check.
+                bool showTexture = _showNonMipmapped || _textureService.ShouldGenerateMipmap(texture.Hash);
+                if (!showTexture)
+                    continue;
 
                 ImGui.PushID_Int(totalIndex);
                 ImGui.TableNextRow(0, 0);
@@ -157,7 +167,7 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
                 var textureDesc = new Texture((IntPtr)(*item)).GetLevelDescription(0);
                 if (ImGui.__Internal.SelectableBool($"{textureDesc.Width}x{textureDesc.Height} | {texture.Hash}", isSelected, (int)0, new ImVec2.__Internal() { x = 0, y = 0 }))
                 {
-                    _currentImage = item;
+                    _currentTexture = texture;
                     _currentImageIndex = totalIndex;
                 }
 
@@ -166,17 +176,28 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
                 totalIndex++;
             }
 
+            _imageCount = totalIndex - 1;
             ImGui.EndTable();
         }
 
+        if (ImGui.Checkbox("Show Non-Mipmapped Textures", ref _showNonMipmapped))
+        {
+            _currentImageIndex = 0;
+            _currentTexture = null;
+        }
+
+        Tooltip.TextOnHover("Tweakbox uses non-mipmapped textures for the dummy textures it places inside the menus to support features such as custom gears.\n" +
+                            "Normally it's not much use to view these textures as they're blank.");
+        ImGui.EndGroup();
+
         // Render Current Item
-        if (_currentImage == (void*)0)
+        if (_currentTexture == null)
             return;
 
-        RenderTexture(_currentImage, remainingWidth);
+        RenderTexture(_currentTexture, remainingWidth);
     }
 
-    private void RenderTexture(byte** currentImage, float remainingWidth)
+    private void RenderTexture(TextureCreationParameters currentImage, float remainingWidth)
     {
         // Setup
         const float spacing = 20;
@@ -184,11 +205,19 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
         ImGui.BeginGroup();
 
         // Render Texture
-        var texturePtr = (IntPtr)(*currentImage);
+        var texturePtr = (IntPtr)(*currentImage.TextureOut);
         var texture = new Texture(texturePtr);
         var desc = texture.GetLevelDescription(0);
         _imageRenderer.SetImageSize(new Vector2(desc.Width, desc.Height));
         _imageRenderer.Render(texturePtr);
+
+        // Texture Details
+        if (_textureService.TryGetInfo(currentImage.Hash, out var info))
+        {
+            ImGui.TextWrapped("This is an injected texture.");
+            ImGui.TextWrapped($"Loaded From: {info.Path}");
+            ImGui.TextWrapped($"Texture Type: {info.Type}");
+        }
 
         // End
         ImGui.EndGroup();
@@ -221,8 +250,7 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
         {
             var textures = _textureService.GetAllD3dTextures();
             foreach (var texture in textures)
-                Log.WriteLine(
-                    $"xxHash: {texture.Hash}, Pointer {(long)texture.NativePointer:X}, ppTexture: {(long)texture.TextureOut:X}");
+                Log.WriteLine($"xxHash: {texture.Hash}, Pointer {(long)texture.NativePointer:X}, ppTexture: {(long)texture.TextureOut:X}");
         }
 
         Tooltip.TextOnHover("[FOR DEBUGGING] Prints details of all currently known used textures.");
