@@ -11,18 +11,27 @@ namespace Riders.Tweakbox.Controllers.CustomGearController;
 /// <summary>
 /// A workaround for exhaust trail issues related to accessing data at offset based on gear index.
 /// </summary>
-public class CustomGearTrailFixer
+public class CustomGearPatches
 {
+    // Exhaust Trails
     private IAsmHook _hookA;
     private IAsmHook _hookB;
     private IAsmHook _hookC;
 
-    public CustomGearTrailFixer()
+    // Pathfinding
+    private IAsmHook _hookD;
+
+    public CustomGearPatches()
     {
         var hooks = IoC.GetSingleton<IReloadedHooks>();
+
+        // Exhaust Trails 
         _hookA = hooks.CreateAsmHook(GetAsm("esi"), 0x4134FC).Activate();
         _hookB = hooks.CreateAsmHook(GetAsm("eax"), 0x413E89).Activate();
         _hookC = hooks.CreateAsmHook(GetAsm("eax"), 0x413F2D).Activate();
+
+        // AI Pathing
+        _hookD = hooks.CreateAsmHook(GetAsm("eax"), 0x4B9158).Activate();
     }
 
     private string[] GetAsm(string register)

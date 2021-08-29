@@ -27,14 +27,14 @@ public unsafe class CustomGearController : IController
 
     internal CustomGearCodePatcher CodePatcher;
     internal CustomGearUiController UiController;
-    internal CustomGearTrailFixer TrailFixer;
+    internal CustomGearPatches Patches;
 
     internal Dictionary<string, CustomGearData> AvailableGears = new Dictionary<string, CustomGearData>();
     internal List<CustomGearData> LoadedGears = new List<CustomGearData>();
 
     public CustomGearController()
     {
-        TrailFixer = new CustomGearTrailFixer();
+        Patches = new CustomGearPatches();
         CodePatcher = new CustomGearCodePatcher();
         UiController = new CustomGearUiController(CodePatcher);
     }
