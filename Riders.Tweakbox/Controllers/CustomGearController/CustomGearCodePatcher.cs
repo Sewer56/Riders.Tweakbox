@@ -97,6 +97,9 @@ internal unsafe class CustomGearCodePatcher
     {
         foreach (var codePointer in MaxGearCountPatch)
             Memory.Instance.SafeWrite((IntPtr)codePointer, (byte)maxId);
+
+        foreach (var codePointer in MaxGearCountPatchGreaterOrEqual)
+            Memory.Instance.SafeWrite((IntPtr)codePointer, (byte)maxId + 1);
     }
 
     private void SetupNewPointers<T>(string pointerName, ref T[] output, ref RefFixedArrayPtr<T> apiEndpoint, int[] sourceAddresses) where T : unmanaged
@@ -182,6 +185,13 @@ internal unsafe class CustomGearCodePatcher
 
         // < 0
         0x462CAD, 0x462ECD, 0x4630CE
+    };
+
+    // Patch total amount of gears available in menu code.
+    private readonly int[] MaxGearCountPatchGreaterOrEqual =
+    {
+        // >= 41
+        0x41486E, 0x4148B0
     };
     #endregion
 }
