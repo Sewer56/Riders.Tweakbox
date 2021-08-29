@@ -19,6 +19,7 @@ internal unsafe class CustomGearCodePatcher
     public int OriginalGearCount { get; private set; } = Player.OriginalNumberOfGears;
     public int GearCount { get; private set; } = Player.Gears.Count;
     public int AvailableSlots => byte.MaxValue - GearCount;
+    public bool HasAvailableSlots => AvailableSlots > 0;
 
     // New pointer targets.
     private ExtremeGear* _newGearsPtr;

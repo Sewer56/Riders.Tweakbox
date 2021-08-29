@@ -281,15 +281,18 @@ public class TextureService : ISingletonService
     /// Tries to force reload a texture.
     /// </summary>
     /// <param name="hash">The hash.</param>
+    /// <param name="failSilently">Do not report texture reload failures.</param>
     /// <returns>True on success, else false.</returns>
-    internal unsafe bool TryReloadTexture(string hash)
+    internal unsafe bool TryReloadTexture(string hash, bool failSilently = false)
     {
         // Setup force reload if not ready.
         EnsurePacingControllerSetup();
         bool hasTexture = TryGetD3dTexture(hash, out var texture);
         if (!hasTexture)
         {
-            _logLoad.WriteLine($"Reload of Texture {hash} was requested but texture is not loaded.");
+            if (!failSilently)
+                _logLoad.WriteLine($"Reload of Texture {hash} was requested but texture is not loaded.");
+            
             return false;
         }
 

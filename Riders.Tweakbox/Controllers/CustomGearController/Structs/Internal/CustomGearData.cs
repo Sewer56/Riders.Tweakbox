@@ -64,12 +64,28 @@ public class CustomGearData
     /// <summary>
     /// Sets a new gear index and notifies any subscribers of the changed.
     /// </summary>
-    public void SetGearIndex(int index)
+    internal void SetGearIndex(int index)
     {
         if (index != GearIndex)
         {
             GearIndex = index;
             OnIndexChanged?.Invoke(index);
         }
+    }
+
+    /// <summary>
+    /// Resets the state of the object.
+    /// </summary>
+    public void Reset()
+    {
+        GearName = default;
+        GearData = default;
+        GearDataLocation = default;
+        IconPath = default;
+        NamePath = default;
+        AnimatedIconFolder = default;
+        AnimatedNameFolder = default;
+        GearIndex = default;
+        OnIndexChanged = default;
     }
 }

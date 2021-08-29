@@ -1,4 +1,5 @@
-﻿using Sewer56.SonicRiders.Structures.Gameplay;
+﻿using System;
+using Sewer56.SonicRiders.Structures.Gameplay;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Services.TextureGen;
@@ -8,6 +9,7 @@ using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using EnumsNET;
 using Reloaded.Memory;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
@@ -48,6 +50,10 @@ public unsafe class CustomGearController : IController
         if (string.IsNullOrEmpty(request.GearName) || IsGearLoaded(request.GearName))
             return null;
 
+        // If hit gear limit, ignore.
+        if (!CodePatcher.HasAvailableSlots)
+            return null;
+
         // Get gear data from file (if needed).
         if (!request.LoadData())
             return null;
@@ -78,6 +84,50 @@ public unsafe class CustomGearController : IController
     }
 
     /// <summary>
+    /// Retrieves the names of all custom gears.
+    /// </summary>
+    /// <param name="names">The span to receive the names of the custom gears.</param>
+    public void GetCustomGearNames(Span<string> loadedNames, Span<string> unloadedNames)
+    {
+        for (var x = 0; x < LoadedGears.Count && x < loadedNames.Length; x++)
+            loadedNames[x] = LoadedGears[x].GearName;
+
+        // Populated Loaded Names
+        var values = AvailableGears.Values;
+        int unloadedIndex = 0;
+        foreach (var value in values)
+        {
+            if (unloadedIndex >= unloadedNames.Length)
+                break;
+
+            if (!value.IsGearLoaded)
+                unloadedNames[unloadedIndex++] = value.GearName;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the names of all custom gears.
+    /// </summary>
+    /// <param name="loadedGears">List of the names of currently loaded gears.</param>
+    /// <param name="unloadedGears">List of the names of currently unloaded gears.</param>
+    public void GetCustomGearNames(out string[] loadedGears, out string[] unloadedGears)
+    {
+        GetCustomGearCount(out int loadedGearCount, out int unloadedGearCount);
+        loadedGears   = new string[loadedGearCount];
+        unloadedGears = new string[unloadedGearCount];
+        GetCustomGearNames(loadedGears, unloadedGears);
+    }
+
+    /// <summary>
+    /// Retrieves the names of all loaded custom gears.
+    /// </summary>
+    public void GetCustomGearCount(out int loadedGears, out int unloadedGears)
+    {
+        loadedGears   = LoadedGears.Count;
+        unloadedGears = AvailableGears.Count - LoadedGears.Count;
+    }
+
+    /// <summary>
     /// Retrieves the name of a given gear.
     /// </summary>
     /// <param name="index">The index of the gear.</param>
@@ -99,19 +149,29 @@ public unsafe class CustomGearController : IController
     }
 
     /// <summary>
-    /// Removes a custom gear with a specific name.
+    /// Unloads a custom gear with a specific name.
     /// </summary>
     /// <param name="name">Name of the gear used in <see cref="AddGearRequest.GearName"/> when the gear was added.</param>
     /// <returns>True on success, else false.</returns>
-    public bool RemoveGear(string name)
+    public bool UnloadGear(string name) => RemoveGear(name, false);
+
+    /// <summary>
+    /// Removes a custom gear with a specific name.
+    /// </summary>
+    /// <param name="name">Name of the gear used in <see cref="AddGearRequest.GearName"/> when the gear was added.</param>
+    /// <param name="clearGear">Removes the gear from the available/unloaded set of gears.</param>
+    /// <returns>True on success, else false.</returns>
+    public bool RemoveGear(string name, bool clearGear = true)
     {
         if (!AvailableGears.ContainsKey(name))
             return false;
 
         _log.WriteLine($"[{nameof(CustomGearController)}] Removing Gear: {name}");
-        AvailableGears.Remove(name, out var value);
-        LoadedGears.Remove(value);
-        Reload();
+        LoadedGears.Remove(AvailableGears[name]);
+        if (clearGear)
+            AvailableGears.Remove(name, out var value);
+
+        Reload(LoadedGears.Select(x => x.GearName).ToArray());
         return true;
     }
 
@@ -141,9 +201,9 @@ public unsafe class CustomGearController : IController
     /// <summary>
     /// Reloads the gears and adds only the gear names in the given list.
     /// </summary>
-    public void Reload(List<string> gearNames)
+    public void Reload(IEnumerable<string> gearNames)
     {
-        _log.WriteLine($"[{nameof(CustomGearController)}] Reloading Specific Set of Gears");
+        _log.WriteLine($"[{nameof(CustomGearController)}] Reloading Gears");
         Reset(false);
 
         foreach (var gearName in gearNames)
@@ -154,16 +214,9 @@ public unsafe class CustomGearController : IController
     }
 
     /// <summary>
-    /// Reloads all gear data.
-    /// Used e.g. when entering Netplay.
+    /// Reloads all available gear data.
     /// </summary>
-    public void Reload()
-    {
-        _log.WriteLine($"[{nameof(CustomGearController)}] Reloading Gears");
-        Reset(false);
-        foreach (var gear in AvailableGears.Values)
-            AddGear_Internal(gear);
-    }
+    public void ReloadAll() => Reload(AvailableGears.Select(x => x.Value.GearName));
 
     /// <summary>
     /// Resets all custom gear data.
@@ -174,14 +227,11 @@ public unsafe class CustomGearController : IController
         _log.WriteLine($"[{nameof(CustomGearController)}] Resetting Gears"); 
         CodePatcher.Reset();
         UiController.Reset();
+        ClearGearIndices();
         if (clearGears)
-        {
-            ClearGearIndices();
             AvailableGears.Clear();
-        }
 
         LoadedGears.Clear();
-        ClearGearIndices();
     }
 
     /// <summary>

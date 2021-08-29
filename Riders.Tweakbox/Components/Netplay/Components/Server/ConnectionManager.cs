@@ -13,6 +13,8 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Controllers.CustomGearController;
+using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Shell;
 using Sewer56.SonicRiders.Utility;
@@ -38,6 +40,7 @@ public class ConnectionManager : INetplayComponent
 
     private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());
     private Logger _log = new Logger(LogCategory.Socket);
+    private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
 
     public ConnectionManager(Socket socket, EventController @event)
     {
@@ -82,7 +85,8 @@ public class ConnectionManager : INetplayComponent
 
         unsafe
         {
-            using var gameData = GameData.FromGame();
+            _customGearController.GetCustomGearNames(out var loadedGears, out _);
+            using var gameData = GameData.FromGame(loadedGears);
             using var courseSelectSync = CourseSelectSync.FromGame(Event.CourseSelect);
             Socket.SendAndFlush(peer, ReliablePacket.Create(gameData), DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
             Socket.SendAndFlush(peer, ReliablePacket.Create(courseSelectSync), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
@@ -230,7 +234,7 @@ public class ConnectionManager : INetplayComponent
         else if (packet.MessageType == MessageType.GameData)
         {
             var data = packet.GetMessage<GameData>();
-            data.ToGame();
+            data.ToGame(strings => { _customGearController.Reload(strings); });
         }
     }
 

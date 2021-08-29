@@ -12,9 +12,9 @@ public struct AntiCheatDataHash : IReliableMessage
     /// <summary>
     /// Gets a hash of the current game data.
     /// </summary>
-    public static AntiCheatDataHash FromGame()
+    public static AntiCheatDataHash FromGame(string[] customGears = null)
     {
-        using var data = GameData.FromGame();
+        using var data = GameData.FromGame(customGears);
         using var bytes = data.ToCompressedBytes(out int bytesWritten);
 
         return new AntiCheatDataHash(XXH64.DigestOf(bytes.Span.Slice(0, bytesWritten)));
@@ -29,7 +29,7 @@ public struct AntiCheatDataHash : IReliableMessage
     /// <summary>
     /// True if external hash matches our game, else false.
     /// </summary>
-    public static bool Verify(AntiCheatDataHash external) => external.Equals(FromGame());
+    public static bool Verify(AntiCheatDataHash external, string[] customGears = null) => external.Equals(FromGame(customGears));
 
     /// <inheritdoc />
     public void Dispose() { }

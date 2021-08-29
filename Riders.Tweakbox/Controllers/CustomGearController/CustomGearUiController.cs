@@ -334,6 +334,7 @@ internal unsafe class CustomGearUiController
             _redirectDictionary.TryAddTextureFromFilePath(texturePath, hash);
 
         _textureService.GenerateMipmaps(hash);
+        _textureService.TryReloadTexture(hash);
     }
 
     internal void Reset()

@@ -109,6 +109,7 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
                         Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
+                        Benchmark(() => IoC.GetSingleton<CustomGearDebug>(), nameof(CustomGearDebug)),
                     })
                 },
                 Text = new List<string>()
