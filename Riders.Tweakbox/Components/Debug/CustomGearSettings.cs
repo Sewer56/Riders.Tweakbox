@@ -100,12 +100,14 @@ namespace Riders.Tweakbox.Components.Debug
                                 _log.WriteLine($"[{nameof(CustomGearSettings)}] Failed to Unload Gear");
                         }
 
+#if DEBUG
                         if (ImGui.Button("Try Remove Gear", Constants.Zero))
                         {
                             if (!_customGearController.RemoveGear(_gearData.GearName, true))
                                 _log.WriteLine($"[{nameof(CustomGearSettings)}] Failed to Remove Gear");
                         }
                         Tooltip.TextOnHover("Permanently removes gear until added again in code or via restart.");
+#endif
                     }
                     else
                     {
