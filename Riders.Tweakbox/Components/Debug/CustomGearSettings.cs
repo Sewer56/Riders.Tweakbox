@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DearImguiSharp;
 using DotNext.Buffers;
+using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
@@ -12,21 +13,25 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Misc;
+using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;
 
 namespace Riders.Tweakbox.Components.Debug
 {
-    public class CustomGearDebug : ComponentBase
+    public class CustomGearSettings : ComponentBase, IComponent
     {
-        
         public override string Name { get; set; } = "Custom Gear Settings";
         private CustomGearController _customGearController;
         private string[] _loadedGearNameBuffer = new string[0];
         private string[] _unloadedGearNameBuffer = new string[0];
         private CustomGearData _gearData = new CustomGearData();
         private Logger _log = new Logger();
+        private NetplayController _netplayController = IoC.GetSingleton<NetplayController>();
 
-        public CustomGearDebug(CustomGearController customGearController)
+        /// <inheritdoc />
+        public bool IsAvailable() => !_netplayController.IsActive();
+
+        public CustomGearSettings(CustomGearController customGearController)
         {
             _customGearController = customGearController;
         }
@@ -92,13 +97,13 @@ namespace Riders.Tweakbox.Components.Debug
                         if (ImGui.Button("Try Unload Gear", Constants.Zero))
                         {
                             if (!_customGearController.UnloadGear(_gearData.GearName))
-                                _log.WriteLine($"[{nameof(CustomGearDebug)}] Failed to Unload Gear");
+                                _log.WriteLine($"[{nameof(CustomGearSettings)}] Failed to Unload Gear");
                         }
 
                         if (ImGui.Button("Try Remove Gear", Constants.Zero))
                         {
                             if (!_customGearController.RemoveGear(_gearData.GearName, true))
-                                _log.WriteLine($"[{nameof(CustomGearDebug)}] Failed to Remove Gear");
+                                _log.WriteLine($"[{nameof(CustomGearSettings)}] Failed to Remove Gear");
                         }
                         Tooltip.TextOnHover("Permanently removes gear until added again in code or via restart.");
                     }
@@ -108,7 +113,7 @@ namespace Riders.Tweakbox.Components.Debug
                         {
                             var result = _customGearController.AddGear(Mapping.Mapper.Map<AddGearRequest>(_gearData));
                             if (result == null)
-                                _log.WriteLine($"[{nameof(CustomGearDebug)}] Failed to Load Gear");
+                                _log.WriteLine($"[{nameof(CustomGearSettings)}] Failed to Load Gear");
                         }
                     }
                     

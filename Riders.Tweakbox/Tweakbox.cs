@@ -89,6 +89,7 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<TweakboxSettings>(), nameof(TweakboxSettings)),
                         Benchmark(() => IoC.GetSingleton<TextureEditor>(), nameof(TextureEditor)),
                         Benchmark(() => IoC.GetSingleton<InfoEditor>(), nameof(InfoEditor)),
+                        Benchmark(() => IoC.GetSingleton<CustomGearSettings>(), nameof(CustomGearSettings)),
                     }),
                     new MenuBarItem("Editors", new List<IComponent>()
                     {
@@ -109,7 +110,6 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
                         Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
-                        Benchmark(() => IoC.GetSingleton<CustomGearDebug>(), nameof(CustomGearDebug)),
                     })
                 },
                 Text = new List<string>()
