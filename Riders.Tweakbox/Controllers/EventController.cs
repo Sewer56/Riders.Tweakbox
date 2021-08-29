@@ -136,34 +136,19 @@ public unsafe partial class EventController : TaskEvents, IController
     public event CdeclReturnIntFn RemoveAllTasks;
 
     /// <summary>
-    /// Executed when the player physics simulation is to be executed.
-    /// </summary>
-    public event Functions.RunPlayerPhysicsSimulationFn OnRunPlayerPhysicsSimulation;
-
-    /// <summary>
-    /// Executed after the player physics simulation has been executed.
-    /// </summary>
-    public event Functions.RunPlayerPhysicsSimulationFn AfterRunPlayerPhysicsSimulation;
-
-    /// <summary>
-    /// Runs the physics simulation for an individual player.
-    /// </summary>
-    public event RunPlayerPhysicsSimulationFn RunPlayerPhysicsSimulation;
-
-    /// <summary>
     /// Executed before the code to run 1 frame of physics simulation.
     /// </summary>
-    public event Functions.CdeclReturnIntFn OnRunPhysicsSimulation;
+    public event Functions.SaveAllRegistersReturnIntFn OnRunPhysicsSimulation;
 
     /// <summary>
     /// Executed after the code to run 1 frame of physics simulation.
     /// </summary>
-    public event Functions.CdeclReturnIntFn AfterRunPhysicsSimulation;
+    public event Functions.SaveAllRegistersReturnIntFn AfterRunPhysicsSimulation;
 
     /// <summary>
     /// Replaces the code to run 1 frame of physics simulation.
     /// </summary>
-    public event CdeclReturnIntFn RunPhysicsSimulation;
+    public event SaveAllRegistersReturnIntFnFn RunPhysicsSimulation;
 
     /// <summary>
     /// Replaces the code to pause the game.
@@ -210,8 +195,7 @@ public unsafe partial class EventController : TaskEvents, IController
     private IHook<Functions.UpdateLapCounterFn> _updateLapCounterHook;
     private IHook<Functions.CdeclReturnByteFn> _goalRaceFinishTaskHook;
     private IHook<Functions.CdeclReturnIntFn> _removeAllTasksHook;
-    private IHook<Functions.RunPlayerPhysicsSimulationFn> _runPlayerPhysicsSimulationHook;
-    private IHook<Functions.CdeclReturnIntFn> _runPhysicsSimulationHook;
+    private IHook<Functions.SaveAllRegistersReturnIntFn> _runPhysicsSimulationHook;
     private IHook<Functions.PauseGameFn> _pauseGameHook;
     private IHook<Functions.SetEndOfRaceDialogTaskFn> _setEndOfRaceDialogTask;
     private IHook<Functions.ShouldGenerateTurbulenceFn> _shouldGenerateTurbulenceHook;
@@ -283,7 +267,6 @@ public unsafe partial class EventController : TaskEvents, IController
         _updateLapCounterHook = Functions.UpdateLapCounter.Hook(UpdateLapCounterHook).Activate();
         _goalRaceFinishTaskHook = Functions.GoalRaceFinishTask.Hook(GoalRaceFinishTaskHook).Activate();
         _removeAllTasksHook = Functions.RemoveAllTasks.Hook(RemoveAllTasksHook).Activate();
-        _runPlayerPhysicsSimulationHook = Functions.RunPlayerPhysicsSimulation.Hook(RunPlayerPhysicsSimulationHook).Activate();
         _runPhysicsSimulationHook = Functions.RunPhysicsSimulation.Hook(RunPhysicsSimulationHook).Activate();
         _pauseGameHook = Functions.PauseGame.Hook(PauseGameHook).Activate();
         _setEndOfRaceDialogTask = Functions.SetEndOfRaceDialogTask.Hook(SetEndOfRaceDialogHandlerHook).Activate();
@@ -345,13 +328,6 @@ public unsafe partial class EventController : TaskEvents, IController
     /// </summary>
     public void InvokeSetGoalRaceFinishTask(Player* player) => _setGoalRaceFinishTaskHook.OriginalFunction(player);
 
-    /// <summary>
-    /// Invokes the function that runs the player physics simulation.
-    /// </summary>
-    public void InvokeRunPlayerPhysicsSimulation(void* somephysicsobjectptr, Vector4* vector, int* playerindex) => _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
-
-
-
     private Task* SetRenderItemPickupHook(Player* player, byte a2, ushort a3) => SetItemPickupTaskHandler != null ? SetItemPickupTaskHandler(player, a2, a3, _setRenderItemPickupTaskHook)
                                                                                                                   : _setRenderItemPickupTaskHook.OriginalFunction(player, a2, a3);
 
@@ -365,15 +341,7 @@ public unsafe partial class EventController : TaskEvents, IController
 
         return result;
     }
-
-    private int RunPlayerPhysicsSimulationHook(void* somephysicsobjectptr, Vector4* vector, int* playerindex)
-    {
-        OnRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
-        var result = RunPlayerPhysicsSimulation?.Invoke(_runPlayerPhysicsSimulationHook, (Void*)somephysicsobjectptr, vector, playerindex) ?? _runPlayerPhysicsSimulationHook.OriginalFunction((Void*)somephysicsobjectptr, vector, playerindex);
-        AfterRunPlayerPhysicsSimulation?.Invoke(somephysicsobjectptr, vector, playerindex);
-        return result;
-    }
-
+    
     private int SetSpawnLocationsStartOfRaceHook(int numberOfPlayers)
     {
         OnSetSpawnLocationsStartOfRace?.Invoke(numberOfPlayers);
@@ -427,7 +395,8 @@ public unsafe partial class EventController : TaskEvents, IController
     public unsafe delegate int UpdateLapCounterHandlerFn(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2);
     public delegate byte CdeclReturnByteFnFn(IHook<Functions.CdeclReturnByteFn> hook);
     public delegate int CdeclReturnIntFn(IHook<Functions.CdeclReturnIntFn> hook);
-    public delegate int RunPlayerPhysicsSimulationFn(IHook<Functions.RunPlayerPhysicsSimulationFn> hook, void* somePhysicsObjectPtr, Vector4* vector, int* playerIndex);
+    public delegate int SaveAllRegistersReturnIntFnFn(IHook<Functions.SaveAllRegistersReturnIntFn> hook);
+
     public unsafe delegate bool ShouldSpawnTurbulenceHandlerFn(Player* player, IHook<Functions.ShouldGenerateTurbulenceFn> hook);
     public unsafe delegate bool ShouldKillTurbulenceHandlerFn(Player* player, IHook<Functions.ShouldKillTurbulenceFn> hook);
 
