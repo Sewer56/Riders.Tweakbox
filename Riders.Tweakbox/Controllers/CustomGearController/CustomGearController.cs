@@ -185,10 +185,17 @@ public unsafe class CustomGearController : IController
     /// Checks if the user has all gears from a given list of names.
     /// </summary>
     /// <param name="gearNames">List of names of each gear.</param>
-    public bool HasAllGears(List<string> gearNames, out List<string> missingGears)
+    public bool HasAllGears(IEnumerable<string> gearNames, out List<string> missingGears)
     {
-        missingGears = new List<string>(gearNames.Count);
+        // If there's no gears, we have them all!
+        if (gearNames == null)
+        {
+            missingGears = default;
+            return true;
+        }
 
+        // Else actually do the check.
+        missingGears = new List<string>();
         foreach (var gearName in gearNames)
         {
             if (!AvailableGears.ContainsKey(gearName))
@@ -205,6 +212,9 @@ public unsafe class CustomGearController : IController
     {
         _log.WriteLine($"[{nameof(CustomGearController)}] Reloading Gears");
         Reset(false);
+
+        if (gearNames == null)
+            return;
 
         foreach (var gearName in gearNames)
         {

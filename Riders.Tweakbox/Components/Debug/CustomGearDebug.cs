@@ -10,6 +10,7 @@ using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
+using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Misc;
 using Constants = Sewer56.Imgui.Misc.Constants;
 
@@ -93,6 +94,13 @@ namespace Riders.Tweakbox.Components.Debug
                             if (!_customGearController.UnloadGear(_gearData.GearName))
                                 _log.WriteLine($"[{nameof(CustomGearDebug)}] Failed to Unload Gear");
                         }
+
+                        if (ImGui.Button("Try Remove Gear", Constants.Zero))
+                        {
+                            if (!_customGearController.RemoveGear(_gearData.GearName, true))
+                                _log.WriteLine($"[{nameof(CustomGearDebug)}] Failed to Remove Gear");
+                        }
+                        Tooltip.TextOnHover("Permanently removes gear until added again in code or via restart.");
                     }
                     else
                     {

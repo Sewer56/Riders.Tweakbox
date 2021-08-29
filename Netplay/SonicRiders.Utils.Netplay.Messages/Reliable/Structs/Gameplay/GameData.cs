@@ -83,18 +83,20 @@ public unsafe struct GameData : IReliableMessage
     /// <summary>
     /// Writes the contents of this packet to the game memory.
     /// </summary>
-    /// <param name="applyCustomGears">A function which applies custom gears to the game.</param>
-    public unsafe void ToGame(Action<string[]> applyCustomGears)
+    /// <param name="applyCustomGears">A function which applies custom gears to the game. Returns true on success, else false.</param>
+    public unsafe void ToGame(Func<string[], bool> applyCustomGears)
     {
         // TODO: Custom Gear Support
-        GearData.ToGame(applyCustomGears);
-        *Player.RunPhysics = RunningPhysics1;
-        *Player.RunPhysics2 = RunningPhysics2;
-        *State.CurrentRaceSettings = RaceSettings;
-        Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
-        Static.PanelProperties = PanelProperties;
-        Static.SpeedShoeProperties = SpeedShoeProperties;
-        Static.DecelProperties.Value = DecelProperties;
+        if (GearData.ToGame(applyCustomGears))
+        {
+            *Player.RunPhysics = RunningPhysics1;
+            *Player.RunPhysics2 = RunningPhysics2;
+            *State.CurrentRaceSettings = RaceSettings;
+            Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
+            Static.PanelProperties = PanelProperties;
+            Static.SpeedShoeProperties = SpeedShoeProperties;
+            Static.DecelProperties.Value = DecelProperties;
+        }
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DotNext;
 using LiteNetLib;
@@ -155,6 +156,15 @@ public class ConnectionManager : INetplayComponent
         HostUpdatePlayerMap();
     }
 
+    /// <summary>
+    /// Force disconnects the client/host with a given reason.
+    /// </summary>
+    private void ForceDisconnect(string reason)
+    {
+        Shell.AddDialog("Disconnected from Game", reason);
+        Socket.Dispose();
+    }
+
     private void OnClientPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
         try
@@ -234,7 +244,19 @@ public class ConnectionManager : INetplayComponent
         else if (packet.MessageType == MessageType.GameData)
         {
             var data = packet.GetMessage<GameData>();
-            data.ToGame(strings => { _customGearController.Reload(strings); });
+            data.ToGame(strings =>
+            {
+                if (_customGearController.HasAllGears(strings, out var missingGears))
+                {
+                    _customGearController.Reload(strings);
+                    return true;
+                }
+                else
+                {
+                    ForceDisconnect($"Client is missing custom gears being used by the host.\nGear List:\n\n{string.Join("\n", missingGears)}");
+                    return false;
+                }
+            });
         }
     }
 

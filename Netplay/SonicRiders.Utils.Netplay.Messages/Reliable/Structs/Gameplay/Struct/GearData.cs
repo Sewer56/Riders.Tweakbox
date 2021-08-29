@@ -47,12 +47,16 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
         /// <summary>
         /// Writes the contents of this packet to the game memory.
         /// </summary>
-        /// <param name="applyCustomGears">A function which applies custom gears to the game.</param>
-        public unsafe void ToGame(Action<string[]> applyCustomGears)
+        /// <param name="applyCustomGears">A function which applies custom gears to the game. Returns true on success, else false.</param>
+        /// <returns>True on success, else false.</returns>
+        public unsafe bool ToGame(Func<string[], bool> applyCustomGears)
         {
             // TODO: Custom Gear Support
-            applyCustomGears?.Invoke(CustomGears);
-            Player.Gears.CopyFrom(Gears, NumGears);
+            bool result = applyCustomGears != null ? applyCustomGears.Invoke(CustomGears) : true; 
+            if (result)
+                Player.Gears.CopyFrom(Gears, Gears.Length);
+
+            return result;
         }
 
         /// <summary>
