@@ -96,7 +96,7 @@ public class AnimatedTexture : IDisposable
     /// <param name="firstTexReference">Native pointer to the first texture instance.</param>
     public unsafe void Preload(void* firstTexReference)
     {
-        if (_loaded)
+        if (_loaded || (_preloadFromCacheTask != null && !_preloadFromCacheTask.IsCompleted))
             return;
         
         var device = IoC.Get<Device>();
