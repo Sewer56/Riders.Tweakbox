@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Misc.Data;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
@@ -81,7 +82,7 @@ public class AnimatedTexture : IDisposable
             var file = Files[x];
             var fullPath = Folder + file.RelativePath;
             var texRef = TextureRef.FromFile(fullPath, file.Format);
-            var texture = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data);
+            var texture = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data, Usage.Dynamic, Pool.Default);
             if (texRef.ShouldBeCached())
             {
                 var cache = TextureCacheService.Instance;
@@ -90,7 +91,7 @@ public class AnimatedTexture : IDisposable
 
             Textures.Add(texture);
         }
-
+        
         _loaded = true;
     }
 
@@ -153,39 +154,9 @@ public class AnimatedTexture : IDisposable
     {
         try
         {
-            var files = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly);
-
-            texture = new AnimatedTexture()
-            {
-                Files = new List<AnimatedTextureFile>(files.Length),
-                Folder = Path.GetFullPath(folderPath),
-                _minId = new List<int>(files.Length),
-                Textures = new List<SharpDX.Direct3D9.Texture>()
-            };
-
-            foreach (var file in files)
-            {
-                var format = file.GetTextureFormatFromFileName();
-                if (format == TextureFormat.Unknown)
-                    continue;
-
-                var fullPath = Path.GetFullPath(file);
-                var relativePath = fullPath.Substring(texture.Folder.Length);
-                texture.Files.Add(new AnimatedTextureFile(relativePath, format));
-            }
-
-            // Sort
-            texture.Files.Sort((first, second) => string.CompareOrdinal(first.RelativePath, second.RelativePath));
-
-            foreach (var file in texture.Files)
-            {
-                var path = Path.GetFileName(file.RelativePath.Substring(0, file.RelativePath.IndexOf('.')));
-                int minId = Int32.Parse(path);
-                texture._minId.Add(minId);
-            }
-
-            texture._modulo = texture._minId[^1] + 1;
-            return texture.Files.Count > 0;
+            texture = new AnimatedTexture();
+            texture.Folder = Path.GetFullPath(folderPath);
+            return texture.TryLoad();
         }
         catch (Exception e)
         {
@@ -193,5 +164,47 @@ public class AnimatedTexture : IDisposable
             texture = null;
             return false;
         }
+    }
+
+    /// <summary>
+    /// Tried to reload this animated texture's contents.
+    /// </summary>
+    public bool TryReload()
+    {
+        Dispose();
+        return TryLoad();
+    }
+
+    private bool TryLoad()
+    {
+        var files = Directory.GetFiles(Folder, "*.*", SearchOption.TopDirectoryOnly);
+        Files     = new List<AnimatedTextureFile>(files.Length);
+        _minId    = new List<int>(files.Length);
+        Textures  = new List<SharpDX.Direct3D9.Texture>();
+
+        foreach (var file in files)
+        {
+            var format = file.GetTextureFormatFromFileName();
+            if (format == TextureFormat.Unknown)
+                continue;
+
+            var fullPath = Path.GetFullPath(file);
+            var relativePath = fullPath.Substring(Folder.Length);
+            Files.Add(new AnimatedTextureFile(relativePath, format));
+        }
+
+        // Sort
+        Files.Sort((first, second) => string.CompareOrdinal(first.RelativePath, second.RelativePath));
+
+        foreach (var file in Files)
+        {
+            var path = Path.GetFileName(file.RelativePath.Substring(0, file.RelativePath.IndexOf('.')));
+            int minId = Int32.Parse(path);
+            _minId.Add(minId);
+        }
+
+        _modulo = _minId[^1] + 1;
+        _lastIndex = 0;
+        return Files.Count > 0;
     }
 }

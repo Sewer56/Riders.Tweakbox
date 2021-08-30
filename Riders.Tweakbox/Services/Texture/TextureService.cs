@@ -367,7 +367,10 @@ public class TextureService : ISingletonService
                 int count = (int)releaseTexture.Invoke(parameters.NativePointer);
                 if (count > 0)
                     _logLoad.WriteLine($"WARNING!! Texture Reload: Custom Texture Reference Count > 0");
-                
+
+                if (reloadTexture.Info.Animated != null)
+                    reloadTexture.Info.Animated.TryReload();
+
                 _injectionController.LoadCustomTexture(parameters.Hash, reloadTexture.Info, reloadTexture.Ref,
                     (byte*)parameters.Device, parameters.SrcDataRef, parameters.SrcDataSize,
                     parameters.Width, parameters.Height, parameters.MipLevels,
