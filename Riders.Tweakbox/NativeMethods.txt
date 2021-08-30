@@ -16,4 +16,10 @@ GetProcAddress
 ShowCursor
 GetModuleHandle
 
+FindFirstFile
+FindFirstFileW
+FindNextFile
+FindClose
+WIN32_FIND_DATAW
+
 MONITORINFO

@@ -25,6 +25,13 @@ public struct TextureRef
     public bool ShouldBeCached() => Format.ShouldBeCached() && !IsCached;
 
     /// <summary>
+    /// Gets a texture reference from file; ignoring the cache..
+    /// </summary>
+    /// <param name="filePath">The file path to the texture.</param>
+    /// <param name="type">The texture type.</param>
+    public static TextureRef FromFileUncached(string filePath, TextureFormat type) => type == TextureFormat.DdsLz4 ? TextureCompression.PickleFromFileToRef(filePath) : new TextureRef(File.ReadAllBytes(filePath), type);
+
+    /// <summary>
     /// Gets a texture reference from file.
     /// </summary>
     /// <param name="filePath">The file path to the texture.</param>
@@ -35,6 +42,6 @@ public struct TextureRef
         if (type.ShouldBeCached() && cache != null && cache.TryFetch(filePath, out var result))
             return result;
 
-        return type == TextureFormat.DdsLz4 ? TextureCompression.PickleFromFileToRef(filePath) : new TextureRef(File.ReadAllBytes(filePath), type);
+        return FromFileUncached(filePath, type);
     }
 }

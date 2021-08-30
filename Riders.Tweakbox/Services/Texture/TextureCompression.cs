@@ -17,25 +17,50 @@ public class TextureCompression
     /// <summary>
     /// Decompresses a DDS.LZ4 from a given file path.
     /// </summary>
-    /// <param name="filePath">The file path.</param>
-    public static byte[] PickleFromFile(string filePath)
+    /// <param name="stream">The file path.</param>
+    public static byte[] PickleFromStream(Stream stream)
     {
         // Stack storage.
         Span<int> intSpan = stackalloc int[2];
 
         // Read Header
-        using var fileStream = new FileStream(filePath, FileMode.Open);
-        fileStream.Read(MemoryMarshal.AsBytes(intSpan));
+        stream.Read(MemoryMarshal.AsBytes(intSpan));
         var numUncompressed = intSpan[1];
         var numEncoded = intSpan[0];
 
         // Read Data
         var compressedData = GC.AllocateUninitializedArray<byte>(numEncoded);
-        fileStream.Read(compressedData.AsSpan());
+        stream.Read(compressedData.AsSpan());
 
         var uncompressedData = GC.AllocateUninitializedArray<byte>(numUncompressed);
         LZ4Codec.Decode(compressedData.AsSpan(), uncompressedData.AsSpan());
         return uncompressedData;
+    }
+
+    /// <summary>
+    /// Decompresses a DDS.LZ4 from a given file path.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    public static byte[] PickleFromFile(string filePath)
+    {
+        using var fileStream = new FileStream(filePath, FileMode.Open);
+        return PickleFromStream(fileStream);
+    }
+
+    /// <summary>
+    /// Writes a DDS.LZ4 to a given file path.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="data">The data to compress.</param>
+    public static void PickleToStream(Stream stream, Span<byte> data)
+    {
+        var compressedData = GC.AllocateUninitializedArray<byte>(data.Length);
+        var encoded = LZ4Codec.Encode(data, compressedData, LZ4Level.L12_MAX);
+        
+        // Write Compressed and Uncompressed.
+        stream.Write<int>(encoded);
+        stream.Write<int>(data.Length);
+        stream.Write(compressedData.AsSpan().Slice(0, encoded));
     }
 
     /// <summary>
@@ -45,14 +70,7 @@ public class TextureCompression
     /// <param name="data">The data to compress.</param>
     public static void PickleToFile(string filePath, Span<byte> data)
     {
-        var compressedData = GC.AllocateUninitializedArray<byte>(data.Length);
-        var encoded = LZ4Codec.Encode(data, compressedData, LZ4Level.L12_MAX);
-
         using var fileStream = new FileStream(filePath, FileMode.Create);
-
-        // Write Compressed and Uncompressed.
-        fileStream.Write<int>(encoded);
-        fileStream.Write<int>(data.Length);
-        fileStream.Write(compressedData.AsSpan().Slice(0, encoded));
+        PickleToStream(fileStream, data);
     }
 }

@@ -4,8 +4,10 @@ using System.IO;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Data;
 using Riders.Tweakbox.Misc.Log;
+using Riders.Tweakbox.Services.Texture.Animation;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
+using SharpDX;
 using SharpDX.Direct3D9;
 namespace Riders.Tweakbox.Services.Texture.Animation;
 
@@ -26,10 +28,18 @@ public class AnimatedTexture : IDisposable
     /// </summary>
     public List<SharpDX.Direct3D9.Texture> Textures { get; private set; }
 
+    /// <summary>
+    /// Path to the cache file for this animated texture.
+    /// </summary>
+    public string CachePath => Path.Combine(Folder, "Cache", "cache.bin");
+
     private int _modulo = 0;
     private List<int> _minId;
     private bool _loaded;
     private int _lastIndex;
+
+    // Cache Related Parameters
+    private DateTime _newestFileTime;
 
     private AnimatedTexture() { }
 
@@ -77,21 +87,12 @@ public class AnimatedTexture : IDisposable
 
         var device = IoC.Get<Device>();
         Textures.Add(new SharpDX.Direct3D9.Texture((IntPtr)firstTexReference));
-        for (var x = 0; x < Files.Count - 1; x++)
-        {
-            var file = Files[x];
-            var fullPath = Folder + file.RelativePath;
-            var texRef = TextureRef.FromFile(fullPath, file.Format);
-            var texture = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data, Usage.Dynamic, Pool.Default);
-            if (texRef.ShouldBeCached())
-            {
-                var cache = TextureCacheService.Instance;
-                cache?.QueueStore(fullPath, texture);
-            }
 
-            Textures.Add(texture);
-        }
-        
+        if (CanLoadFromCache())
+            PreloadFromTextureCache(device);
+        else
+            PreLoadFromFilesAndCache(device);
+
         _loaded = true;
     }
 
@@ -177,20 +178,24 @@ public class AnimatedTexture : IDisposable
 
     private bool TryLoad()
     {
-        var files = Directory.GetFiles(Folder, "*.*", SearchOption.TopDirectoryOnly);
-        Files     = new List<AnimatedTextureFile>(files.Length);
-        _minId    = new List<int>(files.Length);
+        DirectorySearcher.TryGetDirectoryContents(Folder, out var files, out var directories);
+
+        Files     = new List<AnimatedTextureFile>(files.Count);
+        _minId    = new List<int>(files.Count);
         Textures  = new List<SharpDX.Direct3D9.Texture>();
 
         foreach (var file in files)
         {
-            var format = file.GetTextureFormatFromFileName();
+            var format = file.FullPath.GetTextureFormatFromFileName();
             if (format == TextureFormat.Unknown)
                 continue;
 
-            var fullPath = Path.GetFullPath(file);
+            var fullPath = Path.GetFullPath(file.FullPath);
             var relativePath = fullPath.Substring(Folder.Length);
             Files.Add(new AnimatedTextureFile(relativePath, format));
+
+            if (file.LastWriteTime > _newestFileTime)
+                _newestFileTime = file.LastWriteTime;
         }
 
         // Sort
@@ -206,5 +211,75 @@ public class AnimatedTexture : IDisposable
         _modulo = _minId[^1] + 1;
         _lastIndex = 0;
         return Files.Count > 0;
+    }
+
+
+    private void PreLoadFromFilesAndCache(Device device)
+    {
+        PreloadFromFiles(device);
+        CreateTextureCacheFile();
+    }
+
+    private void PreloadFromFiles(Device device)
+    {
+        // Load all files.
+        for (var x = 0; x < Files.Count - 1; x++)
+        {
+            var file = Files[x];
+            var fullPath = Folder + file.RelativePath;
+            var texRef = TextureRef.FromFileUncached(fullPath, file.Format);
+            var texture = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data, Usage.Dynamic, Pool.Default);
+            Textures.Add(texture);
+        }
+    }
+
+    private unsafe void PreloadFromTextureCache(Device device)
+    {
+        var data = TextureCompression.PickleFromFile(CachePath);
+        using var reader = new AnimatedTextureCacheReader(data);
+
+        while (reader.TryGetNextFile(out int size, out byte* dataPtr))
+        {
+            var unmangedStream = new DataStream((IntPtr)dataPtr, size, true, true);
+            var texture = SharpDX.Direct3D9.Texture.FromStream(device, unmangedStream, Usage.Dynamic, Pool.Default);
+            Textures.Add(texture);
+        }
+    }
+
+    private void CreateTextureCacheFile()
+    {
+        // We dump the data using DirectX here because we want the DDS format; as that contains mipmaps.
+        // If the source file was not a DDS file (in which case you should yell at the mod creator!)
+        // then we will at least have mipmaps.
+        if (Textures.Count <= 1)
+            return;
+
+        var cacheFiles = new List<byte[]>(Textures.Count - 1);
+        for (int x = 1; x < Textures.Count; x++)
+        {
+            var texture = Textures[x];
+            using var stream = BaseTexture.ToStream(texture, ImageFileFormat.Dds);
+            cacheFiles.Add(stream.ReadRange<byte>((int)stream.RemainingLength));
+        }
+
+        using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 1);
+        foreach (var file in cacheFiles)
+            cacheWriter.AddFile(file);
+
+        cacheWriter.Finish();
+        Directory.CreateDirectory(Path.GetDirectoryName(CachePath));
+        TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan());
+    }
+
+    private bool CanLoadFromCache()
+    {
+        try
+        {
+            return File.GetLastWriteTimeUtc(CachePath) > _newestFileTime;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 }
