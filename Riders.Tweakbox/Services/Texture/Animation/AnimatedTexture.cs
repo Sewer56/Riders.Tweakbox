@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Data;
 using Riders.Tweakbox.Misc.Log;
@@ -40,6 +42,8 @@ public class AnimatedTexture : IDisposable
 
     // Cache Related Parameters
     private DateTime _newestFileTime;
+    private CancellationTokenSource _preloadFromCacheToken;
+    private Task _preloadFromCacheTask;
 
     private AnimatedTexture() { }
 
@@ -48,6 +52,8 @@ public class AnimatedTexture : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        _preloadFromCacheToken?.Cancel();
+        _preloadFromCacheTask?.Wait();
         foreach (var texture in Textures)
             texture?.Dispose();
 
@@ -89,11 +95,19 @@ public class AnimatedTexture : IDisposable
         Textures.Add(new SharpDX.Direct3D9.Texture((IntPtr)firstTexReference));
 
         if (CanLoadFromCache())
-            PreloadFromTextureCache(device);
+        {
+            _preloadFromCacheToken = new CancellationTokenSource();
+            _preloadFromCacheTask = Task.Run(() =>
+            {
+                PreloadFromTextureCache(device, _preloadFromCacheToken.Token);
+                _loaded = true;
+            });
+        }
         else
+        {
             PreLoadFromFilesAndCache(device);
-
-        _loaded = true;
+            _loaded = true;
+        }
     }
 
     /// <summary>
@@ -102,6 +116,10 @@ public class AnimatedTexture : IDisposable
     /// <param name="currentFrame">The current rendering frame.</param>
     public unsafe void* GetTextureForFrame(int currentFrame)
     {
+        // Fallback for when texture still loading.
+        if (!_loaded)
+            return (void*)Textures[0].NativePointer;
+
         currentFrame %= _modulo;
         int currentIndex = _lastIndex;
         int maxIndex = _minId.Count - 1;
@@ -233,12 +251,12 @@ public class AnimatedTexture : IDisposable
         }
     }
 
-    private unsafe void PreloadFromTextureCache(Device device)
+    private unsafe void PreloadFromTextureCache(Device device, CancellationToken _asyncLoadToken)
     {
         var data = TextureCompression.PickleFromFile(CachePath);
         using var reader = new AnimatedTextureCacheReader(data);
 
-        while (reader.TryGetNextFile(out int size, out byte* dataPtr))
+        while (!_asyncLoadToken.IsCancellationRequested && reader.TryGetNextFile(out int size, out byte* dataPtr))
         {
             var unmangedStream = new DataStream((IntPtr)dataPtr, size, true, true);
             var texture = SharpDX.Direct3D9.Texture.FromStream(device, unmangedStream, Usage.Dynamic, Pool.Default);
@@ -262,13 +280,17 @@ public class AnimatedTexture : IDisposable
             cacheFiles.Add(stream.ReadRange<byte>((int)stream.RemainingLength));
         }
 
-        using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 1);
-        foreach (var file in cacheFiles)
-            cacheWriter.AddFile(file);
+        // Silently Cache and Compress
+        Task.Run(() =>
+        {
+            using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 1);
+            foreach (var file in cacheFiles)
+                cacheWriter.AddFile(file);
 
-        cacheWriter.Finish();
-        Directory.CreateDirectory(Path.GetDirectoryName(CachePath));
-        TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan());
+            cacheWriter.Finish();
+            Directory.CreateDirectory(Path.GetDirectoryName(CachePath));
+            TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan());
+        });
     }
 
     private bool CanLoadFromCache()
