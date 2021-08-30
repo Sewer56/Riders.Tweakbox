@@ -15,6 +15,8 @@ namespace Riders.Tweakbox.Services.Texture.Animation;
 
 public class AnimatedTexture : IDisposable
 {
+    private const int MinFilesBeforeArchiveCache = 10;
+
     /// <summary>
     /// The folder where the texture set resides.
     /// </summary>
@@ -105,7 +107,7 @@ public class AnimatedTexture : IDisposable
         }
         else
         {
-            PreLoadFromFilesAndCache(device);
+            PreLoadFromFilesAndCache(device, ShouldCache());
             _loaded = true;
         }
     }
@@ -232,21 +234,28 @@ public class AnimatedTexture : IDisposable
     }
 
 
-    private void PreLoadFromFilesAndCache(Device device)
+    private void PreLoadFromFilesAndCache(Device device, bool shouldCacheArchive)
     {
-        PreloadFromFiles(device);
-        CreateTextureCacheFile();
+        PreloadFromFiles(device, shouldCacheArchive);
+        if (shouldCacheArchive)
+            CreateTextureCacheFile();
     }
 
-    private void PreloadFromFiles(Device device)
+    private void PreloadFromFiles(Device device, bool cacheArchiveInsteadOfFile)
     {
         // Load all files.
         for (var x = 0; x < Files.Count - 1; x++)
         {
             var file = Files[x];
             var fullPath = Folder + file.RelativePath;
-            var texRef = TextureRef.FromFileUncached(fullPath, file.Format);
+            var texRef  = cacheArchiveInsteadOfFile ? TextureRef.FromFileUncached(fullPath, file.Format) : TextureRef.FromFile(fullPath, file.Format);
             var texture = SharpDX.Direct3D9.Texture.FromMemory(device, texRef.Data, Usage.Dynamic, Pool.Default);
+            if (!cacheArchiveInsteadOfFile && texRef.ShouldBeCached())
+            {
+                var cache = TextureCacheService.Instance;
+                cache?.QueueStore(fullPath, texture);
+            }
+
             Textures.Add(texture);
         }
     }
@@ -292,6 +301,11 @@ public class AnimatedTexture : IDisposable
             TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan());
         });
     }
+
+    /// <summary>
+    /// Returns true if a list of textures should be cached; else false.
+    /// </summary>
+    private bool ShouldCache() => Files.Count >= MinFilesBeforeArchiveCache;
 
     private bool CanLoadFromCache()
     {
