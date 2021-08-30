@@ -10,6 +10,8 @@ public class AnimatedTextureService : ISingletonService
 {
     private Dictionary<IntPtr, AnimatedTexture> _animatedTextures = new Dictionary<IntPtr, AnimatedTexture>();
 
+
+
     /// <summary>
     /// Starts tracking an <see cref="AnimatedTexture"/> returned from <see cref="TextureService.TryGetData"/>.
     /// </summary>

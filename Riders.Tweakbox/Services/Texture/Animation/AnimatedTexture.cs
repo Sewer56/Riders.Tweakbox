@@ -1,16 +1,11 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using K4os.Compression.LZ4;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Data;
 using Riders.Tweakbox.Misc.Log;
-using Riders.Tweakbox.Misc.Pointers;
-using Riders.Tweakbox.Services.Texture.Animation;
 using Riders.Tweakbox.Services.Texture.Enums;
 using Riders.Tweakbox.Services.Texture.Structs;
 using SharpDX;
@@ -19,7 +14,6 @@ namespace Riders.Tweakbox.Services.Texture.Animation;
 
 public class AnimatedTexture : IDisposable
 {
-    private const int MinFilesBeforeArchiveCache = 10;
 
     /// <summary>
     /// The folder where the texture set resides.
@@ -53,6 +47,7 @@ public class AnimatedTexture : IDisposable
 
     // Misc
     private static Logger _log = new Logger(LogCategory.TextureLoad);
+    private static Logger _logDefault = new Logger(LogCategory.Default);
 
     private AnimatedTexture() { }
 
@@ -102,7 +97,7 @@ public class AnimatedTexture : IDisposable
         var device = IoC.Get<Device>();
         Textures[0] = new SharpDX.Direct3D9.Texture((IntPtr)firstTexReference);
 
-        if (CanLoadFromCache())
+        if (AnimatedTextureCacheTools.CanLoadFromCache(CachePath, _newestFileTime))
         {
             _preloadFromCacheToken = new CancellationTokenSource();
             _preloadFromCacheTask = Task.Run(() =>
@@ -113,7 +108,7 @@ public class AnimatedTexture : IDisposable
         }
         else
         {
-            PreLoadFromFilesAndCache(device, ShouldCache());
+            PreLoadFromFilesAndCache(device, AnimatedTextureCacheTools.ShouldCache(Files.Count));
             _loaded = true;
         }
     }
@@ -237,9 +232,19 @@ public class AnimatedTexture : IDisposable
 
         _modulo = _minId[^1] + 1;
         _lastIndex = 0;
+        ThrowPerformanceWarningIfNeeded();
         return Files.Count > 0;
     }
 
+    private void ThrowPerformanceWarningIfNeeded()
+    {
+        if (AnimatedTextureCacheTools.ShouldGivePerfWarning(Files.Count, Files[0].Format))
+            _logDefault.WriteLine((string)$"[{nameof(AnimatedTexture)}] !!PERFORMANCE WARNING!!\n" +
+                                  $"Animated texture with many frames ({Files.Count}) is using non-optimal format {Files[0].Format}.\n" +
+                                  $"This will use a lot of VRAM leading to performance issues.\n" +
+                                  $"Please optimize your textures: https://sewer56.dev/Riders.Tweakbox/optimizing-textures/ \n" +
+                                  $"Path: {Folder}");
+    }
 
     private void PreLoadFromFilesAndCache(Device device, bool shouldCacheArchive)
     {
@@ -271,26 +276,13 @@ public class AnimatedTexture : IDisposable
 
     private unsafe void PreloadFromTextureCache(Device device, CancellationToken _asyncLoadToken)
     {
-        var data = TextureCompression.PickleFromFile(CachePath);
-        using var reader = new AnimatedTextureCacheReader(data);
-
-        if (reader.FileCount != Files.Count - 1)
+        if (!AnimatedTextureCacheTools.TryLoadFromCacheFile(device, CachePath, Files.Count - 1, Textures, 1, _asyncLoadToken))
         {
-            _log.WriteLine($"[{nameof(AnimatedTexture)}] File Count In Cache {reader.FileCount} Does Not Match Actual Count {Files.Count - 1}. Loading using fallback.");
-            PreLoadFromFilesAndCache(device, ShouldCache());
-            return;
-        }
-        
-        int count = 1;
-        while (reader.TryGetNextFile(out int size, out byte* dataPtr))
-        {
-            var unmangedStream = new DataStream((IntPtr)dataPtr, size, true, true);
-            Textures[count++] = SharpDX.Direct3D9.Texture.FromStream(device, unmangedStream, Usage.None, Pool.Default);
-
-            if (_asyncLoadToken.IsCancellationRequested)
-                return;
+            _log.WriteLine($"[{nameof(AnimatedTexture)}] File Count In Cache Does Not Match Actual Count {Files.Count - 1}. Loading using fallback.");
+            PreLoadFromFilesAndCache(device, AnimatedTextureCacheTools.ShouldCache(Files.Count));
         }
     }
+
     private void CreateTextureCacheFile()
     {
         // We dump the data using DirectX here because we want the DDS format; as that contains mipmaps.
@@ -308,32 +300,6 @@ public class AnimatedTexture : IDisposable
         }
 
         // Silently Cache and Compress
-        Task.Run(() =>
-        {
-            using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 16, cacheFiles.Count);
-            foreach (var file in cacheFiles)
-                cacheWriter.TryWriteFile(file);
-
-            cacheWriter.Finish();
-            Directory.CreateDirectory(Path.GetDirectoryName(CachePath));
-            TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan(), LZ4Level.L11_OPT);
-        });
-    }
-
-    /// <summary>
-    /// Returns true if a list of textures should be cached; else false.
-    /// </summary>
-    private bool ShouldCache() => Files.Count >= MinFilesBeforeArchiveCache;
-
-    private bool CanLoadFromCache()
-    {
-        try
-        {
-            return File.GetLastWriteTimeUtc(CachePath) > _newestFileTime;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
+        AnimatedTextureCacheTools.QueueCreateArchive(cacheFiles, CachePath);
     }
 }
