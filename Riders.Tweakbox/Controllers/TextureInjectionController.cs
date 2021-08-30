@@ -129,7 +129,7 @@ public unsafe class TextureInjectionController : IController
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
     {
-        if (!_d3dController.IsRidersDevice(devicepointer) || !_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
+        if (!_animatedTextureService.TryGetAnimatedTexture(texture, *State.TotalFrameCounter, out var newTexture))
             return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)texture);
 
         return _setTextureHook.OriginalFunction.Value.Invoke(devicepointer, stage, (Void*)newTexture);
