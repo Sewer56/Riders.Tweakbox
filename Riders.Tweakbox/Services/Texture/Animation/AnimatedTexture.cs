@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using K4os.Compression.LZ4;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Data;
 using Riders.Tweakbox.Misc.Log;
@@ -95,7 +97,7 @@ public class AnimatedTexture : IDisposable
     {
         if (_loaded)
             return;
-
+        
         var device = IoC.Get<Device>();
         Textures.Add(new SharpDX.Direct3D9.Texture((IntPtr)firstTexReference));
 
@@ -308,7 +310,7 @@ public class AnimatedTexture : IDisposable
 
             cacheWriter.Finish();
             Directory.CreateDirectory(Path.GetDirectoryName(CachePath));
-            TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan());
+            TextureCompression.PickleToFile(CachePath, cacheWriter.GetSpan(), LZ4Level.L11_OPT);
         });
     }
 

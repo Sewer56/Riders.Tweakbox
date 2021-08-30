@@ -47,19 +47,21 @@ public unsafe class TextureCompression
     }
 
     /// <summary>
-    /// Writes a DDS.LZ4 to a given file path.
+    /// Writes a DDS.LZ4 to an array.
     /// </summary>
-    /// <param name="filePath">The file path.</param>
     /// <param name="data">The data to compress.</param>
-    public static void PickleToStream(Stream stream, Span<byte> data)
+    /// <param name="level">The compression level.</param>
+    public static Span<byte> PickleToArray(Span<byte> data, LZ4Level level = LZ4Level.L12_MAX)
     {
-        var compressedData = GC.AllocateUninitializedArray<byte>(data.Length);
-        var encoded = LZ4Codec.Encode(data, compressedData, LZ4Level.L12_MAX);
-        
+        const int headerSize = 8;
+        var compressedData = GC.AllocateUninitializedArray<byte>(data.Length + headerSize);
+        int encoded = LZ4Codec.Encode(data, compressedData.AsSpan(headerSize), level);
+
         // Write Compressed and Uncompressed.
-        stream.Write<int>(encoded);
-        stream.Write<int>(data.Length);
-        stream.Write(compressedData.AsSpan().Slice(0, encoded));
+        using var memStream = new MemoryStream(compressedData);
+        memStream.Write<int>(encoded);
+        memStream.Write<int>(data.Length);
+        return compressedData.AsSpan(0, encoded + headerSize);
     }
 
     /// <summary>
@@ -67,9 +69,23 @@ public unsafe class TextureCompression
     /// </summary>
     /// <param name="filePath">The file path.</param>
     /// <param name="data">The data to compress.</param>
-    public static void PickleToFile(string filePath, Span<byte> data)
+    /// <param name="level">The compression level.</param>
+    public static void PickleToStream(Stream stream, Span<byte> data, LZ4Level level = LZ4Level.L12_MAX)
     {
+        var result = PickleToArray(data, level);
+        stream.Write(result);
+    }
+
+    /// <summary>
+    /// Writes a DDS.LZ4 to a given file path.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="data">The data to compress.</param>
+    /// <param name="level">The compression level.</param>
+    public static void PickleToFile(string filePath, Span<byte> data, LZ4Level level = LZ4Level.L12_MAX)
+    {
+        var result = PickleToArray(data, level);
         using var fileStream = new FileStream(filePath, FileMode.Create);
-        PickleToStream(fileStream, data);
+        fileStream.Write(result);
     }
 }
