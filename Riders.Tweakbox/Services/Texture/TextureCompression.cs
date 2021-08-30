@@ -6,7 +6,7 @@ using Reloaded.Memory.Streams;
 using Riders.Tweakbox.Services.Texture.Enums;
 namespace Riders.Tweakbox.Services.Texture;
 
-public class TextureCompression
+public unsafe class TextureCompression
 {
     /// <summary>
     /// Decompresses a DDS.LZ4 from a given file path.
@@ -18,22 +18,15 @@ public class TextureCompression
     /// Decompresses a DDS.LZ4 from a given file path.
     /// </summary>
     /// <param name="stream">The file path.</param>
-    public static byte[] PickleFromStream(Stream stream)
+    public static byte[] PickleFromMemory(byte* data, int dataLength)
     {
-        // Stack storage.
-        Span<int> intSpan = stackalloc int[2];
-
         // Read Header
-        stream.Read(MemoryMarshal.AsBytes(intSpan));
-        var numUncompressed = intSpan[1];
-        var numEncoded = intSpan[0];
+        var numEncoded = *(int*)(data);
+        var numUncompressed = *(int*)(data + 4);
 
         // Read Data
-        var compressedData = GC.AllocateUninitializedArray<byte>(numEncoded);
-        stream.Read(compressedData.AsSpan());
-
         var uncompressedData = GC.AllocateUninitializedArray<byte>(numUncompressed);
-        LZ4Codec.Decode(compressedData.AsSpan(), uncompressedData.AsSpan());
+        LZ4Codec.Decode(new ReadOnlySpan<byte>(data + 8, dataLength - 8), uncompressedData.AsSpan());
         return uncompressedData;
     }
 
@@ -44,7 +37,13 @@ public class TextureCompression
     public static byte[] PickleFromFile(string filePath)
     {
         using var fileStream = new FileStream(filePath, FileMode.Open);
-        return PickleFromStream(fileStream);
+        var fileData = GC.AllocateUninitializedArray<byte>((int)fileStream.Length);
+        fileStream.Read(fileData.AsSpan());
+
+        fixed (byte* dataPtr = fileData)
+        {
+            return PickleFromMemory(dataPtr, fileData.Length);
+        }
     }
 
     /// <summary>
