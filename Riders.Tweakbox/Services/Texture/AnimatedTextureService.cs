@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.Texture.Animation;
 using Riders.Tweakbox.Services.Texture.Structs;
@@ -40,11 +41,14 @@ public class AnimatedTextureService : ISingletonService
     /// <param name="currentFrame">The current in-game frame.</param>
     /// <param name="newTexture">The new texture reference to use.</param>
     /// <returns></returns>
+    [SkipLocalsInit]
     public unsafe bool TryGetAnimatedTexture(void* firstTexReference, int currentFrame, out void* newTexture)
     {
-        newTexture = default;
         if (!_animatedTextures.TryGetValue((IntPtr)firstTexReference, out var animated))
+        {
+            newTexture = default;
             return false;
+        }
 
         newTexture = animated.GetTextureForFrame(currentFrame);
         return true;

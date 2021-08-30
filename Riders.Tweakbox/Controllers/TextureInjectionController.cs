@@ -126,6 +126,7 @@ public unsafe class TextureInjectionController : IController
         }
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private IntPtr SetTextureHookInstance(IntPtr devicepointer, int stage, void* texture)
     {
