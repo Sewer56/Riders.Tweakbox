@@ -15,6 +15,16 @@ namespace Riders.Tweakbox.Services.Texture.Animation
         private int* _currentPointer;
 
         /// <summary>
+        /// The version of this archive file.
+        /// </summary>
+        public int Version { get; private set; }
+
+        /// <summary>
+        /// The file count for this archive file.
+        /// </summary>
+        public int FileCount { get; private set; }
+
+        /// <summary>
         /// Creates an instance of an animated texture cache reader.
         /// </summary>
         /// <param name="data">The data to read the cache contents from.</param>
@@ -23,6 +33,11 @@ namespace Riders.Tweakbox.Services.Texture.Animation
             _data = data;
             _handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             _currentPointer = (int*)_handle.AddrOfPinnedObject();
+
+            // Read Header
+            Version   = *_currentPointer;
+            FileCount = *(_currentPointer + 1);
+            _currentPointer += 2;
         }
 
         /// <summary>

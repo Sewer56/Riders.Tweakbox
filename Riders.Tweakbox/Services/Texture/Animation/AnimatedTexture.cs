@@ -47,6 +47,9 @@ public class AnimatedTexture : IDisposable
     private CancellationTokenSource _preloadFromCacheToken;
     private Task _preloadFromCacheTask;
 
+    // Misc
+    private static Logger _log = new Logger(LogCategory.TextureLoad);
+
     private AnimatedTexture() { }
 
     ~AnimatedTexture() => Dispose();
@@ -54,7 +57,7 @@ public class AnimatedTexture : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _preloadFromCacheToken?.Cancel();
+        _preloadFromCacheToken?.Dispose();
         _preloadFromCacheTask?.Wait();
         foreach (var texture in Textures)
             texture?.Dispose();
@@ -181,7 +184,7 @@ public class AnimatedTexture : IDisposable
         }
         catch (Exception e)
         {
-            Log.WriteLine($"Failed to make AnimatedTexture: Folder | {folderPath} | {e.Message}");
+            _log.WriteLine($"[{nameof(AnimatedTexture)}] Failed to make AnimatedTexture: Folder | {folderPath} | {e.Message}");
             texture = null;
             return false;
         }
@@ -265,6 +268,13 @@ public class AnimatedTexture : IDisposable
         var data = TextureCompression.PickleFromFile(CachePath);
         using var reader = new AnimatedTextureCacheReader(data);
 
+        if (reader.FileCount != Files.Count - 1)
+        {
+            _log.WriteLine($"[{nameof(AnimatedTexture)}] File Count In Cache {reader.FileCount} Does Not Match Actual Count {Files.Count - 1}. Loading using fallback.");
+            PreLoadFromFilesAndCache(device, ShouldCache());
+            return;
+        }
+
         while (!_asyncLoadToken.IsCancellationRequested && reader.TryGetNextFile(out int size, out byte* dataPtr))
         {
             var unmangedStream = new DataStream((IntPtr)dataPtr, size, true, true);
@@ -292,9 +302,9 @@ public class AnimatedTexture : IDisposable
         // Silently Cache and Compress
         Task.Run(() =>
         {
-            using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 1);
+            using var cacheWriter = new AnimatedTextureCacheWriter((cacheFiles[0].Length * cacheFiles.Count) + 16, cacheFiles.Count);
             foreach (var file in cacheFiles)
-                cacheWriter.AddFile(file);
+                cacheWriter.TryWriteFile(file);
 
             cacheWriter.Finish();
             Directory.CreateDirectory(Path.GetDirectoryName(CachePath));

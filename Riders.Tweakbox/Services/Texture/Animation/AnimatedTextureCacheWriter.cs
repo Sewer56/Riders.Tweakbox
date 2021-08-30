@@ -22,15 +22,30 @@ namespace Riders.Tweakbox.Services.Texture.Animation
         /// Constant size that marks the end of file.
         /// </summary>
         public const int EndOfFile = -1;
+
+        /// <summary>
+        /// Current version of the cache file.
+        /// </summary>
+        public const int CurrentVersion = 1;
+
         private MemoryStream _stream;
+        private int _fileCount;
+        private int _numFiles;
 
         /// <summary>
         /// Initinalizes a cache writer given an estimate complete file size.
         /// </summary>
         /// <param name="estimatedSize">Estimated total size of the data.</param>
-        public AnimatedTextureCacheWriter(int estimatedSize)
+        /// <param name="numFiles">The number of files that will be contained in this archive.</param>
+        public AnimatedTextureCacheWriter(int estimatedSize, int numFiles)
         {
             _stream = new MemoryStream(estimatedSize);
+            _numFiles = numFiles;
+            _fileCount = 0;
+
+            // Write Header
+            _stream.Write<int>(CurrentVersion);
+            _stream.Write<int>(_numFiles);
         }
 
         public void Dispose() => _stream?.Dispose();
@@ -38,11 +53,17 @@ namespace Riders.Tweakbox.Services.Texture.Animation
         /// <summary>
         /// Adds a file to the stream.
         /// </summary>
-        /// <param name="data"></param>
-        public void AddFile(Span<byte> data)
+        public bool TryWriteFile(Span<byte> data)
         {
-            _stream.Write<int>(data.Length);
-            _stream.Write(data);
+            bool success = _fileCount < _numFiles;
+            if (success)
+            {
+                _stream.Write<int>(data.Length);
+                _stream.Write(data);
+                _fileCount++;
+            }
+
+            return success;
         }
 
         /// <summary>
