@@ -102,12 +102,13 @@ internal unsafe class CustomGearUiController
         {
             "use32",
 
+            $"{utilities.PushCdeclCallerSavedRegisters()}", // Save registers
+
             // Get player ptr
             "lea eax, [ecx+ecx*8]",
             "shl eax, 9",
-            "add eax, 0x6A4B80",
+            $"add eax, 0x{(long)Sewer56.SonicRiders.API.Player.Players.Pointer:X}",
 
-            $"{utilities.PushCdeclCallerSavedRegisters()}", // Save registers
             "push esi", // 2d object
             "push eax", // player ptr
             $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInGearselHook, out _, false)}",
@@ -121,13 +122,19 @@ internal unsafe class CustomGearUiController
             "use32",
 
             $"{utilities.PushCdeclCallerSavedRegisters()}", // Save registers
+
+            // Get player ptr
+            "lea eax, [edx+edx*8]",
+            "shl eax, 9",
+            $"add eax, 0x{(long)Sewer56.SonicRiders.API.Player.Players.Pointer:X}",
+
             "push esi", // 2d object
             "push eax", // player ptr
             $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInCharSelectedHook, out _, false)}",
             $"{utilities.PopCdeclCallerSavedRegisters()}", // Restore registers
         };
 
-        _setEntrySelectionTextureIndexHook = hooks.CreateAsmHook(setTextureIdOnceSelectedHook, 0x461B7A).Activate();
+        _setEntrySelectionTextureIndexHook = hooks.CreateAsmHook(setTextureIdOnceSelectedHook, 0x00461B81).Activate();
 
         // Create Metadata Hook
         string[] createMetadataHook = new[]
