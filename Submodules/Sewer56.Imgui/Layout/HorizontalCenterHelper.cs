@@ -19,7 +19,7 @@ public class HorizontalCenterHelper
     public void Begin(float? availableWidth = null)
     {
         ImGui.NewLine();
-        availableWidth ??= ImGui.GetWindowContentRegionWidth();
+        availableWidth ??= ImGui.GetWindowWidth();
         ImGui.SameLine((availableWidth.Value - LastItemWidth) / 2, 0);
     }
 
