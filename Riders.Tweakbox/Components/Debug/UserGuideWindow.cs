@@ -3,7 +3,7 @@ namespace Riders.Tweakbox.Components.Debug;
 
 public class UserGuideWindow : ComponentBase
 {
-    public override string Name { get; set; } = "User Guide";
+    public override string Name { get; set; } = "Dear ImGui User Guide";
 
     public override void Render()
     {
