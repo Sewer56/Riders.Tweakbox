@@ -68,7 +68,9 @@ internal unsafe class CustomGearUiController
     private Functions.Spani_SABInitFn _initFn = Functions.Initialize2dMetadataFile.GetWrapper();
     private Functions.GetSet_TexFn _loadXvrsFromArchiveFn = Functions.LoadXvrsFromArchive.GetWrapper();
 
-    private IAsmHook _setTextureIndexHook;
+
+    private IAsmHook _setGearTextureIndexHook;
+    private IAsmHook _setEntrySelectionTextureIndexHook;
     private IAsmHook _createMetadataHook;
     private IAsmHook _createXvrsHook;
 
@@ -108,11 +110,24 @@ internal unsafe class CustomGearUiController
             $"{utilities.PushCdeclCallerSavedRegisters()}", // Save registers
             "push esi", // 2d object
             "push eax", // player ptr
-            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexHook, out _, false)}",
+            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInGearselHook, out _, false)}",
             $"{utilities.PopCdeclCallerSavedRegisters()}", // Restore registers
         };
 
-        _setTextureIndexHook = hooks.CreateAsmHook(setTextureIdHook, 0x461756).Activate();
+        _setGearTextureIndexHook = hooks.CreateAsmHook(setTextureIdHook, 0x461756).Activate();
+
+        string[] setTextureIdOnceSelectedHook = new[]
+        {
+            "use32",
+
+            $"{utilities.PushCdeclCallerSavedRegisters()}", // Save registers
+            "push esi", // 2d object
+            "push eax", // player ptr
+            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInCharSelectedHook, out _, false)}",
+            $"{utilities.PopCdeclCallerSavedRegisters()}", // Restore registers
+        };
+
+        _setEntrySelectionTextureIndexHook = hooks.CreateAsmHook(setTextureIdOnceSelectedHook, 0x461B7A).Activate();
 
         // Create Metadata Hook
         string[] createMetadataHook = new[]
@@ -283,7 +298,7 @@ internal unsafe class CustomGearUiController
         return max;
     }
 
-    private void SetCustomTextureIndexHook(Player* player, GearSelSys2DObject* object2d)
+    private void SetCustomTextureIndexInGearselHook(Player* player, GearSelSys2DObject* object2d)
     {
         var gear = player->ExtremeGear;
         if (gear > ExtremeGear.Cannonball)
@@ -291,6 +306,17 @@ internal unsafe class CustomGearUiController
             var gearOffset = (int) (gear - ExtremeGear.Cannonball) - 1;
             object2d->GearTexNo = (ushort)(_iconAllocations.TextureIndex + gearOffset);
             object2d->GearNameTexNo = (ushort)(_nameAllocations.TextureIndex + gearOffset);
+        }
+    }
+
+    private void SetCustomTextureIndexInCharSelectedHook(Player* player, GearSelSys2DObject* object2d)
+    {
+        var gear = player->ExtremeGear;
+        if (gear > ExtremeGear.Cannonball)
+        {
+            var gearOffset = (int)(gear - ExtremeGear.Cannonball) - 1;
+            object2d->PlayerIndexTexNo = (ushort)(_nameAllocations.TextureIndex + gearOffset);
+            // Note: The above assignment assigns the gear name; I'm just lazy to make a new struct.
         }
     }
 
