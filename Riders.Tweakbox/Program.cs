@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime;
 using System.Windows;
 using Reloaded.Hooks.Definitions;
@@ -52,6 +53,10 @@ public class Program : IMod
         // Tweak Garbage Collection.
         GC.Collect();
         GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+
+        // Tweak Process Priority
+        var process = Process.GetCurrentProcess();
+        process.PriorityClass = ProcessPriorityClass.High;
     }
 
     /* Mod loader actions. */
