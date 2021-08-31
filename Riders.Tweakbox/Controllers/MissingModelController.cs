@@ -101,7 +101,7 @@ namespace Riders.Tweakbox.Controllers
                 // Set new fileName
                 var builder = new StringBuilder();
                 builder.Append(fileName.AsSpan(0, 2));
-                builder.Append(replacementModel.ToString());
+                builder.Append(replacementModel.ToString("00"));
 
                 // Any suffix (if available)
                 if (fileName.Length > builder.Length)
