@@ -118,6 +118,10 @@ public unsafe class FramePacingController : IController
         SharedRandom.Instance.Next();
         if (_config.Data.FramePacing)
         {
+            // If the game reset the frame counter, we probably have a good reason like a load screen.
+            if (*State.TotalFrameCounter < _lastFrameCounter)
+                ResetSpeedup();
+
             try
             {
                 _direct3DController.D3dDeviceEx.EndScene();
@@ -128,6 +132,7 @@ public unsafe class FramePacingController : IController
             }
 
             Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold, _config.Data.RemoveFpsCap);
+            _lastFrameCounter = *State.TotalFrameCounter;
             *State.TotalFrameCounter += 1;
 
             if (_resetSpeedup)
