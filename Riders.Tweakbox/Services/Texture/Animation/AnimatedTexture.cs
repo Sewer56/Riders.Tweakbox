@@ -57,7 +57,9 @@ public class AnimatedTexture : IDisposable
     public void Dispose()
     {
         _preloadFromCacheToken?.Dispose();
-        _preloadFromCacheTask?.Wait();
+        try { _preloadFromCacheTask?.Wait(); }
+        catch (Exception) { /* Ignored */ }
+        
         foreach (var texture in Textures)
             texture?.Dispose();
         
