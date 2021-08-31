@@ -1,11 +1,13 @@
 ﻿using Reloaded.Memory.Pointers;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using System;
+using System.Collections.Generic;
 using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
+using Sewer56.Hooks.Utilities;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -41,6 +43,9 @@ internal unsafe class CustomGearCodePatcher
         // Set other useful pointers.
         fixed (ExtremeGear* ptr = &_newGears[0])
             _newGearsPtr = ptr;
+
+        // Patch Branches
+        PatchBranches();
     }
 
     /// <summary>
@@ -145,6 +150,24 @@ internal unsafe class CustomGearCodePatcher
         Player.Gears.Count = newCount;
     }
 
+    private void PatchBranches()
+    {
+        foreach (var branch in PatchOpcodeAddresses)
+        {
+            if (OpcodeShortMap.TryGetValue(*(ushort*)branch, out var replacementShort))
+            {
+                *(ushort*)branch = replacementShort;
+                continue;
+            }
+
+            if (OpcodeByteMap.TryGetValue(*(byte*)branch, out var replacementByte))
+            {
+                *(byte*)branch = replacementByte;
+                continue;
+            }
+        }
+    }
+    
     #region Pointers
     private const int _newGearCount = 255;
 
@@ -162,6 +185,26 @@ internal unsafe class CustomGearCodePatcher
         0x50782B, 0x507831, 0x507837, 0x50783F, 0x50784E, 0x507856
 
         // 0x4B9444: Problems with Tag Mode
+    };
+
+    // Patch total amount of gears available in menu code.
+    private readonly int[] PatchOpcodeAddresses =
+    {
+        // jle -> jbe
+        0x463964, 0x462848, 0x462A18, 0x462BB8, 0x462C98, 0x462EB8, 0x4630B9,
+
+        // movsx (0xBE0F) -> movzx (0xB60F)
+        // Corresponds to ExtremeGearPtrAddresses: Duplicates are here just for clarity.
+        0x408D40, 0x408E20, 0x408F1D, 0x408FB5, 0x414128, 0x41417E, 0x414656, 0x414874, /*    ,*/ 0x447839,
+        0x447A91, 0x447D3A, 0x44C020, 0x450D2A, 0x4609FF, 0x4609FF, 0x460BB4, 0x460D49, 0x461129, /*    */
+        /*     */ 0x462B90, 0x462C60, 0x462C60, 0x462E84, 0x462E84, 0x46307F, 0x46307F, /*     */ /*    */
+        /*     */ /*     */ /*     */ 0x474368, 0x47436C, 0x474479, 0x473660, 0x473664, 0x473668, /*    */
+        /*     */ 0x4B07D0, /*     */ 0x4B7D44, 0x4B942C, 0x4BDE6B, 0x4C9B33, 0x4E18CF, 0x4EC7FB, /*    */
+        /*     */ 0x507820, /*     */ 0x4134F5, 0x4134F5, 0x413F29, 0x413E85, 0x461E55, 0x4B4F0A, 0x4F4230,
+        0x507820, 0x507820, 0x507820, 0x507820, 0x507820, 0x507820,
+
+        /* Extra ones found via Cheat Engine/Debugging */
+        0x4616BC, 0x461B0E, 0x4B9151, 0x50CC60, 0x50CCEF, 0x50CD6E, 0x50C825, 0x50C8B0, 
     };
 
     // All pointers in game code referring to unlocked gear data.
@@ -186,5 +229,36 @@ internal unsafe class CustomGearCodePatcher
         // < 0
         0x462CAD, 0x462ECD, 0x4630CE
     };
+
+
+    // Map to convert signed to unsigned branches
+    private Dictionary<byte, byte> OpcodeByteMap = new Dictionary<byte, byte>()
+    {
+        // jle 0x7E -> jbe 0x76
+        { 0x7E, 0x76 },
+    };
+
+    // Map to convert signed to unsigned branches
+    private Dictionary<ushort, ushort> OpcodeShortMap = new Dictionary<ushort, ushort>()
+    {
+        // movsx -> movzx
+        { 0xBE0F, 0xB60F },
+    };
+
+    /// <summary>
+    /// Pair of register and address to be used in conversion from signed to unsigned.
+    /// </summary>
+    struct SignedToUnsignedAddressRegisterPair
+    {
+        public long Address;
+        public string Register;
+
+        public SignedToUnsignedAddressRegisterPair(long address, string register)
+        {
+            Address = address;
+            Register = register;
+        }
+    }
+
     #endregion
 }
