@@ -49,7 +49,7 @@ public class WelcomeScreenRenderer : IDisposable
             ImGui.TextWrapped("Please note that this project is an active work in progress (alpha build). Features like Netplay can be incomplete, buggy and prone to crashing.");
             ImGui.Spacing();
 
-            Hyperlink.CreateText("Please report crashes and issues using the guidelines provided in the documentation.", "https://sewer56.dev/Riders.Tweakbox/", _hyperlinkColor);
+            Hyperlink.CreateText("Please report crashes and issues using the guidelines provided in the documentation.", "https://sewer56.dev/Riders.Tweakbox/", true, _hyperlinkColor);
 
             // Footer
             ImGui.Spacing();

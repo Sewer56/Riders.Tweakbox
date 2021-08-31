@@ -10,10 +10,13 @@ namespace Sewer56.Imgui.Shell;
 /// </summary>
 public class InformationWindow : IDisposable
 {
-    private const int LogWindowFlags = (int)(ImGuiWindowFlags.ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlags.ImGuiWindowFlagsNoInputs |
-                                             ImGuiWindowFlags.ImGuiWindowFlagsNoMove | ImGuiWindowFlags.ImGuiWindowFlagsNoSavedSettings |
-                                             ImGuiWindowFlags.ImGuiWindowFlagsNoScrollbar | ImGuiWindowFlags.ImGuiWindowFlagsNoNav |
-                                             ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlags.ImGuiWindowFlagsNoFocusOnAppearing);
+    /// <summary>
+    /// The flags used for rendering this window.
+    /// </summary>
+    public ImGuiWindowFlags WindowFlags = (ImGuiWindowFlags.ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlags.ImGuiWindowFlagsNoInputs |
+                                           ImGuiWindowFlags.ImGuiWindowFlagsNoMove | ImGuiWindowFlags.ImGuiWindowFlagsNoSavedSettings |
+                                           ImGuiWindowFlags.ImGuiWindowFlagsNoScrollbar | ImGuiWindowFlags.ImGuiWindowFlagsNoNav |
+                                           ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlags.ImGuiWindowFlagsNoFocusOnAppearing);
 
     /// <summary>
     /// The name of the window.
@@ -102,7 +105,7 @@ public class InformationWindow : IDisposable
     {
         SetWindowPosition();
         ImGui.SetNextWindowSize(Size, (int)ImGuiCond.ImGuiCondAlways);
-        ImGui.Begin(Name, ref _isOpen, LogWindowFlags);
+        ImGui.Begin(Name, ref _isOpen, (int)WindowFlags);
     }
 
     /// <summary>

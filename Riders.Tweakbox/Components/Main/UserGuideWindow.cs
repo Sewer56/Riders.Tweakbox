@@ -1,9 +1,9 @@
 ﻿using DearImguiSharp;
-namespace Riders.Tweakbox.Components.Debug;
+namespace Riders.Tweakbox.Components.Main;
 
 public class UserGuideWindow : ComponentBase
 {
-    public override string Name { get; set; } = "Dear ImGui User Guide";
+    public override string Name { get; set; } = "Menu Help";
 
     public override void Render()
     {

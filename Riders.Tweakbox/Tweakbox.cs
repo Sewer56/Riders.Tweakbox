@@ -13,6 +13,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Universal.Redirector.Interfaces;
+using Riders.Tweakbox.Components.Main;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
 using Riders.Tweakbox.Components.Editors.Gear;
@@ -80,9 +81,11 @@ public class Tweakbox
             {
                 Menus = new List<MenuBarItem>()
                 {
-                    new MenuBarItem("Netplay", new List<IComponent>()
+                    new MenuBarItem("Main", new List<IComponent>()
                     {
-                        Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu))
+                        Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu)),
+                        Benchmark(() => IoC.GetSingleton<UserGuideWindow>(), nameof(UserGuideWindow)),
+                        Benchmark(() => IoC.GetSingleton<AboutMenu>(), nameof(AboutMenu)),
                     }),
                     new MenuBarItem("Settings", new List<IComponent>()
                     {
@@ -100,7 +103,6 @@ public class Tweakbox
                     new MenuBarItem("Debug", new List<IComponent>()
                     {
                         Benchmark(() => IoC.GetSingleton<DemoWindow>(), nameof(DemoWindow)),
-                        Benchmark(() => IoC.GetSingleton<UserGuideWindow>(), nameof(UserGuideWindow)),
                         Benchmark(() => IoC.GetSingleton<ShellTestWindow>(), nameof(ShellTestWindow)),
                         Benchmark(() => IoC.GetSingleton<TaskTrackerWindow>(), nameof(TaskTrackerWindow)),
                         Benchmark(() => IoC.GetSingleton<MemoryDebugWindow>(), nameof(MemoryDebugWindow)),

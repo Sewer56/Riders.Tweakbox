@@ -22,7 +22,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
 {
     public NetplayController Controller = IoC.Get<NetplayController>();
     public new NetplayEditorConfig Config => base.Config;
-    public override string Name { get; set; } = "Netplay Menu";
+    public override string Name { get; set; } = "Netplay";
 
     // Sub-menus.
     public NetplayLobbyMenu LobbyMenu { get; set; }
