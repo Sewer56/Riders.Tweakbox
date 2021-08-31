@@ -28,7 +28,7 @@ public class SinglePlayerObjectLayoutController : IController
             $"{utilities.AssembleAbsoluteCall(() => CheckIfForceSinglePlayerObjectLayout.InvokeIfNotNull(), out _, new []{ "mov eax, 1" }, null, null, "je")}"
         };
 
-        _initializeObjectLayoutHook = SDK.ReloadedHooks.CreateAsmHook(checkIfLoadSinglePlayerLayout, 0x004196E0, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+        _initializeObjectLayoutHook = SDK.ReloadedHooks.CreateAsmHook(checkIfLoadSinglePlayerLayout, 0x4196E5, AsmHookBehaviour.ExecuteFirst).Activate();
         CheckIfForceSinglePlayerObjectLayout += CheckIfLoadSinglePlayerObjectLayout;
     }
 
