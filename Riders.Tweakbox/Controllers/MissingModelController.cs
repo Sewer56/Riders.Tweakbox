@@ -91,6 +91,10 @@ namespace Riders.Tweakbox.Controllers
 
         private void OverrideCharacterImpl(Player* playerptr)
         { 
+            // Ignore unjoined players
+            if ((sbyte)playerptr->ExtremeGear == -1)
+                return;
+            
             var gear = (ExtremeGear*) Sewer56.SonicRiders.API.Player.Gears.GetPointerToElement((int)playerptr->ExtremeGear);
             if (gear->GearModel == ExtremeGearModel.ChaosEmerald)
                 playerptr->Character = Characters.SuperSonic;
