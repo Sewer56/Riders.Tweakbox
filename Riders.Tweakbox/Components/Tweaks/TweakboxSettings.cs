@@ -57,6 +57,9 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             RenderMiscMenu(data);
 
+        if (ImGui.CollapsingHeaderTreeNodeFlags("Controls", 0))
+            RenderControls(data);
+
         // Restore item width
         ImGui.PopItemWidth();
     }
@@ -199,6 +202,14 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
                             "This value affects maximum file sizes allowed for native game models, textures etc.");
     }
 
+    private void RenderControls(TweakboxConfig.Internal data)
+    {
+        ImGui.PushItemWidth(ImGui.GetFontSize() * -6);
+        Reflection.MakeControlEnum(ref data.InputMode, "Input Mode");
+        if (data.InputMode == TweakboxConfig.GameInput.Toggle)
+            Reflection.MakeControlEnum(ref data.InputToggleKey, "Toggle Key");
+        ImGui.PopItemWidth();
+    }
     private bool IsFullscreenSupported()
     {
         foreach (var mode in _d3dController.Modes)

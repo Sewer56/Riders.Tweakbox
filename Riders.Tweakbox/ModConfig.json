@@ -10,7 +10,7 @@
   "ModR2RManagedDll64": "x64/Riders.Tweakbox.dll",
   "ModNativeDll32": "",
   "ModNativeDll64": "",
-  "ModDependencies": [ "reloaded.sharedlib.hooks", "Reloaded.Universal.DInputPleaseCooperate", "reloaded.universal.redirector", "criware.filesystem.hook" ],
+  "ModDependencies": [ "reloaded.sharedlib.hooks", "Reloaded.Universal.DInputPleaseCooperate", "reloaded.universal.redirector", "criware.filesystem.hook", "Riders.Controller.Hook" ],
   "OptionalDependencies": [],
   "SupportedAppId": [ "sonicriders.exe" ]
 }

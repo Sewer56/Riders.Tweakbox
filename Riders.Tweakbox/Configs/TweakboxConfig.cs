@@ -10,6 +10,8 @@ using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.Imgui.Misc;
+
 namespace Riders.Tweakbox.Configs;
 
 public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Internal>
@@ -48,6 +50,9 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
         public bool RemoveFpsCap = false;
         public VoiceLanguage VoiceLanguage = VoiceLanguage.English;
         public MessageLanguage Language = MessageLanguage.English;
+
+        public GameInput InputMode = GameInput.WhenNoWindowActive;
+        public VK InputToggleKey = VK.F10;
     }
 
     public enum MemoryLimit : int
@@ -56,5 +61,12 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
         MB128 = 0x7A12000,
         MB256 = 0xF424000,
         MB512 = 0x1E848000
+    }
+
+    public enum GameInput
+    {
+        Always,
+        Toggle,
+        WhenNoWindowActive
     }
 }

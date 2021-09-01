@@ -13,6 +13,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Universal.Redirector.Interfaces;
+using Riders.Controller.Hook.Interfaces;
 using Riders.Tweakbox.Components.Main;
 using Riders.Tweakbox.Components.Debug;
 using Riders.Tweakbox.Components.Debug.Log;
@@ -41,18 +42,19 @@ public class Tweakbox
     public IReloadedHooks Hooks { get; private set; }
     public IReloadedHooksUtilities HooksUtilities { get; private set; }
     public IRedirectorController Redirector { get; private set; }
-
-    public bool InputsEnabled { get; private set; } = true;
+    
     public bool IsEnabled { get; private set; } = true;
     public bool IsReady { get; private set; } = false;
     public MenuBar MenuBar { get; private set; }
     public List<IController> Controllers { get; private set; } = new List<IController>();
-    public IHook<Functions.CdeclReturnIntFn> BlockInputsHook { get; private set; }
+    public event Action OnFrame;
+
     public event Action OnInitialized;
 
     private WelcomeScreenRenderer _welcomeScreenRenderer;
     private DllNotifier _notifier;
     private IModLoader _modLoader;
+    private IControllerHook _controllerHook;
     private Logger _log = new Logger(LogCategory.Default);
 
     /* Creation & Disposal */
@@ -61,18 +63,17 @@ public class Tweakbox
     /// <summary>
     /// Creates a new instance of Riders Tweakbox.
     /// </summary>
-    public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities,
-        IRedirectorController redirector, IModLoader modLoader)
+    public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IRedirectorController redirector, IModLoader modLoader, IControllerHook controllerHook)
     {
         var modFolder = modLoader.GetDirectoryForModId("Riders.Tweakbox");
         var tweakBox = new Tweakbox();
 
         tweakBox._notifier = new DllNotifier(hooks);
         tweakBox._modLoader = modLoader;
+        tweakBox._controllerHook = controllerHook;
         tweakBox.Hooks = hooks;
         tweakBox.HooksUtilities = hooksUtilities;
         tweakBox.Redirector = redirector;
-        tweakBox.BlockInputsHook = Functions.GetInputs.Hook(tweakBox.BlockGameInputsIfEnabled).Activate();
         tweakBox.InitializeIoC(modFolder);
 
 #pragma warning disable 4014
@@ -118,8 +119,7 @@ public class Tweakbox
                 },
                 Text = new List<string>()
                 {
-                    "F11: Show/Hide Menus",
-                    "F10: Enable/Disable Game Input"
+                    "F11: Show/Hide Menus"
                 }
             };
         }).ConfigureAwait(false);
@@ -146,6 +146,7 @@ public class Tweakbox
         var io = new IO(modFolder);
         IoC.Kernel.Bind<IO>().ToConstant(io);
         IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
+        IoC.Kernel.Bind<IControllerHook>().ToConstant(_controllerHook);
         IoC.Kernel.Bind<IModLoader>().ToConstant(_modLoader);
         IoC.Kernel.Bind<IReloadedHooks>().ToConstant(Hooks);
         IoC.Kernel.Bind<Reloaded.Hooks.Definitions.IReloadedHooks>().ToConstant(Hooks);
@@ -210,15 +211,6 @@ public class Tweakbox
                                                                          "Please run from Reloaded as admin at least once, thanks!");
     }
 
-    private int BlockGameInputsIfEnabled()
-    {
-        // Skips game controller input obtain function is menu is open.
-        if (InputsEnabled)
-            return BlockInputsHook.OriginalFunction();
-
-        return 0;
-    }
-
     /* Implementation */
     private void Render()
     {
@@ -232,21 +224,13 @@ public class Tweakbox
             if (ImGui.IsKeyPressed((int)VK.F11, false))
                 IsEnabled = !IsEnabled;
 
-            if (ImGui.IsKeyPressed((int)VK.F10, false))
-                InputsEnabled = !InputsEnabled;
-
-            // Update Menu Bar Text
-            if (InputsEnabled)
-                MenuBar.Text[1] = "F10: Disable Game Input";
-            else
-                MenuBar.Text[1] = "F10: Enable Game Input";
-
             // Render MenuBar and Menus
             if (IsEnabled)
                 MenuBar.Render();
 
             // Render Shell
             Shell.Render();
+            OnFrame?.Invoke();
         }
         catch (Exception e)
         {

@@ -58,6 +58,7 @@
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />
     <ProjectReference Include="..\Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj" />
+    <ProjectReference Include="..\Submodules\Riders.Controller.Hook\Riders.Controller.Hook\Riders.Controller.Hook.Interfaces\Riders.Controller.Hook.Interfaces.csproj" />
     <ProjectReference Include="..\Submodules\Riders.Tweakbox.API\Source\Riders.Tweakbox.API.SDK\Riders.Tweakbox.API.SDK.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.Hooks.Utilities\Sewer56.Hooks.Utilities.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.Imgui\Sewer56.Imgui.csproj" />

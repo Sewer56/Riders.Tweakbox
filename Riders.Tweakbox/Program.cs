@@ -6,6 +6,7 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Reloaded.Universal.Redirector.Interfaces;
+using Riders.Controller.Hook.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Utilities;
@@ -39,6 +40,7 @@ public class Program : IMod
         _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
         _modLoader.GetController<IReloadedHooksUtilities>().TryGetTarget(out var hooksUtilities);
         _modLoader.GetController<IRedirectorController>().TryGetTarget(out var redirector);
+        _modLoader.GetController<IControllerHook>().TryGetTarget(out var controllerHook);
 
         /* Your mod code starts here. */
         Log.ConsoleListener = new ConsoleOutListener(_logger);
@@ -48,7 +50,7 @@ public class Program : IMod
 #if DEBUG
         Reloaded.Imgui.Hook.SDK.Debug += s => Log.WriteLine(s);
 #endif
-        _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader);
+        _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader, controllerHook);
 
         // Tweak Garbage Collection.
         GC.Collect();

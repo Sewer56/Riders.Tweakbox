@@ -16,3 +16,6 @@
 [submodule "Submodules/reloaded.universal.redirector"]
 	path = Submodules/reloaded.universal.redirector
 	url = https://github.com/Reloaded-Project/reloaded.universal.redirector.git
+[submodule "Submodules/Riders.Controller.Hook"]
+	path = Submodules/Riders.Controller.Hook
+	url = https://github.com/Sewer56/Riders.Controller.Hook.git
