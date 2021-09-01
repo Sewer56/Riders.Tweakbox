@@ -25,14 +25,9 @@ public static partial class Shell
     private static List<Func<bool>> _widgets = new List<Func<bool>>();
 
     /// <summary>
-    /// Keeps all log text available.
+    /// Renders the logs!
     /// </summary>
-    private static Queue<LogItem> _logs = new Queue<LogItem>();
-
-    /// <summary>
-    /// The log window.
-    /// </summary>
-    private static InformationWindow _logWindow = new InformationWindow("Sewer56.Imgui Log", Pivots.Pivot.BottomRight, Pivots.Pivot.BottomRight);
+    private static LogRenderer _logRenderer = new LogRenderer("Shell Logger");
 
     /// <summary>
     /// Adds a dialog to the current shell.
@@ -138,11 +133,7 @@ public static partial class Shell
     /// Adds a new item onto the log window.
     /// </summary>
     /// <param name="item">The item to log.</param>
-    public static void Log(in LogItem item)
-    {
-        lock (_logs)
-            _logs.Enqueue(item);
-    }
+    public static void Log(in LogItem item) => _logRenderer.Log(item);
 
     private static void RenderWidgets()
     {
@@ -161,29 +152,8 @@ public static partial class Shell
         if (!EnableLog)
             return;
 
-        lock (_logs)
-        {
-            var totalItems = _logs.Count;
-            if (totalItems <= 0)
-                return;
-
-            _logWindow.SetPivot(LogPosition, LogPosition);
-            _logWindow.Begin();
-            int itemsRendered = 0;
-            while (itemsRendered < totalItems && _logs.TryDequeue(out var logItem))
-            {
-                // Render Item
-                ImGui.Text(logItem.Text);
-
-                // Re-queue item if necessary.
-                if (!logItem.HasExpired())
-                    _logs.Enqueue(logItem);
-
-                itemsRendered += 1;
-            }
-
-            _logWindow.End();
-        }
+        _logRenderer.LogPosition = LogPosition;
+        _logRenderer.Render();
     }
 
     /// <summary>

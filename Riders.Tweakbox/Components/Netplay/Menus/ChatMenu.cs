@@ -65,7 +65,19 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         /// <param name="message">The message.</param>
         public void AddMessage(string source, string message) => _messages.PushBack(FormatMessage(source, message));
 
-        private string FormatMessage(string source, string message) => $"[{source}] {message}";
+        /// <summary>
+        /// Adds a message to the log.
+        /// </summary>
+        /// <param name="text">The raw message.</param>
+        public void AddMessageUnformatted(string text) => _messages.PushBack(text);
+
+        /// <summary>
+        /// Formats a message to the format used by the chat box.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="message">The message.</param>
+        /// <returns></returns>
+        public string FormatMessage(string source, string message) => $"[{source}] {message}";
 
         private void AddMessage(string message) => _messages.PushBack(message);
 

@@ -1,11 +1,16 @@
 ﻿using Riders.Tweakbox.Components.Netplay.Components.Server;
 using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Misc.Log;
+using Sewer56.Imgui.Shell;
+using Sewer56.Imgui.Shell.Structures;
+using Sewer56.Imgui.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Sewer56.Imgui.Utilities.Pivots;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -20,6 +25,21 @@ public partial class NetplayController
     public ChatMenu Chat { get; set; }
 
     private ChatService _chatService;
+    private LogRenderer _logRenderer = new LogRenderer("Netplay Controller Log Renderer");
+    private Logger _log = new Logger(LogCategory.NetplayChat);
+
+    private void InitializeChatComponent()
+    {
+        Chat = new ChatMenu(GetPlayerName, SendMessage, () => IsConnected());
+        _logRenderer.LogPosition = Pivots.Pivot.Bottom;
+        Shell.AddCustom(RenderChatPopups);
+    }
+
+    private bool RenderChatPopups()
+    {
+        _logRenderer.Render();
+        return true;
+    }
 
     private void InitializeChat(Socket socket)
     {
@@ -36,7 +56,13 @@ public partial class NetplayController
             _chatService.OnReceiveMessage -= WriteToMenuOnMessageReceive;
     }
 
-    private void WriteToMenuOnMessageReceive(in ChatMessageEvent message) => Chat.AddMessage(message.Source, message.Text);
+    private void WriteToMenuOnMessageReceive(in ChatMessageEvent message)
+    {
+        var formatted = Chat.FormatMessage(message.Source, message.Text);
+        _log.WriteLine(formatted);
+        _logRenderer.Log(new LogItem(formatted));
+        Chat.AddMessageUnformatted(formatted);
+    }
 
     private string GetPlayerName()
     {

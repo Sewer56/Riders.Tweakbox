@@ -42,9 +42,7 @@ public partial class NetplayController : IController
         Config = config;
         Event.AfterEndScene += OnEndScene;
         Task.Run(InitializeApi);
-
-        // Chat
-        Chat = new ChatMenu(GetPlayerName, SendMessage, () => IsConnected());
+        InitializeChatComponent();
     }
 
     /// <summary>
