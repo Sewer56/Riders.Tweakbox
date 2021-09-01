@@ -27,11 +27,14 @@ public partial class NetplayController
     private ChatService _chatService;
     private LogRenderer _logRenderer = new LogRenderer("Netplay Controller Log Renderer");
     private Logger _log = new Logger(LogCategory.NetplayChat);
+    private Tweakbox _tweakbox;
 
-    private void InitializeChatComponent()
+    private void InitializeChatComponent(Tweakbox tweakbox)
     {
-        Chat = new ChatMenu(GetPlayerName, SendMessage, () => IsConnected());
+        _tweakbox = tweakbox;
         _logRenderer.LogPosition = Pivots.Pivot.Bottom;
+
+        Chat = new ChatMenu(GetPlayerName, SendMessage, () => IsConnected() && _tweakbox.IsEnabled);
         Shell.AddCustom(RenderChatPopups);
     }
 

@@ -37,12 +37,12 @@ public partial class NetplayController : IController
     /// </summary>
     public TweakboxApi Api { get; set; }
 
-    public NetplayController(NetplayEditorConfig config)
+    public NetplayController(NetplayEditorConfig config, Tweakbox tweakbox)
     {
         Config = config;
         Event.AfterEndScene += OnEndScene;
         Task.Run(InitializeApi);
-        InitializeChatComponent();
+        InitializeChatComponent(tweakbox);
     }
 
     /// <summary>
