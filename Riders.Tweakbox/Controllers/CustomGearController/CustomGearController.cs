@@ -34,8 +34,9 @@ public unsafe class CustomGearController : IController
 
     public CustomGearController()
     {
-        Patches = new CustomGearPatches();
+        // DO NOT Reorder
         CodePatcher = new CustomGearCodePatcher();
+        Patches = new CustomGearPatches(CodePatcher);
         UiController = new CustomGearUiController(CodePatcher);
     }
 

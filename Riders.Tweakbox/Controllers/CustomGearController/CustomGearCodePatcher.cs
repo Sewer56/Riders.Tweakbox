@@ -22,6 +22,7 @@ internal unsafe class CustomGearCodePatcher
     public int GearCount { get; private set; } = Player.Gears.Count;
     public int AvailableSlots => byte.MaxValue - GearCount;
     public bool HasAvailableSlots => AvailableSlots > 0;
+    public const int MaxGearCount = 255; // 256th is reserved for "unjoined"
 
     // New pointer targets.
     private ExtremeGear* _newGearsPtr;
@@ -114,7 +115,7 @@ internal unsafe class CustomGearCodePatcher
     private void SetupNewPointers<T>(string pointerName, ref T[] output, ref FixedArrayPtr<T> apiEndpoint, int[] sourceAddresses) where T : unmanaged
     {
         // Allocate array and copy existing data.
-        output = GC.AllocateArray<T>(_newGearCount, true);
+        output = GC.AllocateArray<T>(MaxGearCount, true);
         var originalData = apiEndpoint;
         originalData.CopyTo(output, originalData.Count);
 
@@ -122,7 +123,7 @@ internal unsafe class CustomGearCodePatcher
         fixed (T* ptr = output)
         {
             // Fix pointer in library.
-            apiEndpoint = new FixedArrayPtr<T>((ulong)ptr, _newGearCount);
+            apiEndpoint = new FixedArrayPtr<T>((ulong)ptr, MaxGearCount);
 
             // Patch all pointers in game code.
             var originalAddress = (byte*)originalData.Pointer;
@@ -169,8 +170,6 @@ internal unsafe class CustomGearCodePatcher
     }
     
     #region Pointers
-    private const int _newGearCount = 255;
-
     // All pointers in game code referring to extreme gear data:
     // i.e. Player.Gears in the library
     private readonly int[] ExtremeGearPtrAddresses = new int[]
