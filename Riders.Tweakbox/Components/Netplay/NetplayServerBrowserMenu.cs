@@ -24,7 +24,6 @@ public class NetplayServerBrowserMenu : ComponentBase
 
     public TweakboxApi Api => Controller.Api;
     public NetplayController Controller => Owner.Controller;
-    public NetplayEditorConfig Config => Owner.Config;
 
     // Re-route to internal window.
     public override ref bool IsEnabled() => ref BrowserMenu.IsEnabled();

@@ -7,7 +7,7 @@ using Sewer56.BitStream.Interfaces;
 namespace Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 
 [Equals(DoNotAddEqualityOperators = true)]
-public class PlayerData : IReusable
+public class ClientData : IReusable
 {
     public const int NumPlayersBits = 2;
 
@@ -22,16 +22,22 @@ public class PlayerData : IReusable
     public const int LatencyUpdatePeriod = 1000;
 
     /// <summary>
-    /// The name of the player.
+    /// The name of the client.
     /// </summary>
     public string Name;
 
     /// <summary>
-    /// Index of the individual player.
-    /// This corresponds to the indices in <see cref="UnreliablePacket"/>.
+    /// Index of the individual player as assigned by the host.
+    /// This value is -1 if the client is spectating.
     /// Ignore if received from client.
     /// </summary>
     public int PlayerIndex;
+
+    /// <summary>
+    /// Unique index of the individual client as assigned by the host.
+    /// Each client has a unique value. Value shouldn't change until player disconnects.
+    /// </summary>
+    public int ClientIndex;
 
     /// <summary>
     /// Contains the current ping of the individual player.
@@ -52,7 +58,7 @@ public class PlayerData : IReusable
     /// <summary>
     /// Copies data submitted by the client.
     /// </summary>
-    public void UpdateFromClient(PlayerData data)
+    public void UpdateFromClient(ClientData data)
     {
         this.Name = data.Name;
         this.NumPlayers = data.NumPlayers;
@@ -76,7 +82,8 @@ public class PlayerData : IReusable
     public unsafe void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
         Name = bitStream.ReadString();
-        PlayerIndex = bitStream.Read<int>(Constants.MaxNumberOfClientsBitField.NumBits);
+        PlayerIndex = bitStream.Read<int>(Constants.PlayerCountBitfield.NumBits);
+        ClientIndex = bitStream.Read<int>(Constants.MaxNumberOfClientsBitField.NumBits);
         Latency = bitStream.Read<int>(NumPlayersBits);
         NumPlayers = bitStream.Read<int>(NumPlayersBits);
     }
@@ -84,7 +91,8 @@ public class PlayerData : IReusable
     public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
         bitStream.WriteString(Name);
-        bitStream.Write(PlayerIndex, Constants.MaxNumberOfClientsBitField.NumBits);
+        bitStream.Write(PlayerIndex, Constants.PlayerCountBitfield.NumBits);
+        bitStream.Write(ClientIndex, Constants.MaxNumberOfClientsBitField.NumBits);
         bitStream.Write(Latency, NumPlayersBits);
         bitStream.Write(NumPlayers, NumPlayersBits);
     }

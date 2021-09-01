@@ -15,9 +15,9 @@ public class NetplayEditorConfig : JsonConfigBase<NetplayEditorConfig, NetplayEd
     /// <summary>
     /// Turns a player config into user data to send over the web.
     /// </summary>
-    public PlayerData ToPlayerData()
+    public ClientData ToPlayerData()
     {
-        return new PlayerData()
+        return new ClientData()
         {
             Name = Data.PlayerSettings.PlayerName,
             NumPlayers = Data.PlayerSettings.LocalPlayers,

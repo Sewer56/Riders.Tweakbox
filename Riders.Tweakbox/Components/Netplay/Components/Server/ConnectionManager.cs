@@ -238,8 +238,9 @@ public class ConnectionManager : INetplayComponent
         {
             var data = packet.GetMessage<HostSetPlayerData>();
             _log.WriteLine($"[Client] Received Player Info");
-            State.PlayerInfo = data.Data.Slice(0, data.NumElements);
-            State.SelfInfo.PlayerIndex = data.Index;
+            State.SetClientInfo(data.Data.Slice(0, data.NumElements));
+            State.SelfInfo.PlayerIndex = data.PlayerIndex;
+            State.SelfInfo.ClientIndex = data.ClientIndex;
         }
         else if (packet.MessageType == MessageType.GameData)
         {
@@ -262,6 +263,9 @@ public class ConnectionManager : INetplayComponent
 
     private void HostUpdatePlayerMap()
     {
+        // Note: Don't use separate channel because some other events e.g. Chat Messages
+        //       may depend on message order.
+
         // Update Player Map.
         for (var x = 0; x < Manager.ConnectedPeerList.Count; x++)
         {
@@ -271,7 +275,7 @@ public class ConnectionManager : INetplayComponent
         }
 
         Socket.Update();
-        State.PlayerInfo = HostState.ClientMap.ToMessage(State.SelfInfo.PlayerIndex).Data;
+        State.SetClientInfo(HostState.ClientMap.ToMessage(State.SelfInfo.PlayerIndex, State.SelfInfo.ClientIndex).Data);
     }
 
     /// <inheritdoc />

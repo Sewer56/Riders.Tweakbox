@@ -9,6 +9,7 @@ using Riders.Netplay.Messages.Reliable.Structs.Server;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay.Components;
+using Riders.Tweakbox.Components.Netplay.Components.Server;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
@@ -116,7 +117,7 @@ public abstract class Socket : IDisposable
         Manager.EnableStatistics = true;
         Bandwidth = new BandwidthTracker(Manager);
         Config = config;
-        Manager.PingInterval = PlayerData.LatencyUpdatePeriod;
+        Manager.PingInterval = ClientData.LatencyUpdatePeriod;
     }
 
     protected void Initialize()
@@ -157,6 +158,9 @@ public abstract class Socket : IDisposable
 
         // API
         AddComponent(IoC.Get<Components.Api.ServerReporter>());
+
+        // Extensions
+        AddComponent(IoC.Get<Components.Server.ChatService>());
     }
 
     /// <summary>
@@ -168,7 +172,7 @@ public abstract class Socket : IDisposable
         foreach (var component in Components.Values)
             component.Dispose();
 
-        Controller.Socket = null;
+        Controller.DisposeSocket();
         Manager.Stop(true);
         Listener.Dispose();
     }
@@ -438,8 +442,8 @@ public abstract class Socket : IDisposable
         // TODO: More accurate waiting. This isn't frame perfect and subject to thread context switch.
         ActionWrappers.TryWaitUntil(() =>
         {
-                // Check if already done.
-                var timeLeft = waitUntil - DateTime.UtcNow;
+            // Check if already done.
+            var timeLeft = waitUntil - DateTime.UtcNow;
             if (timeLeft.Milliseconds < 0)
                 return true;
 

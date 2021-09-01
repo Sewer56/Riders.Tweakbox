@@ -7,17 +7,22 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server;
 
 public struct HostSetPlayerData : IReliableMessage
 {
-    private static ArrayPool<PlayerData> _pool = ArrayPool<PlayerData>.Shared;
+    private static ArrayPool<ClientData> _pool = ArrayPool<ClientData>.Shared;
 
     /// <summary>
     /// Contains indexes and names of all other players.
     /// </summary>
-    public PlayerData[] Data { get; set; }
+    public ClientData[] Data { get; set; }
 
     /// <summary>
-    /// Index of the player receiving the message.
+    /// Index of the player (host side) receiving the message.
     /// </summary>
-    public int Index { get; set; }
+    public int PlayerIndex { get; set; }
+
+    /// <summary>
+    /// Index of the client (host side) receiving the message.
+    /// </summary>
+    public int ClientIndex { get; set; }
 
     /// <summary>
     /// Number of elements in the <see cref="Data"/> array.
@@ -26,10 +31,11 @@ public struct HostSetPlayerData : IReliableMessage
 
     private bool _isPooled;
 
-    public HostSetPlayerData(PlayerData[] data, int index)
+    public HostSetPlayerData(ClientData[] data, int playerIndex, int clientIndex)
     {
         Data = data;
-        Index = index;
+        PlayerIndex = playerIndex;
+        ClientIndex = clientIndex;
 
         NumElements = Data.Length;
         _isPooled = false;
@@ -54,11 +60,12 @@ public struct HostSetPlayerData : IReliableMessage
         _isPooled = true;
 
         NumElements = bitStream.Read<byte>(Constants.MaxNumberOfClientsBitField.NumBits) + 1;
-        Index = bitStream.Read<byte>(Constants.PlayerCountBitfield.NumBits);
+        PlayerIndex = bitStream.Read<byte>(Constants.PlayerCountBitfield.NumBits);
+        ClientIndex = bitStream.Read<byte>(Constants.MaxNumberOfClientsBitField.NumBits);
         Data = _pool.Rent(NumElements);
         for (int x = 0; x < NumElements; x++)
         {
-            var data = new PlayerData();
+            var data = new ClientData();
             data.FromStream(ref bitStream);
             Data[x] = data;
         }
@@ -68,7 +75,8 @@ public struct HostSetPlayerData : IReliableMessage
     public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
         bitStream.Write(NumElements - 1, Constants.MaxNumberOfClientsBitField.NumBits);
-        bitStream.Write(Index, Constants.PlayerCountBitfield.NumBits);
+        bitStream.Write(PlayerIndex, Constants.PlayerCountBitfield.NumBits);
+        bitStream.Write(ClientIndex, Constants.MaxNumberOfClientsBitField.NumBits);
 
         for (int x = 0; x < NumElements; x++)
             Data[x].ToStream(ref bitStream);

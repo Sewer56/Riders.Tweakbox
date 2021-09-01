@@ -6,7 +6,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Server;
 [Equals(DoNotAddEqualityOperators = true)]
 public struct ClientSetPlayerData : IReliableMessage
 {
-    public PlayerData Data { get; set; }
+    public ClientData Data { get; set; }
 
     /// <inheritdoc />
     public void Dispose() { }
@@ -17,7 +17,7 @@ public struct ClientSetPlayerData : IReliableMessage
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
-        Data ??= new PlayerData();
+        Data ??= new ClientData();
         Data.FromStream(ref bitStream);
     }
 

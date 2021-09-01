@@ -11,10 +11,10 @@ public class ServerMessageTests
         // Make Message
         var message = new HostSetPlayerData(new[]
         {
-                new PlayerData() { Name = "Yacker", PlayerIndex = 0 },
-                new PlayerData() { Name = "Xi Kykping", PlayerIndex = 1 },
-                new PlayerData() { Name = "Pixel", PlayerIndex = 2 }
-            }, 3);
+                new ClientData() { Name = "Yacker", PlayerIndex = 0, ClientIndex = 0 },
+                new ClientData() { Name = "Xi Kykping", PlayerIndex = 1, ClientIndex = 1 },
+                new ClientData() { Name = "Pixel", PlayerIndex = 2, ClientIndex = 2 }
+            }, 3, 3);
 
         using var packet = ReliablePacket.Create(message);
 

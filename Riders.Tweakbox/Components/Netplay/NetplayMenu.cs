@@ -4,6 +4,7 @@ using DearImguiSharp;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Tweakbox.API.Application.Commands.v1.User;
 using Riders.Tweakbox.API.SDK;
+using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
@@ -278,7 +279,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
     {
         try
         {
-            Controller.Socket = new Host(Config, Controller, Controller.Api);
+            Controller.SetSocket(new Host(Config, Controller, Controller.Api));
             ServerBrowserMenu.IsEnabled() = false;
         }
         catch (Exception e)
@@ -291,7 +292,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
     {
         try
         {
-            Controller.Socket = new Client(Config, Controller, Controller.Api);
+            Controller.SetSocket(new Client(Config, Controller, Controller.Api));
             ServerBrowserMenu.IsEnabled() = false;
         }
         catch (Exception e)

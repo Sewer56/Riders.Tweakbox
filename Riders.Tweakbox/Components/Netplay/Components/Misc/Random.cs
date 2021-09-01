@@ -146,9 +146,9 @@ public class Random : INetplayComponent
 
         // Multiply the highest recently recorded Round Trip Time and multiply by 2 in case of spike.
         // Should be good enough as long as RecentLatencies is a list long enough.
-        if (Socket.HostState.PlayerInfo.Length > 0)
+        if (Socket.HostState.ClientInfo.Length > 0)
         {
-            var timeOffset = (Socket.HostState.PlayerInfo.Max(x => x.RecentLatencies.Max(y => y.Value + 0.5)) * 2) * 2;
+            var timeOffset = (Socket.HostState.ClientInfo.Max(x => x.RecentLatencies.Max(y => y.Value + 0.5)) * 2) * 2;
             _logRandom.WriteLine($"[{nameof(Random)} / Host] Time Offset: {timeOffset}ms");
             var startTime = DateTime.UtcNow.AddMilliseconds(timeOffset);
             Socket.SendToAllAndFlush(ReliablePacket.Create(new SRandSync(startTime, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Host] Sending Random Seed {(int)seed}", LogCategory.Random, _randomChannel);

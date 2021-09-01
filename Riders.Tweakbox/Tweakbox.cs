@@ -27,6 +27,7 @@ using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
+using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Functions;
@@ -112,6 +113,7 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
                         Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
+                        Benchmark(() => IoC.GetSingleton<ChatMenuDebug>(), nameof(ChatMenuDebug)),
                     })
                 },
                 Text = new List<string>()
@@ -227,10 +229,10 @@ public class Tweakbox
         {
             // This works because the keys sent to imgui in WndProc follow
             // the Windows key code order.
-            if (ImGui.IsKeyPressed((int)Keys.F11, false))
+            if (ImGui.IsKeyPressed((int)VK.F11, false))
                 IsEnabled = !IsEnabled;
 
-            if (ImGui.IsKeyPressed((int)Keys.F10, false))
+            if (ImGui.IsKeyPressed((int)VK.F10, false))
                 InputsEnabled = !InputsEnabled;
 
             // Update Menu Bar Text

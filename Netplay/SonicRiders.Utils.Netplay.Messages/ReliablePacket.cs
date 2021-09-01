@@ -9,6 +9,8 @@ namespace Riders.Netplay.Messages;
 
 public unsafe struct ReliablePacket : IPacket
 {
+    private const int MaxMessageSize = ushort.MaxValue * 2;
+
     /// <summary>
     /// Flags attacked to the original packet.
     /// </summary>
@@ -60,7 +62,7 @@ public unsafe struct ReliablePacket : IPacket
     public ArrayRental<byte> Serialize(out int numBytes)
     {
         // Rent some bytes.
-        var rental = new ArrayRental<byte>(8192);
+        var rental = new ArrayRental<byte>(MaxMessageSize);
         var rentalStream = new RentalByteStream(rental);
         var bitStream = new BitStream<RentalByteStream>(rentalStream);
 

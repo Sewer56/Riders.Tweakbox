@@ -13,7 +13,7 @@ namespace Riders.Tweakbox.Components.Netplay.Components.Misc;
 
 public class LatencyUpdate : INetplayComponent
 {
-    private const int UpdateIntervalMs = PlayerData.LatencyUpdatePeriod;
+    private const int UpdateIntervalMs = ClientData.LatencyUpdatePeriod;
 
     /// <inheritdoc />
     public Socket Socket { get; set; }
@@ -53,7 +53,7 @@ public class LatencyUpdate : INetplayComponent
                     continue;
 
                 var excludeIndex = playerData.PlayerIndex;
-                var latencies = state.PlayerInfo.ToStructEnumerable()
+                var latencies = state.ClientInfo.ToStructEnumerable()
                     .Where(x => x.PlayerIndex != excludeIndex, x => x)
                     .Select(x => (short)x.Latency, x => x).ToArray();
 
@@ -104,7 +104,7 @@ public class LatencyUpdate : INetplayComponent
                 {
                     // Fill in from player 2, as player 1 will be host.
                     for (int x = 0; x < latencies.NumElements; x++)
-                        Socket.State.PlayerInfo[x + 1].UpdateLatency(latencies.Data[x]);
+                        Socket.State.ClientInfo[x + 1].UpdateLatency(latencies.Data[x]);
                 }
                 catch (Exception e)
                 {

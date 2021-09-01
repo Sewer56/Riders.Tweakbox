@@ -73,7 +73,7 @@ public class ServerReporter : INetplayComponent
         var players = new List<ServerPlayerInfoResult>();
         players.AddRange(GetServerInfoFromClient(state.SelfInfo));
 
-        foreach (var player in state.PlayerInfo)
+        foreach (var player in state.ClientInfo)
             players.AddRange(GetServerInfoFromClient(player));
 
         var hostSettings = Socket.Config.Data.HostSettings;
@@ -115,7 +115,7 @@ public class ServerReporter : INetplayComponent
         };
     }
 
-    private List<ServerPlayerInfoResult> GetServerInfoFromClient(PlayerData playerData)
+    private List<ServerPlayerInfoResult> GetServerInfoFromClient(ClientData playerData)
     {
         var result = new List<ServerPlayerInfoResult>();
 

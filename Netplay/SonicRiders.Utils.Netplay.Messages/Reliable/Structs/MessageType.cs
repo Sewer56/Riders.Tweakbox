@@ -55,6 +55,9 @@ public enum MessageType : byte
     CharaSelectLoop,      // Client -> Host
     CharaSelectSync,      // Host   -> Client
     CharaSelectExit,      // Client -> Host & Host -> Client.
+
+    // ServerEx: Version 0.6.1
+    ChatMessage, // Client -> Host & Host -> Client.
 }
 
 public static class MessageTypeExtensions
@@ -101,6 +104,8 @@ public static class MessageTypeExtensions
             MessageType.CharaSelectSync => new CharaSelectSync(),
             MessageType.CharaSelectExit => new CharaSelectExit(),
 
+            // ServerEx,
+            MessageType.ChatMessage => new ChatMessage(),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }

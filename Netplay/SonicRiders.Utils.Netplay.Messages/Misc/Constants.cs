@@ -15,7 +15,7 @@ public static class Constants
     public const int MaxNumberOfLocalPlayers = 4;
 
     /// <summary>
-    /// The maximum number of clients that can connect to a server (indexed from 1.
+    /// The maximum number of clients that can connect to a server (indexed from 1).
     /// </summary>
     public static int MaxNumberOfClients => MaxNumberOfClientsBitField.MaxValue + 1;
 

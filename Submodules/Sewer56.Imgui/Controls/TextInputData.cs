@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using DearImguiSharp;
 using Reloaded.Memory.Interop;
@@ -43,9 +44,17 @@ public unsafe class TextInputData
 
     public TextInputData(string text) : this(text, text.Length, sizeof(int)) { }
 
-    public void Render(string label = "", ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = null, IntPtr userData = default)
+    /// <summary>
+    /// Clears the text buffer.
+    /// </summary>
+    public void Clear() => Unsafe.InitBlockUnaligned(Pointer, 0x00, (uint)SizeOfData);
+
+    /// <summary>
+    /// Renders the control.
+    /// </summary>
+    public bool Render(string label = "", ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = null, IntPtr userData = default)
     {
-        ImGui.InputText(label, Pointer, (IntPtr)SizeOfData, (int)flags, callback, userData);
+        return ImGui.InputText(label, Pointer, (IntPtr)SizeOfData, (int)flags, callback, userData);
     }
 
     private string GetText()

@@ -48,7 +48,7 @@ public class NetplayLobbyMenu : ComponentBase
     private void RenderConnectedWindow()
     {
         var socket = Controller.Socket;
-        foreach (var player in socket.State.PlayerInfo)
+        foreach (var player in socket.State.ClientInfo)
             ImGui.Text($"{player.Name} | {player.PlayerIndex} | {player.Latency}ms");
 
         if (ImGui.Button("Disconnect", Constants.ButtonSize))

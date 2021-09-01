@@ -11,9 +11,9 @@ public static class Extensions
 {
     /// <summary>
     /// Utility for hosts sending arrays of data to other players.
-    /// Returns a span of player indices to exclude (all ports local to that player) given <see cref="PlayerData"/> and an existing <see cref="Span{T}"/> to slice
+    /// Returns a span of player indices to exclude (all ports local to that player) given <see cref="ClientData"/> and an existing <see cref="Span{T}"/> to slice
     /// </summary>
-    public static Span<byte> GetExcludeIndices(this PlayerData data, Span<byte> excludeIndexBuffer)
+    public static Span<byte> GetExcludeIndices(this ClientData data, Span<byte> excludeIndexBuffer)
     {
         var excludeIndices = excludeIndexBuffer.Slice(0, data.NumPlayers);
 

@@ -1,11 +1,13 @@
-﻿using Riders.Netplay.Messages.Misc;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Struct;
 using StructLinq;
 namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 
 public class CommonState
 {
-    public CommonState(PlayerData selfInfo, Socket owner)
+    public CommonState(ClientData selfInfo, Socket owner)
     {
         SelfInfo = selfInfo;
         Owner = owner;
@@ -19,7 +21,7 @@ public class CommonState
     /// <summary>
     /// Contains information about own player.
     /// </summary>
-    public PlayerData SelfInfo;
+    public ClientData SelfInfo;
 
     /// <summary>
     /// Current frame counter for the client/server.
@@ -39,11 +41,16 @@ public class CommonState
     public int DisconnectTimeout = 8000;
 
     /// <summary>
-    /// Contains information about other players.
-    /// For client, index 0 is guaranteed to contain host.
-    /// For host, index 0 will contain player 1.
+    /// Contains information about other clients.
+    /// For client, index 0 contains host, and then other players.
+    /// For host, index 0 will contain first client, and others.
     /// </summary>
-    public PlayerData[] PlayerInfo = new PlayerData[0];
+    public ClientData[] ClientInfo { get; private set; } = new ClientData[0];
+
+    /// <summary>
+    /// Maps client indices to the corresponding info.
+    /// </summary>
+    public Dictionary<int, ClientData> ClientIndexToDataMap { get; private set; } = new Dictionary<int, ClientData>();
 
     /// <summary>
     /// Number of local players.
@@ -56,16 +63,16 @@ public class CommonState
     /// </summary>
     public int GetPlayerCount()
     {
-        if (PlayerInfo.Length > 0)
-            return SelfInfo.NumPlayers + PlayerInfo.ToStructEnumerable().Sum(x => x.NumPlayers, x => x);
+        if (ClientInfo.Length > 0)
+            return SelfInfo.NumPlayers + ClientInfo.ToStructEnumerable().Sum(x => x.NumPlayers, x => x);
 
         return SelfInfo.NumPlayers;
     }
 
     /// <summary>
-    /// Gets the <see cref="PlayerData"/> belonging to the host.
+    /// Gets the <see cref="ClientData"/> belonging to the host.
     /// </summary>
-    public virtual PlayerData GetHostData() => PlayerInfo[0];
+    public virtual ClientData GetHostData() => ClientInfo[0];
 
     /// <summary>
     /// Converts a local player index to an index on the host's end.
@@ -123,7 +130,7 @@ public class CommonState
     public bool IsHuman(int playerIndex)
     {
         // Compare against highest player index.
-        if (PlayerInfo.Length > 0)
+        if (ClientInfo.Length > 0)
         {
             if (IsSpectator(playerIndex))
                 return false;
@@ -154,9 +161,9 @@ public class CommonState
     /// </summary>
     public bool IsRemote(int playerIndex)
     {
-        for (int x = 0; x < PlayerInfo.Length; x++)
+        for (int x = 0; x < ClientInfo.Length; x++)
         {
-            var player = PlayerInfo[x];
+            var player = ClientInfo[x];
             var minIndex = GetLocalPlayerIndex(player.PlayerIndex);
             var maxIndex = minIndex + player.NumPlayers;
 
@@ -165,5 +172,14 @@ public class CommonState
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Sets the client info stored by the state tracker.
+    /// </summary>
+    public void SetClientInfo(ClientData[] data)
+    {
+        ClientInfo = data;
+        ClientIndexToDataMap = data.ToDictionary(x => x.ClientIndex);
     }
 }

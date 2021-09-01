@@ -4,6 +4,8 @@ using DearImguiSharp;
 using Riders.Tweakbox.API.Application.Commands.v1.User;
 using Riders.Tweakbox.API.SDK;
 using Riders.Tweakbox.Components.Netplay;
+using Riders.Tweakbox.Components.Netplay.Components.Server;
+using Riders.Tweakbox.Components.Netplay.Menus;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
@@ -18,12 +20,12 @@ namespace Riders.Tweakbox.Controllers;
 /// <summary>
 /// Owned by <see cref="Netplay"/>
 /// </summary>
-public class NetplayController : IController
+public partial class NetplayController : IController
 {
     /// <summary>
     /// The current socket instance, either a <see cref="Client"/> or <see cref="Host"/>.
     /// </summary>
-    public Socket Socket;
+    public Socket Socket { get; private set; }
 
     /// <summary>
     /// The config associated with this controller.
@@ -40,8 +42,29 @@ public class NetplayController : IController
         Config = config;
         Event.AfterEndScene += OnEndScene;
         Task.Run(InitializeApi);
+
+        // Chat
+        Chat = new ChatMenu(GetPlayerName, SendMessage, () => IsConnected());
     }
 
+    /// <summary>
+    /// Sets the current socket to be managed by the Netplay Controller.
+    /// Hooks up the chat and
+    /// </summary>
+    public void SetSocket(Socket socket)
+    {
+        Socket = socket;
+        InitializeChat(socket);
+    }
+
+    /// <summary>
+    /// Disposes the current socket.
+    /// </summary>
+    public void DisposeSocket()
+    {
+        DisposeChat();
+        Socket = null;
+    }
 
     /// <summary>
     /// True if Netplay Mode is currently Active

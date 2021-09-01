@@ -3,7 +3,7 @@ namespace Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 
 public class HostState : CommonState
 {
-    public HostState(PlayerData selfInfo, Socket owner) : base(selfInfo, owner)
+    public HostState(ClientData selfInfo, Socket owner) : base(selfInfo, owner)
     {
         ClientMap = new ClientMap(selfInfo);
     }
@@ -14,9 +14,9 @@ public class HostState : CommonState
     public ClientMap ClientMap;
 
     /// <summary>
-    /// Gets the <see cref="PlayerData"/> belonging to the host.
+    /// Gets the <see cref="ClientData"/> belonging to the host.
     /// </summary>
-    public override PlayerData GetHostData() => SelfInfo;
+    public override ClientData GetHostData() => SelfInfo;
 
     /// <summary>
     /// Translates a host player index into a local player index. 
