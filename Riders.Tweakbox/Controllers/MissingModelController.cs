@@ -12,7 +12,10 @@ using Reloaded.Hooks.Definitions.X86;
 using System.Diagnostics;
 using Sewer56.SonicRiders.Structures.Enums;
 using System.Text;
+using Reloaded.Memory.Sources;
 using Sewer56.SonicRiders.API;
+using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
+using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
 namespace Riders.Tweakbox.Controllers
 {
@@ -25,6 +28,7 @@ namespace Riders.Tweakbox.Controllers
         private string _dataFolderPath;
         private IAsmHook _loadPlayerModelRaceHook;
         private IAsmHook _loadPlayerModelMenuHook;
+        private IAsmHook _replaceCharacterWithSuperHook;
 
         private Logger _generalLogger = new Logger(LogCategory.Default);
         private Logger _raceLogger = new Logger(LogCategory.Race);
@@ -61,9 +65,38 @@ namespace Riders.Tweakbox.Controllers
             };
 
             _loadPlayerModelMenuHook = hooks.CreateAsmHook(menuHookAsm, 0x00460C26, AsmHookBehaviour.ExecuteFirst).Activate();
+
+            // Compare Super Sonic Gear Model instead of Gear Id
+            Memory.Instance.WriteRaw((IntPtr)0x460BCB, new byte[] { 0x83, 0xFB, 0x12, 0x90, 0x90, 0x90, 0x90 }); // cmp ebx, 0x12
+
+            string[] changeCharacterToSuperAsm = new[]
+            {
+                "use32",
+                // Backup Registers
+                $"{utilities.PushCdeclCallerSavedRegisters()}",
+
+                // Offset player pointer and push
+                "mov eax, edi",
+                "sub eax, 0xBA",
+                "push eax",
+
+                $"{AsmHelpers.AssembleAbsoluteCall<OverrideCharacterFn>(utilities, OverrideCharacterImpl, out _, false)}",
+                
+                // Save Registers
+                $"{utilities.PopCdeclCallerSavedRegisters()}",
+            };
+
+            _replaceCharacterWithSuperHook = hooks.CreateAsmHook(changeCharacterToSuperAsm, 0x4638C0, AsmHookBehaviour.ExecuteFirst).Activate();
         }
 
-        public void OverrideMenuModelName(byte* fileNamePtr)
+        private void OverrideCharacterImpl(Player* playerptr)
+        { 
+            var gear = (ExtremeGear*) Sewer56.SonicRiders.API.Player.Gears.GetPointerToElement((int)playerptr->ExtremeGear);
+            if (gear->GearModel == ExtremeGearModel.ChaosEmerald)
+                playerptr->Character = Characters.SuperSonic;
+        }
+
+        private void OverrideMenuModelName(byte* fileNamePtr)
         {
             var fileName = Marshal.PtrToStringAnsi((IntPtr)fileNamePtr);
             if (HandleMissingModel(fileName, out fileName))
@@ -74,7 +107,7 @@ namespace Riders.Tweakbox.Controllers
             }
         }
 
-        public void* ArchiveSetIngameLoadFileImpl(string fileName, void* maybeDataAddress)
+        private void* ArchiveSetIngameLoadFileImpl(string fileName, void* maybeDataAddress)
         {
             var filePath = Path.Combine(_dataFolderPath, fileName);
             HandleMissingModel(fileName, out fileName);
@@ -118,5 +151,8 @@ namespace Riders.Tweakbox.Controllers
 
         [Function(CallingConventions.Stdcall)]
         private delegate void OverrideMenuModelNameFn(byte* fileNamePtr);
+
+        [Function(CallingConventions.Stdcall)]
+        private delegate void OverrideCharacterFn(Player* playerPtr);
     }
 }
