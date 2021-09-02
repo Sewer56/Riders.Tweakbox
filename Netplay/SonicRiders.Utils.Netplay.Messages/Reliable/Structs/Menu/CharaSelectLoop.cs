@@ -15,7 +15,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Menu;
 public struct CharaSelectLoop : IReliableMessage, Misc.Interfaces.IBitPackable<CharaSelectLoop>
 {
     private const int SizeOfCharacterBits = 5;
-    private const int SizeOfBoardBits = 6;
+    private const int SizeOfBoardBits = 8;
     private const int SizeOfStatusBits = 3;
 
     /// <summary>
