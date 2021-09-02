@@ -15,6 +15,7 @@ using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
+using SharpDX.Direct3D11;
 using static Sewer56.SonicRiders.API.Player;
 using static Sewer56.SonicRiders.API.State;
 using Constants = Riders.Netplay.Messages.Misc.Constants;
@@ -49,6 +50,11 @@ public unsafe class RaceLapSync : INetplayComponent
     public Socket Socket { get; set; }
     public EventController Event { get; set; }
     public CommonState State { get; set; }
+
+    /// <summary>
+    /// Called when the lap counter of a local player is updated.
+    /// </summary>
+    public event OnUpdateLocalLapCounter OnUpdateLocalLapCounter;
 
     /// <summary>
     /// Set to true if currently applying an updated lap counter.
@@ -127,7 +133,9 @@ public unsafe class RaceLapSync : INetplayComponent
         var result = hook.OriginalFunction(player, a2);
 
         // Update lap counters for local clients.
-        _lapSync[playerIndex] = new LapCounter(player);
+        var counter = new LapCounter(player);
+        _lapSync[playerIndex] = counter;
+        OnUpdateLocalLapCounter?.Invoke(playerIndex, counter);
         _log.WriteLine($"[{nameof(RaceLapSync)}] Set: {playerIndex} | Lap {_lapSync[playerIndex].Counter} Timer {_lapSync[playerIndex].Timer}");
 
         switch (Socket.GetSocketType())
@@ -169,7 +177,7 @@ public unsafe class RaceLapSync : INetplayComponent
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        var counters = lapCounters.Elements;
+        var counters   = lapCounters.Elements;
         var numCounters = lapCounters.NumElements;
 
         for (int x = 0; x < numCounters; x++)
@@ -315,3 +323,5 @@ public unsafe class RaceLapSync : INetplayComponent
     /// <inheritdoc />
     public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) { }
 }
+
+public delegate void OnUpdateLocalLapCounter(int playerIndex, in LapCounter counter);

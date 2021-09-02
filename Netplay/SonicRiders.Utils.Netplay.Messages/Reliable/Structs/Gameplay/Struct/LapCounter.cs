@@ -17,6 +17,7 @@ public struct LapCounter : Misc.Interfaces.IBitPackable<LapCounter>, IEquatable<
 
     /// <summary>
     /// Current value of the race timer.
+    /// See <see cref="Timer"/> struct in Sewer56.SonicRiders.
     /// </summary>
     public int Timer;
 

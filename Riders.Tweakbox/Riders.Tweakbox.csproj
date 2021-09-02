@@ -66,6 +66,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Components\Netplay\Components\Game\Structs\" />
     <Folder Include="Misc\Graphics\" />
     <Folder Include="Services\TextureGen\Structs\" />
   </ItemGroup>

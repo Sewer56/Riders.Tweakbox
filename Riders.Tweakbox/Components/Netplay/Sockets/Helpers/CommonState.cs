@@ -159,19 +159,46 @@ public class CommonState
     /// <summary>
     /// True if the player is a remote human player.
     /// </summary>
-    public bool IsRemote(int playerIndex)
+    public bool IsRemote(int playerIndex) => GetRemoteClientInfo(playerIndex, out _) != null;
+
+    /// <summary>
+    /// Retrieves the data for a particular client given an index.
+    /// </summary>
+    /// <param name="playerIndex">The local player index.</param>
+    /// <param name="playerOffset">Offset of the player. If this value is 1, it indicates the 2nd player on that local machine is being used.</param>
+    public ClientData GetClientInfo(int playerIndex, out int playerOffset)
     {
+        if (IsLocal(playerIndex))
+        {
+            playerOffset = NumLocalPlayers - playerIndex;
+            return SelfInfo;
+        }
+
+        return GetRemoteClientInfo(playerIndex, out playerOffset);
+    }
+
+    /// <summary>
+    /// Retrieves the data for a particular remote client given an index.
+    /// </summary>
+    /// <param name="playerIndex">The local player index.</param>
+    /// <param name="playerOffset">Offset of the player. If this value is 1, it indicates the 2nd player on that local machine is being used.</param>
+    public ClientData GetRemoteClientInfo(int playerIndex, out int playerOffset)
+    {
+        playerOffset = default;
         for (int x = 0; x < ClientInfo.Length; x++)
         {
-            var player = ClientInfo[x];
+            var player   = ClientInfo[x];
             var minIndex = GetLocalPlayerIndex(player.PlayerIndex);
             var maxIndex = minIndex + player.NumPlayers;
 
             if (playerIndex >= minIndex && playerIndex < maxIndex)
-                return true;
+            {
+                playerOffset = playerIndex - minIndex;
+                return player;
+            }
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>

@@ -161,6 +161,7 @@ public abstract class Socket : IDisposable
 
         // Extensions
         AddComponent(IoC.Get<Components.Server.ChatService>());
+        AddComponent(IoC.Get<Components.Game.ShowLapDetailsInResultsOverride>());
     }
 
     /// <summary>
