@@ -56,12 +56,16 @@ public class AnimatedTexture : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _preloadFromCacheToken?.Dispose();
+        try { _preloadFromCacheToken?.Dispose(); }
+        catch (Exception) { /* Ignored */ }
         try { _preloadFromCacheTask?.Wait(); }
         catch (Exception) { /* Ignored */ }
-        
+
         foreach (var texture in Textures)
-            texture?.Dispose();
+        {
+            try { texture?.Dispose(); }
+            catch (Exception) { /* Ignored */ }
+        }
         
         _loaded = false;
     }
