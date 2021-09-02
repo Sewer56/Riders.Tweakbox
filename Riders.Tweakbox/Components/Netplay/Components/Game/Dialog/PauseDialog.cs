@@ -85,7 +85,7 @@ internal class PauseDialog
 
     private unsafe bool RenderInternal(ref bool isOpened)
     {
-        RenderAdditionalItems();
+        RenderAdditionalItems?.Invoke();
         var socket = Owner.Socket;
         bool isHost = socket.GetSocketType() == SocketType.Host;
         if (isHost)
