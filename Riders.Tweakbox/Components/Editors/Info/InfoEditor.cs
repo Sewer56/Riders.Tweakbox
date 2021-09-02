@@ -1,6 +1,7 @@
 ﻿using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc;
+using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Constants = Sewer56.Imgui.Misc.Constants;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
@@ -117,6 +118,13 @@ public class InfoEditor : ComponentBase<InfoEditorConfig>, IComponent
             Reflection.MakeControl(ref data.ShowHeapNumber, showNumber);
             Reflection.MakeControl(ref data.ShowHeapGraph, showGraph);
             Reflection.MakeControl(ref data.ShowHeapPercent, showPercent);
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Extra Race HUD"))
+        {
+            Reflection.MakeControl(ref data.ShowRacePositions, "Show Race Positions");
+            Tooltip.TextOnHover("Shows player positions and approximate time to leader in real time.");
             ImGui.TreePop();
         }
 

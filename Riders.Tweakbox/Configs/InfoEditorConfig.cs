@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Utilities;
+using Sewer56.SonicRiders.API;
 using static Riders.Tweakbox.Configs.InfoEditorConfig;
+using Player = Riders.Tweakbox.Configs.InfoEditorConfig.Player;
 
 namespace Riders.Tweakbox.Configs;
 
@@ -44,8 +46,9 @@ public class InfoEditorConfig : JsonConfigBase<InfoEditorConfig, InfoEditorConfi
         public bool ShowHeapGraph = false;
 
         public Player ShowPlayerPos = Player.None;
+        public bool ShowRacePositions = false;
 
-        public bool HasAnythingToShow()
+        public unsafe bool HasAnythingToShow()
         {
             return ShowFpsNumber || ShowFpsGraph
                                  || ShowFrameTimeNumber || ShowFrameTimeGraph
@@ -53,7 +56,7 @@ public class InfoEditorConfig : JsonConfigBase<InfoEditorConfig, InfoEditorConfi
                                  || ShowCpuNumber || ShowCpuGraph
                                  || ShowRenderTimeNumber || ShowRenderTimeGraph || ShowRenderTimePercent
                                  || ShowHeapNumber || ShowHeapGraph || ShowHeapPercent
-                                 || (ShowPlayerPos != Player.None);
+                                 || (ShowPlayerPos != Player.None) || (ShowRacePositions && *State.RaceModeDetail > 0);
         }
     }
 
