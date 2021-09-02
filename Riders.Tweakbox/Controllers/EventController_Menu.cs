@@ -51,7 +51,7 @@ public unsafe partial class EventController
 
         var onExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnExitCharacterSelect?.Invoke(), out _)}" };
         var ifExitCharaSelectAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00463741, Environment.Is64BitProcess) };
-        var onCheckIfExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfExitCharaSelect.InvokeIfNotNull(), out _, ifExitCharaSelectAsm, null, null, "je")}" };
+        var onCheckIfExitCharaSelectAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfExitCharaSelect.InvokeIfNotNull(), out _, ifExitCharaSelectAsm, null, null)}" };
         _onCheckIfExitCharaSelectHook = hooks.CreateAsmHook(onCheckIfExitCharaSelectAsm, 0x00463732, AsmHookBehaviour.ExecuteFirst).Activate();
         _onExitCharaSelectHook = hooks.CreateAsmHook(onExitCharaSelectAsm, 0x00463741, AsmHookBehaviour.ExecuteFirst).Activate();
 

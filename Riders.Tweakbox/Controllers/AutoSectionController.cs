@@ -36,7 +36,7 @@ public class AutoSectionController : IController
         var onCheckIfQtePressLeft = new[]
         {
             $"use32\n" +
-            $"{utilities.AssembleAbsoluteCall(() => OnCheckIfQtePressLeft.InvokeIfNotNull(), out _, ifQtePressLeftAsm, null, null, "je")}"
+            $"{utilities.AssembleAbsoluteCall(() => OnCheckIfQtePressLeft.InvokeIfNotNull(), out _, ifQtePressLeftAsm, null, null)}"
         };
 
         _onCheckIfQtePressLeftHook = hooks.CreateAsmHook(onCheckIfQtePressLeft, 0x4B3716).Activate();
@@ -50,7 +50,7 @@ public class AutoSectionController : IController
         var onCheckIfQtePressRight = new[]
         {
             $"use32\n" +
-            $"{utilities.AssembleAbsoluteCall(() => OnCheckIfQtePressRight.InvokeIfNotNull(), out _, ifQtePressRightAsm, null, null, "je")}"
+            $"{utilities.AssembleAbsoluteCall(() => OnCheckIfQtePressRight.InvokeIfNotNull(), out _, ifQtePressRightAsm, null, null)}"
         };
 
         _onCheckIfQtePressRightHook = hooks.CreateAsmHook(onCheckIfQtePressRight, 0x4B373B).Activate();

@@ -2,12 +2,15 @@
 using Sewer56.SonicRiders.Structures.Gameplay;
 using System;
 using System.Collections.Generic;
+using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Memory.Sources;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
 using Sewer56.Hooks.Utilities;
+using Sewer56.SonicRiders;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -16,13 +19,16 @@ namespace Riders.Tweakbox.Controllers.CustomGearController;
 /// </summary>
 internal unsafe class CustomGearCodePatcher
 {
+    private static IReloadedHooks Hooks => SDK.ReloadedHooks;
+    private static IReloadedHooksUtilities Utilities => SDK.ReloadedHooks.Utilities;
+
     // Image Ptr 4616c3
     // Also original count for gear->model map.
     public int OriginalGearCount { get; private set; } = Player.OriginalNumberOfGears;
     public int GearCount { get; private set; } = Player.Gears.Count;
-    public int AvailableSlots => byte.MaxValue - GearCount;
+    public int AvailableSlots => MaxGearCount - GearCount;
     public bool HasAvailableSlots => AvailableSlots > 0;
-    public const int MaxGearCount = 255; // 256th is reserved for "unjoined"
+    public const int MaxGearCount = 254; // 256th is reserved for "unjoined"
 
     // New pointer targets.
     private ExtremeGear* _newGearsPtr;
@@ -30,11 +36,18 @@ internal unsafe class CustomGearCodePatcher
     private bool[] _unlockedGearModels;
     private byte[] _gearToModelMap;
 
+    // Code patching shenanigans.
+    private int[] _gearCountMinusOneArr;
+    private int* _gearCountMinusOne; // Accessed in comparisons from asm code.
+    private List<IAsmHook> _boundsCheckPatches = new List<IAsmHook>();
+
     // Private members
     private Logger _log = new Logger(LogCategory.CustomGear);
-
+    
     internal CustomGearCodePatcher()
     {
+        MakeMaxGearAsmPatches();
+
         // We GC.AllocateArray so stuff gets put on the pinned object heap.
         // Any fixed statement is no-op pinning, and the object will never be moved.
         SetupNewPointers("Gear Data", ref _newGears, ref Player.Gears, ExtremeGearPtrAddresses);
@@ -42,11 +55,16 @@ internal unsafe class CustomGearCodePatcher
         SetupNewPointers("Gear to Model Map", ref _gearToModelMap, ref Sewer56.SonicRiders.API.State.GearIdToModelMap, GearToModelCodeAddresses);
 
         // Set other useful pointers.
+        _gearCountMinusOneArr = GC.AllocateUninitializedArray<int>(1, true);
+        fixed (int* ptr = &_gearCountMinusOneArr[0])
+            _gearCountMinusOne = ptr;
+
         fixed (ExtremeGear* ptr = &_newGears[0])
             _newGearsPtr = ptr;
 
         // Patch Branches
-        PatchBranches();
+        PatchOpcodes();
+        PatchBoundsChecks();
     }
 
     /// <summary>
@@ -147,11 +165,12 @@ internal unsafe class CustomGearCodePatcher
     private void UpdateGearCount(int newCount)
     {
         GearCount = newCount;
+        *_gearCountMinusOne = GearCount - 1;
         Player.NumberOfGears = newCount;
         Player.Gears.Count = newCount;
     }
 
-    private void PatchBranches()
+    private void PatchOpcodes()
     {
         foreach (var branch in PatchOpcodeAddresses)
         {
@@ -168,7 +187,26 @@ internal unsafe class CustomGearCodePatcher
             }
         }
     }
-    
+
+    private void PatchBoundsChecks()
+    {
+        foreach (var patch in MaxGearAsmPatches)
+        {
+            var asm = GetAsmCompareToMaxGearCount(patch.Register, String.Join(Environment.NewLine, patch.ExtraCode));
+            _boundsCheckPatches.Add(Hooks.CreateAsmHook(asm, patch.Address, patch.Behaviour).Activate());
+        }
+    }
+
+    private string[] GetAsmCompareToMaxGearCount(string registerToCompare, string extraCode)
+    {
+        return new string[]
+        {
+            "use32",
+            $"cmp {registerToCompare}, [{(long)_gearCountMinusOne}]",
+            $"{extraCode}"
+        };
+    }
+
     #region Pointers
     // All pointers in game code referring to extreme gear data:
     // i.e. Player.Gears in the library
@@ -187,10 +225,55 @@ internal unsafe class CustomGearCodePatcher
     };
 
     // Patch total amount of gears available in menu code.
+    private readonly int[] MaxGearCountPatch =
+    {
+        // > 40
+        // Note: Obsoleted for 255 gears by ASM Patches below.
+        //0x463963, 0x462843, 0x462A13, 0x462BB3, 0x462C97, 0x462EB7, 0x4630B8,
+
+        // < 0
+        0x462CAD, 0x462ECD, 0x4630CE
+    };
+
+
+    private void MakeMaxGearAsmPatches()
+    {
+        MaxGearAsmPatches = new []
+        {
+            // Experimental
+            new MaxGearCheckAsmPatch(
+                0x463961, "edx",
+                new string[] { Utilities.AssembleTrueFalseComplete(Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x463968, false), "xor edx, edx", "", "jbe") },
+                AsmHookBehaviour.DoNotExecuteOriginal), // TEST
+
+            new MaxGearCheckAsmPatch(0x462841, "eax"), // OK
+            new MaxGearCheckAsmPatch(0x462A11, "eax"), // OK
+            new MaxGearCheckAsmPatch(0x462BB1, "eax"), // OK
+        
+            // Experimental
+            new MaxGearCheckAsmPatch(0x462C95, "edx",
+                new string[] { Utilities.AssembleTrueFalseComplete(Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x462D98, false), "", "", "jbe") },
+                AsmHookBehaviour.ExecuteFirst), // TEST
+
+            // Experimental
+            new MaxGearCheckAsmPatch(0x462EB5, "edx",
+                new string[] { Utilities.AssembleTrueFalseComplete(Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x462FB8, false), "", "", "jbe") },
+                AsmHookBehaviour.ExecuteFirst), // TEST
+
+            // Experimental
+            new MaxGearCheckAsmPatch(0x4630B6, "edx",
+                new string[] { Utilities.AssembleTrueFalseComplete(Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x463199, false), "", "", "jbe") },
+                AsmHookBehaviour.ExecuteFirst), // TEST
+        };
+    }
+
+    private MaxGearCheckAsmPatch[] MaxGearAsmPatches { get; set; }
     private readonly int[] PatchOpcodeAddresses =
     {
+        // Patch Signed to Unsigned for 255 gears instead of 127
+        // Obsoleted by MaxGearAsmPatches
         // jle -> jbe
-        0x463964, 0x462848, 0x462A18, 0x462BB8, 0x462C98, 0x462EB8, 0x4630B9,
+        //0x463964, 0x462848, 0x462A18, 0x462BB8, 0x462C98, 0x462EB8, 0x4630B9,
 
         // movsx (0xBE0F) -> movzx (0xB60F)
         // Corresponds to ExtremeGearPtrAddresses: Duplicates are here just for clarity.
@@ -219,17 +302,6 @@ internal unsafe class CustomGearCodePatcher
         0x460B5D, 0x4628AF, 0x462A81, 0x462C21, 0x00462E19, 0x463039, 0x463220, 0x4639C4
     };
 
-    // Patch total amount of gears available in menu code.
-    private readonly int[] MaxGearCountPatch =
-    {
-        // > 40
-        0x463963, 0x462843, 0x462A13, 0x462BB3, 0x462C97, 0x462EB7, 0x4630B8,
-
-        // < 0
-        0x462CAD, 0x462ECD, 0x4630CE
-    };
-
-
     // Map to convert signed to unsigned branches
     private Dictionary<byte, byte> OpcodeByteMap = new Dictionary<byte, byte>()
     {
@@ -244,20 +316,28 @@ internal unsafe class CustomGearCodePatcher
         { 0xBE0F, 0xB60F },
     };
 
-    /// <summary>
-    /// Pair of register and address to be used in conversion from signed to unsigned.
-    /// </summary>
-    struct SignedToUnsignedAddressRegisterPair
+    struct MaxGearCheckAsmPatch
     {
-        public long Address;
+        public uint Address;
         public string Register;
+        public string[] ExtraCode;
+        public AsmHookBehaviour Behaviour;
 
-        public SignedToUnsignedAddressRegisterPair(long address, string register)
+        public MaxGearCheckAsmPatch(uint address, string register, string[] extraCode, AsmHookBehaviour behaviour = AsmHookBehaviour.ExecuteAfter)
         {
             Address = address;
             Register = register;
+            ExtraCode = extraCode;
+            Behaviour = behaviour;
+        }
+
+        public MaxGearCheckAsmPatch(uint address, string register, AsmHookBehaviour behaviour = AsmHookBehaviour.ExecuteAfter) : this()
+        {
+            Address = address;
+            Register = register;
+            ExtraCode = new string[0];
+            Behaviour = behaviour;
         }
     }
-
     #endregion
 }

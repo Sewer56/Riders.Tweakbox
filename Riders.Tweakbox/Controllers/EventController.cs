@@ -221,23 +221,23 @@ public unsafe partial class EventController : TaskEvents, IController
 
         var onStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnStartRace?.Invoke(), out _)}" };
         var ifStartRaceAsm = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x0046364B, Environment.Is64BitProcess) };
-        var onCheckIfStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfStartRace.InvokeIfNotNull(), out _, ifStartRaceAsm, null, null, "je")}" };
+        var onCheckIfStartRaceAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfStartRace.InvokeIfNotNull(), out _, ifStartRaceAsm, null, null)}" };
         _onStartRaceHook = hooks.CreateAsmHook(onStartRaceAsm, 0x0046364B, AsmHookBehaviour.ExecuteFirst).Activate();
         _onCheckIfStartRaceHook = hooks.CreateAsmHook(onCheckIfStartRaceAsm, 0x0046352B, AsmHookBehaviour.ExecuteFirst).Activate();
 
         var onSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnRaceSkipIntro?.Invoke(), out _)}" };
         var ifSkipIntroAsm = new string[] { $"{utilities.GetAbsoluteJumpMnemonics((IntPtr)0x00415F8E, Environment.Is64BitProcess)}" };
-        var onCheckIfSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfSkipIntro.InvokeIfNotNull(), out _, ifSkipIntroAsm, null, null, "je")}" };
+        var onCheckIfSkipIntroAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(() => OnCheckIfSkipIntro.InvokeIfNotNull(), out _, ifSkipIntroAsm, null, null)}" };
         _skipIntroCameraHook = hooks.CreateAsmHook(onSkipIntroAsm, 0x00416001, AsmHookBehaviour.ExecuteFirst).Activate();
         _checkIfSkipIntroCamera = hooks.CreateAsmHook(onCheckIfSkipIntroAsm, 0x415F2F, AsmHookBehaviour.ExecuteFirst).Activate();
 
         var ifSkipRenderGauge = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004A17C0, Environment.Is64BitProcess) };
-        var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null, "je")}" };
+        var onCheckIfSkipRenderGaugeAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], edi\n{utilities.AssembleAbsoluteCall(OnCheckIfSkipRenderGaugeHook, out _, ifSkipRenderGauge, null, null)}" };
         _onCheckIfSkipRenderGaugeFill = hooks.CreateAsmHook(onCheckIfSkipRenderGaugeAsm, 0x004A178C, AsmHookBehaviour.ExecuteFirst).Activate();
 
         var ifIsHumanInput = new string[] { "mov edx, 0" };
         var ifIsNotHumanInput = new string[] { "mov edx, 1" };
-        var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null, "je")}" };
+        var onCheckIsHumanInputAsm = new[] { $"use32\nmov [{(int)_tempPlayerPointer.Pointer}], esi\n{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanInputHook, out _, ifIsHumanInput, ifIsNotHumanInput, null)}" };
         _onCheckIsHumanInputHook = hooks.CreateAsmHook(onCheckIsHumanInputAsm, 0x004BD0C4, AsmHookBehaviour.ExecuteFirst).Activate();
 
         var ifIsHumanIndicator = new string[] { "mov ecx, 0" };
@@ -246,7 +246,7 @@ public unsafe partial class EventController : TaskEvents, IController
         {
             $"use32",
             $"{utilities.PushXmmRegisters(Constants.XmmRegisters)}",
-            $"{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanIndicatorHook, out _, ifIsHumanIndicator, ifIsNotHumanIndicator, null, "je")}",
+            $"{utilities.AssembleAbsoluteCall(OnCheckIfIsHumanIndicatorHook, out _, ifIsHumanIndicator, ifIsNotHumanIndicator, null)}",
             $"{utilities.PopXmmRegisters(Constants.XmmRegisters)}",
         };
 

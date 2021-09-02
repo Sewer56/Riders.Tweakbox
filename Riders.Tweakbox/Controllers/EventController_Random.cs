@@ -61,7 +61,7 @@ public unsafe partial class EventController
         _onGetRandomDoubleInPlayerFunctionHook = hooks.CreateAsmHook(onGetRandomDoubleInPlayerFunctionAsm, 0x004E1FA7, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
 
         var ifGiveAiRandomItems = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004C721F, false) };
-        var onCheckIfAiRandomItemsAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfGiveAiRandomItemsHook, out _, ifGiveAiRandomItems, null, null, "je")}" };
+        var onCheckIfAiRandomItemsAsm = new[] { $"use32\n{utilities.AssembleAbsoluteCall(OnCheckIfGiveAiRandomItemsHook, out _, ifGiveAiRandomItems, null, null)}" };
         _onCheckIfGiveAiRandomItemsHook = hooks.CreateAsmHook(onCheckIfAiRandomItemsAsm, 0x004C71F9).Activate();
 
         _randItemPickupWrapper = hooks.CreateReverseWrapper<Functions.CdeclReturnIntFn>(ItemPickupRandImpl);
@@ -76,7 +76,7 @@ public unsafe partial class EventController
             "lea eax, dword [edi - 0xBA]",
             $"mov [{(int)_tempPlayerPointer.Pointer}], eax",
             "pop eax",
-            $"{utilities.AssembleAbsoluteCall(OnCheckIfRandomizePlayerHook, out _, ifRandomizePlayer, ifNotRandomizePlayer, null, "je")}"
+            $"{utilities.AssembleAbsoluteCall(OnCheckIfRandomizePlayerHook, out _, ifRandomizePlayer, ifNotRandomizePlayer, null)}"
         };
         _checkIfRandomizePlayerHook = hooks.CreateAsmHook(onCheckIfRandomizePlayer, 0x004638D1, AsmHookBehaviour.ExecuteFirst).Activate();
     }

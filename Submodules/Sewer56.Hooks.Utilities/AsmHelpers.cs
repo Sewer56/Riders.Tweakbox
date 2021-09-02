@@ -126,8 +126,7 @@ public static class AsmHelpers
     /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
     /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
     /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
-    /// <param name="condition">The condition, e.g. jump equal, jump less, jump greater.</param>
-    public static string AssembleAbsoluteCall(this IReloadedHooksUtilities utilities, AsmFunc function, out IReverseWrapper<AsmFunc> reverseWrapper, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
+    public static string AssembleAbsoluteCall(this IReloadedHooksUtilities utilities, AsmFunc function, out IReverseWrapper<AsmFunc> reverseWrapper, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions)
     {
         var asm = new string[]
         {
@@ -135,7 +134,7 @@ public static class AsmHelpers
             $"{utilities.GetAbsoluteCallMnemonics<AsmFunc>(function, out reverseWrapper)}",
             $"cmp {_eax}, 1",
             $"{utilities.PopCdeclCallerSavedRegisters()}",
-            $"{utilities.AssembleTrueFalseFinally(trueInstructions, falseInstructions, completeInstructions, condition)}"
+            $"{utilities.AssembleTrueFalseForAsmFunctionResult(trueInstructions, falseInstructions, completeInstructions)}"
         };
 
         _wrappers.Add(reverseWrapper);
@@ -150,27 +149,91 @@ public static class AsmHelpers
     /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
     /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
     /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
-    /// <param name="condition">The condition, e.g. jump equal, jump less, jump greater.</param>
-    public static string AssembleTrueFalseFinally(this IReloadedHooksUtilities utilities, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
+    /// <param name="condition">The condition to evaluate to true; e.g. "je"</param>
+    public static string AssembleTrueFalseComplete(this IReloadedHooksUtilities utilities, string trueInstructions, string falseInstructions, string completeInstructions, string condition = "je")
+    {
+        trueInstructions ??= "";
+        falseInstructions ??= "";
+        completeInstructions ??= "";
+
+        return String.Join(Environment.NewLine, new[]
+        {
+            $"{condition} true",
+            $"false:",
+            $"{falseInstructions}",
+            $"jmp complete",
+
+            $"true:",
+            $"{trueInstructions}",
+
+            $"complete:",
+            $"{completeInstructions}",
+        });
+    }
+
+    /// <summary>
+    /// Returns the assembly code to run following a comparison.
+    /// This assembly code assumes that the `cmp` opcode has been already executed and appropriate flags set.
+    /// </summary>
+    /// <param name="utilities"></param>
+    /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
+    /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
+    /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
+    /// <param name="condition">The condition to evaluate to true; e.g. "je"</param>
+    public static string AssembleTrueFalseComplete(this IReloadedHooksUtilities utilities, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions, string condition = "je")
     {
         trueInstructions ??= new string[0];
         falseInstructions ??= new string[0];
         completeInstructions ??= new string[0];
 
+        return AssembleTrueFalseComplete(utilities,
+            String.Join(Environment.NewLine, trueInstructions),
+            String.Join(Environment.NewLine, falseInstructions),
+            String.Join(Environment.NewLine, completeInstructions), 
+            condition);
+    }
+
+    /// <summary>
+    /// Returns the assembly code to run following a comparison.
+    /// This assembly code assumes that the `cmp` opcode has been already executed and appropriate flags set.
+    /// To be used with return values of <see cref="AsmFunctionResult"/> after a cmp has been made with them.
+    /// </summary>
+    /// <param name="utilities"></param>
+    /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
+    /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
+    /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
+    public static string AssembleTrueFalseForAsmFunctionResult(this IReloadedHooksUtilities utilities, string trueInstructions, string falseInstructions, string completeInstructions)
+    {
+        trueInstructions ??= "";
+        falseInstructions ??= "";
+        completeInstructions ??= "";
+
         return String.Join(Environment.NewLine, new[]
         {
             $"jg complete",
-            $"{condition} true",
-            $"false:",
-            $"{String.Join(Environment.NewLine, falseInstructions)}",
-            $"jmp complete",
-
-            $"true:",
-            $"{String.Join(Environment.NewLine, trueInstructions)}",
-
-            $"complete:",
-            $"{String.Join(Environment.NewLine, completeInstructions)}",
+            $"{AssembleTrueFalseComplete(utilities, trueInstructions, falseInstructions, completeInstructions, "je")}"
         });
+    }
+
+    /// <summary>
+    /// Returns the assembly code to run following a comparison.
+    /// This assembly code assumes that the `cmp` opcode has been already executed and appropriate flags set.
+    /// To be used with return values of <see cref="AsmFunctionResult"/> after a cmp has been made with them.
+    /// </summary>
+    /// <param name="utilities"></param>
+    /// <param name="trueInstructions">The assembly instructions to execute if the condition evaluates true.</param>
+    /// <param name="falseInstructions">The assembly instructions to execute if the condition evaluates false.</param>
+    /// <param name="completeInstructions">The assembly instructions to execute after true or false branch executed.</param>
+    public static string AssembleTrueFalseForAsmFunctionResult(this IReloadedHooksUtilities utilities, string[] trueInstructions, string[] falseInstructions, string[] completeInstructions)
+    {
+        trueInstructions ??= new string[0];
+        falseInstructions ??= new string[0];
+        completeInstructions ??= new string[0];
+
+        return AssembleTrueFalseForAsmFunctionResult(utilities, 
+            String.Join(Environment.NewLine, trueInstructions), 
+            String.Join(Environment.NewLine, falseInstructions), 
+            String.Join(Environment.NewLine, completeInstructions));
     }
 
     private static string Architecture(bool is64bit) => is64bit ? "use64" : "use32";
