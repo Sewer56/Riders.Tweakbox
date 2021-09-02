@@ -25,6 +25,9 @@ internal unsafe class CustomGearPatches
     // Pathfinding
     private IAsmHook _hookD;
 
+    // Gear Description
+    private IAsmHook _hookE;
+
     private byte* ModelToIdMapPtr;
     private byte[] ModelToIdMap;
 
@@ -54,6 +57,9 @@ internal unsafe class CustomGearPatches
 
         // AI Pathing
         _hookD = hooks.CreateAsmHook(GetAsmSetDefault("eax"), 0x4B9158).Activate();
+
+        // Patch Gear Description
+        _hookE = hooks.CreateAsmHook(GetAsmSetDefault("edx"), 0x461987).Activate();
     }
 
     private string[] GetAsmSetDefault(string registerToEdit)
