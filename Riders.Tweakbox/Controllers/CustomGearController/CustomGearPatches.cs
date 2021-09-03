@@ -103,7 +103,7 @@ internal unsafe class CustomGearPatches
 
             // Otherwise assign trail by gear type.
             $"assignByGearType:",
-            $"movzx {r2}, byte [{r2} + 0x04]", // Gear Type
+            $"movzx {r2}, byte [{r3} + 0x04]", // Gear Type
 
             // Give Board Gear Ids Board Trails
             $"cmp {r2}, {(int)GearType.Bike}",
