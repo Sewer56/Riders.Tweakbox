@@ -236,7 +236,9 @@ public class InfoWindowController : IController
             var timeBehind = (timer * timerMultiplier) - timer;
 
             var client = state.GetClientInfo(player.PlayerIndex, out int offset);
-            if (client.NumPlayers > 1)
+            if (client == null)
+                ImGui.Text($"{x}. DISCONNECTED: {timeBehind.TotalSeconds:00.00}s");
+            else if (client.NumPlayers > 1)
                 ImGui.Text($"{x}. {client.Name}({offset}): {timeBehind.TotalSeconds:00.00}s");
             else
                 ImGui.Text($"{x}. {client.Name}: {timeBehind.TotalSeconds:00.00}s");

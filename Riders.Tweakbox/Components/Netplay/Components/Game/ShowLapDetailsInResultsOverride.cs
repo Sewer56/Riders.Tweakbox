@@ -76,7 +76,9 @@ public class ShowLapDetailsInResultsOverride : INetplayComponent
             var counter = counters[x];
             var timer   = (Timer)(counter.Counter.Timer);
             var client  = State.GetClientInfo(counter.Index, out int offset);
-            if (client.NumPlayers > 1)
+            if (client == null)
+                ImGui.Text($"{x}. DISCONNECTED - {timer.Minutes:00}:{timer.Seconds:00}:{timer.Milliseconds:00}");
+            else if (client.NumPlayers > 1)
                 ImGui.Text($"{x}. {client.Name}({offset}) - {timer.Minutes:00}:{timer.Seconds:00}:{timer.Milliseconds:00}");
             else
                 ImGui.Text($"{x}. {client.Name} - {timer.Minutes:00}:{timer.Seconds:00}:{timer.Milliseconds:00}");
