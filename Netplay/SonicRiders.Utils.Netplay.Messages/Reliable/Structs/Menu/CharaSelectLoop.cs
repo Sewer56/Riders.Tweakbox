@@ -1,4 +1,5 @@
-﻿using Sewer56.BitStream;
+﻿using System;
+using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -84,7 +85,8 @@ public struct CharaSelectLoop : IReliableMessage, Misc.Interfaces.IBitPackable<C
         player.IsAiVisual = PlayerType.CPU;
 
         // Replace character with SS if necessary.
-        if (player.ExtremeGear == ExtremeGear.ChaosEmerald)
+        var gear = Player.Gears[(int) player.ExtremeGear];
+        if (gear.GearModel == ExtremeGearModel.ChaosEmerald)
             player.Character = Characters.SuperSonic;
     }
 
