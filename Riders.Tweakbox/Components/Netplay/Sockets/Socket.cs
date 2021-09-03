@@ -134,7 +134,7 @@ public abstract class Socket : IDisposable
 
         // Server
         AddComponent(IoC.Get<Components.Server.ConnectionManager>());
-        AddComponent(IoC.Get<Components.Game.GameModifiers>());
+        AddComponent(IoC.Get<Components.Game.GameModifiersSync>());
 
         // Menus
         AddComponent(IoC.Get<Components.Menu.CourseSelect>());

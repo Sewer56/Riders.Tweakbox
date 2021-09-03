@@ -11,6 +11,7 @@ using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.Imgui.Misc;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 
 namespace Riders.Tweakbox.Configs;
 
@@ -53,6 +54,8 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
 
         public GameInput InputMode = GameInput.WhenNoWindowActive;
         public VK InputToggleKey = VK.F10;
+
+        public GameModifiers Modifiers = new GameModifiers();
     }
 
     public enum MemoryLimit : int

@@ -6,6 +6,7 @@ using Riders.Netplay.Messages.Helpers;
 using Riders.Netplay.Messages.Helpers.Interfaces;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Components.Tweaks;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -26,6 +27,8 @@ public class NetplayLobbyMenu : ComponentBase
 
     /// <inheritdoc />
     public override string Name { get; set; } = "Netplay Lobby";
+
+    private TweakboxSettings _tweakboxSettings;
 
     public NetplayLobbyMenu(NetplayMenu netplayMenu)
     {
@@ -53,39 +56,21 @@ public class NetplayLobbyMenu : ComponentBase
 
         if (ImGui.Button("Disconnect", Constants.ButtonSize))
             Controller.Socket?.Dispose();
-
-        var hasModifiers = socket.TryGetComponent(out GameModifiers modifiers);
-        if (hasModifiers && ImGui.TreeNodeStr("Lobby Options"))
+        
+        if (ImGui.TreeNodeStr("Lobby Options"))
         {
+            _tweakboxSettings ??= IoC.GetSingleton<TweakboxSettings>();
             bool canEdit = Event.LastTask == Tasks.CourseSelect && socket.GetSocketType() == SocketType.Host;
-            ref var mods = ref modifiers.Modifiers;
+            
             if (!canEdit)
                 Utilities.PushDisabled();
 
             ImGui.TextWrapped("Only changeable in Track Select.");
-            ImGui.TextWrapped("Time Trials with Friends");
-            ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdatedSettings);
-            ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdatedSettings);
-
-            ImGui.TextWrapped("Fun");
-            ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdatedSettings);
-            ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdatedSettings);
-
-            ImGui.TextWrapped("Fair Play");
-            ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdatedSettings);
-            if (mods.ReplaceRing100Box)
-                Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdatedSettings);
-
-            ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdatedSettings);
-            if (mods.ReplaceAirMaxBox)
-                Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdatedSettings);
-
+            _tweakboxSettings.RenderModifiersMenu();
             if (!canEdit)
                 Utilities.PopDisabled();
 
             ImGui.TreePop();
-
-            void SendUpdatedSettings() => modifiers.HostSendSettingsToAll();
         }
 
         if (ImGui.TreeNodeStr("Bandwidth Statistics"))
@@ -96,8 +81,6 @@ public class NetplayLobbyMenu : ComponentBase
 
         RenderDebugOptions();
     }
-
-
 
     private void RenderBandwidthUsage(Socket socket)
     {

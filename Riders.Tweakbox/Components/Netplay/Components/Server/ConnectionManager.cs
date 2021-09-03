@@ -92,7 +92,7 @@ public class ConnectionManager : INetplayComponent
             Socket.SendAndFlush(peer, ReliablePacket.Create(gameData), DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
             Socket.SendAndFlush(peer, ReliablePacket.Create(courseSelectSync), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
 
-            if (Socket.TryGetComponent(out GameModifiers mod))
+            if (Socket.TryGetComponent(out GameModifiersSync mod))
                 mod.HostSendSettingsToSinglePeer(peer);
         }
     }

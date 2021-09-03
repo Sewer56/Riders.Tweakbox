@@ -92,7 +92,7 @@ public static class MessageTypeExtensions
             MessageType.ClientSetPlayerData => new ClientSetPlayerData(),
             MessageType.HostSetPlayerData => new HostSetPlayerData(),
             MessageType.HostUpdateClientPing => new HostUpdateClientLatency(),
-            MessageType.ServerGameModifiers => new ServerGameModifiers(),
+            MessageType.ServerGameModifiers => new GameModifiers(),
 
             // Menus
             MessageType.CourseSelectLoop => new CourseSelectLoop(),

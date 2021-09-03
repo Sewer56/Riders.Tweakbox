@@ -5,11 +5,12 @@ using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Parser.Layout.Objects.ItemBox;
 namespace Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 
-public struct ServerGameModifiers : IReliableMessage
+public struct GameModifiers : IReliableMessage
 {
     public bool DisableTornadoes;
     public bool DisableAttacks;
     public bool AlwaysTurbulence;
+    public bool NoTurbulence;
     public bool DisableSmallTurbulence;
 
     public bool ReplaceRing100Box;
@@ -30,6 +31,7 @@ public struct ServerGameModifiers : IReliableMessage
         DisableTornadoes = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableAttacks = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         AlwaysTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        NoTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableSmallTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
 
         ReplaceRing100Box = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
@@ -44,6 +46,7 @@ public struct ServerGameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(DisableTornadoes), 1);
         bitStream.Write(Convert.ToByte(DisableAttacks), 1);
         bitStream.Write(Convert.ToByte(AlwaysTurbulence), 1);
+        bitStream.Write(Convert.ToByte(NoTurbulence), 1);
         bitStream.Write(Convert.ToByte(DisableSmallTurbulence), 1);
 
         bitStream.WriteGeneric(ReplaceRing100Box, 1);

@@ -23,11 +23,13 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
     private DisplayMode? _currentMode;
     private List<string> _modes;
     private NetplayController _netplayController;
+    private GameModifiersController _modifiersController;
 
-    public TweakboxSettings(IO io, NetplayController netController) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
+    public TweakboxSettings(IO io, NetplayController netController, GameModifiersController modifiersController) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
     {
         _netplayController = netController;
         Config.Data.AddPropertyUpdatedHandler(ResolutionUpdated);
+        _modifiersController = modifiersController;
     }
 
     // UI
@@ -41,6 +43,8 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
 
         ImGui.End();
     }
+
+    public void RenderModifiersMenu() => RenderModifiersMenu_Internal();
 
     private unsafe void RenderMenu()
     {
@@ -57,11 +61,55 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         if (ImGui.CollapsingHeaderTreeNodeFlags("Misc", 0))
             RenderMiscMenu(data);
 
+        if (ImGui.CollapsingHeaderTreeNodeFlags("Fun", 0))
+            RenderFunMenu(data);
+
         if (ImGui.CollapsingHeaderTreeNodeFlags("Controls", 0))
             RenderControls(data);
 
         // Restore item width
         ImGui.PopItemWidth();
+    }
+
+    private void RenderFunMenu(TweakboxConfig.Internal data)
+    {
+        if (!_netplayController.IsActive() && ImGui.TreeNodeStr("Race Tweaks (No Override in Netplay)"))
+        {
+            ImGui.Text("These settings are always enabled in Netplay regardless of user preference.");
+            ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref data.AutoQTE).Notify(data, nameof(data.AutoQTE));
+            ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Race Tweaks (Netplay Synced)"))
+        {
+            RenderModifiersMenu_Internal();
+            ImGui.TreePop();
+        }
+    }
+
+    private void RenderModifiersMenu_Internal()
+    {
+        ref var mods = ref _modifiersController.Modifiers;
+        ImGui.TextWrapped("Time Trials with Friends");
+        ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);
+        ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdateNotification);
+
+        ImGui.TextWrapped("Turbulence");
+        ImGui.Checkbox("No Turbulence", ref mods.NoTurbulence).ExecuteIfTrue(SendUpdateNotification);
+        ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdateNotification);
+        ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdateNotification);
+
+        ImGui.TextWrapped("Fair Play");
+        ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdateNotification);
+        if (mods.ReplaceRing100Box)
+            Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+        ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdateNotification);
+        if (mods.ReplaceAirMaxBox)
+            Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+        void SendUpdateNotification() => _modifiersController.InvokeOnEditModifiers();
     }
 
     private void RenderGraphicsMenu(TweakboxConfig.Internal data)
@@ -153,13 +201,6 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.Checkbox("Return to Stage Select from Race", ref data.NormalRaceReturnToTrackSelect).Notify(data, nameof(data.NormalRaceReturnToTrackSelect));
             ImGui.Checkbox("Return to Stage Select from Tag", ref data.TagReturnToTrackSelect).Notify(data, nameof(data.TagReturnToTrackSelect));
             ImGui.Checkbox("Return to Stage Select from Survival", ref data.SurvivalReturnToTrackSelect).Notify(data, nameof(data.SurvivalReturnToTrackSelect));
-            ImGui.TreePop();
-        }
-
-        if (!_netplayController.IsActive() && ImGui.TreeNodeStr("Race Tweaks"))
-        {
-            ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref data.AutoQTE).Notify(data, nameof(data.AutoQTE));
-            ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
             ImGui.TreePop();
         }
 

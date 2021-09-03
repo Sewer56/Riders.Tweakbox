@@ -30,7 +30,6 @@ public unsafe class RacePlayerEventSync : INetplayComponent
     /// Contains available events for each player.
     /// </summary>
     private BoostTornado[] _events = new BoostTornado[Constants.MaxNumberOfPlayers + 1];
-    private GameModifiers _modifiers;
     private Logger _log = new Logger(LogCategory.PlayerEvent);
 
     private const DeliveryMethod _eventDeliveryMethod = DeliveryMethod.ReliableOrdered;
@@ -40,7 +39,6 @@ public unsafe class RacePlayerEventSync : INetplayComponent
         Socket = socket;
         Event = @event;
         State = socket.State;
-        Socket.TryGetComponent(out _modifiers);
 
         Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
     }
@@ -60,10 +58,6 @@ public unsafe class RacePlayerEventSync : INetplayComponent
     {
         // ReSharper disable once VariableHidesOuterVariable
         bool IsLastPlayer(int playerIndex) => playerIndex == *Sewer56.SonicRiders.API.State.NumberOfRacers - 1;
-
-        // Remove Tornadoes if Modifier is set.
-        if (_modifiers != null && _modifiers.Modifiers.DisableTornadoes)
-            player->MovementFlags &= ~MovementFlags.Tornado;
 
         Socket.Update();
         int playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);

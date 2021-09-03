@@ -40,15 +40,15 @@ public unsafe class Attack : INetplayComponent
     /// Contains the synchronization data for handling attacks.
     /// </summary>
     private Timestamped<SetAttack>[] _attackSync = new Timestamped<SetAttack>[Constants.MaxNumberOfPlayers];
-    private GameModifiers _modifiers;
+    private GameModifiersController _modifiersController;
     private Logger _log = new Logger(LogCategory.Race);
 
-    public Attack(Socket socket, EventController @event)
+    public Attack(Socket socket, EventController @event, GameModifiersController modifiersController)
     {
         Socket = socket;
         Event = @event;
         State = Socket.State;
-        Socket.TryGetComponent(out _modifiers);
+        _modifiersController = modifiersController;
 
         Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
         Event.OnStartAttackTask += OnStartAttackTask;
@@ -111,7 +111,7 @@ public unsafe class Attack : INetplayComponent
         if (_isProcessingAttackPackets)
             return 0;
 
-        if (_modifiers != null && _modifiers.Modifiers.DisableAttacks)
+        if (_modifiersController != null && _modifiersController.Modifiers.DisableAttacks)
             return 1;
 
         var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);
