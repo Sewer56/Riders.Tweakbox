@@ -85,9 +85,12 @@ public struct CharaSelectLoop : IReliableMessage, Misc.Interfaces.IBitPackable<C
         player.IsAiVisual = PlayerType.CPU;
 
         // Replace character with SS if necessary.
-        var gear = Player.Gears[(int) player.ExtremeGear];
-        if (gear.GearModel == ExtremeGearModel.ChaosEmerald)
-            player.Character = Characters.SuperSonic;
+        if (player.ExtremeGear >= 0 && player.ExtremeGear < (ExtremeGear) Player.Gears.Count)
+        {
+            var gear = Player.Gears[(int)player.ExtremeGear];
+            if (gear.GearModel == ExtremeGearModel.ChaosEmerald)
+                player.Character = Characters.SuperSonic;
+        }
     }
 
     /// <summary>
