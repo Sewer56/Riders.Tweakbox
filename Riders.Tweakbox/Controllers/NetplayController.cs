@@ -175,8 +175,8 @@ public partial class NetplayController : IController
         data.ClientSettings.Password = password;
         data.ClientSettings.Port = port;
         data.ClientSettings.IP = address;
-
-        Socket = new Client(configCopy, this, Api);
+        
+        SetSocket(new Client(configCopy, this, Api));
         IoC.Get<NetplayMenu>().IsEnabled() = true;
         return true;
     }
