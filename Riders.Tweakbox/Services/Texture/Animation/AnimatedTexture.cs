@@ -57,14 +57,14 @@ public class AnimatedTexture : IDisposable
     public void Dispose()
     {
         try { _preloadFromCacheToken?.Dispose(); }
-        catch (Exception) { /* Ignored */ }
+        catch (Exception e) { _log.WriteLine($"[{nameof(AnimatedTexture)}] Exception Disposing Preload Token {e.Message}"); }
         try { _preloadFromCacheTask?.Wait(); }
-        catch (Exception) { /* Ignored */ }
+        catch (Exception e) { _log.WriteLine($"[{nameof(AnimatedTexture)}] Exception Disposing Preload Task {e.Message}"); }
 
         foreach (var texture in Textures)
         {
             try { texture?.Dispose(); }
-            catch (Exception) { /* Ignored */ }
+            catch (Exception e) { _log.WriteLine($"[{nameof(AnimatedTexture)}] Exception Disposing Texture {e.Message}"); }
         }
         
         _loaded = false;
