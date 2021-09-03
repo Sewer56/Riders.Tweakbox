@@ -71,7 +71,7 @@ public unsafe class Host : Socket
         catch (Exception e)
         {
             _log.WriteLine($"[{nameof(Host)}] NAT Punch Server Failure: {e.Message}");
-            host.NatPunchClient.Dispose();
+            host.NatPunchClient?.Dispose();
         }
     }
 
