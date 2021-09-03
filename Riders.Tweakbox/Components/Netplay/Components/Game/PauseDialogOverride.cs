@@ -88,6 +88,12 @@ public class PauseDialogOverride : INetplayComponent
         EndOfRaceDialog.Initialize(true, mode == EndOfRaceDialogMode.GrandPrix, AdditionalResultsItems);
         Shell.AddDialog("Finished!", EndOfRaceDialog.Render, EndOfRaceDialog.OnClose, showClose: false);
         _restartDialogTask = new PauseDialogTask(EndOfRaceDialog);
+
+        // Kill the dialog if already restarting.
+        // We are creating the dialog anyway because we don't want to return a null ptr.
+        if (*State.EndOfGameMode != EndOfGameMode.Null)
+            _restartDialogTask.Dialog.IsCompleted = true;
+
         return _restartDialogTask.NativeTask;
     }
 
