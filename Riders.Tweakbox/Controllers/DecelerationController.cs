@@ -36,9 +36,9 @@ public class DecelerationController : IController
 
             "linear:",
             "movss xmm1, [0x5C08FC]",
-            $"subss xmm1, [{(int)(&ptr->LinearSpeedCapOverride)}]",
+            $"subss xmm1, [{(int)(&ptr->LinearSpeedCapOverride)}]", // Speed Cap (Overwritten)
             "addss xmm1, [0x5AFFFC]",
-            "subss xmm0, [ebx+0xBE8]",
+            "subss xmm0, [ebx+0xBE8]", // Speed Cap
             "divss xmm0, xmm1",
             "jmp exit",
 

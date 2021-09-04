@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using DearImguiSharp;
 using EnumsNET;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
@@ -109,7 +110,50 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         if (mods.ReplaceAirMaxBox)
             Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
 
+        ImGui.TextWrapped("Catch-up/Rubberbanding");
+        ImGui.Checkbox("Slipstream", ref mods.Slipstream.Enabled).ExecuteIfTrue(SendUpdateNotification);
+        Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxAngle, "Max Angle (Degrees)", 0.001f, null).ExecuteIfTrue(SendUpdateNotification);
+        ImGui.DragFloat("Max Strength", ref mods.Slipstream.SlipstreamMaxStrength, 0.0001f, 0f, 0.1f, "%.4f", 1).ExecuteIfTrue(SendUpdateNotification);
+        Tooltip.TextOnHover("Strength is defined as the amount the player speed is multiplied by per frame.\n" +
+                            "This value is scaled (using Max Angle) based on how perfectly your angle matches other players; with this being the upper bound.");
+
+        Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxDistance, "Max Distance", 0.1f, null).ExecuteIfTrue(SendUpdateNotification);
+        Tooltip.TextOnHover("Maximum distance for Slipstream. The closer the player, the more slipstream is applied. At the distance here, minimum slipstream is applied.");
+
+        Reflection.MakeControlEnum(ref mods.Slipstream.EasingSetting, "Easing Setting").ExecuteIfTrue(SendUpdateNotification);
+        Tooltip.TextOnHover("Controls the post processing algorithm used to scale slipstream bonus with range.\n" +
+                            "Tweakbox scales' its slipstream such that more bonus is applied when you are closer to the opponent.\n" +
+                            "These algorithms are listed in increasing levels of growth rate.\n" +
+                            "Don't know what this means? Google \"Easing Functions\"");
+
+        ImGui.TextWrapped("Player Interaction/Time Trial With Friends");
+
+        if (ImGui.TreeNodeStr("Ring Loss on Death"))
+        {
+            RenderRingLossMenu(ref mods.DeathRingLoss);
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Ring Loss on Hit"))
+        {
+            RenderRingLossMenu(ref mods.HitRingLoss);
+            ImGui.TreePop();
+        }
+
         void SendUpdateNotification() => _modifiersController.InvokeOnEditModifiers();
+
+        void RenderRingLossMenu(ref RingLossBehaviour behaviour)
+        {
+            ImGui.Checkbox("Enabled", ref behaviour.Enabled).ExecuteIfTrue(SendUpdateNotification);
+            var minPercent = 0.0f;
+            var maxPercent = 100f;
+            var minLoss = (byte) 0;
+            var maxLoss = (byte) 100;
+
+            Reflection.MakeControl(ref behaviour.RingLossBefore, "Loss Before Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
+            Reflection.MakeControl(ref behaviour.RingLossPercentage, "Loss Percentage", 0.01f, ref minPercent, ref maxPercent).ExecuteIfTrue(SendUpdateNotification);
+            Reflection.MakeControl(ref behaviour.RingLossAfter, "Loss After Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
+        }
     }
 
     private void RenderGraphicsMenu(TweakboxConfig.Internal data)

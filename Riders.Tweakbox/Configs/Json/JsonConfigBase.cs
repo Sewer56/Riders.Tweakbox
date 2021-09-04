@@ -14,7 +14,8 @@ public abstract class JsonConfigBase<TParent, TConfig> : IConfiguration where TP
     {
         IncludeFields = true,
         WriteIndented = true,
-        Converters = { new TextInputJsonConverter() }
+        IgnoreNullValues = true,
+        Converters = { new TextInputJsonConverter(),  }
     };
 
     /// <summary>

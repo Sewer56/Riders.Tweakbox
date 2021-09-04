@@ -55,7 +55,7 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
         public GameInput InputMode = GameInput.WhenNoWindowActive;
         public VK InputToggleKey = VK.F10;
 
-        public GameModifiers Modifiers = new GameModifiers();
+        public GameModifiers Modifiers = GameModifiers.CreateDefault();
     }
 
     public enum MemoryLimit : int

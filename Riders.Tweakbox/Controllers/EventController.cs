@@ -186,6 +186,27 @@ public unsafe partial class EventController : TaskEvents, IController
     /// </summary>
     public event SetSpeedShoesSpeedHandlerFn SetSpeedShoesSpeed;
 
+    /// <summary>
+    /// Executed before the player's rings are to be drained after they are hit.
+    /// Applies only to modes where rings are lost (i.e. not triggered by battle).
+    /// </summary>
+    public event GenericPlayerFn OnSetRingsOnHit;
+
+    /// <summary>
+    /// Use this event to override how the player's rings are set when the player is hit.
+    /// </summary>
+    public event GenericPlayerFn SetRingsOnHit;
+
+    /// <summary>
+    /// Executed before the player's rings are to be drained after they die.
+    /// </summary>
+    public event GenericPlayerFn OnSetRingsOnDeath;
+
+    /// <summary>
+    /// Use this event to override how the player's rings are set when the player is respawned after a death.
+    /// </summary>
+    public event GenericPlayerFn SetRingsOnDeath;
+
     private IHook<Functions.StartLineSetSpawnLocationsFn> _setSpawnLocationsStartOfRaceHook;
     private IHook<Functions.StartAttackTaskFn> _startAttackTaskHook;
     private IHook<Functions.SetMovementFlagsBasedOnInputFn> _setMovementFlagsOnInputHook;
@@ -211,6 +232,8 @@ public unsafe partial class EventController : TaskEvents, IController
     private IAsmHook _onCheckIfHumanInputIndicatorHook;
     private IAsmHook _forceTurbulenceTypeHook;
     private IAsmHook _setDashPanelSpeedHook;
+    private IAsmHook _setRingsOnHitHook;
+    private IAsmHook _setRingsOnDeathHook;
 
     private unsafe Pinnable<BlittablePointer<Player>> _tempPlayerPointer = new Pinnable<BlittablePointer<Player>>(new BlittablePointer<Player>());
 
@@ -283,7 +306,6 @@ public unsafe partial class EventController : TaskEvents, IController
             "pop ecx"
         }, 0x0045617F, AsmHookBehaviour.ExecuteFirst).Activate();
 
-
         _setDashPanelSpeedHook = hooks.CreateAsmHook(new string[]
         {
             // Goal: Modify `ecx` register
@@ -312,6 +334,35 @@ public unsafe partial class EventController : TaskEvents, IController
             "pop edx", // Caller Restore Registers
             "pop eax"
         }, 0x004C7323, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+        
+        _setRingsOnHitHook = hooks.CreateAsmHook(new string[]
+        {
+            "use32",
+
+            $"{utilities.PushCdeclCallerSavedRegisters()}",
+            "push esi", // Player Ptr
+            $"{utilities.AssembleAbsoluteCall<GenericPlayerFn>(OnPlayerHitRingLossHook, out _, false)}",
+            $"{utilities.PopCdeclCallerSavedRegisters()}",
+
+            // Original Code
+            "cmp ebx, 8", // Original line to set ring count after is omitted.
+        }, 0x4A456D, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+
+        _setRingsOnDeathHook = hooks.CreateAsmHook(new string[]
+        {
+            "use32",
+
+            // Original Code
+            "mov [esi+0CB4h], ecx", // Original line to set ring count after is omitted.
+            
+            $"{utilities.PushXmmRegisters(Constants.XmmRegisters)}",
+            $"{utilities.PushCdeclCallerSavedRegisters()}",
+            "push esi", // Player Ptr
+            $"{utilities.AssembleAbsoluteCall<GenericPlayerFn>(OnPlayerDeathHook, out _, false)}",
+            $"{utilities.PopCdeclCallerSavedRegisters()}",
+            $"{utilities.PopXmmRegisters(Constants.XmmRegisters)}",
+
+        }, 0x4B8EA6, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
     }
 
     private Pinnable<float> _dashPanelSpeed = new Pinnable<float>(0);
@@ -330,6 +381,24 @@ public unsafe partial class EventController : TaskEvents, IController
 
     private Task* SetRenderItemPickupHook(Player* player, byte a2, ushort a3) => SetItemPickupTaskHandler != null ? SetItemPickupTaskHandler(player, a2, a3, _setRenderItemPickupTaskHook)
                                                                                                                   : _setRenderItemPickupTaskHook.OriginalFunction(player, a2, a3);
+
+    private void OnPlayerHitRingLossHook(Player* player)
+    {
+        OnSetRingsOnHit?.Invoke(player);
+        if (SetRingsOnHit != null)
+            SetRingsOnHit.Invoke(player);
+        else
+            player->Rings = 0;
+    }
+
+    private void OnPlayerDeathHook(Player* player)
+    {
+        OnSetRingsOnDeath?.Invoke(player);
+        if (SetRingsOnDeath != null)
+            SetRingsOnDeath.Invoke(player);
+        else
+            player->Rings = 0;
+    }
 
     private byte SetPlayerStateHook(Player* player, PlayerState state) => SetNewPlayerStateHandler?.Invoke(player, state, _setNewPlayerStateHook) ?? _setNewPlayerStateHook.OriginalFunction(player, state);
 
@@ -410,4 +479,10 @@ public unsafe partial class EventController : TaskEvents, IController
 
     [Function(new Register[0], ecx, StackCleanup.Callee)]
     public delegate IntFloat SetSpeedShoesSpeedHandlerFn(Player* player, float targetSpeed);
+
+    /// <summary>
+    /// Generic function that acts upon a player.
+    /// </summary>
+    [Function(CallingConventions.Stdcall)]
+    public delegate void GenericPlayerFn(Player* player);
 }

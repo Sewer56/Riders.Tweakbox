@@ -115,6 +115,7 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                         Benchmark(() => IoC.GetSingleton<ChatMenuDebug>(), nameof(ChatMenuDebug)),
+                        Benchmark(() => IoC.GetSingleton<SlipstreamDebug>(), nameof(SlipstreamDebug)),
                     })
                 },
                 Text = new List<string>()
