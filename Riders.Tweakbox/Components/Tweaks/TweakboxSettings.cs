@@ -195,8 +195,13 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.Text($"Current FPS: " + _pacingController.Fps.StatFPS);
 
             ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
-            ImGui.Checkbox("Fix D3D Device Flags", ref data.D3DDeviceFlags).Notify(data, nameof(data.D3DDeviceFlags));
-            Tooltip.TextOnHover("Applies on boot.");
+            if (ImGui.TreeNodeStr("Direct3D Flags"))
+            {
+                ImGui.TextWrapped("These settings apply on boot.");
+                ImGui.Checkbox("Hardware Vertex Processing", ref data.HardwareVertexProcessing).Notify(data, nameof(data.HardwareVertexProcessing));
+                ImGui.Checkbox("Disable PSGP Threading", ref data.DisablePsgpThreading).Notify(data, nameof(data.DisablePsgpThreading));
+                ImGui.TreePop();
+            }
 
             ImGui.Checkbox("Disable VSync", ref data.DisableVSync).Notify(data, nameof(data.DisableVSync));
             Tooltip.TextOnHover("Applies on boot.");

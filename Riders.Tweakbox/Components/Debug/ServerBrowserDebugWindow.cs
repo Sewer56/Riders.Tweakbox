@@ -67,7 +67,9 @@ public class ServerBrowserDebugWindow : ComponentBase
 
     private Task FakeRefresh()
     {
-        return Task.Run(() => GenerateData(NumServers));
+        var task = Task.Run(() => GenerateData(NumServers));
+        task.ConfigureAwait(false);
+        return task;
     }
 
     #region Test Data Generation

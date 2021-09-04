@@ -16,6 +16,7 @@ using Microsoft.Windows.Sdk;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc.Extensions;
 using Task = System.Threading.Tasks.Task;
+using Riders.Tweakbox.Misc.Log;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -61,12 +62,16 @@ public unsafe class FramePacingController : IController
     private IHook<ReturnVoidFnPtr> _endFrameHook;
     private Direct3DController _direct3DController = IoC.GetSingleton<Direct3DController>();
     private int _lastFrameCounter;
+    private Logger _logger = new Logger(LogCategory.Default);
 
     public FramePacingController()
     {
         // Set this field in background because it's slow and blocking.
-        try { Task.Run(() => _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")).ConfigureAwait(false); }
-        catch (Exception e) { /* Fails on some machines. */ }
+        Task.Run(() =>
+        {
+            try { _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total"); }
+            catch (Exception e) { _logger.WriteLine($"Failed to Create CPU Counter: {e.Message}"); }
+        }).ConfigureAwait(false);
 
         // Hook and disable frequency adjusting functions.
         var winmm = PInvoke.LoadLibrary("winmm.dll");

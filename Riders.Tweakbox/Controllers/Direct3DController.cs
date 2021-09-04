@@ -23,6 +23,12 @@ public unsafe class Direct3DController : IController
     /// </summary>
     public Direct3DEx D3dEx { get; private set; }
 
+
+    /// <summary>
+    /// The D3D9 Device.
+    /// </summary>
+    public Device D3dDevice { get; private set; }
+
     /// <summary>
     /// The D3D9 Device.
     /// </summary>
@@ -103,12 +109,12 @@ public unsafe class Direct3DController : IController
             return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
         }
 
-        if (_config.Data.D3DDeviceFlags)
-        {
+        if (_config.Data.HardwareVertexProcessing)
             behaviorFlags |= CreateFlags.HardwareVertexProcessing;
-            behaviorFlags |= CreateFlags.DisablePsgpThreading;
-        }
 
+        if (_config.Data.DisablePsgpThreading)
+            behaviorFlags |= CreateFlags.DisablePsgpThreading;
+        
         if (!presentParameters.Windowed)
             PInvoke.ShowCursor(true);
 

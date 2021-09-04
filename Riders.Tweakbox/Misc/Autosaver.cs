@@ -91,7 +91,7 @@ namespace Riders.Tweakbox.Misc
                 _autosaveCompressor.AddFiles(Directory, CompressTime, Filter);
                 _autosaveCompressor.DeleteOldFiles(DeleteTime);
                 _autosaveCompressor.Flush();
-            });
+            }).ConfigureAwait(false);
         }
     }
 }
