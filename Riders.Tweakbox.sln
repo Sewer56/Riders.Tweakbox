@@ -45,8 +45,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Shared", "R
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Controller.Hook.Interfaces", "Submodules\Riders.Controller.Hook\Riders.Controller.Hook\Riders.Controller.Hook.Interfaces\Riders.Controller.Hook.Interfaces.csproj", "{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordRPC", "Submodules\discord-rpc-csharp\DiscordRPC\DiscordRPC.csproj", "{3A4C7B95-9917-425F-9A04-A3052C2E475F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,10 +123,6 @@ Global
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3A4C7B95-9917-425F-9A04-A3052C2E475F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3A4C7B95-9917-425F-9A04-A3052C2E475F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3A4C7B95-9917-425F-9A04-A3052C2E475F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3A4C7B95-9917-425F-9A04-A3052C2E475F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -151,7 +145,6 @@ Global
 		{4AEADEBE-41AE-4EB1-99D3-5168CE63CC84} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{FD6F13B0-8703-4460-A858-F0414AC3D9AE} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
-		{3A4C7B95-9917-425F-9A04-A3052C2E475F} = {B1F8CFC6-AB03-441E-8076-4A073E8A0257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47C82F64-5E24-4FAC-8796-D945A77F8863}

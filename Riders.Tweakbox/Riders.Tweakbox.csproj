@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
@@ -31,6 +31,7 @@
   <ItemGroup>
     <PackageReference Include="Bogus" Version="33.0.2" Condition="'$(Configuration)'=='Debug'" />
     <PackageReference Include="ByteSize" Version="2.0.0" />
+    <PackageReference Include="DiscordRichPresence" Version="1.0.175" />
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.3" />
     <PackageReference Include="Enums.NET" Version="4.0.0" />
     <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
@@ -56,7 +57,6 @@
     <ProjectReference Include="..\Netplay\MLAPI.Puncher.LiteNetLib\MLAPI.Puncher.LiteNetLib.csproj" />
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
     <ProjectReference Include="..\Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj" />
-    <ProjectReference Include="..\Submodules\discord-rpc-csharp\DiscordRPC\DiscordRPC.csproj" />
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />
     <ProjectReference Include="..\Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj" />

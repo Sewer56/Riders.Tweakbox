@@ -19,6 +19,3 @@
 [submodule "Submodules/Riders.Controller.Hook"]
 	path = Submodules/Riders.Controller.Hook
 	url = https://github.com/Sewer56/Riders.Controller.Hook.git
-[submodule "Submodules/discord-rpc-csharp"]
-	path = Submodules/discord-rpc-csharp
-	url = https://github.com/Sewer56/discord-rpc-csharp
