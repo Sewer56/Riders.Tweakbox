@@ -86,7 +86,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.TreePop();
         }
 
-        if (ImGui.TreeNodeStr("Race Tweaks (Netplay Synced)"))
+        if (_netplayController.CanEditSettings() && ImGui.TreeNodeStr("Race Tweaks (Netplay Synced)"))
         {
             RenderModifiersMenu_Internal();
             ImGui.TreePop();

@@ -14,6 +14,7 @@ using Riders.Tweakbox.Misc.Log;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell;
 using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Utility;
 using Constants = Sewer56.Imgui.Misc.Constants;
 namespace Riders.Tweakbox.Controllers;
 
@@ -37,9 +38,13 @@ public partial class NetplayController : IController
     /// </summary>
     public TweakboxApi Api { get; set; }
 
+    private EventController _event;
+
     public NetplayController(NetplayEditorConfig config, Tweakbox tweakbox)
     {
         Config = config;
+        _event = IoC.GetSingleton<EventController>();
+
         Event.AfterEndScene += OnEndScene;
         Task.Run(InitializeApi);
         InitializeChatComponent(tweakbox);
@@ -68,6 +73,20 @@ public partial class NetplayController : IController
     /// True if Netplay Mode is currently Active
     /// </summary>
     public bool IsActive() => Socket != null;
+
+    /// <summary>
+    /// True if the client is allowed to edit game settings, else false.
+    /// </summary>
+    public bool CanEditSettings()
+    {
+        if (Socket == null)
+            return true;
+
+        if (!Socket.IsConnected())
+            return true;
+
+        return _event.LastTask == Tasks.CourseSelect && Socket.GetSocketType() == SocketType.Host;
+    }
 
     /// <summary>
     /// True is currently connected, else false.

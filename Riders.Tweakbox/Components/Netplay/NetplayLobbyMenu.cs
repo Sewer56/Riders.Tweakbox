@@ -60,8 +60,8 @@ public class NetplayLobbyMenu : ComponentBase
         if (ImGui.TreeNodeStr("Lobby Options"))
         {
             _tweakboxSettings ??= IoC.GetSingleton<TweakboxSettings>();
-            bool canEdit = Event.LastTask == Tasks.CourseSelect && socket.GetSocketType() == SocketType.Host;
-            
+            bool canEdit = Controller.CanEditSettings();
+
             if (!canEdit)
                 Utilities.PushDisabled();
 
