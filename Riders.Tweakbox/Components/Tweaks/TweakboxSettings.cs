@@ -96,51 +96,64 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
     private void RenderModifiersMenu_Internal()
     {
         ref var mods = ref _modifiersController.Modifiers;
-        ImGui.TextWrapped("Time Trials with Friends");
-        ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);
-        ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdateNotification);
-
-        ImGui.TextWrapped("Turbulence");
-        ImGui.Checkbox("No Turbulence", ref mods.NoTurbulence).ExecuteIfTrue(SendUpdateNotification);
-        ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdateNotification);
-        ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdateNotification);
-
-        ImGui.TextWrapped("Fair Play");
-        ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdateNotification);
-        if (mods.ReplaceRing100Box)
-            Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
-
-        ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdateNotification);
-        if (mods.ReplaceAirMaxBox)
-            Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
-
-        ImGui.TextWrapped("Catch-up/Rubberbanding");
-        ImGui.Checkbox("Slipstream", ref mods.Slipstream.Enabled).ExecuteIfTrue(SendUpdateNotification);
-        Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxAngle, "Max Angle (Degrees)", 0.001f, null).ExecuteIfTrue(SendUpdateNotification);
-        ImGui.DragFloat("Max Strength", ref mods.Slipstream.SlipstreamMaxStrength, 0.0001f, 0f, 0.1f, "%.4f", 1).ExecuteIfTrue(SendUpdateNotification);
-        Tooltip.TextOnHover("Strength is defined as the amount the player speed is multiplied by per frame.\n" +
-                            "This value is scaled (using Max Angle) based on how perfectly your angle matches other players; with this being the upper bound.");
-
-        Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxDistance, "Max Distance", 0.1f, null).ExecuteIfTrue(SendUpdateNotification);
-        Tooltip.TextOnHover("Maximum distance for Slipstream. The closer the player, the more slipstream is applied. At the distance here, minimum slipstream is applied.");
-
-        Reflection.MakeControlEnum(ref mods.Slipstream.EasingSetting, "Easing Setting").ExecuteIfTrue(SendUpdateNotification);
-        Tooltip.TextOnHover("Controls the post processing algorithm used to scale slipstream bonus with range.\n" +
-                            "Tweakbox scales' its slipstream such that more bonus is applied when you are closer to the opponent.\n" +
-                            "These algorithms are listed in increasing levels of growth rate.\n" +
-                            "Don't know what this means? Google \"Easing Functions\"");
-
-        ImGui.TextWrapped("Player Interaction/Time Trial With Friends");
-
-        if (ImGui.TreeNodeStr("Ring Loss on Death"))
+        if (ImGui.TreeNodeStr("Player Interaction/Time Trials with Friends"))
         {
-            RenderRingLossMenu(ref mods.DeathRingLoss);
+            ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdateNotification);
+
+            if (ImGui.TreeNodeStr("Ring Loss on Death"))
+            {
+                RenderRingLossMenu(ref mods.DeathRingLoss);
+                ImGui.TreePop();
+            }
+
+            if (ImGui.TreeNodeStr("Ring Loss on Hit"))
+            {
+                RenderRingLossMenu(ref mods.HitRingLoss);
+                ImGui.TreePop();
+            }
+
             ImGui.TreePop();
         }
 
-        if (ImGui.TreeNodeStr("Ring Loss on Hit"))
+        if (ImGui.TreeNodeStr("Turbulence"))
         {
-            RenderRingLossMenu(ref mods.HitRingLoss);
+            ImGui.Checkbox("No Turbulence", ref mods.NoTurbulence).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Fair Play"))
+        {
+            ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdateNotification);
+            if (mods.ReplaceRing100Box)
+                Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+            ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdateNotification);
+            if (mods.ReplaceAirMaxBox)
+                Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Catch-up/Rubberbanding"))
+        {
+            ImGui.Checkbox("Slipstream", ref mods.Slipstream.Enabled).ExecuteIfTrue(SendUpdateNotification);
+            Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxAngle, "Max Angle (Degrees)", 0.001f, null).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.DragFloat("Max Strength", ref mods.Slipstream.SlipstreamMaxStrength, 0.0001f, 0f, 0.1f, "%.4f", 1).ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Strength is defined as the amount the player speed is multiplied by per frame.\n" +
+                                "This value is scaled (using Max Angle) based on how perfectly your angle matches other players; with this being the upper bound.");
+
+            Reflection.MakeControl(ref mods.Slipstream.SlipstreamMaxDistance, "Max Distance", 0.1f, null).ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Maximum distance for Slipstream. The closer the player, the more slipstream is applied. At the distance here, minimum slipstream is applied.");
+
+            Reflection.MakeControlEnum(ref mods.Slipstream.EasingSetting, "Easing Setting").ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Controls the post processing algorithm used to scale slipstream bonus with range.\n" +
+                                "Tweakbox scales' its slipstream such that more bonus is applied when you are closer to the opponent.\n" +
+                                "These algorithms are listed in increasing levels of growth rate.\n" +
+                                "Don't know what this means? Google \"Easing Functions\"");
+
             ImGui.TreePop();
         }
 
