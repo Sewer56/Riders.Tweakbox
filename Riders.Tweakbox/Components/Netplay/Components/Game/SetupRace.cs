@@ -2,6 +2,7 @@
 using LiteNetLib;
 using Riders.Netplay.Messages;
 using Riders.Tweakbox.Components.Netplay.Sockets;
+using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.API;
@@ -67,9 +68,16 @@ public unsafe class SetupRace : INetplayComponent
         // Reset number of frames.
         Socket.State.FrameCounter = 0;
 
+        // Game Config
+        var tweakboxConf  = IoC.GetSingleton<TweakboxConfig>();
+        bool noScreenpeek = tweakboxConf.Data.Modifiers.NoScreenpeek;
+
         // Calculate Number of Cameras depending on Local Players
         var totalPlayers = Socket.State.GetPlayerCount();
         var numCameras = Socket.Config.Data.PlayerSettings.MaxNumberOfCameras;
+        if (!Socket.State.SelfInfo.IsSpectator && noScreenpeek)
+            numCameras = 0;
+
         if (numCameras > 0)
         {
             while (numCameras > totalPlayers)

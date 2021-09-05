@@ -96,6 +96,14 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
     private void RenderModifiersMenu_Internal()
     {
         ref var mods = ref _modifiersController.Modifiers;
+
+        if (ImGui.TreeNodeStr("Netplay Only Settings"))
+        {
+            ImGui.Checkbox("No Screenpeek", ref mods.NoScreenpeek).ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Uses the Minimal Amount of Cameras. Same as Automatic setting in Netplay player settings.");
+            ImGui.TreePop();
+        }
+
         if (ImGui.TreeNodeStr("Player Interaction/Time Trials with Friends"))
         {
             ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);

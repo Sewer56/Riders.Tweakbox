@@ -56,6 +56,11 @@ public class ClientData : IReusable
     public int NumPlayers;
 
     /// <summary>
+    /// True if the client is a spectator, else false.
+    /// </summary>
+    public bool IsSpectator => ClientIndex == -1;
+
+    /// <summary>
     /// Copies data submitted by the client.
     /// </summary>
     public void UpdateFromClient(ClientData data)

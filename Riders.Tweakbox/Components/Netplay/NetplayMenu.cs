@@ -244,7 +244,8 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
             "0 = Automatic\n" +
             "1 = Single Screen\n" +
             "2 = Split-Screen\n" +
-            "3-4 = 4-way Split Screen.");
+            "3-4 = 4-way Split Screen.\n" +
+            "Note: This setting may be ignored if NoScreenpeek is enabled by the host.");
 
         bool openBufferSettings = ImGui.TreeNodeStr("Buffer Settings");
         Tooltip.TextOnHover("Advanced users only. Changing the defaults is not recommended.");

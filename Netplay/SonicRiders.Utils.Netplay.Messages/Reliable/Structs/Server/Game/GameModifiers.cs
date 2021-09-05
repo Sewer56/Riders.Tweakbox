@@ -20,7 +20,8 @@ public struct GameModifiers : IReliableMessage
     public bool AlwaysTurbulence;
     public bool NoTurbulence;
     public bool DisableSmallTurbulence;
-    
+    public bool NoScreenpeek;
+
     public bool ReplaceRing100Box;
     public ItemBoxAttribute Ring100Replacement;
 
@@ -63,6 +64,7 @@ public struct GameModifiers : IReliableMessage
         AlwaysTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableSmallTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
 
         ReplaceRing100Box = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         Ring100Replacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
@@ -82,6 +84,7 @@ public struct GameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(AlwaysTurbulence), 1);
         bitStream.Write(Convert.ToByte(NoTurbulence), 1);
         bitStream.Write(Convert.ToByte(DisableSmallTurbulence), 1);
+        bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
 
         bitStream.WriteGeneric(ReplaceRing100Box, 1);
         bitStream.WriteGeneric(Ring100Replacement, EnumNumBits<ItemBoxAttribute>.Number);
