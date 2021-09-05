@@ -6,12 +6,12 @@ using Sewer56.SonicRiders.Parser.Layout.Enums;
 
 namespace Riders.Tweakbox.Controllers;
 
-public class RemoveParticlesController : IController
+public class ObjectLayoutModifiersController : IController
 {
     private TweakboxConfig _config;
     private ObjectLayoutController.ObjectLayoutController _layoutController;
 
-    public RemoveParticlesController(TweakboxConfig config)
+    public ObjectLayoutModifiersController(TweakboxConfig config)
     {
         _config = config;
         _layoutController = IoC.GetSingleton<ObjectLayoutController.ObjectLayoutController>();
@@ -20,14 +20,14 @@ public class RemoveParticlesController : IController
 
     private void OnLoadLayout(ref InMemoryLayoutFile layout)
     {
-        if (!_config.Data.NoParticles)
-            return;
-
         for (int x = 0; x < layout.Objects.Count; x++)
         {
             ref var obj = ref layout.Objects[x];
-            if (obj.Type >= ObjectId.eParSet00 && obj.Type <= ObjectId.eParSet29)
+            if (_config.Data.NoParticles && obj.Type >= ObjectId.eParSet00 && obj.Type <= ObjectId.eParSet29)
                 obj.Type = ObjectId.oInvalid;
+
+            if (_config.Data.SinglePlayerStageData)
+                obj.MaxPlayerCount = 4;
         }
     }
 }
