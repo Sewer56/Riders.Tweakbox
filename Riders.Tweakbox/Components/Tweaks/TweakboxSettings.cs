@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using DearImguiSharp;
 using EnumsNET;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
@@ -25,12 +27,14 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
     private List<string> _modes;
     private NetplayController _netplayController;
     private GameModifiersController _modifiersController;
+    private bool _isVulkanLoaded;
 
     public TweakboxSettings(IO io, NetplayController netController, GameModifiersController modifiersController) : base(io, io.FixesConfigFolder, io.GetFixesConfigFiles, IO.JsonConfigExtension)
     {
         _netplayController = netController;
         Config.Data.AddPropertyUpdatedHandler(ResolutionUpdated);
         _modifiersController = modifiersController;
+        _isVulkanLoaded = Native.GetModuleHandle("vulkan-1.dll") != IntPtr.Zero;
     }
 
     // UI
@@ -216,7 +220,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
 
             ImGui.Checkbox("Disable Particles", ref data.NoParticles).Notify(data, nameof(data.NoParticles));
-            Tooltip.TextOnHover("Riders' implementation of particle emitters on PC is known for slowing the game down massively; causing some performance issues for some people.\n" +
+            Tooltip.TextOnHover("Riders' implementation of particle emitters on PC is known for slowing the game down massively; causing some performance issues in some areas.\n" +
                                 "This will make it so that particle emitters aren't spawned in levels.\n" +
                                 "Setting takes effect on stage load.");
 
@@ -245,6 +249,16 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             Tooltip.TextOnHover("Basic widescreen hack that centers the game content to the screen.\n" +
                                 "Do not combine/use with other widescreen hacks.");
             ImGui.TreePop();
+        }
+
+        if (!_isVulkanLoaded)
+        {
+            if (ImGui.Button("Having Performance Issues? Try DXVK.", Constants.Zero))
+                Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/doitsujin/dxvk/releases") { CreateNoWindow = true });
+
+            Tooltip.TextOnHover("Riders' implementation of particle emitters on PC is known for slowing the game down massively in some areas; causing performance issues.\n" +
+                                "While Tweakbox can mitigate the problem partially, it can't be fully fixed without a particle system rewrite.\n" +
+                                "Using the Vulkan wrapper with proper support for multithreading will improve your performance by 2-3x.");
         }
     }
 

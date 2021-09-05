@@ -23,12 +23,6 @@ public unsafe class Direct3DController : IController
     /// </summary>
     public Direct3DEx D3dEx { get; private set; }
 
-
-    /// <summary>
-    /// The D3D9 Device.
-    /// </summary>
-    public Device D3dDevice { get; private set; }
-
     /// <summary>
     /// The D3D9 Device.
     /// </summary>
