@@ -35,6 +35,7 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
         public bool SinglePlayerModels = true;
         public bool HardwareVertexProcessing = true;
         public bool DisablePsgpThreading = true;
+        public bool NoParticles = false;
 
         public bool NormalRaceReturnToTrackSelect = true;
         public bool TagReturnToTrackSelect = true;

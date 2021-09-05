@@ -197,7 +197,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.PushItemWidth(ImGui.GetFontSize() * -20);
             if (ImGui.TreeNodeStr("Direct3D Flags"))
             {
-                ImGui.TextWrapped("These settings apply on boot.");
+                ImGui.TextWrapped("Note: These settings apply on boot!!");
                 ImGui.Checkbox("Hardware Vertex Processing", ref data.HardwareVertexProcessing).Notify(data, nameof(data.HardwareVertexProcessing));
                 ImGui.Checkbox("Disable PSGP Threading", ref data.DisablePsgpThreading).Notify(data, nameof(data.DisablePsgpThreading));
                 ImGui.TreePop();
@@ -214,6 +214,11 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
 
             ImGui.Checkbox("Frame Pacing Fix", ref data.FramePacing).Notify(data, nameof(data.FramePacing));
             Tooltip.TextOnHover("Replaces game's framerate limiter with a custom one. Eliminates stuttering. Makes times more consistent.");
+
+            ImGui.Checkbox("Disable Particles", ref data.NoParticles).Notify(data, nameof(data.NoParticles));
+            Tooltip.TextOnHover("Riders' implementation of particle emitters on PC is known for slowing the game down massively; causing some performance issues for some people.\n" +
+                                "This will make it so that particle emitters aren't spawned in levels.\n" +
+                                "Setting takes effect on stage load.");
 
             if (Config.Data.FramePacing && ImGui.TreeNodeStr("Frame Pacing Settings"))
             {

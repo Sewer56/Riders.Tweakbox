@@ -175,7 +175,7 @@ public unsafe class Direct3DController : IController
             presentParameters.PresentationInterval = PresentInterval.Immediate;
             presentParameters.FullScreenRefreshRateInHz = 0;
         }
-
+        
         // Cannot be used with FlipEx
         presentParameters.Windowed = !_config.Data.Fullscreen;
         presentParameters.MultiSampleQuality = 0;
