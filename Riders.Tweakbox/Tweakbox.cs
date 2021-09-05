@@ -88,6 +88,7 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<NetplayMenu>(), nameof(NetplayMenu)),
                         Benchmark(() => IoC.GetSingleton<UserGuideWindow>(), nameof(UserGuideWindow)),
                         Benchmark(() => IoC.GetSingleton<AboutMenu>(), nameof(AboutMenu)),
+                        Benchmark(() => IoC.GetSingleton<OpenSourceLibraries>(), nameof(OpenSourceLibraries)),
                     }),
                     new MenuBarItem("Settings", new List<IComponent>()
                     {

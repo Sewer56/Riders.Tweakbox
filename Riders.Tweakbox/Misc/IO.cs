@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 namespace Riders.Tweakbox.Misc;
 
@@ -12,6 +13,8 @@ public class IO
     public const string ConfigSearchPattern = "*.tweakbox";
     public static string GameFolderLocation = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
     public static string DataFolderLocation = Path.Combine(GameFolderLocation, "Data");
+
+    private Dictionary<string, string> _licenseNameToTextMap = new Dictionary<string, string>();
 
     // Configuration Directories.
     public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
@@ -32,8 +35,8 @@ public class IO
     public string TextureDumpCommonFolder => Path.Combine(TextureDumpFolder, "Auto Common");
     public string TextureCacheFilePath => Path.Combine(TextureCacheFolder, "TextureCache.msgpack");
     public string FirstTimeFlagPath => Path.Combine(ConfigFolder, "FirstTime.txt");
-
     public string AssetsFolder => Path.Combine(ModFolder, "Assets");
+    public string LicenseFolder => Path.Combine(AssetsFolder, "License");
 
     /// <summary>
     /// Folder mod is stored in.
@@ -65,4 +68,24 @@ public class IO
     public string[] GetLogsConfigFiles() => Directory.GetFiles(LogConfigFolder, JsonSearchPattern);
     public string[] GetNetplayConfigFiles() => Directory.GetFiles(NetplayConfigFolder, JsonSearchPattern);
     public string[] GetInfoConfigFiles() => Directory.GetFiles(InfoConfigFolder, ConfigSearchPattern);
+
+    /// <summary>
+    /// Gets the license given a specific file name.
+    /// </summary>
+    /// <param name="fileNameWithoutExtension">File name without extension.</param>
+    public string GetLicenseFile(string fileNameWithoutExtension)
+    {
+        var filePath = Path.Combine(LicenseFolder, $"{fileNameWithoutExtension}.txt");
+        if (_licenseNameToTextMap.TryGetValue(fileNameWithoutExtension, out var text))
+            return text;
+        
+        if (File.Exists(filePath))
+        {
+            text = File.ReadAllText(filePath);
+            _licenseNameToTextMap[filePath] = text;
+            return text;
+        }
+
+        return "";
+    }
 }
