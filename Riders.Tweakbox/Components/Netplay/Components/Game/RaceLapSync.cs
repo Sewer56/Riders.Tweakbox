@@ -15,7 +15,6 @@ using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
 using Sewer56.SonicRiders.Structures.Tasks.Enums.States;
-using SharpDX.Direct3D11;
 using static Sewer56.SonicRiders.API.Player;
 using static Sewer56.SonicRiders.API.State;
 using Constants = Riders.Netplay.Messages.Misc.Constants;

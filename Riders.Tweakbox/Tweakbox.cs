@@ -11,6 +11,7 @@ using Microsoft.Win32;
 using Reloaded.Assembler;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Imgui.Hook;
+using Reloaded.Imgui.Hook.Implementations;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Controller.Hook.Interfaces;
@@ -113,10 +114,13 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<RaceSettingsWindow>(), nameof(RaceSettingsWindow)),
                         Benchmark(() => IoC.GetSingleton<DolphinDumperWindow>(), nameof(DolphinDumperWindow)),
                         Benchmark(() => IoC.GetSingleton<LapCounterWindow>(), nameof(LapCounterWindow)),
-                        Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                         Benchmark(() => IoC.GetSingleton<ChatMenuDebug>(), nameof(ChatMenuDebug)),
                         Benchmark(() => IoC.GetSingleton<SlipstreamDebug>(), nameof(SlipstreamDebug)),
+
+#if DEBUG
+                        Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
+#endif
                     })
                 },
                 Text = new List<string>()
@@ -127,7 +131,14 @@ public class Tweakbox
         }).ConfigureAwait(false);
 #pragma warning restore 4014
 
-        await ImguiHook.Create(tweakBox.Render, new ImguiHookOptions() { EnableViewports = false });
+        await ImguiHook.Create(tweakBox.Render, new ImguiHookOptions()
+        {
+            EnableViewports = false,
+            Implementations = new List<IImguiHook>()
+            {
+                new ImguiHookDx9()
+            }
+        });
 
         // Post-setup steps
         Shell.SetupImGuiConfig(modFolder);

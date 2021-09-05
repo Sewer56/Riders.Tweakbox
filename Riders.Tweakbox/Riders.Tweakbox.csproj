@@ -29,9 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="33.0.2" />
+    <PackageReference Include="Bogus" Version="33.0.2" Condition="'$(Configuration)'=='Debug'" />
     <PackageReference Include="ByteSize" Version="2.0.0" />
-    <PackageReference Include="DiscordRichPresence" Version="1.0.175" />
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.3" />
     <PackageReference Include="Enums.NET" Version="4.0.0" />
     <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
@@ -42,6 +41,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Ninject" Version="3.3.4" />
+    <PackageReference Include="Reloaded.Imgui.Hook" Version="3.0.0" />
+    <PackageReference Include="Reloaded.Imgui.Hook.Direct3D9" Version="1.0.0" />
     <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.8.0" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.8.0" />
@@ -55,6 +56,7 @@
     <ProjectReference Include="..\Netplay\MLAPI.Puncher.LiteNetLib\MLAPI.Puncher.LiteNetLib.csproj" />
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
     <ProjectReference Include="..\Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj" />
+    <ProjectReference Include="..\Submodules\discord-rpc-csharp\DiscordRPC\DiscordRPC.csproj" />
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />
     <ProjectReference Include="..\Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj" />
