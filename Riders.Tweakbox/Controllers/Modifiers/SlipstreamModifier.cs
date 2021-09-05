@@ -88,7 +88,13 @@ public struct SlipstreamModifier
         // Get Slipstream Angle & Distance Bonus
         var firstForwardVector = first.Rotation.GetForwardVector();
         var directionToSecond = Vector3.Normalize(first.Position - second.Position);
-        var angle = Vector3Extensions.CalcAngle(firstForwardVector, directionToSecond);
+        var angle    = Vector3Extensions.CalcAngle(firstForwardVector, directionToSecond);
+        if (float.IsNaN(angle))
+        {
+            slipPower = 0;
+            return;
+        }
+        
         var distance = Vector3.Distance(first.Position, second.Position);
 
         if (angle > modifier.SlipstreamMaxAngle || distance > modifier.SlipstreamMaxDistance)
