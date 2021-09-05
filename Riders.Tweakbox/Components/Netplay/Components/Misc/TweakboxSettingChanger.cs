@@ -1,6 +1,7 @@
 ﻿using LiteNetLib;
 using Reloaded.Hooks.Definitions;
 using Riders.Netplay.Messages;
+using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
@@ -22,6 +23,7 @@ public class TweakboxSettingChanger : INetplayComponent
     private readonly StageSelectFromTagController _stageSelTag;
     private readonly MiscPatchController _miscPatch;
     private readonly TweakboxConfig _tweakboxConfig;
+    private readonly GameModifiers _oldModifiers;
 
     public TweakboxSettingChanger(StageSelectFromRaceController stageSelRace, StageSelectFromSurvivalController stageSelSurv, StageSelectFromTagController stageSelTag, MiscPatchController miscPatch, TweakboxConfig tweakboxConfig)
     {
@@ -36,6 +38,7 @@ public class TweakboxSettingChanger : INetplayComponent
         _oldReturnToStageSelFromTag = _stageSelTag.Hook.IsEnabled;
         _miscPatchEnableBackwards = _miscPatch.EnableGoingBackwards.IsEnabled;
         _hasFpsCap = _tweakboxConfig.Data.RemoveFpsCap;
+        _oldModifiers = _tweakboxConfig.Data.Modifiers;
 
         _stageSelRace.Hook.Enable();
         _stageSelSurv.Hook.Enable();
@@ -52,6 +55,7 @@ public class TweakboxSettingChanger : INetplayComponent
         _stageSelTag.Hook.Toggle(_oldReturnToStageSelFromTag);
         _miscPatch.EnableGoingBackwards.Set(_miscPatchEnableBackwards);
         _tweakboxConfig.Data.RemoveFpsCap = _hasFpsCap;
+        _tweakboxConfig.Data.Modifiers = _oldModifiers;
     }
 
     /// <inheritdoc />
