@@ -109,6 +109,10 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdateNotification);
 
+            ref var atkDurFrm = ref mods.DisableAttackDurationFrames;
+            Reflection.MakeControl(ref atkDurFrm, "Disable Race Start Attack", 0.5f, $"{atkDurFrm} ({mods.GetDisableAttackDuration().TotalMilliseconds:##}ms)").ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Sets the duration for which attacks should be disabled in the beginning of the race.");
+
             if (ImGui.TreeNodeStr("Ring Loss on Death"))
             {
                 RenderRingLossMenu(ref mods.DeathRingLoss);

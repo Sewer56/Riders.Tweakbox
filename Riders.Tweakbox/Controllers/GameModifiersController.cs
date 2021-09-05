@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Numerics;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
-using Sewer56.SonicRiders.Structures.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Reloaded.Hooks.Definitions;
 using Sewer56.SonicRiders.Functions;
@@ -15,6 +14,8 @@ using Riders.Tweakbox.Configs;
 using PlayerAPI = Sewer56.SonicRiders.API.Player;
 using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Controllers.Modifiers;
+using Sewer56.SonicRiders.API;
+using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -42,7 +43,6 @@ public unsafe class GameModifiersController : IController
     private EventController _event;
     private ObjectLayoutController.ObjectLayoutController _layoutController;
     private TweakboxConfig _config;
-    
 
     /// <summary>
     /// Creates the controller which controls game behaviour.
@@ -63,7 +63,16 @@ public unsafe class GameModifiersController : IController
         _event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
         _event.SetRingsOnHit += SetRingsOnHit;
         _event.SetRingsOnDeath += SetRingsOnDeath;
+        _event.OnShouldRejectAttackTask += ShouldRejectAttack;
         _layoutController.OnLoadLayout += OnLoadLayout;
+    }
+
+    private int ShouldRejectAttack(Player* playerone, Player* playertwo, int a3)
+    {
+        if (State.StageTimer->ToTimeSpan() <= Modifiers.GetDisableAttackDuration())
+            return 1;
+
+        return 0;
     }
 
     /// <summary>
@@ -80,6 +89,20 @@ public unsafe class GameModifiersController : IController
     /// Invokes an event indicating the modifiers have been edited.
     /// </summary>
     public void InvokeOnEditModifiers() => OnEditModifiers?.Invoke();
+
+    /// <summary>
+    /// Returns true if a client side attack should be rejected.
+    /// </summary>
+    public bool ShouldRejectAttack()
+    {
+        if (State.StageTimer->ToTimeSpan() <= Modifiers.GetDisableAttackDuration())
+            return true;
+
+        if (Modifiers.DisableAttacks)
+            return true;
+
+        return false;
+    }
 
     private unsafe Player* OnAfterSetMovementFlagsOnInput(Player* player)
     {

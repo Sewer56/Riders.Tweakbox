@@ -111,7 +111,7 @@ public unsafe class Attack : INetplayComponent
         if (_isProcessingAttackPackets)
             return 0;
 
-        if (_modifiersController != null && _modifiersController.Modifiers.DisableAttacks)
+        if (_modifiersController != null && _modifiersController.ShouldRejectAttack())
             return 1;
 
         var p1Index = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerOne);

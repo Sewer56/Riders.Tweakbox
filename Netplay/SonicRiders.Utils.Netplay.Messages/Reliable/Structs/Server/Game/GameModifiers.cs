@@ -17,6 +17,8 @@ public struct GameModifiers : IReliableMessage
 {
     public bool DisableTornadoes;
     public bool DisableAttacks;
+    public ushort DisableAttackDurationFrames;
+
     public bool AlwaysTurbulence;
     public bool NoTurbulence;
     public bool DisableSmallTurbulence;
@@ -56,6 +58,11 @@ public struct GameModifiers : IReliableMessage
     /// <inheritdoc />
     public MessageType GetMessageType() => MessageType.ServerGameModifiers;
 
+    /// <summary>
+    /// Gets the disable attack duration as a timespan.
+    /// </summary>
+    public TimeSpan GetDisableAttackDuration() => TimeSpan.FromMilliseconds((1000.0 / 60.0) * DisableAttackDurationFrames);
+
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
@@ -65,6 +72,7 @@ public struct GameModifiers : IReliableMessage
         NoTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableSmallTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        DisableAttackDurationFrames = bitStream.ReadGeneric<ushort>();
 
         ReplaceRing100Box = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         Ring100Replacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
@@ -85,6 +93,7 @@ public struct GameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(NoTurbulence), 1);
         bitStream.Write(Convert.ToByte(DisableSmallTurbulence), 1);
         bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
+        bitStream.Write(DisableAttackDurationFrames);
 
         bitStream.WriteGeneric(ReplaceRing100Box, 1);
         bitStream.WriteGeneric(Ring100Replacement, EnumNumBits<ItemBoxAttribute>.Number);
