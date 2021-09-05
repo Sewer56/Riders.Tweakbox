@@ -111,6 +111,7 @@ public class AnimatedTexture : IDisposable
                 PreloadFromTextureCache(device, _preloadFromCacheToken.Token);
                 _loaded = true;
             });
+            _preloadFromCacheTask.ConfigureAwait(false);
         }
         else
         {
