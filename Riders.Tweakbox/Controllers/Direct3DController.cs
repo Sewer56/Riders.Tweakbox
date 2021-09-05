@@ -108,7 +108,7 @@ public unsafe class Direct3DController : IController
             Log.WriteLine($"[{nameof(CreateDeviceHook)}] Not Riders Device, Ignoring");
             return _createDeviceHook.OriginalFunction(direct3dpointer, adapter, deviceType, hFocusWindow, behaviorFlags, ref presentParameters, ppReturnedDeviceInterface);
         }
-
+        
         if (_config.Data.HardwareVertexProcessing)
             behaviorFlags |= CreateFlags.HardwareVertexProcessing;
 
