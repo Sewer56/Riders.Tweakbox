@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Reloaded.Hooks.Definitions;
@@ -31,7 +32,7 @@ public unsafe class Direct3DController : IController
     /// <summary>
     /// The current display modes.
     /// </summary>
-    public DisplayModeCollection Modes { get; private set; }
+    public List<DisplayMode> Modes { get; private set; }
 
     /// <summary>
     /// Last presentation parameters used for instantiation.
@@ -76,8 +77,14 @@ public unsafe class Direct3DController : IController
     private IntPtr CreateRidersDeviceImpl(uint sdkversion)
     {
         D3dEx = new Direct3DEx();
-        Modes = D3dEx.Adapters.First().GetDisplayModes(Format.X8R8G8B8);
+        Modes = new List<DisplayMode>();
 
+        foreach (var mode in D3dEx.Adapters.First().GetDisplayModes(Format.X8R8G8B8))
+        {
+            if (Modes.FindIndex(x => x.Height == mode.Height && x.Width == mode.Width) == -1)
+                Modes.Add(mode);
+        }
+         
         // Fill in method pointers.
         var moduleHandle = Native.GetModuleHandle("d3d9.dll");
         *(IntPtr*)0x016BEE8C = moduleHandle;

@@ -38,7 +38,7 @@ public static class D3DExtensions
     /// <summary>
     /// Converts the current mode to a human readable string.
     /// </summary>
-    public static List<string> AsStrings(this DisplayModeCollection me)
+    public static List<string> AsStrings(this List<DisplayMode> me)
     {
         var strings = new List<string>(me.Count);
         foreach (var item in me)
