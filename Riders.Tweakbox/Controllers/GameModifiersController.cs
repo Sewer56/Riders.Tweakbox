@@ -16,6 +16,7 @@ using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Controllers.Modifiers;
 using Sewer56.SonicRiders.API;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
+using Riders.Tweakbox.Misc.Log;
 
 namespace Riders.Tweakbox.Controllers;
 
@@ -178,6 +179,9 @@ public unsafe class GameModifiersController : IController
 
     private unsafe bool ShouldKillTurbulence(Player* player, IHook<Functions.ShouldKillTurbulenceFn> hook)
     {
+        if (IsNonPlayerTurbulence(player))
+            return hook.OriginalFunction(player);
+
         if (Modifiers.NoTurbulence)
             return true;
 
@@ -189,6 +193,9 @@ public unsafe class GameModifiersController : IController
 
     private unsafe bool ShouldSpawnTurbulence(Player* player, IHook<Functions.ShouldGenerateTurbulenceFn> hook)
     {
+        if (IsNonPlayerTurbulence(player))
+            return hook.OriginalFunction(player);
+
         if (Modifiers.NoTurbulence)
             return false;
 
@@ -196,5 +203,11 @@ public unsafe class GameModifiersController : IController
             return true;
 
         return hook.OriginalFunction(player);
+    }
+
+    private bool IsNonPlayerTurbulence(Player* player)
+    {
+        var index = PlayerAPI.GetPlayerIndex(player);
+        return index >= *State.NumberOfRacers || index < 0;
     }
 }
