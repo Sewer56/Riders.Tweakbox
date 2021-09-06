@@ -63,6 +63,7 @@ internal unsafe class CustomGearCodePatcher
             _newGearsPtr = ptr;
 
         // Patch Branches
+        UpdateGearCount(OriginalGearCount);
         PatchOpcodes();
         PatchBoundsChecks();
     }
