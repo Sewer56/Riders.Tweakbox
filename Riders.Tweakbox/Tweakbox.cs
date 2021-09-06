@@ -254,19 +254,26 @@ public class Tweakbox
                 if (Path.GetExtension(file.FullPath) != "")
                     continue;
 
-                using var fileStream = new FileStream(file.FullPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-                if (!ArchiveCompression.IsCompressed(fileStream, false))
-                    continue;
+                try
+                {
+                    using var fileStream = new FileStream(file.FullPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                    if (!ArchiveCompression.IsCompressed(fileStream, false))
+                        continue;
 
-                // Decompress and write.
-                var uncompressed = ArchiveCompression.DecompressFast(fileStream, (int)fileStream.Length, ArchiveCompressorOptions.PC);
-                fileStream.SetLength(uncompressed.Length);
-                fileStream.Position = 0;
-                fileStream.Write(uncompressed);
+                    // Decompress and write.
+                    var uncompressed = ArchiveCompression.DecompressFast(fileStream, (int)fileStream.Length, ArchiveCompressorOptions.PC);
+                    fileStream.SetLength(uncompressed.Length);
+                    fileStream.Position = 0;
+                    fileStream.Write(uncompressed);
 
-                // Report Back
-                if (x % 75 == 0)
-                    _log.WriteLine($"Files Processed: {x} / {files.Count}");
+                    // Report Back
+                    if (x % 75 == 0)
+                        _log.WriteLine($"Files Processed: {x} / {files.Count}");
+                }
+                catch (Exception ex)
+                {
+                    _log.WriteLine($"Failed to decompress file: {ex.Message}");
+                }
             }
         }
         finally
