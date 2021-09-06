@@ -231,38 +231,47 @@ public class Tweakbox
 
     private void TryDecompressFiles()
     {
-        // Check using one file, if it is compressed; decompress all.
-        using var checkStream = new FileStream(Path.Combine(IO.DataFolderLocation, "PS00"), FileMode.Open, FileAccess.Read);
-        var isSonicCompressed = ArchiveCompression.IsCompressed(checkStream, false);
-        if (!isSonicCompressed)
-            return;
-
-        checkStream.Dispose();
-        _log.WriteLine($"[{nameof(Tweakbox)}] Decompressing Game Files... This might take a minute; hold tight!");
-        _log.WriteLine($"[{nameof(Tweakbox)}] This is a one time operation; intended to prevent loading screen freezes in vanilla game.");
-        DirectorySearcher.GetDirectoryContentsRecursive(IO.DataFolderLocation, out var files, out var directories);
-
-        Span<byte> test = stackalloc byte[8];
-        for (var x = 0; x < files.Count; x++)
+        try
         {
-            // Skip if has extension.
-            var file = files[x];
-            if (Path.GetExtension(file.FullPath) != "")
-                continue;
+            Redirector.Disable();
 
-            using var fileStream = new FileStream(file.FullPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-            if (!ArchiveCompression.IsCompressed(fileStream, false))
-                continue;
+            // Check using one file, if it is compressed; decompress all.
+            using var checkStream = new FileStream(Path.Combine(IO.DataFolderLocation, "PS00"), FileMode.Open, FileAccess.Read);
+            var isSonicCompressed = ArchiveCompression.IsCompressed(checkStream, false);
+            if (!isSonicCompressed)
+                return;
 
-            // Decompress and write.
-            var uncompressed = ArchiveCompression.DecompressFast(fileStream, (int)fileStream.Length, ArchiveCompressorOptions.PC);
-            fileStream.SetLength(uncompressed.Length);
-            fileStream.Position = 0;
-            fileStream.Write(uncompressed);
+            checkStream.Dispose();
+            _log.WriteLine($"[{nameof(Tweakbox)}] Decompressing Game Files... This might take a minute; hold tight!");
+            _log.WriteLine($"[{nameof(Tweakbox)}] This is a one time operation; intended to prevent loading screen freezes in vanilla game.");
+            DirectorySearcher.GetDirectoryContentsRecursive(IO.DataFolderLocation, out var files, out var directories);
 
-            // Report Back
-            if (x % 75 == 0)
-                _log.WriteLine($"Files Processed: {x} / {files.Count}");
+            Span<byte> test = stackalloc byte[8];
+            for (var x = 0; x < files.Count; x++)
+            {
+                // Skip if has extension.
+                var file = files[x];
+                if (Path.GetExtension(file.FullPath) != "")
+                    continue;
+
+                using var fileStream = new FileStream(file.FullPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                if (!ArchiveCompression.IsCompressed(fileStream, false))
+                    continue;
+
+                // Decompress and write.
+                var uncompressed = ArchiveCompression.DecompressFast(fileStream, (int)fileStream.Length, ArchiveCompressorOptions.PC);
+                fileStream.SetLength(uncompressed.Length);
+                fileStream.Position = 0;
+                fileStream.Write(uncompressed);
+
+                // Report Back
+                if (x % 75 == 0)
+                    _log.WriteLine($"Files Processed: {x} / {files.Count}");
+            }
+        }
+        finally
+        {
+            Redirector.Enable();
         }
     }
 
