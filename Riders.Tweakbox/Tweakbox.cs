@@ -33,8 +33,13 @@ using Sewer56.Imgui.Misc;
 using Sewer56.Imgui.Shell;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Functions;
+using Sewer56.SonicRiders.Parser.Archive;
 using static Riders.Tweakbox.Misc.BenchmarkUtilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
+using Riders.Tweakbox.Misc.Data;
+using Reloaded.Memory.Streams;
+using Reloaded.Memory.Streams.Writers;
+
 namespace Riders.Tweakbox;
 
 public class Tweakbox
@@ -75,6 +80,7 @@ public class Tweakbox
         tweakBox.Hooks = hooks;
         tweakBox.HooksUtilities = hooksUtilities;
         tweakBox.Redirector = redirector;
+        tweakBox.TryDecompressFiles();
         tweakBox.InitializeIoC(modFolder);
 
 #pragma warning disable 4014
@@ -117,7 +123,6 @@ public class Tweakbox
                         Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                         Benchmark(() => IoC.GetSingleton<ChatMenuDebug>(), nameof(ChatMenuDebug)),
                         Benchmark(() => IoC.GetSingleton<SlipstreamDebug>(), nameof(SlipstreamDebug)),
-
 #if DEBUG
                         Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
 #endif
@@ -201,7 +206,7 @@ public class Tweakbox
     /// <summary>
     /// Enables crash dumps for Sonic Riders.
     /// </summary>
-    public void EnableCrashDumps()
+    private void EnableCrashDumps()
     {
         const string dumpsConfigRegkeyPath = @"SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps";
 
@@ -222,6 +227,43 @@ public class Tweakbox
 
         void ShowFailureDialog() => Shell.AddDialog("About Crash Dumps", "Tweakbox couldn't enable crash dumps necessary for reporting Netplay Crashes.\n" +
                                                                          "Please run from Reloaded as admin at least once, thanks!");
+    }
+
+    private void TryDecompressFiles()
+    {
+        // Check using one file, if it is compressed; decompress all.
+        using var checkStream = new FileStream(Path.Combine(IO.DataFolderLocation, "PS00"), FileMode.Open, FileAccess.Read);
+        var isSonicCompressed = ArchiveCompression.IsCompressed(checkStream, false);
+        if (!isSonicCompressed)
+            return;
+
+        checkStream.Dispose();
+        _log.WriteLine($"[{nameof(Tweakbox)}] Decompressing Game Files... This might take a minute; hold tight!");
+        _log.WriteLine($"[{nameof(Tweakbox)}] This is a one time operation; intended to prevent loading screen freezes in vanilla game.");
+        DirectorySearcher.GetDirectoryContentsRecursive(IO.DataFolderLocation, out var files, out var directories);
+
+        Span<byte> test = stackalloc byte[8];
+        for (var x = 0; x < files.Count; x++)
+        {
+            // Skip if has extension.
+            var file = files[x];
+            if (Path.GetExtension(file.FullPath) != "")
+                continue;
+
+            using var fileStream = new FileStream(file.FullPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            if (!ArchiveCompression.IsCompressed(fileStream, false))
+                continue;
+
+            // Decompress and write.
+            var uncompressed = ArchiveCompression.DecompressFast(fileStream, (int)fileStream.Length, ArchiveCompressorOptions.PC);
+            fileStream.SetLength(uncompressed.Length);
+            fileStream.Position = 0;
+            fileStream.Write(uncompressed);
+
+            // Report Back
+            if (x % 75 == 0)
+                _log.WriteLine($"Files Processed: {x} / {files.Count}");
+        }
     }
 
     /* Implementation */

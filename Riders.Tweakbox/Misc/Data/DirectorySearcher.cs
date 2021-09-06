@@ -24,6 +24,39 @@ public static class DirectorySearcher
     /// <returns>True if the operation suceeded, else false.</returns>
     public static bool TryGetDirectoryContents(string path, out List<FileInformation> files, out List<DirectoryInformation> directories)
     {
+        files = new List<FileInformation>();
+        directories = new List<DirectoryInformation>();
+        return TryGetDirectoryContents_Internal(path, ref files, ref directories);
+    }
+
+    /// <summary>
+    /// Retrieves the total contents of a directory and all sub directories.
+    /// </summary>
+    /// <param name="path">The path to search inside. Should not end with a backslash.</param>
+    /// <param name="files">Files contained inside the target directory.</param>
+    /// <param name="directories">Directories contained inside the target directory.</param>
+    /// <returns>True if the operation suceeded, else false.</returns>
+    public static void GetDirectoryContentsRecursive(string path, out List<FileInformation> files, out List<DirectoryInformation> directories)
+    {
+        files = new List<FileInformation>();
+        directories = new List<DirectoryInformation>();
+        TryGetDirectoryContents_Internal_Recursive(path, ref files, ref directories);
+    }
+
+    private static void TryGetDirectoryContents_Internal_Recursive(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
+    {
+        var initialDirSuccess = TryGetDirectoryContents(path, out var newFiles, out var newDirectories);
+        if (!initialDirSuccess)
+            return;
+
+        files.AddRange(newFiles);
+        directories.AddRange(newDirectories);
+        foreach (var directory in newDirectories)
+            TryGetDirectoryContents_Internal_Recursive(directory.FullPath, ref files, ref directories);
+    }
+
+    private static bool TryGetDirectoryContents_Internal(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
+    {
         // Init
         path = Path.GetFullPath(path);
         files = new List<FileInformation>();
