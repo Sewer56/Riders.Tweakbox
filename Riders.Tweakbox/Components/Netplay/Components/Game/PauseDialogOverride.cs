@@ -53,11 +53,10 @@ public class PauseDialogOverride : INetplayComponent
     private PatchCollection _useCustomResultsScreenForTagAndSurvival;
     private PauseDialogTask _restartDialogTask;
 
-    public unsafe PauseDialogOverride(Socket socket, EventController @event, Assembler asm)
+    public unsafe PauseDialogOverride(Socket socket,  Assembler asm)
     {
         MakeCustomResultsScreenPatchCollection(asm);
         Socket = socket;
-        Event = @event;
         PauseDialog = new PauseDialog()
         {
             IsCompleted = true,
@@ -70,20 +69,20 @@ public class PauseDialogOverride : INetplayComponent
             Owner = this
         };
 
-        Event.PauseGame += PauseGame;
-        Event.SetEndOfRaceDialog += SetEndOfRaceDialog;
+        EventController.PauseGame += PauseGame;
+        EventController.SetEndOfRaceDialog += SetEndOfRaceDialog;
         _useCustomResultsScreenForTagAndSurvival.Enable();
     }
 
     /// <inheritdoc />
     public unsafe void Dispose()
     {
-        Event.PauseGame -= PauseGame;
-        Event.SetEndOfRaceDialog -= SetEndOfRaceDialog;
+        EventController.PauseGame -= PauseGame;
+        EventController.SetEndOfRaceDialog -= SetEndOfRaceDialog;
         _useCustomResultsScreenForTagAndSurvival.Disable();
     }
 
-    private unsafe Task* SetEndOfRaceDialog(EndOfRaceDialogMode mode, IHook<Functions.SetEndOfRaceDialogTaskFn> hook)
+    private unsafe Task* SetEndOfRaceDialog(EndOfRaceDialogMode mode, IHook<Functions.SetEndOfRaceDialogTaskFnPtr> hook)
     {
         EndOfRaceDialog.Initialize(true, mode == EndOfRaceDialogMode.GrandPrix, AdditionalResultsItems);
         Shell.AddDialog("Finished!", EndOfRaceDialog.Render, EndOfRaceDialog.OnClose, showClose: false);
@@ -97,7 +96,7 @@ public class PauseDialogOverride : INetplayComponent
         return _restartDialogTask.NativeTask;
     }
 
-    private int PauseGame(int a1, int a2, byte a3, IHook<Functions.PauseGameFn> hook)
+    private int PauseGame(int a1, int a2, byte a3, IHook<Functions.PauseGameFnPtr> hook)
     {
         // To handle our "pause", we add a menu task to the shell.
         if (!PauseDialog.IsCompleted)

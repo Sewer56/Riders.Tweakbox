@@ -47,7 +47,7 @@ namespace Riders.Tweakbox.Controllers
             {
                 "use32",
                 // Replace original jmp with our function.
-                $"{AsmHelpers.AssembleAbsoluteCall<UtilDvdMallocReadFn>(utilities, ArchiveSetIngameLoadFileImpl, out _, false)}",
+                $"{AsmHelpers.AssembleAbsoluteCall<UtilDvdMallocReadFn>(utilities, ArchiveSetIngameLoadFileImpl, false)}",
             
                 // Original Code
                 "push ebx",
@@ -61,7 +61,7 @@ namespace Riders.Tweakbox.Controllers
                 "use32",
                 // Push pointer to the string.
                 "push esi",
-                $"{AsmHelpers.AssembleAbsoluteCall<OverrideMenuModelNameFn>(utilities, OverrideMenuModelName, out _, false)}",
+                $"{AsmHelpers.AssembleAbsoluteCall<OverrideMenuModelNameFn>(utilities, OverrideMenuModelName, false)}",
             };
 
             _loadPlayerModelMenuHook = hooks.CreateAsmHook(menuHookAsm, 0x00460C26, AsmHookBehaviour.ExecuteFirst).Activate();
@@ -80,7 +80,7 @@ namespace Riders.Tweakbox.Controllers
                 "sub eax, 0xBA",
                 "push eax",
 
-                $"{AsmHelpers.AssembleAbsoluteCall<OverrideCharacterFn>(utilities, OverrideCharacterImpl, out _, false)}",
+                $"{AsmHelpers.AssembleAbsoluteCall<OverrideCharacterFn>(utilities, OverrideCharacterImpl, false)}",
                 
                 // Save Registers
                 $"{utilities.PopCdeclCallerSavedRegisters()}",

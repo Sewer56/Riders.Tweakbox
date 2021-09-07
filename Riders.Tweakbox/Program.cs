@@ -7,13 +7,15 @@ using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Controller.Hook.Interfaces;
+using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
+using Sewer56.Hooks.Utilities;
 using Sewer56.Imgui.Utilities;
 using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 
 namespace Riders.Tweakbox;
-public class Program : IMod
+public class Program : IMod, IExports
 {
     /// <summary>
     /// Used for writing text to the console window.
@@ -47,10 +49,11 @@ public class Program : IMod
         Log.HudListener = new ShellTraceListener();
         Sewer56.SonicRiders.SDK.Init(hooks);
         Reloaded.Imgui.Hook.SDK.Init(hooks);
+        AsmHelpers.Init(hooks);
 #if DEBUG
         Reloaded.Imgui.Hook.SDK.Debug += s => Log.WriteLine(s);
 #endif
-        _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader, controllerHook);
+        _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader, controllerHook, this);
 
         // Tweak Garbage Collection.
         GC.Collect();
@@ -79,4 +82,5 @@ public class Program : IMod
        For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
     */
     public static void Main() { }
+    public Type[] GetTypes() => new[] { typeof(ITweakboxApi) };
 }

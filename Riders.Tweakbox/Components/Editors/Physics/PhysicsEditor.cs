@@ -3,8 +3,8 @@ using DearImguiSharp;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc;
-using Riders.Tweakbox.Shared;
-using Riders.Tweakbox.Shared.Structs;
+using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Structs;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
 using Sewer56.SonicRiders.Structures.Enums;
@@ -12,6 +12,8 @@ using Sewer56.SonicRiders.Structures.Gameplay;
 using Sewer56.SonicRiders.Utility;
 using Player = Sewer56.SonicRiders.API.Player;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
+using Riders.Tweakbox.Interfaces.Internal;
+
 namespace Riders.Tweakbox.Components.Editors.Physics;
 
 public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, IComponent

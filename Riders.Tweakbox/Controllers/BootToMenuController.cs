@@ -29,7 +29,7 @@ public class BootToMenuController : IController
         {
             "use32",
             "mov dword [esi+8], 40",
-            $"{utils.AssembleAbsoluteCall(UnlockAllAndDisableBootToMenu, out _)}",
+            $"{utils.AssembleAbsoluteCall(UnlockAllAndDisableBootToMenu)}",
             $"{utils.GetAbsoluteJumpMnemonics((IntPtr) 0x0046AF9D, false)}",
         };
 

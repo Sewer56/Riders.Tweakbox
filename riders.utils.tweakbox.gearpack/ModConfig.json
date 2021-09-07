@@ -1,0 +1,16 @@
+{
+  "ModId": "Riders.Tweakbox.Gearpack",
+  "ModName": "Riders Tweakbox Sample Gear Pack",
+  "ModAuthor": "Sewer56",
+  "ModVersion": "1.0.0",
+  "ModDescription": "Provides backports of gears from Sonic Riders Netplay, TE and DX.",
+  "ModDll": "Riders.Tweakbox.Gearpack.dll",
+  "ModIcon": "Preview.png",
+  "ModR2RManagedDll32": "x86/Riders.Tweakbox.Gearpack.dll",
+  "ModR2RManagedDll64": "x64/Riders.Tweakbox.Gearpack.dll",
+  "ModNativeDll32": "",
+  "ModNativeDll64": "",
+  "ModDependencies": [ "Riders.Tweakbox" ],
+  "OptionalDependencies": null,
+  "SupportedAppId": [ "sonicriders.exe" ]
+}

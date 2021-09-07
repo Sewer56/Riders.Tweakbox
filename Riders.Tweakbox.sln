@@ -41,9 +41,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.API.Applica
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reloaded.Universal.Redirector.Interfaces", "Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj", "{FD6F13B0-8703-4460-A858-F0414AC3D9AE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Shared", "Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj", "{EA1F1FCA-1A9F-44BF-9819-875086C1772D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Interfaces", "Riders.Tweakbox.Interfaces\Riders.Tweakbox.Interfaces.csproj", "{EA1F1FCA-1A9F-44BF-9819-875086C1772D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Controller.Hook.Interfaces", "Submodules\Riders.Controller.Hook\Riders.Controller.Hook\Riders.Controller.Hook.Interfaces\Riders.Controller.Hook.Interfaces.csproj", "{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Gearpack", "riders.utils.tweakbox.gearpack\Riders.Tweakbox.Gearpack.csproj", "{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -123,6 +125,10 @@ Global
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

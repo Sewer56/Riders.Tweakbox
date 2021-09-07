@@ -48,13 +48,11 @@ public unsafe class CharacterSelect : INetplayComponent
 
         _sequencedChannel = (byte)Socket.ChannelAllocator.GetChannel(DeliveryMethod.ReliableSequenced);
         Event.OnCharacterSelect += OnCharaSelect;
-        Event.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
-        Event.OnExitCharacterSelect += MenuOnExitCharacterSelect;
-        Event.OnCheckIfStartRace += MenuCheckIfStartRace;
-        Event.OnStartRace += MenuOnMenuStartRace;
-
-        var eventController = IoC.Get<EventController>();
-        eventController.OnCheckIfRandomizePlayer += OnCheckIfRandomizePlayer;
+        EventController.OnCheckIfExitCharaSelect += MenuCheckIfExitCharaSelect;
+        EventController.OnExitCharacterSelect += MenuOnExitCharacterSelect;
+        EventController.OnCheckIfStartRace += MenuCheckIfStartRace;
+        EventController.OnStartRace += MenuOnMenuStartRace;
+        EventController.OnCheckIfRandomizePlayer += OnCheckIfRandomizePlayer;
     }
 
     /// <inheritdoc />
@@ -62,13 +60,11 @@ public unsafe class CharacterSelect : INetplayComponent
     {
         Socket.ChannelAllocator.ReleaseChannel(DeliveryMethod.ReliableSequenced, _sequencedChannel);
         Event.OnCharacterSelect -= OnCharaSelect;
-        Event.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
-        Event.OnExitCharacterSelect -= MenuOnExitCharacterSelect;
-        Event.OnCheckIfStartRace -= MenuCheckIfStartRace;
-        Event.OnStartRace -= MenuOnMenuStartRace;
-
-        var eventController = IoC.Get<EventController>();
-        eventController.OnCheckIfRandomizePlayer -= OnCheckIfRandomizePlayer;
+        EventController.OnCheckIfExitCharaSelect -= MenuCheckIfExitCharaSelect;
+        EventController.OnExitCharacterSelect -= MenuOnExitCharacterSelect;
+        EventController.OnCheckIfStartRace -= MenuCheckIfStartRace;
+        EventController.OnStartRace -= MenuOnMenuStartRace;
+        EventController.OnCheckIfRandomizePlayer -= OnCheckIfRandomizePlayer;
     }
 
     private void MenuOnMenuStartRace() => DoExitCharaSelect(ExitKind.Start);

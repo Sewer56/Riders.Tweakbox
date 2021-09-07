@@ -50,8 +50,8 @@ public unsafe class Attack : INetplayComponent
         State = Socket.State;
         _modifiersController = modifiersController;
 
-        Event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
-        Event.OnStartAttackTask += OnStartAttackTask;
+        EventController.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
+        EventController.OnStartAttackTask += OnStartAttackTask;
         Event.AfterRace += AfterRace;
         Reset();
     }
@@ -59,8 +59,8 @@ public unsafe class Attack : INetplayComponent
     /// <inheritdoc />
     public void Dispose()
     {
-        Event.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
-        Event.OnStartAttackTask -= OnStartAttackTask;
+        EventController.OnShouldRejectAttackTask -= OnShouldRejectAttackTask;
+        EventController.OnStartAttackTask -= OnStartAttackTask;
         Event.AfterRace -= AfterRace;
     }
 

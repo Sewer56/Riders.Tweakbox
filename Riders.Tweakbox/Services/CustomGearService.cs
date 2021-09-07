@@ -12,6 +12,8 @@ using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using Riders.Tweakbox.Services.Placeholder;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Interfaces.Structs.Gears;
+using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
 
 namespace Riders.Tweakbox.Services
 {
@@ -36,7 +38,7 @@ namespace Riders.Tweakbox.Services
         /// <param name="folder">Full path to the folder containing the gear.</param>
         public AddGearRequest ImportFromFolder(string folder)
         {
-            var result = new CustomGearData();
+            var result = new CustomGearDataInternal();
             
             result.GearName = Path.GetFileName(folder);
             result.GearDataLocation = Path.Combine(folder, _dataFileName);
@@ -61,7 +63,7 @@ namespace Riders.Tweakbox.Services
         /// <returns>The output folder.</returns>
         public void ExportToFolder(ExtremeGear* gear, string gearName)
         {
-            ExportToFolder(gear, new CustomGearData()
+            ExportToFolder(gear, new CustomGearDataInternal()
             {
                 GearName = gearName
             });
@@ -73,7 +75,7 @@ namespace Riders.Tweakbox.Services
         /// <param name="gear">The gear data to write to the folder.</param>
         /// <param name="data">Information about the added gear.</param>
         /// <returns>The output folder.</returns>
-        public void ExportToFolder(ExtremeGear* gear, CustomGearData data)
+        public void ExportToFolder(ExtremeGear* gear, CustomGearDataInternal data)
         {
             var exportFolder = Path.Combine(_io.ExportFolder, data.GearName);
             UpdateTexturePaths(data, ref Unsafe.AsRef<ExtremeGear>(gear));
@@ -91,7 +93,7 @@ namespace Riders.Tweakbox.Services
         /// </summary>
         /// <param name="gear">The raw data to save.</param>
         /// <param name="data">The custom gear data.</param>
-        public void UpdateRawGearData(ExtremeGear* gear, CustomGearData data)
+        public void UpdateRawGearData(ExtremeGear* gear, CustomGearDataInternal data)
         {
             if (UpdateRawGearData(gear, data.GearDataLocation))
                 data.GearData = *gear;
@@ -150,7 +152,7 @@ namespace Riders.Tweakbox.Services
             };
         }
 
-        internal void UpdateTexturePaths(CustomGearData data, ref ExtremeGear gear)
+        internal void UpdateTexturePaths(CustomGearDataInternal data, ref ExtremeGear gear)
         {
             data.IconPath = !string.IsNullOrEmpty(data.IconPath) && File.Exists(data.IconPath) ? data.IconPath : GetPlaceholderIcon(ref gear, data.GearIndex);
             data.NamePath = !string.IsNullOrEmpty(data.NamePath) && File.Exists(data.NamePath) ? data.NamePath : GetPlaceholderTitle(data.GearIndex);

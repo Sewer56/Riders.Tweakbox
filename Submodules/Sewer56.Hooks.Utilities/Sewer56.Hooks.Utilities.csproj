@@ -3,11 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Reloaded.Assembler" Version="1.0.9" />
+    <PackageReference Include="Reloaded.Assembler" Version="1.0.10" />
     <PackageReference Include="Reloaded.Hooks.Definitions" Version="1.10.0" />
+    <PackageReference Include="Reloaded.Memory.Buffers" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup>

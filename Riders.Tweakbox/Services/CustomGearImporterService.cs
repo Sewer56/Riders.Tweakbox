@@ -8,6 +8,7 @@ using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Misc;
+using Riders.Tweakbox.Interfaces.Structs.Gears;
 
 namespace Riders.Tweakbox.Services
 {

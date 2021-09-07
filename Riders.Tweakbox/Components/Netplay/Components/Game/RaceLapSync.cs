@@ -77,9 +77,9 @@ public unsafe class RaceLapSync : INetplayComponent
         Event = @event;
         State = socket.State;
 
-        Event.SetGoalRaceFinishTask += SetGoalRaceFinishTask;
-        Event.UpdateLapCounter += UpdateLapCounterTask;
-        Event.GoalRaceFinishTask += GoalRaceFinishTask;
+        EventController.SetGoalRaceFinishTask += SetGoalRaceFinishTask;
+        EventController.UpdateLapCounter += UpdateLapCounterTask;
+        EventController.GoalRaceFinishTask += GoalRaceFinishTask;
 
         Sewer56.SonicRiders.API.Event.OnKillTask += OnKillTask;
         Sewer56.SonicRiders.API.Event.OnKillAllTasks += RemoveAllTasks;
@@ -92,9 +92,9 @@ public unsafe class RaceLapSync : INetplayComponent
     /// <inheritdoc />
     public void Dispose()
     {
-        Event.SetGoalRaceFinishTask -= SetGoalRaceFinishTask;
-        Event.UpdateLapCounter -= UpdateLapCounterTask;
-        Event.GoalRaceFinishTask -= GoalRaceFinishTask;
+        EventController.SetGoalRaceFinishTask -= SetGoalRaceFinishTask;
+        EventController.UpdateLapCounter -= UpdateLapCounterTask;
+        EventController.GoalRaceFinishTask -= GoalRaceFinishTask;
 
         Sewer56.SonicRiders.API.Event.OnKillTask -= OnKillTask;
         Sewer56.SonicRiders.API.Event.OnKillAllTasks -= RemoveAllTasks;
@@ -110,14 +110,14 @@ public unsafe class RaceLapSync : INetplayComponent
     }
 
     /* Implementation */
-    private unsafe int SetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFn> hook, Player* player)
+    private unsafe int SetGoalRaceFinishTask(IHook<Functions.SetGoalRaceFinishTaskFnPtr> hook, Player* player)
     {
         // Suppress task creation; we will decide ourselves when it's time.
         _log.WriteLine($"[{nameof(RaceLapSync)}] OnSetGoalRaceFinishTask P{GetPlayerIndex(player)}");
         return 0;
     }
 
-    private int UpdateLapCounterTask(IHook<Functions.UpdateLapCounterFn> hook, Player* player, int a2)
+    private int UpdateLapCounterTask(IHook<Functions.UpdateLapCounterFnPtr> hook, Player* player, int a2)
     {
         // Cancel update counter if we're not the one instigating it.
         if (_isSyncingLapCounter)
@@ -129,7 +129,7 @@ public unsafe class RaceLapSync : INetplayComponent
         if (!State.IsLocal(playerIndex))
             return 0;
 
-        var result = hook.OriginalFunction(player, a2);
+        var result = hook.OriginalFunction.Value.Invoke(player, a2);
 
         // Update lap counters for local clients.
         var counter = new LapCounter(player);
@@ -258,12 +258,12 @@ public unsafe class RaceLapSync : INetplayComponent
     }
 
     #region Results Screen Activation Handling
-    private byte GoalRaceFinishTask(IHook<Functions.CdeclReturnByteFn> hook)
+    private byte GoalRaceFinishTask(IHook<Functions.CdeclReturnByteFnPtr> hook)
     {
         _isRaceFinishTaskEnabled = true;
         _goalRaceFinishTaskPtr = *CurrentTask;
 
-        return hook.OriginalFunction();
+        return hook.OriginalFunction.Value.Invoke();
     }
 
     private void OnKillTask()

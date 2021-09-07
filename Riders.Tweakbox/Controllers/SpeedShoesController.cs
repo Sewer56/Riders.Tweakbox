@@ -2,18 +2,20 @@
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Types;
-using Riders.Tweakbox.Shared;
-using Riders.Tweakbox.Shared.Structs;
+using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Structs;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Riders.Tweakbox.Interfaces.Internal;
+
 namespace Riders.Tweakbox.Controllers;
 
 public class SpeedShoesController : IController
 {
-    public EventController Controller = IoC.GetSingleton<EventController>();
+    public EventController Controller = IoC.GetSingleton<EventController>(); // Ensure load order
 
     public unsafe SpeedShoesController()
     {
-        Controller.SetSpeedShoesSpeed += SetSpeedShoesSpeed;
+        EventController.SetSpeedShoesSpeed += SetSpeedShoesSpeed;
     }
 
     private unsafe IntFloat SetSpeedShoesSpeed(Player* player, float targetSpeed)

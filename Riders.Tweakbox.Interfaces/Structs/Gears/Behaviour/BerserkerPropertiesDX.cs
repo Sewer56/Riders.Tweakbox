@@ -1,0 +1,22 @@
+﻿namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
+
+/// <summary>
+/// Properties for DX Berserker Mode.
+/// </summary>
+public struct BerserkerPropertiesDX
+{
+    /// <summary>
+    /// True if enabled, else false.
+    /// </summary>
+    public bool Enabled = false;
+
+    /// <summary>
+    /// Percentage of air above which berserk mode is triggered.
+    /// </summary>
+    public float TriggerPercentage = 75.0f;
+
+    /// <summary>
+    /// The amount by which passive drain is increased.
+    /// </summary>
+    public float PassiveDrainIncrease = 0.0f;
+}

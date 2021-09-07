@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <OutputType>WinExe</OutputType>
+    <OutputPath>$(TWEAKBOX_GEARPACK_DIR)</OutputPath>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Gears\Common\PowerfulGear1.3.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="ModConfig.json" />
+    <None Remove="Preview.png" />
+    <None Remove="Publish.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ModConfig.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Gears\PowerfulGear1.3.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="Tweakbox\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Riders.Tweakbox.Interfaces\Riders.Tweakbox.Interfaces.csproj" />
+  </ItemGroup>
+
+  <!-- Delete old Assets in case stuff moved -->
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <RemoveDir Directories="$(TWEAKBOX_GEARPACK_DIR)/Tweakbox" />
+  </Target>
+
+</Project>

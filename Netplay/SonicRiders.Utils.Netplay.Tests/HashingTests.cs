@@ -3,7 +3,7 @@ using DotNext.Buffers;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc.BitStream;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
-using Riders.Tweakbox.Shared.Structs;
+using Riders.Tweakbox.Interfaces.Structs;
 using Sewer56.BitStream;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Xunit;

@@ -2,18 +2,20 @@
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Types;
-using Riders.Tweakbox.Shared;
-using Riders.Tweakbox.Shared.Structs;
+using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Structs;
 using Sewer56.SonicRiders.Structures.Gameplay;
+using Riders.Tweakbox.Interfaces.Internal;
+
 namespace Riders.Tweakbox.Controllers;
 
 public class DashPanelController : IController
 {
-    public EventController Controller = IoC.GetSingleton<EventController>();
+    public EventController Controller = IoC.GetSingleton<EventController>(); // Load Order
 
     public unsafe DashPanelController()
     {
-        Controller.SetDashPanelSpeed += SetDashPanelSpeed;
+        EventController.SetDashPanelSpeed += SetDashPanelSpeed;
     }
 
     private unsafe IntFloat SetDashPanelSpeed(Player* player, float targetSpeed)

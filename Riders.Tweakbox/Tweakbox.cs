@@ -39,6 +39,8 @@ using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 using Riders.Tweakbox.Misc.Data;
 using Reloaded.Memory.Streams;
 using Reloaded.Memory.Streams.Writers;
+using Riders.Tweakbox.Api;
+using Riders.Tweakbox.Interfaces;
 
 namespace Riders.Tweakbox;
 
@@ -69,7 +71,7 @@ public class Tweakbox
     /// <summary>
     /// Creates a new instance of Riders Tweakbox.
     /// </summary>
-    public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IRedirectorController redirector, IModLoader modLoader, IControllerHook controllerHook)
+    public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IRedirectorController redirector, IModLoader modLoader, IControllerHook controllerHook, Program program)
     {
         var modFolder = modLoader.GetDirectoryForModId("Riders.Tweakbox");
         var tweakBox = new Tweakbox();
@@ -136,6 +138,11 @@ public class Tweakbox
         }).ConfigureAwait(false);
 #pragma warning restore 4014
 
+        // Register API
+        var api = IoC.GetSingleton<TweakboxApi>();
+        tweakBox._modLoader.AddOrReplaceController<ITweakboxApi>(program, api);
+
+        // Wait for Overlay.
         await ImguiHook.Create(tweakBox.Render, new ImguiHookOptions()
         {
             EnableViewports = false,

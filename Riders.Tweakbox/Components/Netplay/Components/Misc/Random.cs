@@ -17,7 +17,7 @@ using Riders.Tweakbox.Misc.Log;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc;
 
-public class Random : INetplayComponent
+public unsafe class Random : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
@@ -33,17 +33,16 @@ public class Random : INetplayComponent
     private Logger _logRandom = new Logger(LogCategory.Random);
     private Logger _logRandomSeed = new Logger(LogCategory.RandomSeed);
 
-    public Random(Socket socket, EventController @event)
+    public Random(Socket socket)
     {
         Socket = socket;
-        Event = @event;
         _framePacingController = IoC.Get<FramePacingController>();
         _randomChannel = (byte)Socket.ChannelAllocator.GetChannel(_randomDeliveryMethod);
 
-        Event.SeedRandom += OnSeedRandom;
-        Event.Random += OnRandom;
-        Event.ItemPickupRandom += OnItemPickupRandom;
-        Event.OnCheckIfGiveAiRandomItems += OnCheckIfGiveAiRandomItems;
+        EventController.SeedRandom += OnSeedRandom;
+        EventController.Random += OnRandom;
+        EventController.ItemPickupRandom += OnItemPickupRandom;
+        EventController.OnCheckIfGiveAiRandomItems += OnCheckIfGiveAiRandomItems;
         _itemPickupRandom = new System.Random();
 
         if (Socket.GetSocketType() == SocketType.Host)
@@ -58,10 +57,10 @@ public class Random : INetplayComponent
     public void Dispose()
     {
         Socket.ChannelAllocator.ReleaseChannel(_randomDeliveryMethod, _randomChannel);
-        Event.SeedRandom -= OnSeedRandom;
-        Event.Random -= OnRandom;
-        Event.ItemPickupRandom -= OnItemPickupRandom;
-        Event.OnCheckIfGiveAiRandomItems -= OnCheckIfGiveAiRandomItems;
+        EventController.SeedRandom -= OnSeedRandom;
+        EventController.Random -= OnRandom;
+        EventController.ItemPickupRandom -= OnItemPickupRandom;
+        EventController.OnCheckIfGiveAiRandomItems -= OnCheckIfGiveAiRandomItems;
 
         if (Socket.GetSocketType() == SocketType.Host)
         {
@@ -88,21 +87,21 @@ public class Random : INetplayComponent
         _syncReady.Remove(peer.Id);
     }
 
-    private int OnItemPickupRandom(IHook<Functions.RandFn> hook)
+    private int OnItemPickupRandom(IHook<Functions.RandFnPtr> hook)
     {
         var result = _itemPickupRandom.Next();
         _logRandomSeed.WriteLine($"[{nameof(Random)}] Item Pickup Seed: {result}");
         return result;
     }
 
-    private int OnRandom(IHook<Functions.RandFn> hook)
+    private int OnRandom(IHook<Functions.RandFnPtr> hook)
     {
-        var result = hook.OriginalFunction();
+        var result = hook.OriginalFunction.Value.Invoke();
         _logRandomSeed.WriteLine($"[{nameof(Random)}] Current Seed: {result}");
         return result;
     }
 
-    private void OnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
+    private void OnSeedRandom(uint seed, IHook<Functions.SRandFnPtr> hook)
     {
         _logRandom.WriteLine($"[{nameof(Random)}] Calling Random Number Generator");
 
@@ -114,10 +113,10 @@ public class Random : INetplayComponent
         _framePacingController.ResetSpeedup();
     }
 
-    private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
+    private void HostOnSeedRandom(uint seed, IHook<Functions.SRandFnPtr> hook)
     {
         // Local function(s)
-        hook.OriginalFunction(seed);
+        hook.OriginalFunction.Value.Invoke(seed);
         if (!Socket.PollUntil(IsEveryoneReady, Socket.State.DisconnectTimeout))
         {
             // Disconnect those who are not ready.
@@ -158,13 +157,13 @@ public class Random : INetplayComponent
         ResetRaceComponent();
     }
 
-    private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFn> hook)
+    private void ClientOnSeedRandom(uint seed, IHook<Functions.SRandFnPtr> hook)
     {
         Socket.SendAndFlush(Socket.Manager.FirstPeer, ReliablePacket.Create(new SRandSync(default, (int)seed)), _randomDeliveryMethod, $"[{nameof(Random)} / Client] Sending dummy random seed and waiting for host response.", LogCategory.Random, _randomChannel);
         if (!Socket.PollUntil(SyncAvailable, Socket.State.DisconnectTimeout))
         {
             _logRandom.WriteLine($"[{nameof(Random)} / Client] RNG Sync Failed.");
-            hook.OriginalFunction(seed);
+            hook.OriginalFunction.Value.Invoke(seed);
             Socket.Dispose();
             return;
         }

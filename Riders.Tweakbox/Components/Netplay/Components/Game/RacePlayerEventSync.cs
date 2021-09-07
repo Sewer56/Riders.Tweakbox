@@ -23,7 +23,6 @@ public unsafe class RacePlayerEventSync : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
     public CommonState State { get; set; }
 
     /// <summary>
@@ -34,19 +33,18 @@ public unsafe class RacePlayerEventSync : INetplayComponent
 
     private const DeliveryMethod _eventDeliveryMethod = DeliveryMethod.ReliableOrdered;
 
-    public RacePlayerEventSync(Socket socket, EventController @event)
+    public RacePlayerEventSync(Socket socket)
     {
         Socket = socket;
-        Event = @event;
         State = socket.State;
 
-        Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
+        EventController.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
+        EventController.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
     }
 
     public void Reset()

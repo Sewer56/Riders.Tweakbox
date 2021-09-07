@@ -5,6 +5,7 @@ using System.Numerics;
 using Sewer56.SonicRiders.API;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 using PlayerAPI = Sewer56.SonicRiders.API.Player;
+using Riders.Tweakbox.Interfaces.Structs.Enums;
 
 namespace Riders.Tweakbox.Controllers.Modifiers;
 
