@@ -1,8 +1,9 @@
 ﻿using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Riders.Tweakbox.Controllers.Interfaces;
-using Riders.Tweakbox.Shared;
-using Riders.Tweakbox.Shared.Structs;
+using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Internal;
+using Riders.Tweakbox.Interfaces.Structs;
 namespace Riders.Tweakbox.Controllers;
 
 /// <summary>

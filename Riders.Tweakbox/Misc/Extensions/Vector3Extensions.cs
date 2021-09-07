@@ -19,7 +19,6 @@ public static class Vector3Extensions
 
         var cosTheta = dotProduct / (magnitudes);
         var arcCos   = Math.Acos(Math.Clamp(cosTheta, -1, 1));
-        Debug.Assert(!double.IsNaN(arcCos));
 
         return (float)(arcCos / Math.PI * 180.0);
     }

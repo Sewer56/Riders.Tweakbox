@@ -11,9 +11,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using EnumsNET;
+using Reloaded.Hooks.Definitions;
 using Reloaded.Memory;
+using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
+using Riders.Tweakbox.Interfaces.Structs.Gears;
+using Sewer56.SonicRiders;
+using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -25,14 +30,19 @@ public unsafe class CustomGearController : IController
     // Private members
     private Logger _log = new Logger(LogCategory.CustomGear);
 
+    /// <summary>
+    /// Executed when the gear list is being reloaded.
+    /// </summary>
+    public event Action OnReset;
+
     internal CustomGearCodePatcher CodePatcher;
     internal CustomGearUiController UiController;
     internal CustomGearPatches Patches;
 
-    internal Dictionary<string, CustomGearData> AvailableGears = new Dictionary<string, CustomGearData>();
-    internal List<CustomGearData> LoadedGears = new List<CustomGearData>();
+    internal Dictionary<string, CustomGearDataInternal> AvailableGears = new Dictionary<string, CustomGearDataInternal>();
+    internal List<CustomGearDataInternal> LoadedGears = new List<CustomGearDataInternal>();
 
-    public CustomGearController()
+    public CustomGearController(IReloadedHooks hooks)
     {
         // DO NOT Reorder
         CodePatcher = new CustomGearCodePatcher();
@@ -45,7 +55,7 @@ public unsafe class CustomGearController : IController
     /// </summary>
     /// <param name="request">The gear information.</param>
     /// <returns>Null if the operation did not suceed, else valid result.</returns>
-    public AddGearResult AddGear(AddGearRequest request)
+    public CustomGearDataInternal AddGear(AddGearRequest request)
     {
         // If already loaded, ignore.
         if (string.IsNullOrEmpty(request.GearName) || IsGearLoaded(request.GearName))
@@ -59,13 +69,28 @@ public unsafe class CustomGearController : IController
         if (!request.LoadData())
             return null;
 
-        var data = Mapping.Mapper.Map<CustomGearData>(request);
+        var data = Mapping.Mapper.Map<CustomGearDataInternal>(request);
         _log.WriteLine($"[{nameof(CustomGearController)}] Adding Gear: {request.GearName}");
-        return AddGear_Internal(data);
+        AddGear_Internal(data);
+        return data;
     }
 
     /// <summary>
-    /// Retrieves the name of a given gear.
+    /// Retrieves the data of a given gear.
+    /// </summary>
+    /// <param name="index">The index of the gear.</param>
+    /// <param name="data">Receives the custom gear.</param>
+    /// <returns>True if the gear data was found, else false.</returns>
+    public bool TryGetGearData(int index, out CustomGearDataInternal data)
+    {
+        if (!TryGetGearData_Internal(index, out data))
+            return false;
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Retrieves the data of a given gear.
     /// </summary>
     /// <param name="name">The name of the gear.</param>
     /// <param name="data">
@@ -73,13 +98,10 @@ public unsafe class CustomGearController : IController
     ///     Must not be null.
     /// </param>
     /// <returns>True if the gear data was found, else false.</returns>
-    public bool TryGetGearData(string name, [NotNull] CustomGearData data)
+    public bool TryGetGearData(string name, out CustomGearDataInternal data)
     {
-        if (AvailableGears.TryGetValue(name, out var originalData))
-        {
-            Mapping.Mapper.From(originalData).AdaptTo(data);
+        if (AvailableGears.TryGetValue(name, out data))
             return true;
-        }
 
         return false;
     }
@@ -141,10 +163,9 @@ public unsafe class CustomGearController : IController
         else
         {
             isCustomGear = true;
-            var loadedIndex = LoadedGears.FindIndex(x => x.GearIndex == index);
-            if (loadedIndex != -1)
-                return LoadedGears[loadedIndex].GearName;
-
+            if (TryGetGearData_Internal(index, out var data))
+                return data.GearName;
+            
             return "Unknown";
         }
     }
@@ -235,6 +256,7 @@ public unsafe class CustomGearController : IController
     /// <param name="clearGears">Removes all known gears if set to true.</param>
     public void Reset(bool clearGears = true)
     {
+        OnReset?.Invoke();
         _log.WriteLine($"[{nameof(CustomGearController)}] Resetting Gears"); 
         CodePatcher.Reset();
         UiController.Reset();
@@ -245,24 +267,33 @@ public unsafe class CustomGearController : IController
         LoadedGears.Clear();
     }
 
+    internal bool TryGetGearData_Internal(int index, out CustomGearDataInternal data)
+    {
+        var indexOffset = index - CodePatcher.OriginalGearCount;
+        data = default;
+
+        if (indexOffset < 0 || indexOffset >= LoadedGears.Count)
+            return false;
+
+        data = LoadedGears[indexOffset];
+        return true;
+    }
+
     /// <summary>
     /// Adds a new extreme gear to the game.
     /// </summary>
     /// <param name="data">The gear data.</param>
     /// <returns>Null if the operation did not suceed, else valid result.</returns>
-    private AddGearResult AddGear_Internal(CustomGearData data)
+    private void AddGear_Internal(CustomGearDataInternal data)
     {
-        var result = new AddGearResult();
+        // Invoke sub-handlers
+        CodePatcher.AddGear(data);
+        UiController.AddGear(data);
 
         // Always add to loaded gears.
         // and/or add/replace dictionary items.
         AvailableGears[data.GearName] = data;
         LoadedGears.Add(data);
-        
-        // Invoke sub-handlers
-        CodePatcher.AddGear(data, result);
-        UiController.AddGear(data, result);
-        return result;
     }
 
     private void ClearGearIndices()

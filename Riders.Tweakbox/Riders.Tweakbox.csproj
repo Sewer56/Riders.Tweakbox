@@ -44,9 +44,9 @@
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Imgui.Hook" Version="3.0.0" />
     <PackageReference Include="Reloaded.Imgui.Hook.Direct3D9" Version="1.0.0" />
-    <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
+    <PackageReference Include="Reloaded.Memory" Version="4.1.2" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.8.0" />
-    <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.8.0" />
+    <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
     <PackageReference Include="Reloaded.WPF.Animations" Version="1.2.2" />
     <PackageReference Include="SimpleBase" Version="3.1.0" />
     <PackageReference Include="Standart.Hash.xxHash" Version="3.1.0" />
@@ -56,7 +56,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Netplay\MLAPI.Puncher.LiteNetLib\MLAPI.Puncher.LiteNetLib.csproj" />
     <ProjectReference Include="..\Netplay\SonicRiders.Utils.Netplay.Messages\Riders.Netplay.Messages.csproj" />
-    <ProjectReference Include="..\Riders.Tweakbox.Shared\Riders.Tweakbox.Shared.csproj" />
+    <ProjectReference Include="..\Riders.Tweakbox.Interfaces\Riders.Tweakbox.Interfaces.csproj" />
     <ProjectReference Include="..\Submodules\LiteNetLib\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\Submodules\MLAPI.Puncher\MLAPI.Puncher.Client\MLAPI.Puncher.Client.csproj" />
     <ProjectReference Include="..\Submodules\reloaded.universal.redirector\Reloaded.Universal.Redirector.Interfaces\Reloaded.Universal.Redirector.Interfaces.csproj" />
@@ -69,6 +69,7 @@
 
   <ItemGroup>
     <Folder Include="Components\Netplay\Components\Game\Structs\" />
+    <Folder Include="Controllers\CustomGearController\Behaviour\" />
     <Folder Include="Misc\Graphics\" />
     <Folder Include="Services\TextureGen\Structs\" />
   </ItemGroup>

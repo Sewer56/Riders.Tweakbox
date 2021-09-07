@@ -34,7 +34,7 @@ public unsafe class CourseSelect : INetplayComponent
         Event = @event;
         Event.OnCourseSelect += OnCourseSelect;
         Event.AfterCourseSelect += Delta.Update;
-        Event.OnEnterCharacterSelect += EnterCharacterSelect;
+        EventController.OnEnterCharacterSelect += EnterCharacterSelect;
         Delta.OnCourseSelectUpdated += CourseSelectUpdated;
     }
 
@@ -43,7 +43,7 @@ public unsafe class CourseSelect : INetplayComponent
     {
         Event.OnCourseSelect -= OnCourseSelect;
         Event.AfterCourseSelect -= Delta.Update;
-        Event.OnEnterCharacterSelect -= EnterCharacterSelect;
+        EventController.OnEnterCharacterSelect -= EnterCharacterSelect;
         Delta.OnCourseSelectUpdated -= CourseSelectUpdated;
     }
 

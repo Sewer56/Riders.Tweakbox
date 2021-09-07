@@ -52,19 +52,19 @@ public unsafe class GameModifiersController : IController
     public GameModifiersController(TweakboxConfig config, IReloadedHooks hooks)
     {
         _config = config;
-        _event = IoC.GetSingleton<EventController>();
+        _event = IoC.GetSingleton<EventController>(); // Ensure load order.
         _layoutController = IoC.GetSingleton<ObjectLayoutController.ObjectLayoutController>();
         Slipstream = new SlipstreamModifier(this);
 
-        _event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
-        _event.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
-        _event.ShouldKillTurbulence += ShouldKillTurbulence;
-        _event.ForceTurbulenceType += ForceTurbulenceType;
-        _event.AfterRunPhysicsSimulation += Slipstream.OnAfterRunPhysicsSimulation;
-        _event.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
-        _event.SetRingsOnHit += SetRingsOnHit;
-        _event.SetRingsOnDeath += SetRingsOnDeath;
-        _event.OnShouldRejectAttackTask += ShouldRejectAttack;
+        EventController.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
+        EventController.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
+        EventController.ShouldKillTurbulence += ShouldKillTurbulence;
+        EventController.ForceTurbulenceType += ForceTurbulenceType;
+        EventController.AfterRunPhysicsSimulation += Slipstream.OnAfterRunPhysicsSimulation;
+        EventController.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
+        EventController.SetRingsOnHit += SetRingsOnHit;
+        EventController.SetRingsOnDeath += SetRingsOnDeath;
+        EventController.OnShouldRejectAttackTask += ShouldRejectAttack;
         _layoutController.OnLoadLayout += OnLoadLayout;
     }
 
@@ -177,10 +177,10 @@ public unsafe class GameModifiersController : IController
         return currentType;
     }
 
-    private unsafe bool ShouldKillTurbulence(Player* player, IHook<Functions.ShouldKillTurbulenceFn> hook)
+    private unsafe bool ShouldKillTurbulence(Player* player, IHook<Functions.ShouldKillTurbulenceFnPtr> hook)
     {
         if (IsNonPlayerTurbulence(player))
-            return hook.OriginalFunction(player);
+            return Convert.ToBoolean(hook.OriginalFunction.Value.Invoke(player));
 
         if (Modifiers.NoTurbulence)
             return true;
@@ -188,13 +188,13 @@ public unsafe class GameModifiersController : IController
         if (Modifiers.AlwaysTurbulence)
             return false;
         
-        return hook.OriginalFunction(player);
+        return Convert.ToBoolean(hook.OriginalFunction.Value.Invoke(player));
     }
 
-    private unsafe bool ShouldSpawnTurbulence(Player* player, IHook<Functions.ShouldGenerateTurbulenceFn> hook)
+    private unsafe bool ShouldSpawnTurbulence(Player* player, IHook<Functions.ShouldGenerateTurbulenceFnPtr> hook)
     {
         if (IsNonPlayerTurbulence(player))
-            return hook.OriginalFunction(player);
+            return Convert.ToBoolean(hook.OriginalFunction.Value.Invoke(player));
 
         if (Modifiers.NoTurbulence)
             return false;
@@ -202,7 +202,7 @@ public unsafe class GameModifiersController : IController
         if (Modifiers.AlwaysTurbulence)
             return true;
 
-        return hook.OriginalFunction(player);
+        return Convert.ToBoolean(hook.OriginalFunction.Value.Invoke(player));
     }
 
     private bool IsNonPlayerTurbulence(Player* player)

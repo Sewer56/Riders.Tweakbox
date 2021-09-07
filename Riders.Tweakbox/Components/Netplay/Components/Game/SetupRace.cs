@@ -30,7 +30,7 @@ public unsafe class SetupRace : INetplayComponent
         Socket = socket;
         Event = @event;
 
-        Event.OnSetupRace += OnSetupRace;
+        EventController.OnSetupRace += OnSetupRace;
         _disableGrandPrixOverridePlayerCount.Enable();
         //_dontSetPlayerTypeOnInit.Enable();
         //_dontSetPlayerTypeOnCharSelectInit.Enable();
@@ -39,7 +39,7 @@ public unsafe class SetupRace : INetplayComponent
     /// <inheritdoc />
     public void Dispose()
     {
-        Event.OnSetupRace -= OnSetupRace;
+        EventController.OnSetupRace -= OnSetupRace;
         _disableGrandPrixOverridePlayerCount.Disable();
         //_dontSetPlayerTypeOnInit.Disable();
         //_dontSetPlayerTypeOnCharSelectInit.Disable();

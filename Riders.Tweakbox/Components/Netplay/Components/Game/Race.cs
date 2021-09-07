@@ -66,14 +66,14 @@ public unsafe class Race : INetplayComponent
         PacingController = IoC.GetSingleton<FramePacingController>();
 
         _raceChannel = (byte)Socket.ChannelAllocator.GetChannel(RaceDeliveryMethod);
-        Event.OnSetSpawnLocationsStartOfRace += SwapSpawns;
-        Event.AfterSetSpawnLocationsStartOfRace += SwapSpawns;
-        Event.AfterRunPhysicsSimulation += OnAfterPhysicsSimulation;
+        EventController.OnSetSpawnLocationsStartOfRace += SwapSpawns;
+        EventController.AfterSetSpawnLocationsStartOfRace += SwapSpawns;
+        EventController.AfterRunPhysicsSimulation += OnAfterPhysicsSimulation;
 
-        Event.OnSetMovementFlagsOnInput += OnSetMovementFlagsOnInput;
-        Event.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
-        Event.OnCheckIfPlayerIsHumanInput += IsHuman;
-        Event.OnCheckIfPlayerIsHumanIndicator += IsHuman;
+        EventController.OnSetMovementFlagsOnInput += OnSetMovementFlagsOnInput;
+        EventController.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
+        EventController.OnCheckIfPlayerIsHumanInput += IsHuman;
+        EventController.OnCheckIfPlayerIsHumanIndicator += IsHuman;
 
         Event.OnRace += OnRace;
         Sewer56.SonicRiders.API.Event.OnKillAllTasks += OnKillAllTasks;
@@ -89,14 +89,14 @@ public unsafe class Race : INetplayComponent
     public void Dispose()
     {
         Socket.ChannelAllocator.ReleaseChannel(RaceDeliveryMethod, _raceChannel);
-        Event.OnSetSpawnLocationsStartOfRace -= SwapSpawns;
-        Event.AfterSetSpawnLocationsStartOfRace -= SwapSpawns;
-        Event.AfterRunPhysicsSimulation -= OnAfterPhysicsSimulation;
+        EventController.OnSetSpawnLocationsStartOfRace -= SwapSpawns;
+        EventController.AfterSetSpawnLocationsStartOfRace -= SwapSpawns;
+        EventController.AfterRunPhysicsSimulation -= OnAfterPhysicsSimulation;
 
-        Event.OnSetMovementFlagsOnInput -= OnSetMovementFlagsOnInput;
-        Event.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
-        Event.OnCheckIfPlayerIsHumanInput -= IsHuman;
-        Event.OnCheckIfPlayerIsHumanIndicator -= IsHuman;
+        EventController.OnSetMovementFlagsOnInput -= OnSetMovementFlagsOnInput;
+        EventController.AfterSetMovementFlagsOnInput -= OnAfterSetMovementFlagsOnInput;
+        EventController.OnCheckIfPlayerIsHumanInput -= IsHuman;
+        EventController.OnCheckIfPlayerIsHumanIndicator -= IsHuman;
 
         Event.OnRace -= OnRace;
         Sewer56.SonicRiders.API.Event.OnKillAllTasks -= OnKillAllTasks;

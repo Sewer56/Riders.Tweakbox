@@ -34,6 +34,8 @@ using Functions = Sewer56.SonicRiders.Functions.Functions;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Services;
 using Riders.Tweakbox.Services.TextureGen.Structs;
+using Riders.Tweakbox.Interfaces.Structs.Gears;
+using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -111,7 +113,7 @@ internal unsafe class CustomGearUiController
 
             "push esi", // 2d object
             "push eax", // player ptr
-            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInGearselHook, out _, false)}",
+            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInGearselHook, false)}",
             $"{utilities.PopCdeclCallerSavedRegisters()}", // Restore registers
         };
 
@@ -130,7 +132,7 @@ internal unsafe class CustomGearUiController
 
             "push esi", // 2d object
             "push eax", // player ptr
-            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInCharSelectedHook, out _, false)}",
+            $"{utilities.AssembleAbsoluteCall<Tm2dPlayerFunction>(SetCustomTextureIndexInCharSelectedHook, false)}",
             $"{utilities.PopCdeclCallerSavedRegisters()}", // Restore registers
         };
 
@@ -146,7 +148,7 @@ internal unsafe class CustomGearUiController
             "push edx",
 
             "push 0x17DD640", // Re-push parameter.
-            $"{utilities.AssembleAbsoluteCall<Spani_SABInitWrapper>(SabInitHook, out _, false)}",
+            $"{utilities.AssembleAbsoluteCall<Spani_SABInitWrapper>(SabInitHook, false)}",
             
             // Restore registers
             "pop edx",
@@ -165,7 +167,7 @@ internal unsafe class CustomGearUiController
             "use32",
 
             // Call our code
-            $"{utilities.AssembleAbsoluteCall<Functions.GetSet_TexFn>(LoadXvrsHook, out _, false)}",
+            $"{utilities.AssembleAbsoluteCall<Functions.GetSet_TexFn>(LoadXvrsHook, false)}",
             
             // Original Code
             "mov eax, [esp+88h]",
@@ -347,7 +349,7 @@ internal unsafe class CustomGearUiController
         }
     }
 
-    internal void AddGear(CustomGearData data, AddGearResult result)
+    internal void AddGear(CustomGearDataInternal data)
     {
         // Get icon paths.
         _customGearService.UpdateTexturePaths(data, ref data.GearData);

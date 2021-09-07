@@ -2,6 +2,7 @@
 using Sewer56.SonicRiders.Structures.Gameplay;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Memory.Sources;
@@ -11,6 +12,8 @@ using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
 using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders;
+using Riders.Tweakbox.Interfaces.Structs.Gears;
+using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -73,7 +76,7 @@ internal unsafe class CustomGearCodePatcher
     /// </summary>
     /// <param name="data">The gear information.</param>
     /// <returns>A pointer to your gear data.</returns>
-    internal void AddGear(CustomGearData data, AddGearResult result)
+    internal void AddGear(CustomGearDataInternal data)
     {
         _log.WriteLine($"[{nameof(CustomGearCodePatcher)}] Adding Gear in Slot: {GearCount}");
         ref var gear = ref data.GearData;
@@ -81,10 +84,10 @@ internal unsafe class CustomGearCodePatcher
         _newGears[GearCount] = gear;
         _gearToModelMap[GearCount] = (byte)gear.GearModel;
 
-        result.GearIndex = GearCount;
+        var gearIndex = GearCount;
         UpdateGearCount(GearCount + 1);
-        data.SetGearIndex(result.GearIndex);
-        PatchMaxGearId(result.GearIndex);
+        data.SetGearIndex(gearIndex);
+        PatchMaxGearId(gearIndex);
     }
 
     /// <summary>

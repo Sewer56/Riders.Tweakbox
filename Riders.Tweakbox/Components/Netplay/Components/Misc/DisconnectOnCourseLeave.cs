@@ -10,17 +10,15 @@ public class DisconnectOnCourseLeave : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
 
-    public DisconnectOnCourseLeave(Socket socket, EventController @event)
+    public DisconnectOnCourseLeave(Socket socket)
     {
         Socket = socket;
-        Event = @event;
-        Event.OnExitCourseSelect += OnExitCourseSelect;
+        EventController.OnExitCourseSelect += OnExitCourseSelect;
     }
 
     /// <inheritdoc />
-    public void Dispose() => Event.OnExitCourseSelect -= OnExitCourseSelect;
+    public void Dispose() => EventController.OnExitCourseSelect -= OnExitCourseSelect;
 
     private void OnExitCourseSelect()
     {

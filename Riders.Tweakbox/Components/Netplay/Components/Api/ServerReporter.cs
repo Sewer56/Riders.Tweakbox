@@ -21,7 +21,6 @@ public class ServerReporter : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
     private Guid _guid;
     private Timer _timer;
     private int _refreshTimeSeconds = 60;
@@ -29,14 +28,13 @@ public class ServerReporter : INetplayComponent
     public unsafe ServerReporter(Socket socket)
     {
         Socket = socket;
-        Event = Socket.Event;
 
         if (Socket.GetSocketType() != SocketType.Host)
             return;
 
-        Event.OnExitCourseSelect += OnExitCourseSelect;
-        Event.OnEnterCharacterSelect += OnEnterCharaSelect;
-        Event.OnExitCharacterSelect += OnExitCharacterSelect;
+        EventController.OnExitCourseSelect += OnExitCourseSelect;
+        EventController.OnEnterCharacterSelect += OnEnterCharaSelect;
+        EventController.OnExitCharacterSelect += OnExitCharacterSelect;
         _timer = new Timer(UpdateServerDetails, null, TimeSpan.Zero, TimeSpan.FromSeconds(_refreshTimeSeconds));
     }
 
@@ -46,9 +44,9 @@ public class ServerReporter : INetplayComponent
         if (Socket.GetSocketType() != SocketType.Host)
             return;
 
-        Event.OnExitCourseSelect -= OnExitCourseSelect;
-        Event.OnEnterCharacterSelect -= OnEnterCharaSelect;
-        Event.OnExitCharacterSelect -= OnExitCharacterSelect;
+        EventController.OnExitCourseSelect -= OnExitCourseSelect;
+        EventController.OnEnterCharacterSelect -= OnEnterCharaSelect;
+        EventController.OnExitCharacterSelect -= OnExitCharacterSelect;
         _timer?.Dispose();
         RemoveServer();
     }
@@ -100,7 +98,7 @@ public class ServerReporter : INetplayComponent
         }
     }
 
-    private unsafe GameModeDto GetMode() => GetMode(Event.TitleSequence->TaskData->RaceMode);
+    private unsafe GameModeDto GetMode() => GetMode(Socket.Event.TitleSequence->TaskData->RaceMode);
     private GameModeDto GetMode(RaceMode raceMode)
     {
         return raceMode switch

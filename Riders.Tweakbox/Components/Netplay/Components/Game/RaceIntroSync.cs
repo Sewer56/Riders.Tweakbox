@@ -21,7 +21,6 @@ public class RaceIntroSync : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
     public CommonState State { get; private set; }
 
     /// <summary>
@@ -34,15 +33,14 @@ public class RaceIntroSync : INetplayComponent
     private bool _clientReadyToStartRace;
     private Logger _log = new Logger(LogCategory.Race);
 
-    public RaceIntroSync(Socket socket, EventController @event)
+    public RaceIntroSync(Socket socket)
     {
         Socket = socket;
-        Event = @event;
         State = Socket.State;
         _framePacingController = IoC.Get<FramePacingController>();
 
-        Event.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
-        Event.OnRaceSkipIntro += OnRaceSkipIntro;
+        EventController.OnCheckIfSkipIntro += OnCheckIfRaceSkipIntro;
+        EventController.OnRaceSkipIntro += OnRaceSkipIntro;
 
         if (Socket.GetSocketType() == SocketType.Host)
         {
@@ -55,8 +53,8 @@ public class RaceIntroSync : INetplayComponent
     /// <inheritdoc />
     public void Dispose()
     {
-        Event.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
-        Event.OnRaceSkipIntro -= OnRaceSkipIntro;
+        EventController.OnCheckIfSkipIntro -= OnCheckIfRaceSkipIntro;
+        EventController.OnRaceSkipIntro -= OnRaceSkipIntro;
 
         if (Socket.GetSocketType() == SocketType.Host)
         {

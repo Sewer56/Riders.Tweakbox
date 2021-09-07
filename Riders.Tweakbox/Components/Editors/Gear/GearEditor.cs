@@ -17,6 +17,7 @@ using Sewer56.SonicRiders.Utility;
 using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using Player = Sewer56.SonicRiders.API.Player;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
+using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
 using static Sewer56.Imgui.Misc.Constants;
 using Sewer56.Imgui.Controls;
 using Riders.Tweakbox.Misc.Log;
@@ -32,7 +33,7 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     private NetplayController _netplayController = IoC.Get<NetplayController>();
     private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
     private CustomGearService _customGearService = IoC.GetSingleton<CustomGearService>();
-    private CustomGearData _customGearData = new CustomGearData();
+    private CustomGearDataInternal _customGearData = new CustomGearDataInternal();
     private Logger _log = new Logger(LogCategory.Default);
 
     public GearEditor(IO io) : base(io, io.GearConfigFolder, io.GetGearConfigFiles)
@@ -66,7 +67,7 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
             if (ImGui.CollapsingHeaderTreeNodeFlags(headerName, 0))
             {
                 ImGui.PushID_Int(x);
-                bool hasCustomData = _customGearController.TryGetGearData(headerName, _customGearData);
+                bool hasCustomData = _customGearController.TryGetGearData(headerName, out _customGearData);
                 var customData = hasCustomData ? _customGearData : null;
                 EditGear(x, customData);
                 ImGui.PopID();
@@ -76,7 +77,7 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
         ImGui.PopItemWidth();
     }
 
-    private void EditGear(int gearIndex, CustomGearData data)
+    private void EditGear(int gearIndex, CustomGearDataInternal data)
     {
         var gear = (ExtremeGear*)Player.Gears.GetPointerToElement(gearIndex);
         if (data != null)

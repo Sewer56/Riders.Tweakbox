@@ -15,13 +15,15 @@ To build the mod, you will require the following components:
 git clone --recursive https://github.com/Sewer56/Riders.Tweakbox.git
 ```
 
-- Add an environment variable named `TWEAKBOX_DIR` to your user variables.
+- Add an environment variables named `TWEAKBOX_DIR` and `TWEAKBOX_GEARPACK_DIR` to your user variables.
 
 ![Environment Variable](./Images/EnvironmentVariable.png)
 
 The value should be the location where the compiled mod is to be placed.
 
 I recommend using `{LOCATION_OF_RELOADED_II}/Mods/riders.utils.tweakbox`, such that when you build the project, the new version is immediately available in Reloaded-II.
+
+For the gear pack, recommend `{LOCATION_OF_RELOADED_II}/Mods/riders.utils.tweakbox.gearpack`.
 
 - Open `Riders.Tweakbox.sln` in Visual Studio or your preferred editing environment of choice.
 
