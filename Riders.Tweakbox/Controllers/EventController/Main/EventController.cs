@@ -70,6 +70,7 @@ public unsafe partial class EventController : TaskEvents, IController
         InitBoostChainMultiplier(hooks, utilities);
         InitModifyBoostDuration(hooks, utilities);
         InitTrickLandSpeed(hooks, utilities);
+        InitSetExhaustTrail(hooks, utilities);
     }
 
     // Common. Do not Move.

@@ -9,11 +9,10 @@ namespace Riders.Tweakbox.Interfaces.Interfaces;
 /// </summary>
 public interface IExtremeGear
 {
-    /* IMPLEMENTING */
-
-    // - OBJECT HIT SPEED
-
-    /* IMPLEMENTED */
+    /// <summary>
+    /// Allows you to modify the exhaust trail colour.
+    /// </summary>
+    public ExhaustProperties GetExhaustProperties() => default;
 
     /// <summary>
     /// If true, uses Riders DX style berserker mode where the air depletes if the gauge

@@ -23,10 +23,9 @@ public struct ShortcutBehaviour
     public float FlyShortcutModifier;
 
     /// <summary>
-    /// [UNIMPLEMENTED]
-    /// Decimal by which to multiply shortcut speed for power types.
+    /// Speed to add to character when punching object as power type.
     /// </summary>
-    public float PowerShortcutModifier;
+    public float PowerShortcutAddedSpeed;
 
     /// <summary>
     /// Sets the shortcut speed for speed type.
@@ -39,8 +38,7 @@ public struct ShortcutBehaviour
     public SetValueHandler<float> SetFlyShortcutSpeed;
 
     /// <summary>
-    /// [UNIMPLEMENTED]
-    /// Sets the shortcut speed for power type.
+    /// Adds speed to character when punching object as power type.
     /// </summary>
-    public SetValueHandler<float> SetPowerShortcutSpeed;
+    public SetValueHandler<float> AddPowerShortcutSpeed;
 }

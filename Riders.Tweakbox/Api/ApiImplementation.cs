@@ -23,6 +23,7 @@ using Riders.Tweakbox.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces.Structs;
 using Riders.Tweakbox.Api.Misc;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
+using Sewer56.SonicRiders.Structures.Misc;
 
 namespace Riders.Tweakbox.Api;
 
@@ -65,6 +66,7 @@ internal unsafe partial class ApiImplementation
         EventController.SetBoostDuration += SetBoostDuration;
         EventController.SetPlayerSpeedOnTrickLand += SetPlayerSpeedOnTrickLand;
         EventController.SetDashPanelSpeed += SetDashPanelSpeed;
+        EventController.SetExhaustTrailColour += SetExhaustTrailColour;
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];
@@ -149,10 +151,20 @@ internal unsafe partial class ApiImplementation
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
             var props = behaviour.GetAirProperties();
-            if (!props.Enabled)
-                return value;
+            if (props.Enabled)
+                value = (int)(value * props.PowerAirGain);
 
-            return (int)(value * props.PowerAirGain);
+            // Tack on power speed gain.
+            var shortcutProps = behaviour.GetShortcutBehaviour();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            float speedGain = 0.0f;
+            if (shortcutProps.Enabled)
+            {
+                shortcutProps.AddPowerShortcutSpeed.InvokeIfNotNull(ref speedGain, (IntPtr) player, playerIndex, GetPlayerLevel(behaviour, player));
+                speedGain += shortcutProps.PowerShortcutAddedSpeed;
+            }
+
+            player->Speed += speedGain;
         }
 
         return value;
@@ -438,6 +450,24 @@ internal unsafe partial class ApiImplementation
         return value;
     }
 
+    private void SetExhaustTrailColour(ColorABGR* value, Player* player)
+    {
+        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        {
+            // Base Modifier
+            var exhaustProperties = behaviour.GetExhaustProperties();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (exhaustProperties.Enabled)
+            {
+                if (exhaustProperties.GetExhaustTrailColour != null)
+                {
+                    var color = exhaustProperties.GetExhaustTrailColour((IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player), *value);
+                    *value = color;
+                }
+            }
+        }
+    }
+
     private Enum<AsmFunctionResult> SetSpeedLossFromWallHit(Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
@@ -455,7 +485,6 @@ internal unsafe partial class ApiImplementation
                 speedLoss *= wallProps.SpeedLossMultiplier.GetValueOrDefault(1.0f);
                 speedLoss += wallProps.SpeedGainFlat.GetValueOrDefault(0.0f);
                 player->Speed -= speedLoss;
-                
 
                 return AsmFunctionResult.False;
             }

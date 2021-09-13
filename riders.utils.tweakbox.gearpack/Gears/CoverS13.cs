@@ -23,6 +23,6 @@ public class CoverS13 : CustomGearBase, IExtremeGear
         Enabled = true,
         FlyShortcutModifier = 1.075f,
         SpeedShortcutModifier = 1.075f,
-        PowerShortcutModifier = 1.075f,
+        PowerShortcutAddedSpeed = 1.075f,
     };
 }

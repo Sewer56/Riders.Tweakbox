@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Drawing;
 using Riders.Tweakbox.Gearpack.Gears.Common;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 using System.IO;
+using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using Player = Sewer56.SonicRiders.API.Player;
+using Colourful;
+using Riders.Tweakbox.Gearpack.Utilities;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
 
 public unsafe class GamblerDX : CustomGearBase, IExtremeGear
 {
+    private const int ExhaustCycleTime = 120;
     private ExtendedLevelStats _extendedLevelStats;
     private OverclockModeDX _overclockProperties = new OverclockModeDX()
     {
@@ -27,6 +32,9 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
         RingActivation = 90
     };
 
+    private ExhaustProperties _exhaustProperties;
+    private IColorConverter<RGBColor, LChabColor> _rgbToLchConverter = new ConverterBuilder().FromRGB().ToLChab().Build();
+    private IColorConverter<LChabColor, RGBColor> _lchToRgbConverter = new ConverterBuilder().FromLChab().ToRGB().Build();
     /// <summary>
     /// Defines a true/false value for every player stating whether they are in overclock mode or not.
     /// </summary>
@@ -43,10 +51,17 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
             SetGearStats = SetGearStats
         };
 
+        _exhaustProperties = new ExhaustProperties()
+        {
+            Enabled = true,
+            GetExhaustTrailColour = GetExhaustTrailColour
+        };
+
         var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "Gambler DX"));
         data.Behaviour = this;
         gearApi.AddGear(data);
     }
+
 
     /// <summary>
     /// Executed every frame. Checks if should enter overclock mode.
@@ -62,6 +77,23 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
             player->Level = 2;
             player->Air = (int)(player->LevelThreeStats.GearStats.MaxAir * (player->Rings / 100f));
         }
+    }
+
+    /// <summary>
+    /// Executed every frame. Sets exhaust trail colour.
+    /// </summary>
+    private Color GetExhaustTrailColour(IntPtr playerPtr, int playerIndex, int playerLevel, Color value)
+    {
+        var player = (Sewer56.SonicRiders.Structures.Gameplay.Player*)playerPtr;
+        if (_isOverclocked[playerIndex])
+        {
+            var lch = _rgbToLchConverter.Convert(new RGBColor(value));
+            var time = (*State.TotalFrameCounter % ExhaustCycleTime) / (float) ExhaustCycleTime;
+            lch = ColorInterpolator.GetRainbowColor((float)lch.C, (float)lch.L, time);
+            return _lchToRgbConverter.Convert(lch).ToColor();
+        }
+
+        return value;
     }
 
     /// <summary>
@@ -92,6 +124,8 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
     private void OnResetImpl(IntPtr playerptr, int playerindex, int playerLevel) => _isOverclocked = new bool[Player.MaxNumberOfPlayers]; // Nobody is overclocked :/
 
     // Gear API Callbacks
+    public ExhaustProperties GetExhaustProperties() => _exhaustProperties;
+
     public ExtendedLevelStats GetExtendedLevelStats() => _extendedLevelStats;
 
     public ApiEventHandler OnFrame() => CheckIfShouldEnterOverclockMode;
