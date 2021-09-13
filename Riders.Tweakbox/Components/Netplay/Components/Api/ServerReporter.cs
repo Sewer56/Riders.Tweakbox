@@ -12,6 +12,8 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Controllers;
 using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Structures.Enums;
+using TweakboxApi = Riders.Tweakbox.Api.TweakboxApi;
+
 namespace Riders.Tweakbox.Components.Netplay.Components.Api;
 
 /// <summary>
@@ -24,10 +26,12 @@ public class ServerReporter : INetplayComponent
     private Guid _guid;
     private Timer _timer;
     private int _refreshTimeSeconds = 60;
+    private TweakboxApi _tweakboxApi;
 
-    public unsafe ServerReporter(Socket socket)
+    public unsafe ServerReporter(Socket socket, TweakboxApi api)
     {
         Socket = socket;
+        _tweakboxApi = api;
 
         if (Socket.GetSocketType() != SocketType.Host)
             return;
@@ -80,11 +84,12 @@ public class ServerReporter : INetplayComponent
             Name = hostSettings.Name,
             HasPassword = hostSettings.Password.Text.Length > 0,
             Type = MatchTypeDto.Default, // TODO: Add Other GameModes
-            Mods = "Vanilla", // TODO: Add Mod Support
             GameMode = GetMode(),
             Port = hostSettings.Port,
             Players = players
         };
+
+        request.SetMods(_tweakboxApi.LoadedMods.ToArray());
 
         var result = (await Socket.Api.BrowserApi.CreateOrRefresh(request)).AsOneOf();
         if (result.IsT1)

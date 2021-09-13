@@ -17,6 +17,9 @@ using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 namespace Riders.Tweakbox;
 public class Program : IMod, IExports
 {
+    public static string Version = "0.7.0";
+    private const string MyModId = "Riders.Tweakbox";
+
     /// <summary>
     /// Used for writing text to the console window.
     /// </summary>
@@ -38,7 +41,9 @@ public class Program : IMod, IExports
         MessageBox.Show("Attach Debugger Now");
 #endif
         _modLoader = (IModLoader)loader;
+        _modLoader.ModLoaded += OnModLoaded;
         _logger = (ILogger)_modLoader.GetLogger();
+
         _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
         _modLoader.GetController<IReloadedHooksUtilities>().TryGetTarget(out var hooksUtilities);
         _modLoader.GetController<IRedirectorController>().TryGetTarget(out var redirector);
@@ -62,6 +67,13 @@ public class Program : IMod, IExports
         // Tweak Process Priority
         var process = Process.GetCurrentProcess();
         process.PriorityClass = ProcessPriorityClass.High;
+    }
+
+    // Get version of our own mod from callback.
+    private void OnModLoaded(IModV1 arg1, IModConfigV1 arg2)
+    {
+        if (arg2.ModId == MyModId)
+            Version = arg2.ModVersion;
     }
 
     /* Mod loader actions. */

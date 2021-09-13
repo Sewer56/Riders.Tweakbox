@@ -39,7 +39,7 @@ public class ConnectionManager : INetplayComponent
     private Dictionary<int, VersionInformation> _versionMap = new Dictionary<int, VersionInformation>();
     private Dictionary<int, VersionInformationEx> _versionExMap = new Dictionary<int, VersionInformationEx>();
 
-    private VersionInformation _currentVersionInformation = new VersionInformation(typeof(Program).Assembly.GetName().Version.ToString());
+    private VersionInformation _currentVersionInformation = new VersionInformation(Program.Version);
     private Logger _log = new Logger(LogCategory.Socket);
     private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
 

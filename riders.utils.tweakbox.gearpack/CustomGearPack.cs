@@ -1,4 +1,5 @@
 ﻿using Riders.Tweakbox.Gearpack.Gears.Common;
+using Riders.Tweakbox.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +15,7 @@ public class CustomGearPack
     /// </summary>
     public List<CustomGearBase> Gears = new List<CustomGearBase>();
 
-    public CustomGearPack(string modFolder, Interfaces.ITweakboxApi api)
+    public CustomGearPack(string modFolder, ITweakboxApiImpl api)
     {
         var gearApi = api.GetCustomGearApi();
         var gearPath = Path.Combine(modFolder, "Tweakbox/Custom");

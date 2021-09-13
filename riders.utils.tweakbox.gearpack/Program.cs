@@ -33,7 +33,8 @@ public class Program : IMod
 
         /* Your mod code starts here. */
         _modLoader.GetController<ITweakboxApi>().TryGetTarget(out var api);
-        _customGearPack = new CustomGearPack(_modLoader.GetDirectoryForModId(MyModId), api);
+        var modImpl = api.Register(MyModId);
+        _customGearPack = new CustomGearPack(_modLoader.GetDirectoryForModId(MyModId), modImpl);
     }
     
     /* Mod loader actions. */

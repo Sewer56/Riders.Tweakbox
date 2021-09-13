@@ -6,7 +6,7 @@ namespace Riders.Tweakbox.Interfaces.Internal;
 
 /// <summary>
 /// INTERNAL API. DO NOT USE.
-/// Use <see cref="IPhysicsApi"/> in <see cref="ITweakboxApi"/>.
+/// Use <see cref="IPhysicsApi"/> in <see cref="ITweakboxApiImpl"/>.
 /// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class Static
