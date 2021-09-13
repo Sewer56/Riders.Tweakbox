@@ -23,4 +23,10 @@ public class NimbusDX : CustomGearBase, IExtremeGear
         Enabled = true,
         DriftDashCap = Utility.SpeedometerToFloat(260.0f)
     };
+
+    public WallHitBehaviour GetWallHitBehaviour() => new WallHitBehaviour()
+    {
+        Enabled = true,
+        SpeedLossMultiplier = 0
+    };
 }

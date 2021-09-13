@@ -23,4 +23,10 @@ public class MagicCarpet13 : CustomGearBase, IExtremeGear
         Enabled = true,
         DriftDashCap = Utility.SpeedometerToFloat(260.0f)
     };
+
+    public OffRoadProperties GetOffroadProperties() => new OffRoadProperties()
+    {
+        Enabled = true,
+        IgnoreSpeedLoss = true
+    };
 }

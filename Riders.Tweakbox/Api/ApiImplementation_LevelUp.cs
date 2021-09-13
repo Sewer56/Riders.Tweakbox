@@ -80,6 +80,9 @@ internal unsafe partial class ApiImplementation
     {
         // Init Stats.
         var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+        if (playerIndex == -1)
+            return _setStatsForPlayerRaceHook.OriginalFunction.Value.Invoke(player); ;
+
         bool hasExtendedGears = InitStats(player, playerIndex, out var extendedStats);
         ResetState();
 

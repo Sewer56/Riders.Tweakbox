@@ -6,14 +6,14 @@ using System.IO;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
 
-public class MagicCarpetDX : CustomGearBase, IExtremeGear
+public class Nimbus13 : CustomGearBase, IExtremeGear
 {
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
     public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
     {
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "MagicCarpet DX"));
+        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "Nimbus 1.3"));
         data.Behaviour = this;
         gearApi.AddGear(data);
     }
@@ -24,9 +24,9 @@ public class MagicCarpetDX : CustomGearBase, IExtremeGear
         DriftDashCap = Utility.SpeedometerToFloat(260.0f)
     };
 
-    public OffRoadProperties GetOffroadProperties() => new OffRoadProperties()
+    public WallHitBehaviour GetWallHitBehaviour() => new WallHitBehaviour()
     {
         Enabled = true,
-        IgnoreSpeedLoss = true
+        SpeedLossMultiplier = 0
     };
 }

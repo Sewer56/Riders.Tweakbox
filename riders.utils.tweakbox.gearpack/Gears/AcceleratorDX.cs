@@ -23,7 +23,7 @@ public class AcceleratorDX : CustomGearBase, IExtremeGear
     {
         Enabled = true,
         GainsRingsOnRingGear = true,
-        PowerAirGain = 0.5f,
+        PowerAirGainMultiplier = 0.5f,
     };
 
     public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()

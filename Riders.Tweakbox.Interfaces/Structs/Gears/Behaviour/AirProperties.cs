@@ -23,15 +23,25 @@ public struct AirProperties
     /// <summary>
     /// Amount of air gained from speed type shortcuts.
     /// </summary>
-    public float SpeedAirGain = 1;
+    public float? SpeedAirGainMultiplier = 1;
 
     /// <summary>
     /// Amount of air gained from fly type shortcuts.
     /// </summary>
-    public float FlyAirGain = 1;
+    public float? FlyAirGainMultiplier = 1;
 
     /// <summary>
     /// Amount of air gained from power type shortcuts.
     /// </summary>
-    public float PowerAirGain = 1;
+    public float? PowerAirGainMultiplier = 1;
+
+    /// <summary>
+    /// Amount of air gained from pits.
+    /// </summary>
+    public float? PitAirGainMultiplier = 1;
+
+    /// <summary>
+    /// Updates the amount of air gained from pits.
+    /// </summary>
+    public SetValueHandler<int> SetPitAirGain;
 }

@@ -68,6 +68,8 @@ internal unsafe partial class ApiImplementation
         EventController.SetDashPanelSpeed += SetDashPanelSpeed;
         EventController.SetExhaustTrailColour += SetExhaustTrailColour;
         EventController.SetTornadoDeceleration += SetTornadoDeceleration;
+        EventController.SetRingCountFromRingPickup += SetRingCountFromRingPickup;
+        EventController.SetPitAirGain += SetPitAirGain;
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];
@@ -127,7 +129,7 @@ internal unsafe partial class ApiImplementation
             if (!props.Enabled)
                 return value;
 
-            return value * props.SpeedAirGain;
+            return value * props.SpeedAirGainMultiplier.GetValueOrDefault(1.0f);
         }
 
         return value;
@@ -141,7 +143,7 @@ internal unsafe partial class ApiImplementation
             if (!props.Enabled)
                 return value;
 
-            return (int)(value * props.FlyAirGain);
+            return (int)(value * props.FlyAirGainMultiplier.GetValueOrDefault(1.0f));
         }
 
         return value;
@@ -153,7 +155,7 @@ internal unsafe partial class ApiImplementation
         {
             var props = behaviour.GetAirProperties();
             if (props.Enabled)
-                value = (int)(value * props.PowerAirGain);
+                value = (int)(value * props.PowerAirGainMultiplier.GetValueOrDefault(1.0f));
 
             // Tack on power speed gain.
             var shortcutProps = behaviour.GetShortcutBehaviour();
@@ -369,7 +371,7 @@ internal unsafe partial class ApiImplementation
         // Determine if Remove Boost
         bool cannotBoost = boostProps.CannotBoost.GetValueOrDefault(false);
         var result = boostProps.CheckIfCanBoost.QueryIfNotNull((IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
-        result.Value.TryConvertToBool(out cannotBoost);
+        result.GetValueOrDefault(QueryResult.Indeterminate).TryConvertToBool(out cannotBoost);
 
         // Remove Boost
         if (cannotBoost && player->PlayerInput->ButtonsPressed.HasAllFlags(Buttons.Decline))
@@ -480,6 +482,39 @@ internal unsafe partial class ApiImplementation
             {
                 tornadoProperties.SetTornadoSpeed.InvokeIfNotNull(ref value, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
                 value *= tornadoProperties.SpeedMultiplier.GetValueOrDefault(1.0f);
+            }
+        }
+
+        return value;
+    }
+
+    private int SetRingCountFromRingPickup(int value, Player* player)
+    {
+        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        {
+            // Base Modifier
+            var itemProps = behaviour.GetItemProperties();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (itemProps.Enabled)
+            {
+                itemProps.SetRingCountOnPickup.InvokeIfNotNull(ref value, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
+            }
+        }
+
+        return value;
+    }
+
+    private int SetPitAirGain(int value, Player* player)
+    {
+        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        {
+            // Base Modifier
+            var airProps = behaviour.GetAirProperties();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (airProps.Enabled)
+            {
+                airProps.SetPitAirGain.InvokeIfNotNull(ref value, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
+                value = (int)(value * airProps.PitAirGainMultiplier.GetValueOrDefault(1.0f));
             }
         }
 

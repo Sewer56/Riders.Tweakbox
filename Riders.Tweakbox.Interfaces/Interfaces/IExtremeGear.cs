@@ -10,6 +10,11 @@ namespace Riders.Tweakbox.Interfaces.Interfaces;
 public interface IExtremeGear
 {
     /// <summary>
+    /// Returns custom properties for changing behaviour on interacting with items.
+    /// </summary>
+    public ItemProperties GetItemProperties() => default;
+
+    /// <summary>
     /// Returns custom properties for modifying tornado behaviour.
     /// </summary>
     public TornadoProperties GetTornadoProperties() => default;
@@ -130,7 +135,7 @@ public static class IExtremeGearExtensions
         if (handler != null)
             return handler(playerPtr, playerIndex, playerLevel);
 
-        return default;
+        return new T();
     }
 }
 
