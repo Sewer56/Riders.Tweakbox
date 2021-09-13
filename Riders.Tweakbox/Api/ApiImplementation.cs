@@ -67,6 +67,7 @@ internal unsafe partial class ApiImplementation
         EventController.SetPlayerSpeedOnTrickLand += SetPlayerSpeedOnTrickLand;
         EventController.SetDashPanelSpeed += SetDashPanelSpeed;
         EventController.SetExhaustTrailColour += SetExhaustTrailColour;
+        EventController.SetTornadoDeceleration += SetTornadoDeceleration;
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];
@@ -466,6 +467,23 @@ internal unsafe partial class ApiImplementation
                 }
             }
         }
+    }
+
+    private float SetTornadoDeceleration(float value, Player* player)
+    {
+        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        {
+            // Base Modifier
+            var tornadoProperties = behaviour.GetTornadoProperties();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (tornadoProperties.Enabled)
+            {
+                tornadoProperties.SetTornadoSpeed.InvokeIfNotNull(ref value, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
+                value *= tornadoProperties.SpeedMultiplier.GetValueOrDefault(1.0f);
+            }
+        }
+
+        return value;
     }
 
     private Enum<AsmFunctionResult> SetSpeedLossFromWallHit(Player* player)

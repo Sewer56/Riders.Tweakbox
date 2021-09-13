@@ -10,6 +10,11 @@ namespace Riders.Tweakbox.Interfaces.Interfaces;
 public interface IExtremeGear
 {
     /// <summary>
+    /// Returns custom properties for modifying tornado behaviour.
+    /// </summary>
+    public TornadoProperties GetTornadoProperties() => default;
+
+    /// <summary>
     /// Allows you to modify the exhaust trail colour.
     /// </summary>
     public ExhaustProperties GetExhaustProperties() => default;

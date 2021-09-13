@@ -71,6 +71,7 @@ public unsafe partial class EventController : TaskEvents, IController
         InitModifyBoostDuration(hooks, utilities);
         InitTrickLandSpeed(hooks, utilities);
         InitSetExhaustTrail(hooks, utilities);
+        InitSetTornadoDeceleration(hooks, utilities);
     }
 
     // Common. Do not Move.
