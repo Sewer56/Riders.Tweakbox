@@ -10,6 +10,11 @@ namespace Riders.Tweakbox.Interfaces.Interfaces;
 public interface IExtremeGear
 {
     /// <summary>
+    /// Modifies the behaviour of running for the gear.
+    /// </summary>
+    public RunningProperties GetRunningProperties() => default;
+
+    /// <summary>
     /// Returns custom properties for changing behaviour on interacting with items.
     /// </summary>
     public ItemProperties GetItemProperties() => default;

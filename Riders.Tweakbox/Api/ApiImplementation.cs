@@ -70,6 +70,7 @@ internal unsafe partial class ApiImplementation
         EventController.SetTornadoDeceleration += SetTornadoDeceleration;
         EventController.SetRingCountFromRingPickup += SetRingCountFromRingPickup;
         EventController.SetPitAirGain += SetPitAirGain;
+        EventController.SetRunningSpeedHook += SetRunningSpeedHook;
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];
@@ -519,6 +520,28 @@ internal unsafe partial class ApiImplementation
         }
 
         return value;
+    }
+
+
+    private void SetRunningSpeedHook(Player* player, RunningPhysics2* physics)
+    {
+        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        {
+            // Base Modifier
+            var airProps = behaviour.GetRunningProperties();
+            var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
+            if (airProps.Enabled)
+            {
+                var intptr = (IntPtr) physics;
+                airProps.SetRunningProperties.InvokeIfNotNull(ref intptr, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
+                physics->GearOneAcceleration += airProps.GearOneAccelerationOffset.GetValueOrDefault(0f);
+                physics->GearTwoAcceleration += airProps.GearTwoAccelerationOffset.GetValueOrDefault(0f);
+                physics->GearThreeAcceleration += airProps.GearThreeAccelerationOffset.GetValueOrDefault(0f);
+                physics->GearOneMaxSpeed += airProps.GearOneMaxSpeedOffset.GetValueOrDefault(0f);
+                physics->GearTwoMaxSpeed += airProps.GearTwoMaxSpeedOffset.GetValueOrDefault(0f);
+                physics->GearThreeMaxSpeed += airProps.GearThreeMaxSpeedOffset.GetValueOrDefault(0f);
+            }
+        }
     }
 
     private Enum<AsmFunctionResult> SetSpeedLossFromWallHit(Player* player)
