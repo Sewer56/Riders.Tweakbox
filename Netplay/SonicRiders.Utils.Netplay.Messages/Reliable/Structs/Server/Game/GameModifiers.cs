@@ -22,6 +22,8 @@ public struct GameModifiers : IReliableMessage
     public bool AlwaysTurbulence;
     public bool NoTurbulence;
     public bool DisableSmallTurbulence;
+
+    public bool BerserkerTurbulenceFix;
     public bool NoScreenpeek;
 
     public bool ReplaceRing100Box;
@@ -48,6 +50,7 @@ public struct GameModifiers : IReliableMessage
             RingLossPercentage = 0
         };
 
+        result.BerserkerTurbulenceFix = true;
         result.HitRingLoss = RingLossBehaviour.CreateDefault();
         return result;
     }
@@ -71,6 +74,7 @@ public struct GameModifiers : IReliableMessage
         AlwaysTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableSmallTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        BerserkerTurbulenceFix = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableAttackDurationFrames = bitStream.ReadGeneric<ushort>();
 
@@ -92,6 +96,7 @@ public struct GameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(AlwaysTurbulence), 1);
         bitStream.Write(Convert.ToByte(NoTurbulence), 1);
         bitStream.Write(Convert.ToByte(DisableSmallTurbulence), 1);
+        bitStream.Write(Convert.ToByte(BerserkerTurbulenceFix), 1);
         bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
         bitStream.Write(DisableAttackDurationFrames);
 

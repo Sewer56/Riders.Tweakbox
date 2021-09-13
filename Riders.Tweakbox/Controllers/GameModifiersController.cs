@@ -5,6 +5,7 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Enums;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Parser.Layout.Objects.ItemBox;
 using Sewer56.SonicRiders.Parser.Layout.Enums;
@@ -44,6 +45,7 @@ public unsafe class GameModifiersController : IController
     private EventController _event;
     private ObjectLayoutController.ObjectLayoutController _layoutController;
     private TweakboxConfig _config;
+    private IAsmHook _noBerserkerOnTurbulence;
 
     /// <summary>
     /// Creates the controller which controls game behaviour.
@@ -55,6 +57,16 @@ public unsafe class GameModifiersController : IController
         _event = IoC.GetSingleton<EventController>(); // Ensure load order.
         _layoutController = IoC.GetSingleton<ObjectLayoutController.ObjectLayoutController>();
         Slipstream = new SlipstreamModifier(this);
+
+        _noBerserkerOnTurbulence = hooks.CreateAsmHook(new string[]
+        {
+            "use32",
+            $"cmp byte [eax+0x11BC], 0x10", // Check player state; null if turbulence.
+            $"jne exit",
+            "push esi",
+            $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4CFDAE, false)}", // Dip out of speed loss func.
+            $"exit:"
+        }, 0x4CFD74, new AsmHookOptions() { Behaviour = AsmHookBehaviour.ExecuteFirst, MaxOpcodeSize = 6 }).Activate();
 
         EventController.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
         EventController.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
@@ -89,7 +101,14 @@ public unsafe class GameModifiersController : IController
     /// <summary>
     /// Invokes an event indicating the modifiers have been edited.
     /// </summary>
-    public void InvokeOnEditModifiers() => OnEditModifiers?.Invoke();
+    public void InvokeOnEditModifiers()
+    {
+        OnEditModifiers?.Invoke();
+        if (Modifiers.BerserkerTurbulenceFix)
+            _noBerserkerOnTurbulence.Enable();
+        else
+            _noBerserkerOnTurbulence.Disable();
+    }
 
     /// <summary>
     /// Returns true if a client side attack should be rejected.

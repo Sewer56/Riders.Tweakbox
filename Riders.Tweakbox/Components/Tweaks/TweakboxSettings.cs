@@ -133,6 +133,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.Checkbox("No Turbulence", ref mods.NoTurbulence).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Berserker Speed Fix", ref mods.BerserkerTurbulenceFix).ExecuteIfTrue(SendUpdateNotification);
             ImGui.TreePop();
         }
 
