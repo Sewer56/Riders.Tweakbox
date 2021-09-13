@@ -44,10 +44,9 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float SetNewDriftCapHook(float value, Player* player)
     {
-        OnSetNewDriftCap?.Invoke(value, player);
-        if (SetNewDriftCap != null)
-            return SetNewDriftCap(value, player);
-        else
-            return value;
+        var copy = value;
+        OnSetNewDriftCap?.Invoke(ref copy, player);
+        SetNewDriftCap?.Invoke(ref value, player);
+        return value;
     }
 }

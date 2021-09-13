@@ -41,10 +41,9 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static int SetPitAirGainHook(int value, Player* player)
     {
-        OnSetPitAirGain?.Invoke(value, player);
-        if (SetPitAirGain != null)
-            return SetPitAirGain(value, player);
-        else
-            return value;
+        var copy = value;
+        OnSetPitAirGain?.Invoke(ref copy, player);
+        SetPitAirGain?.Invoke(ref value, player);
+        return value;
     }
 }

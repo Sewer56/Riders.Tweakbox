@@ -93,30 +93,27 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float OnSetGrindAirGainHook(float value, Player* player)
     {
-        OnSetAirGainedThisFrameFromGrind?.Invoke(value, player);
-        if (SetAirGainedThisFrameFromGrind != null)
-            return SetAirGainedThisFrameFromGrind.Invoke(value, player);
-        else
-            return value;
+        var copy = value;
+        OnSetAirGainedThisFrameFromGrind?.Invoke(ref copy, player);
+        SetAirGainedThisFrameFromGrind?.Invoke(ref value, player);
+        return value;
     }
 
     [UnmanagedCallersOnly]
     private static int OnSetFlyAirGainHook(int value, Player* player)
     {
-        OnSetAirGainedThisFrameFromFly?.Invoke(value, player);
-        if (SetAirGainedThisFrameFromFly != null)
-            return SetAirGainedThisFrameFromFly(value, player);
-        else
-            return value;
+        var copy = value;
+        OnSetAirGainedThisFrameFromFly?.Invoke(ref copy, player);
+        SetAirGainedThisFrameFromFly?.Invoke(ref value, player);
+        return value;
     }
 
     [UnmanagedCallersOnly]
     private static int OnSetPowerAirGainHook(int value, Player* player)
     {
-        OnSetAirGainedThisFrameFromPower?.Invoke(value, player);
-        if (SetAirGainedThisFrameFromPower != null)
-            return SetAirGainedThisFrameFromPower(value, player);
-        else
-            return value;
+        var copy = value;
+        OnSetAirGainedThisFrameFromPower?.Invoke(ref copy, player);
+        SetAirGainedThisFrameFromPower(ref value, player);
+        return value;
     }
 }

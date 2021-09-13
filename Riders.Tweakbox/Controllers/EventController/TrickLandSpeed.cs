@@ -61,10 +61,9 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float ModifyTrickLandSpeed(float speed, Player* player)
     {
-        OnSetPlayerSpeedOnTrickLand?.Invoke(speed, player);
-        if (SetPlayerSpeedOnTrickLand != null)
-            return SetPlayerSpeedOnTrickLand(speed, player);
-
+        var copy = speed;
+        OnSetPlayerSpeedOnTrickLand?.Invoke(ref copy, player);
+        SetPlayerSpeedOnTrickLand?.Invoke(ref speed, player);
         return speed;
     }
 }

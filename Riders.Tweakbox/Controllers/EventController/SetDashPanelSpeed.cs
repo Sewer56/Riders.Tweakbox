@@ -40,11 +40,12 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static IntFloat SetDashPanelSpeedHook(Player* player, float speed)
     {
-        return SetDashPanelSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
+        SetDashPanelSpeed?.Invoke(player, ref speed);
+        return new IntFloat(speed);
     }
 
     [Function(new[] { ebx, ecx }, ecx, StackCleanup.Caller)]
-    public delegate IntFloat SetDashPanelSpeedHandlerFn(Player* player, float targetSpeed);
+    public delegate void SetDashPanelSpeedHandlerFn(Player* player, ref float targetSpeed);
 
     [Function(new[] { ebx, ecx }, ecx, StackCleanup.Caller)]
     public struct SetDashPanelSpeedHandlerFnPtr { public FuncPtr<BlittablePointer<Player>, float, IntFloat> Value; }

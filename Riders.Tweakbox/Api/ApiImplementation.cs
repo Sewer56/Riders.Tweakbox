@@ -71,6 +71,7 @@ internal unsafe partial class ApiImplementation
         EventController.SetRingCountFromRingPickup += SetRingCountFromRingPickup;
         EventController.SetPitAirGain += SetPitAirGain;
         EventController.SetRunningSpeedHook += SetRunningSpeedHook;
+        EventController.SetSpeedShoesSpeed += SetSpeedShoesSpeed;
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];
@@ -122,35 +123,27 @@ internal unsafe partial class ApiImplementation
         void DefaultImplementation() => player->AirGainedThisFrame *= (player->GearSpecialFlags.HasAllFlags(ExtremeGearSpecialFlags.GearOnRings) ? 0 : 1);
     }
 
-    private float SetAirGainedThisFrameFromGrind(float value, Player* player)
+    private void SetAirGainedThisFrameFromGrind(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
             var props = behaviour.GetAirProperties();
-            if (!props.Enabled)
-                return value;
-
-            return value * props.SpeedAirGainMultiplier.GetValueOrDefault(1.0f);
+            if (props.Enabled)
+                value *= props.SpeedAirGainMultiplier.GetValueOrDefault(1.0f);
         }
-
-        return value;
     }
 
-    private int SetAirGainedThisFrameFromFly(int value, Player* player)
+    private void SetAirGainedThisFrameFromFly(ref int value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
             var props = behaviour.GetAirProperties();
-            if (!props.Enabled)
-                return value;
-
-            return (int)(value * props.FlyAirGainMultiplier.GetValueOrDefault(1.0f));
+            if (props.Enabled)
+                value = (int)(value * props.FlyAirGainMultiplier.GetValueOrDefault(1.0f));
         }
-
-        return value;
     }
 
-    private int SetAirGainedThisFrameFromPower(int value, Player* player)
+    private void SetAirGainedThisFrameFromPower(ref int value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -170,8 +163,6 @@ internal unsafe partial class ApiImplementation
 
             player->Speed += speedGain;
         }
-
-        return value;
     }
 
     private bool CustomOffroadFunction(Player* player)
@@ -193,7 +184,7 @@ internal unsafe partial class ApiImplementation
         return false;
     }
 
-    private float SetRailSpeedCap(float value, Player* player)
+    private void SetRailSpeedCap(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -210,8 +201,6 @@ internal unsafe partial class ApiImplementation
             // Mono modifier
             value = ApplyMonoShortcutModifier(value, player, behaviour);
         }
-
-        return value;
     }
 
     private Enum<AsmFunctionResult> SetForceLegendEffect(Player* player)
@@ -237,7 +226,7 @@ internal unsafe partial class ApiImplementation
         return AsmFunctionResult.Indeterminate;
     }
 
-    private float SetFlySpeedX(float value, Player* player)
+    private void SetFlySpeedX(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -254,11 +243,9 @@ internal unsafe partial class ApiImplementation
             // Mono modifier
             value = ApplyMonoShortcutModifier(value, player, behaviour);
         }
-
-        return value;
     }
 
-    private float SetFlySpeedY(float value, Player* player)
+    private void SetFlySpeedY(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -274,11 +261,9 @@ internal unsafe partial class ApiImplementation
 
             value = ApplyMonoShortcutModifier(value, player, behaviour);
         }
-
-        return value;
     }
 
-    private float HandleDriftBehaviour(float value, Player* player)
+    private void HandleDriftBehaviour(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -296,8 +281,6 @@ internal unsafe partial class ApiImplementation
 
             value = ApplyMonoShortcutModifier(value, player, behaviour);
         }
-
-        return value;
     }
 
     private Player* AfterSetMovementFlagsOnInput(Player* player)
@@ -391,7 +374,7 @@ internal unsafe partial class ApiImplementation
         }
     }
 
-    private float SetBoostChainMultiplier(float value, Player* player)
+    private void SetBoostChainMultiplier(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -404,15 +387,12 @@ internal unsafe partial class ApiImplementation
 
                 additionalBcm = boostProps.GetAddedBoostChainMultiplier.QueryIfNotNull((IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player)).Value;
                 additionalBcm += boostProps.AddedBoostChainMultiplier.GetValueOrDefault(0.0F);
-
                 value += additionalBcm;
             }
         }
-
-        return value;
     }
 
-    private int SetBoostDuration(int value, Player* player)
+    private void SetBoostDuration(ref int value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -432,11 +412,9 @@ internal unsafe partial class ApiImplementation
             // Update boost duration.
             _playerState[playerIndex].BoostDuration = value;
         }
-
-        return value;
     }
 
-    private float SetPlayerSpeedOnTrickLand(float value, Player* player)
+    private void SetPlayerSpeedOnTrickLand(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -450,8 +428,6 @@ internal unsafe partial class ApiImplementation
                 value *= trickProps.SpeedGainPercentage.GetValueOrDefault(1.0f);
             }
         }
-
-        return value;
     }
 
     private void SetExhaustTrailColour(ColorABGR* value, Player* player)
@@ -472,7 +448,7 @@ internal unsafe partial class ApiImplementation
         }
     }
 
-    private float SetTornadoDeceleration(float value, Player* player)
+    private void SetTornadoDeceleration(ref float value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -485,11 +461,9 @@ internal unsafe partial class ApiImplementation
                 value *= tornadoProperties.SpeedMultiplier.GetValueOrDefault(1.0f);
             }
         }
-
-        return value;
     }
 
-    private int SetRingCountFromRingPickup(int value, Player* player)
+    private void SetRingCountFromRingPickup(ref int value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -497,15 +471,11 @@ internal unsafe partial class ApiImplementation
             var itemProps = behaviour.GetItemProperties();
             var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
             if (itemProps.Enabled)
-            {
                 itemProps.SetRingCountOnPickup.InvokeIfNotNull(ref value, (IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
-            }
         }
-
-        return value;
     }
 
-    private int SetPitAirGain(int value, Player* player)
+    private void SetPitAirGain(ref int value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {
@@ -518,8 +488,6 @@ internal unsafe partial class ApiImplementation
                 value = (int)(value * airProps.PitAirGainMultiplier.GetValueOrDefault(1.0f));
             }
         }
-
-        return value;
     }
 
 
@@ -572,7 +540,22 @@ internal unsafe partial class ApiImplementation
         float CalcSpeedLoss(float angle) => (float)(angle / (Math.PI / 2.0f) * scaledSpeedLoss);
     }
 
-    private unsafe IntFloat SetDashPanelSpeed(Player* player, float targetSpeed)
+    private unsafe void SetSpeedShoesSpeed(Player* player, ref float targetSpeed)
+    {
+        ref var props = ref Static.SpeedShoeProperties;
+
+        targetSpeed = props.Mode switch
+        {
+            SpeedShoesMode.Vanilla => targetSpeed,
+            SpeedShoesMode.Fixed => props.FixedSpeed,
+            SpeedShoesMode.Additive => player->Speed + props.AdditiveSpeed,
+            SpeedShoesMode.Multiplicative => player->Speed * (1 + props.MultiplicativeSpeed),
+            SpeedShoesMode.MultiplyOrFixed => Math.Max(player->Speed * (1 + props.MultiplicativeSpeed), props.MultiplicativeMinSpeed),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private unsafe void SetDashPanelSpeed(Player* player, ref float targetSpeed)
     {
         ref var props = ref Static.PanelProperties;
 
@@ -597,8 +580,6 @@ internal unsafe partial class ApiImplementation
                 targetSpeed += dashProps.AdditionalSpeed.GetValueOrDefault(0.0f);
             }
         }
-
-        return targetSpeed;
     }
 
     private float ApplyMonoShortcutModifier(float value, Player* player, IExtremeGear behaviour)

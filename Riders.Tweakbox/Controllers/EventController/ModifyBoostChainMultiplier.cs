@@ -52,10 +52,10 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float SetNewBoostChainMultiplier(float value, Player* player)
     {
-        OnBoostChain?.Invoke(value, player);
-        if (SetBoostChainMultiplier == null)
-            return value;
+        var copy = value;
+        OnBoostChain?.Invoke(ref copy, player);
+        SetBoostChainMultiplier?.Invoke(ref value, player);
 
-        return SetBoostChainMultiplier(value, player);
+        return value;
     }
 }

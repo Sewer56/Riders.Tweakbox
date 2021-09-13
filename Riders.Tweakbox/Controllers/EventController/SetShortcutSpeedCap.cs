@@ -112,29 +112,25 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float SetPlayerGrindSpeedCap(float value, Player* player)
     {
-        OnSetRailSpeedCap?.Invoke(value, player);
-        if (SetRailSpeedCap != null)
-            return SetRailSpeedCap(value, player);
-
+        var copy = value;
+        OnSetRailSpeedCap?.Invoke(ref copy, player);
+        SetRailSpeedCap(ref value, player);
         return value;
     }
 
     [UnmanagedCallersOnly]
     private static float SetFlySpeedXHook(float value, Player* player)
     {
-        OnSetFlyRingSpeed?.Invoke(value, player);
-        if (SetFlyRingSpeedX != null)
-            return SetFlyRingSpeedX(value, player);
-
+        var copy = value;
+        OnSetFlyRingSpeed?.Invoke(ref copy, player);
+        SetFlyRingSpeedX?.Invoke(ref value, player);
         return value;
     }
 
     [UnmanagedCallersOnly]
     private static float SetFlySpeedYHook(float value, Player* player)
     {
-        if (SetFlyRingSpeedY != null)
-            return SetFlyRingSpeedY(value, player);
-
+        SetFlyRingSpeedY?.Invoke(ref value, player);
         return value;
     }
 }

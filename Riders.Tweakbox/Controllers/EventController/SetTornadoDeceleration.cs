@@ -46,9 +46,7 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static float SetTornadoDecelerationHook(float value, Player* player)
     {
-        if (SetTornadoDeceleration != null)
-            return SetTornadoDeceleration(value, player);
-
+        SetTornadoDeceleration?.Invoke(ref value, player);
         return value;
     }
 }

@@ -47,10 +47,10 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static int ModifyBoostDurationHook(int duration, Player* player)
     {
-        OnSetBoostDuration?.Invoke(duration, player);
-        if (SetBoostDuration == null)
-            return duration;
+        var copy = duration;
+        OnSetBoostDuration?.Invoke(ref copy, player);
+        SetBoostDuration?.Invoke(ref duration, player);
 
-        return SetBoostDuration(duration, player);
+        return duration;
     }
 }

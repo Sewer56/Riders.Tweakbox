@@ -44,9 +44,9 @@ public unsafe partial class EventController : TaskEvents, IController
     [UnmanagedCallersOnly]
     private static int PickupRingHook(int value, Player* player)
     {
-        OnSetRingCountFromRingPickup?.Invoke(value, player);
-        if (SetRingCountFromRingPickup != null)
-            return SetRingCountFromRingPickup(value, player);
+        var copy = value;
+        OnSetRingCountFromRingPickup?.Invoke(ref copy, player);
+        SetRingCountFromRingPickup?.Invoke(ref value, player);
 
         return value;
     }

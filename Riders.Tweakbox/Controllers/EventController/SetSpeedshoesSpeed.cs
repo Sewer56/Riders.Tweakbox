@@ -47,10 +47,14 @@ public unsafe partial class EventController : TaskEvents, IController
     }
 
     [UnmanagedCallersOnly]
-    private static IntFloat SetSpeedShoesSpeedHook(Player* player, float speed) => SetSpeedShoesSpeed?.Invoke(player, speed) ?? new IntFloat(speed);
+    private static IntFloat SetSpeedShoesSpeedHook(Player* player, float speed)
+    {
+        SetSpeedShoesSpeed?.Invoke(player, ref speed);
+        return new IntFloat(speed);
+    }
 
     [Function(new FunctionAttribute.Register[0], ecx, Callee)]
-    public delegate IntFloat SetSpeedShoesSpeedHandlerFn(Player* player, float targetSpeed);
+    public delegate void SetSpeedShoesSpeedHandlerFn(Player* player, ref float targetSpeed);
 
     [Function(new FunctionAttribute.Register[0], ecx, Callee)]
     public struct SetSpeedShoesSpeedHandlerFnPtr { public FuncPtr<BlittablePointer<Player>, float, IntFloat> Value; }

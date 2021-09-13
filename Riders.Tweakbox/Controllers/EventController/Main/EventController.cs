@@ -94,7 +94,7 @@ public unsafe partial class EventController : TaskEvents, IController
     /// Generic function that modifies a float in memory.
     /// </summary>
     [Function(CallingConventions.Stdcall)]
-    public delegate float GenericModifyFloatFn(float value);
+    public delegate void GenericModifyFloatFn(ref float value);
 
     [Function(CallingConventions.Stdcall)]
     public struct GenericModifyFloatFnPtr { public FuncPtr<float, float> Value; }
@@ -103,7 +103,7 @@ public unsafe partial class EventController : TaskEvents, IController
     /// Generic function that modifies a float in memory for a given player.
     /// </summary>
     [Function(CallingConventions.Stdcall)]
-    public delegate float GenericModifyPlayerFloatFn(float value, Player* player);
+    public delegate void GenericModifyPlayerFloatFn(ref float value, Player* player);
 
     [Function(CallingConventions.Stdcall)]
     public struct GenericModifyPlayerFloatFnPtr { public FuncPtr<float, BlittablePointer<Player>, float> Value; }
@@ -112,7 +112,7 @@ public unsafe partial class EventController : TaskEvents, IController
     /// Generic function that modifies a float in memory for a given player.
     /// </summary>
     [Function(CallingConventions.Stdcall)]
-    public delegate int GenericModifyPlayerIntFn(int value, Player* player);
+    public delegate void GenericModifyPlayerIntFn(ref int value, Player* player);
 
     [Function(CallingConventions.Stdcall)]
     public struct GenericModifyPlayerIntFnPtr { public FuncPtr<int, BlittablePointer<Player>, int> Value; }
