@@ -10,13 +10,13 @@ public class TweakboxApi : ITweakboxApi
     private ICustomGearApi _customGearApi;
     private IPhysicsApi _physicsApi;
 
-    private ApiImplementation _apiImplementation;
+    private ApiGearImplementation _apiGearImplementation;
 
     public TweakboxApi()
     {
         _physicsApi = new PhysicsApi();
         _customGearApi = IoC.Get<CustomGearApi>();
-        _apiImplementation = IoC.Get<ApiImplementation>();
+        _apiGearImplementation = IoC.Get<ApiGearImplementation>();
     }
 
     /// <inheritdoc />

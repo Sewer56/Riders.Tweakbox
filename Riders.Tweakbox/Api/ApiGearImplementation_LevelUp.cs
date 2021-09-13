@@ -22,7 +22,7 @@ namespace Riders.Tweakbox.Api;
 /// <summary>
 /// Handles the custom gear levels part of Custom Gear Gameplay Hooks.
 /// </summary>
-internal unsafe partial class ApiImplementation
+internal unsafe partial class ApiGearImplementation
 {
     private const int DefaultNumLevels = 3;
 
@@ -35,7 +35,7 @@ internal unsafe partial class ApiImplementation
     // Constructor
     private void InitCustomLevels()
     {
-        _setStatsForPlayerRaceHook = Functions.SetPlayerStatsForRaceMode.HookAs<Functions.PlayerFnPtr>(typeof(ApiImplementation), nameof(OnSetPlayerStatsForRaceModeStatic)).Activate();
+        _setStatsForPlayerRaceHook = Functions.SetPlayerStatsForRaceMode.HookAs<Functions.PlayerFnPtr>(typeof(ApiGearImplementation), nameof(OnSetPlayerStatsForRaceModeStatic)).Activate();
         Sewer56.SonicRiders.API.Event.AfterEndScene += UpdateGearDataAfterRenderFrame;
         EventController.ForceLevelUpHandler += ForceLevelUpHandler;
         EventController.ForceLevelDownHandler += ForceLevelDownHandler;

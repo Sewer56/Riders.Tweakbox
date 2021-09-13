@@ -27,9 +27,9 @@ using Sewer56.SonicRiders.Structures.Misc;
 
 namespace Riders.Tweakbox.Api;
 
-internal unsafe partial class ApiImplementation
+internal unsafe partial class ApiGearImplementation
 {
-    private static ApiImplementation Instance;
+    private static ApiGearImplementation Instance;
 
     private CustomGearController _owner;
     private IReloadedHooks _hooks;
@@ -39,7 +39,7 @@ internal unsafe partial class ApiImplementation
 
     private ApiPlayerState[] _playerState;
 
-    public ApiImplementation(CustomGearController owner)
+    public ApiGearImplementation(CustomGearController owner)
     {
         Instance = this;
         _hooks = SDK.ReloadedHooks;
@@ -49,7 +49,7 @@ internal unsafe partial class ApiImplementation
 
         ResetState();
         InitCustomLevels();
-        _applyTurningSpeedLossHook = Functions.ApplyTurningSpeedLoss.HookAs<Functions.ApplyTurningSpeedLossFnPtr>(typeof(ApiImplementation), nameof(ApplyTurningSpeedLossImplStatic)).Activate();
+        _applyTurningSpeedLossHook = Functions.ApplyTurningSpeedLoss.HookAs<Functions.ApplyTurningSpeedLossFnPtr>(typeof(ApiGearImplementation), nameof(ApplyTurningSpeedLossImplStatic)).Activate();
         EventController.SetAirGainedThisFrame += SetAirGainedThisFrame;
         EventController.SetAirGainedThisFrameFromGrind += SetAirGainedThisFrameFromGrind;
         EventController.SetAirGainedThisFrameFromFly += SetAirGainedThisFrameFromFly;
