@@ -12,6 +12,7 @@ using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.Imgui.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
+using Sewer56.SonicRiders.Structures.Misc;
 
 namespace Riders.Tweakbox.Configs;
 
@@ -56,6 +57,14 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
 
         public GameInput InputMode = GameInput.WhenNoWindowActive;
         public VK InputToggleKey = VK.F10;
+
+        public Definitions.Nullable<ColorRGBA> DriftChargeColour = new Definitions.Nullable<ColorRGBA>(new ColorRGBA()
+        {
+            Red = 248,
+            Green = 243,
+            Blue = 10,
+            Alpha = 255
+        }, false);
 
         public GameModifiers Modifiers = GameModifiers.CreateDefault();
     }

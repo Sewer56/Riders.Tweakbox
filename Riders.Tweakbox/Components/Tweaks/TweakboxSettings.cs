@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using DearImguiSharp;
 using EnumsNET;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
@@ -10,6 +11,7 @@ using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.Imgui.Controls;
 using Sewer56.Imgui.Shell.Interfaces;
+using Sewer56.SonicRiders.Structures.Misc;
 using SharpDX.Direct3D9;
 using Constants = Sewer56.Imgui.Misc.Constants;
 using Reflection = Sewer56.Imgui.Controls.Reflection;
@@ -76,13 +78,26 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         ImGui.PopItemWidth();
     }
 
-    private void RenderFunMenu(TweakboxConfig.Internal data)
+    private unsafe void RenderFunMenu(TweakboxConfig.Internal data)
     {
         if (!_netplayController.IsActive() && ImGui.TreeNodeStr("Race Tweaks (No Override in Netplay)"))
         {
             ImGui.Text("These settings are always enabled in Netplay regardless of user preference.");
             ImGui.Checkbox("Automatic QTE Bug (Simulate Keyboard Left+Right Hold)", ref data.AutoQTE).Notify(data, nameof(data.AutoQTE));
             ImGui.Checkbox("Allow going backwards in Races", ref data.AllowBackwardsDriving).Notify(data, nameof(data.AllowBackwardsDriving));
+            ImGui.TreePop();
+        }
+
+        if (ImGui.TreeNodeStr("Client Side (Unsynced) Options"))
+        {
+            ImGui.Checkbox("Drift Charge Indicator", ref data.DriftChargeColour.HasValue).Notify(data, nameof(data.DriftChargeColour));
+            if (data.DriftChargeColour.HasValue)
+            {
+                Span<float> values = stackalloc float[4];
+                ColourToFloat(data.DriftChargeColour.Value, values);
+                ImGui.Custom.ColorEdit4("Colour", (float*) Unsafe.AsPointer(ref values.GetPinnableReference()), 1);
+                data.DriftChargeColour.Value = FloatToColour(values);
+            }
             ImGui.TreePop();
         }
 
@@ -414,6 +429,26 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             Height = data.ResolutionY,
             Width = data.ResolutionX,
             RefreshRate = 0
+        };
+    }
+
+    // TODO: Add Float* Overload to 
+    private void ColourToFloat(ColorRGBA color, Span<float> colors)
+    {
+        colors[0] = color.Red   / 255.0f;
+        colors[1] = color.Green / 255.0f;
+        colors[2] = color.Blue  / 255.0f;
+        colors[3] = color.Alpha / 255.0f;
+    }
+
+    private ColorRGBA FloatToColour(Span<float> colors)
+    {
+        return new ColorRGBA()
+        {
+            Red = (byte)(colors[0] * 255.0f),
+            Green = (byte)(colors[1] * 255.0f),
+            Blue = (byte)(colors[2] * 255.0f),
+            Alpha = (byte)(colors[3] * 255.0f)
         };
     }
 }

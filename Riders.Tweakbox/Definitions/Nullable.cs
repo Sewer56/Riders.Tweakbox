@@ -9,6 +9,12 @@ public struct Nullable<T>
     public bool HasValue;
     public T Value;
 
+    public Nullable(T value, bool hasValue)
+    {
+        HasValue = hasValue;
+        Value = value;
+    }
+
     public Nullable(T value)
     {
         HasValue = true;

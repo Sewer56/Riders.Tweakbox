@@ -430,7 +430,7 @@ internal unsafe partial class ApiGearImplementation
         }
     }
 
-    private void SetExhaustTrailColour(ColorABGR* value, Player* player)
+    private void SetExhaustTrailColour(ColorRGBA* value, Player* player)
     {
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
         {

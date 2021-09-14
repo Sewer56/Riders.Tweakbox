@@ -55,5 +55,5 @@ public unsafe partial class EventController : TaskEvents, IController
     /// Generic function that modifies a float in memory for a given player.
     /// </summary>
     [Function(CallingConventions.Stdcall)]
-    public delegate void GenericModifyPlayerColourFn(ColorABGR* value, Player* player);
+    public delegate void GenericModifyPlayerColourFn(ColorRGBA* value, Player* player);
 }
