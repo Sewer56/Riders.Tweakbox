@@ -22,7 +22,7 @@ namespace Riders.Tweakbox.Api;
 /// <summary>
 /// Handles the custom gear levels part of Custom Gear Gameplay Hooks.
 /// </summary>
-internal unsafe partial class ApiGearImplementation
+internal unsafe partial class ApiBehaviourImplementation
 {
     public static Action OnInitGearStats;
 
@@ -37,7 +37,7 @@ internal unsafe partial class ApiGearImplementation
     // Constructor
     private void InitCustomLevels()
     {
-        _setStatsForPlayerRaceHook = Functions.SetPlayerStatsForRaceMode.HookAs<Functions.PlayerFnPtr>(typeof(ApiGearImplementation), nameof(OnSetPlayerStatsForRaceModeStatic)).Activate();
+        _setStatsForPlayerRaceHook = Functions.SetPlayerStatsForRaceMode.HookAs<Functions.PlayerFnPtr>(typeof(ApiBehaviourImplementation), nameof(OnSetPlayerStatsForRaceModeStatic)).Activate();
         Sewer56.SonicRiders.API.Event.AfterEndScene += UpdateGearDataAfterRenderFrame;
         EventController.ForceLevelUpHandler += ForceLevelUpHandler;
         EventController.ForceLevelDownHandler += ForceLevelDownHandler;
@@ -51,29 +51,32 @@ internal unsafe partial class ApiGearImplementation
         OnInitGearStats?.Invoke();
 
         // Now allocate memory as needed.
-        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        if (TryGetCustomBehaviour(player, out var behaviours, out _, out var level))
         {
-            var stats = behaviour.GetExtendedLevelStats();
-            if (stats.Enabled && stats.ExtendedStats != null)
+            foreach (var behaviour in behaviours)
             {
-                numLevels = stats.ExtendedStats.Length;
+                var stats = behaviour.GetExtendedLevelStats();
+                if (stats != null && stats.ExtendedStats != null)
+                {
+                    numLevels = stats.ExtendedStats.Length;
 
-                // Copy gear data.
-                var gearStats = &player->ExtremeGearPtr->GearStatsLevel1;
-                var levels = Math.Min(numLevels, DefaultNumLevels);
-                for (int x = 0; x < levels; x++)
-                    gearStats[x] = stats.ExtendedStats[x].ConvertToNative();
+                    // Copy gear data.
+                    var gearStats = &player->ExtremeGearPtr->GearStatsLevel1;
+                    var levels = Math.Min(numLevels, DefaultNumLevels);
+                    for (int x = 0; x < levels; x++)
+                        gearStats[x] = stats.ExtendedStats[x].ConvertToNative();
 
-                result = numLevels > DefaultNumLevels;
+                    result = numLevels > DefaultNumLevels;
 
-                if (result)
-                    extendedStats = new Span<ExtendedExtremeGearLevelStats>(stats.ExtendedStats, DefaultNumLevels, numLevels - DefaultNumLevels);
+                    if (result)
+                        extendedStats = new Span<ExtendedExtremeGearLevelStats>(stats.ExtendedStats, DefaultNumLevels, numLevels - DefaultNumLevels);
+                }
+
+                behaviour.OnReset()?.Invoke((IntPtr)player, playerIndex, level);
             }
-
-            behaviour.OnReset()?.Invoke((IntPtr)player, playerIndex, GetPlayerLevel(behaviour, player));
         }
 
-        _basePlayerLevelStats[playerIndex] = new PlayerLevelStats[numLevels];
+        _basePlayerLevelStats[playerIndex]    = new PlayerLevelStats[numLevels];
         _currentPlayerLevelStats[playerIndex] = new PlayerLevelStats[numLevels];
         return result;
     }
@@ -84,7 +87,7 @@ internal unsafe partial class ApiGearImplementation
         // Init Stats.
         var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
         if (playerIndex == -1)
-            return _setStatsForPlayerRaceHook.OriginalFunction.Value.Invoke(player); ;
+            return _setStatsForPlayerRaceHook.OriginalFunction.Value.Invoke(player);
 
         bool hasExtendedGears = InitStats(player, playerIndex, out var extendedStats);
         ResetState();
@@ -136,51 +139,53 @@ internal unsafe partial class ApiGearImplementation
                 continue;
 
             var currentStats = _currentPlayerLevelStats[x];
-            if (!TryGetGearBehaviour((int)playerPtr->ExtremeGear, out var behaviour))
+            if (!TryGetCustomBehaviour(playerPtr, out var behaviours, out int playerIndex, out var level))
                 continue;
 
-            // Update state.
-            behaviour.OnFrame()?.Invoke((IntPtr)playerPtr, x, GetPlayerLevel(behaviour, playerPtr));
-
-            // Update gear data for all levels.
-            for (int levelIndex = 0; levelIndex < baseStats.Length; levelIndex++)
+            foreach (var behaviour in behaviours)
             {
-                var stats = baseStats[levelIndex];
-                UpdateGearData(ref stats, ref Unsafe.AsRef<Player>(playerPtr), behaviour, levelIndex);
-                currentStats[levelIndex] = stats;
-            }
+                // Update state.
+                behaviour.OnFrame()?.Invoke((IntPtr)playerPtr, x, level);
 
-            // Copy data to player struct.
-            var playerLevelStats = new Span<PlayerLevelStats>(&playerPtr->LevelOneStats, DefaultNumLevels);
-            var numStats = Math.Min(DefaultNumLevels, currentStats.Length);
-            currentStats.AsSpan(0, numStats).CopyTo(playerLevelStats);
+                // Update gear data for all levels.
+                for (int levelIndex = 0; levelIndex < baseStats.Length; levelIndex++)
+                {
+                    var stats = baseStats[levelIndex];
+                    UpdateGearData(ref stats, ref Unsafe.AsRef<Player>(playerPtr), behaviour, levelIndex);
+                    currentStats[levelIndex] = stats;
+                }
 
-            // Write extended stats.
-            var extendedStats = behaviour.GetExtendedLevelStats();
-            if (extendedStats.Enabled)
-            {
-                // Get Level
-                var level = extendedStats.GetPlayerLevel(playerPtr->Level, playerPtr->Rings);
-                var existingLevel = _playerState[x].PlayerLevel;
-                var overWriteLevel = Math.Min((byte)(DefaultNumLevels - 1), level);
+                // Copy data to player struct.
+                var playerLevelStats = new Span<PlayerLevelStats>(&playerPtr->LevelOneStats, DefaultNumLevels);
+                var numStats = Math.Min(DefaultNumLevels, currentStats.Length);
+                currentStats.AsSpan(0, numStats).CopyTo(playerLevelStats);
 
-                // Check for level up.
-                if (level > existingLevel)
-                    _playerState[x].ForceLevelUp = true;
-                else if (level < existingLevel)
-                    _playerState[x].ForceLevelDown = true;
+                // Write extended stats.
+                var extendedStats = behaviour.GetExtendedLevelStats();
+                if (extendedStats != null)
+                {
+                    // Get Level
+                    var existingLevel = _playerState[x].PlayerLevel;
+                    var overWriteLevel = Math.Min((byte)(DefaultNumLevels - 1), level);
 
-                // Copy stats.
-                playerLevelStats[overWriteLevel] = currentStats[level];
+                    // Check for level up.
+                    if (level > existingLevel)
+                        _playerState[x].ForceLevelUp = true;
+                    else if (level < existingLevel)
+                        _playerState[x].ForceLevelDown = true;
 
-                // Force up to lv3.
-                playerPtr->Level = overWriteLevel;
-                _playerState[x].PlayerLevel = level;
+                    // Copy stats.
+                    playerLevelStats[overWriteLevel] = currentStats[level];
+
+                    // Force up to lv3.
+                    playerPtr->Level = (byte) overWriteLevel;
+                    _playerState[x].PlayerLevel = (byte) level;
+                }
             }
         }
     }
 
-    private void UpdateGearData(ref PlayerLevelStats stats, ref Player player, IExtremeGear behaviour, int level)
+    private void UpdateGearData(ref PlayerLevelStats stats, ref Player player, ICustomStats behaviour, int level)
     {
         var playerPtr = (Player*)Unsafe.AsPointer(ref player);
         var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(playerPtr);
@@ -188,12 +193,12 @@ internal unsafe partial class ApiGearImplementation
 
         // Extended Stats
         var extendedStats = behaviour.GetExtendedLevelStats();
-        if (extendedStats.Enabled)
-            extendedStats.SetGearStats?.Invoke((IntPtr) statsPtr, (IntPtr)playerPtr, playerIndex, level);
+        if (extendedStats != null)
+            extendedStats.SetPlayerStats?.Invoke((IntPtr) statsPtr, (IntPtr)playerPtr, playerIndex, level);
         
         // Cruise
         var cruiseProps = behaviour.GetCruisingProperties();
-        if (cruiseProps.Enabled)
+        if (cruiseProps != null)
         {
             var addedSpeed = cruiseProps.TopSpeedPerRing.GetValueOrDefault(0.0f) * player.Rings;
             stats.SpeedCap1 += addedSpeed;
@@ -203,7 +208,7 @@ internal unsafe partial class ApiGearImplementation
 
         // Accelerating Boosts & COV-P
         var boostProps = behaviour.GetBoostProperties();
-        if (boostProps.Enabled)
+        if (boostProps != null)
         {
             var boostSpeedGain = 0.0f;
             var framesElapsed  = _playerState[playerIndex].FramesSpentBoosting;
@@ -220,7 +225,7 @@ internal unsafe partial class ApiGearImplementation
         
         // Berserker
         var berserkProps = behaviour.GetBerserkerProperties();
-        if (berserkProps.Enabled)
+        if (berserkProps != null)
         {
             if (IsBerserkerMode(playerPtr, berserkProps.TriggerPercentage))
                 stats.GearStats.PassiveAirDrain += berserkProps.PassiveDrainIncreaseFlat;
@@ -229,15 +234,17 @@ internal unsafe partial class ApiGearImplementation
 
     private Enum<AsmFunctionResult> ForceLevelUpHandler(Player* player)
     {
-        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        if (TryGetCustomBehaviour(player, out var behaviours, out int playerIndex, out var level))
         {
-            var stats = behaviour.GetExtendedLevelStats();
-            if (stats.Enabled && stats.ExtendedStats != null)
+            foreach (var behaviour in behaviours)
             {
-                var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-                var forceLvUp = _playerState[playerIndex].ForceLevelUp;
-                _playerState[playerIndex].ForceLevelUp = false;
-                return forceLvUp;
+                var stats = behaviour.GetExtendedLevelStats();
+                if (stats != null && stats.ExtendedStats != null)
+                {
+                    var forceLvUp = _playerState[playerIndex].ForceLevelUp;
+                    _playerState[playerIndex].ForceLevelUp = false;
+                    return forceLvUp;
+                }
             }
         }
 
@@ -245,15 +252,17 @@ internal unsafe partial class ApiGearImplementation
     }
     private Enum<AsmFunctionResult> ForceLevelDownHandler(Player* player)
     {
-        if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))
+        if (TryGetCustomBehaviour(player, out var behaviours, out int playerIndex, out var level))
         {
-            var stats = behaviour.GetExtendedLevelStats();
-            if (stats.Enabled && stats.ExtendedStats != null)
+            foreach (var behaviour in behaviours)
             {
-                var playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-                var forceLvDown = _playerState[playerIndex].ForceLevelDown;
-                _playerState[playerIndex].ForceLevelDown = false;
-                return forceLvDown;
+                var stats = behaviour.GetExtendedLevelStats();
+                if (stats != null && stats.ExtendedStats != null)
+                {
+                    var forceLvDown = _playerState[playerIndex].ForceLevelDown;
+                    _playerState[playerIndex].ForceLevelDown = false;
+                    return forceLvDown;
+                }
             }
         }
 

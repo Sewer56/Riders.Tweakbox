@@ -8,6 +8,16 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class TheCrazyDX : CustomGearBase, IExtremeGear
 {
+    private AirProperties _airProperties = new AirProperties()
+    {
+        GainsRingsOnRingGear = true
+    };
+
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,15 +28,8 @@ public class TheCrazyDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public AirProperties GetAirProperties() => new AirProperties()
-    {
-        Enabled = true,
-        GainsRingsOnRingGear = true
-    };
+    // IExtremeGear API Callbacks //
+    public AirProperties GetAirProperties() => _airProperties;
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
-    };
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 }

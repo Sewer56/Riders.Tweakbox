@@ -9,6 +9,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class SuperHangOnDX : CustomGearBase, IExtremeGear
 {
+    private AirProperties _airProperties = new AirProperties()
+    {
+        PitAirGainMultiplier = 2.75f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -19,9 +24,6 @@ public class SuperHangOnDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public AirProperties GetAirProperties() => new AirProperties()
-    {
-        Enabled = true,
-        PitAirGainMultiplier = 2.75f
-    };
+    // IExtremeGear API Callbacks //
+    public AirProperties GetAirProperties() => _airProperties;
 }

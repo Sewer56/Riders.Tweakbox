@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class HangOn13 : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class HangOn13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 }

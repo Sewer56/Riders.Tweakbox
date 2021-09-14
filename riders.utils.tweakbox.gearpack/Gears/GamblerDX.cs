@@ -35,6 +35,7 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
     private ExhaustProperties _exhaustProperties;
     private IColorConverter<RGBColor, LChabColor> _rgbToLchConverter = new ConverterBuilder().FromRGB().ToLChab().Build();
     private IColorConverter<LChabColor, RGBColor> _lchToRgbConverter = new ConverterBuilder().FromLChab().ToRGB().Build();
+
     /// <summary>
     /// Defines a true/false value for every player stating whether they are in overclock mode or not.
     /// </summary>
@@ -47,13 +48,11 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
     {
         _extendedLevelStats = new ExtendedLevelStats()
         {
-            Enabled = true,
-            SetGearStats = SetGearStats
+            SetPlayerStats = SetGearStats
         };
 
         _exhaustProperties = new ExhaustProperties()
         {
-            Enabled = true,
             GetExhaustTrailColour = GetExhaustTrailColour
         };
 
@@ -123,7 +122,7 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
     /// </summary>
     private void OnResetImpl(IntPtr playerptr, int playerindex, int playerLevel) => _isOverclocked = new bool[Player.MaxNumberOfPlayers]; // Nobody is overclocked :/
 
-    // Gear API Callbacks
+    // IExtremeGear API Callbacks //
     public ExhaustProperties GetExhaustProperties() => _exhaustProperties;
 
     public ExtendedLevelStats GetExtendedLevelStats() => _extendedLevelStats;

@@ -3,13 +3,8 @@ using System;
 
 namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
-public struct TrickBehaviour
+public class TrickBehaviour
 {
-    /// <summary>
-    /// True if enabled, else false.
-    /// </summary>
-    public bool Enabled;
-
     /// <summary>
     /// Flat amount of speed (percentage) to grant to the player on a trick land.
     /// </summary>

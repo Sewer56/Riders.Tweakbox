@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Fastest13 : CustomGearBase, IExtremeGear
 {
+    private TornadoProperties _tornadoProperties = new TornadoProperties()
+    {
+        SpeedMultiplier = 0.5f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class Fastest13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public TornadoProperties GetTornadoProperties() => new TornadoProperties()
-    {
-        Enabled = true,
-        SpeedMultiplier = 0.5f
-    };
+    // IExtremeGear API Callbacks //
+    public TornadoProperties GetTornadoProperties() => _tornadoProperties;
 }

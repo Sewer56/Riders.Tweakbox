@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Cannonball13 : CustomGearBase, IExtremeGear
 {
+    private HandlingProperties _handlingProperties = new HandlingProperties()
+    {
+        SpeedLossMultiplier = 0
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class Cannonball13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public HandlingProperties GetHandlingProperties() => new HandlingProperties()
-    {
-        Enabled = true,
-        SpeedLossMultiplier = 0
-    };
+    // IExtremeGear API Callbacks //
+    public HandlingProperties GetHandlingProperties() => _handlingProperties;
 }

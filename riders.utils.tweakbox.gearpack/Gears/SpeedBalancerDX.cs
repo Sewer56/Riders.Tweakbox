@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class SpeeedBalancerDX : CustomGearBase, IExtremeGear
 {
+    private WallHitBehaviour _wallHitBehaviour = new WallHitBehaviour()
+    {
+        SpeedLossMultiplier = 0
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class SpeeedBalancerDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public WallHitBehaviour GetWallHitBehaviour() => new WallHitBehaviour()
-    {
-        Enabled = true,
-        SpeedLossMultiplier = 0
-    };
+    // IExtremeGear API Callbacks //
+    public WallHitBehaviour GetWallHitBehaviour() => _wallHitBehaviour;
 }

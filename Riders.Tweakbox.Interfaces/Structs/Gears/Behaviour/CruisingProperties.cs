@@ -3,10 +3,8 @@
 /// <summary>
 /// Defines different properties which affect how cruising is performed on a gear.
 /// </summary>
-public struct CruisingProperties
+public class CruisingProperties
 {
-    public bool Enabled;
-
     /// <summary>
     /// The amount of top speed gained per individual ring.
     /// </summary>

@@ -8,6 +8,21 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverPDX : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(280.0f)
+    };
+
+    private CruisingProperties _cruisingProperties = new CruisingProperties()
+    {
+        TopSpeedPerRing = Utility.SpeedometerToFloat(0.5f)
+    };
+
+    private BoostProperties _boostProperties = new BoostProperties()
+    {
+        AddedBoostSpeedFromRingCount = Utility.SpeedometerToFloat(0.5f),
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,21 +33,10 @@ public class CoverPDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(280.0f)
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 
-    public CruisingProperties GetCruisingProperties() => new CruisingProperties()
-    {
-        Enabled = true,
-        TopSpeedPerRing = Utility.SpeedometerToFloat(0.5f)
-    };
+    public CruisingProperties GetCruisingProperties() => _cruisingProperties;
 
-    public BoostProperties GetBoostProperties() => new BoostProperties()
-    {
-        Enabled = true,
-        AddedBoostSpeedFromRingCount = Utility.SpeedometerToFloat(0.5f),
-    };
+    public BoostProperties GetBoostProperties() => _boostProperties;
 }

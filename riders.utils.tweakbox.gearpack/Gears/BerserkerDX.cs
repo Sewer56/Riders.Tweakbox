@@ -9,6 +9,13 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class BerserkerDX : CustomGearBase, IExtremeGear
 {
+    private BerserkerPropertiesDX _berserkerProperties = new BerserkerPropertiesDX()
+    {
+        PassiveDrainIncreaseFlat = 224,
+        TriggerPercentage = 0.75f,
+        SpeedMultiplier = 1.0025f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,12 +25,7 @@ public class BerserkerDX : CustomGearBase, IExtremeGear
         data.Behaviour = this;
         gearApi.AddGear(data);
     }
-    
-    public BerserkerPropertiesDX GetBerserkerProperties() => new BerserkerPropertiesDX()
-    {
-        Enabled = true,
-        PassiveDrainIncreaseFlat = 224,
-        TriggerPercentage = 0.75f,
-        SpeedMultiplier = 1.0025f
-    };
+
+    // IExtremeGear API Callbacks //
+    public BerserkerPropertiesDX GetBerserkerProperties() => _berserkerProperties;
 }

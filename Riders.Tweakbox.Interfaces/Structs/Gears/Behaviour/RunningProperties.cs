@@ -2,13 +2,8 @@
 using System;
 
 namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-public struct RunningProperties
+public class RunningProperties
 {
-    /// <summary>
-    /// True if enabled, else false.
-    /// </summary>
-    public bool Enabled = false;
-
     /// <summary>
     /// Amount to add to the maximum speed until a switch to gear 2 is performed.
     /// </summary>

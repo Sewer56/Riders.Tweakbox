@@ -9,6 +9,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Legend13 : CustomGearBase, IExtremeGear
 {
+    private LegendProperties _legendProperties = new LegendProperties()
+    {
+        IgnoreOnState = PlayerStateFlags.Attacking | PlayerStateFlags.GettingAttacked
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -19,9 +24,6 @@ public class Legend13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public LegendProperties GetLegendProperties() => new LegendProperties()
-    {
-        Enabled = true,
-        IgnoreOnState = PlayerStateFlags.Attacking | PlayerStateFlags.GettingAttacked
-    };
+    // IExtremeGear API Callbacks //
+    public LegendProperties GetLegendProperties() => _legendProperties;
 }

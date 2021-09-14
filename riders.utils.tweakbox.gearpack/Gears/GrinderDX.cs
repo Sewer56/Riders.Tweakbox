@@ -8,6 +8,12 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class GrinderDX : CustomGearBase, IExtremeGear
 {
+    private MonoTypeShortcutBehaviourDX _monoTypeShortcutBehaviour = new MonoTypeShortcutBehaviourDX()
+    {
+        ExistingTypeSpeedModifierPercent = 1.125f,
+        NewTypeSpeedModifierPercent = 0.95f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,10 +24,6 @@ public class GrinderDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public MonoTypeShortcutBehaviourDX GetMonoTypeShortcutBehaviour() => new MonoTypeShortcutBehaviourDX()
-    {
-        Enabled = true,
-        ExistingTypeSpeedModifierPercent = 1.125f,
-        NewTypeSpeedModifierPercent = 0.95f
-    };
+    // IExtremeGear API Callbacks //
+    public MonoTypeShortcutBehaviourDX GetMonoTypeShortcutBehaviour() => _monoTypeShortcutBehaviour;
 }

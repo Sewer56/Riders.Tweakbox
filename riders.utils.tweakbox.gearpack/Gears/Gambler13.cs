@@ -20,13 +20,11 @@ public class Gambler13 : CustomGearBase, IExtremeGear
     {
         _itemProperties = new ItemProperties()
         {
-            Enabled = true,
             SetRingCountOnPickup = SetRingCountOnPickup
         };
 
         _boostProperties = new BoostProperties()
         {
-            Enabled = true,
             GetAddedBoostSpeed = GetAddedBoostSpeed,
             OnBoost = OnBoost,
             GetAddedBoostChainMultiplier = GetAddedBoostChainMultiplier
@@ -65,7 +63,7 @@ public class Gambler13 : CustomGearBase, IExtremeGear
 
     private int SetRingCountOnPickup(IntPtr playerPtr, int playerIndex, int playerLevel, int value) => value + 1;
 
-    // API Callbacks.
+    // IExtremeGear API Callbacks //
     public ItemProperties GetItemProperties() => _itemProperties;
     public BoostProperties GetBoostProperties() => _boostProperties;
 }

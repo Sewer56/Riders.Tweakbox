@@ -8,6 +8,16 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Nimbus13 : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
+    };
+
+    private WallHitBehaviour _wallHitBehaviour = new WallHitBehaviour()
+    {
+        SpeedLossMultiplier = 0
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,15 +28,8 @@ public class Nimbus13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 
-    public WallHitBehaviour GetWallHitBehaviour() => new WallHitBehaviour()
-    {
-        Enabled = true,
-        SpeedLossMultiplier = 0
-    };
+    public WallHitBehaviour GetWallHitBehaviour() => _wallHitBehaviour;
 }

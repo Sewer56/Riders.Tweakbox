@@ -8,6 +8,16 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class MagicCarpet13 : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
+    };
+
+    private OffRoadProperties _offRoadProperties = new OffRoadProperties()
+    {
+        IgnoreSpeedLoss = true
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,15 +28,8 @@ public class MagicCarpet13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(260.0f)
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 
-    public OffRoadProperties GetOffroadProperties() => new OffRoadProperties()
-    {
-        Enabled = true,
-        IgnoreSpeedLoss = true
-    };
+    public OffRoadProperties GetOffroadProperties() => _offRoadProperties;
 }

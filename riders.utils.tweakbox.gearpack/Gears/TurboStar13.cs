@@ -10,7 +10,6 @@ public class TurboStar13 : CustomGearBase, IExtremeGear
 {
     private ExtendedLevelStats _extendedStats = new ExtendedLevelStats()
     {
-        Enabled = true,
         ExtendedStats = new[]
         {
             new ExtendedExtremeGearLevelStats()
@@ -70,5 +69,6 @@ public class TurboStar13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
+    // IExtremeGear API Callbacks //
     public ExtendedLevelStats GetExtendedLevelStats() => _extendedStats;
 }

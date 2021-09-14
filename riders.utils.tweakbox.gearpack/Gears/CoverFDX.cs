@@ -8,6 +8,17 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverFDX : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(260.0f),
+        BoostOnDriftDash = true
+    };
+
+    private BoostProperties _boostProperties = new BoostProperties()
+    {
+        CannotBoost = true,
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,16 +29,8 @@ public class CoverFDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(260.0f),
-        BoostOnDriftDash = true
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 
-    public BoostProperties GetBoostProperties() => new BoostProperties()
-    {
-        Enabled = true,
-        CannotBoost = true,
-    };
+    public BoostProperties GetBoostProperties() => _boostProperties;
 }

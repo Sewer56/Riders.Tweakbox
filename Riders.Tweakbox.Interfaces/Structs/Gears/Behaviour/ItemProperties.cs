@@ -3,13 +3,8 @@ using System;
 
 namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
-public struct ItemProperties
+public class ItemProperties
 {
-    /// <summary>
-    /// True if this struct is enabled, else false.
-    /// </summary>
-    public bool Enabled;
-
     /// <summary>
     /// Allows you to modify the character's amount of rings right after a ring pickup occurs.
     /// </summary>

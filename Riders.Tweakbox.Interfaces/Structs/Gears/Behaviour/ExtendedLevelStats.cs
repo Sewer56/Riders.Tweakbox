@@ -2,24 +2,20 @@
 
 namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
-public struct ExtendedLevelStats
+public class ExtendedLevelStats
 {
     /// <summary>
-    /// True if this struct is enabled, else false.
-    /// </summary>
-    public bool Enabled;
-
-    /// <summary>
+    /// [CUSTOM GEARS ONLY. DO NOT USE ON CHARACTERS.]
     /// Overrides individual level information for each this gear's levels.
     /// Levels 3 and above will use Character Level 3's stats when calculating final stats.
     /// </summary>
     public ExtendedExtremeGearLevelStats[] ExtendedStats;
 
     /// <summary>
-    /// Allows you to modify gear stats for a given level.
+    /// Allows you to modify player stats for a given level.
     /// Executed every frame.
     /// </summary>
-    public EditGearStatsHandler SetGearStats;
+    public EditGearStatsHandler SetPlayerStats;
 
     /// <summary>
     /// Returns the player's current level. Including extended levels.
@@ -28,7 +24,7 @@ public struct ExtendedLevelStats
     /// <param name="rings">The amount of rings in the player's posession.</param>
     public byte GetPlayerLevel(byte playerLevel, int rings)
     {
-        if (!Enabled || ExtendedStats == null)
+        if (ExtendedStats == null)
             return playerLevel;
 
         for (int x = 0; x < ExtendedStats.Length - 1; x++)
@@ -47,7 +43,7 @@ public struct ExtendedLevelStats
 /// <summary>
 /// Allows you the gear stats for a given level.
 /// </summary>
-/// <param name="levelDataPtr">Pointer to the level data for the character. Cast this to `Sewer56.SonicRiders.Structures.Gameplay.PlayerLevelStats*`</param>
+/// <param name="levelStatsPtr">Pointer to the level data for the character. Cast this to `Sewer56.SonicRiders.Structures.Gameplay.PlayerLevelStats*`</param>
 /// <param name="playerPtr">Pointer to the player struct.</param>
 /// <param name="playerIndex">Index of the player in the player struct.</param>
 /// <param name="playerLevel">The level of the player.</param>

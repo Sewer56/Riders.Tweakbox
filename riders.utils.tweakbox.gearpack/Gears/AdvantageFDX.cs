@@ -19,7 +19,6 @@ public class AdvantageFDX : CustomGearBase, IExtremeGear
     {
         _behaviour = new TrickBehaviour()
         {
-            Enabled = true,
             SetSpeedGain = SetSpeedGainFromTrick
         };
 
@@ -28,6 +27,7 @@ public class AdvantageFDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
+    // IExtremeGear API Callbacks //
     public TrickBehaviour GetTrickBehaviour() => _behaviour;
 
     private unsafe float SetSpeedGainFromTrick(IntPtr playerPtr, int playerIndex, int playerLevel, float speed)

@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class AccessDX : CustomGearBase, IExtremeGear
 {
+    private DashPanelGearProperties _dashPanelGearProperties = new DashPanelGearProperties()
+    {
+        AdditionalSpeed = Utility.SpeedometerToFloat(10)
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class AccessDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DashPanelGearProperties GetDashPanelProperties() => new DashPanelGearProperties()
-    {
-        Enabled = true,
-        AdditionalSpeed = Utility.SpeedometerToFloat(10)
-    };
+    // IExtremeGear API Callbacks //
+    public DashPanelGearProperties GetDashPanelProperties() => _dashPanelGearProperties;
 }

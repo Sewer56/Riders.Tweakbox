@@ -47,6 +47,7 @@ public static class Mapping
             .AfterMapping((data, gearData) => gearData.GearData = Struct.GetBytes(data.GearData));
 
         typeAdapterConfig.NewConfig<IExtremeGear, IExtremeGear>().MapWith(data => data).PreserveReference(true);
+        typeAdapterConfig.NewConfig<ICustomStats, ICustomStats>().MapWith(data => data).PreserveReference(true);
 
         Mapper = new Mapper(typeAdapterConfig);
     }

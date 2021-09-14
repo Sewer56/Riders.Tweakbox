@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class BlueStarII12 : CustomGearBase, IExtremeGear
 {
+    private BoostProperties _boostProperties = new BoostProperties()
+    {
+        AddedBoostDurationLv3 = 30
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class BlueStarII12 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public BoostProperties GetBoostProperties() => new BoostProperties()
-    {
-        Enabled = true,
-        AddedBoostDurationLv3 = 30
-    };
+    // IExtremeGear API Callbacks //
+    public BoostProperties GetBoostProperties() => _boostProperties;
 }

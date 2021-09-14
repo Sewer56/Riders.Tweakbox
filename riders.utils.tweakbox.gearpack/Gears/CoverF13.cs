@@ -8,6 +8,12 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverF13 : CustomGearBase, IExtremeGear
 {
+    private BoostProperties _boostProperties = new BoostProperties()
+    {
+        AddedBoostChainMultiplier = -0.193f, // Disable BoostChain
+        AirPercentageOnBoost = 0.7f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -17,11 +23,7 @@ public class CoverF13 : CustomGearBase, IExtremeGear
         data.Behaviour = this;
         gearApi.AddGear(data);
     }
-    
-    public BoostProperties GetBoostProperties() => new BoostProperties()
-    {
-        Enabled = true,
-        AddedBoostChainMultiplier = -0.193f, // Disable BoostChain
-        AirPercentageOnBoost = 0.7f
-    };
+
+    // IExtremeGear API Callbacks //
+    public BoostProperties GetBoostProperties() => _boostProperties;
 }

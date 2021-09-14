@@ -11,15 +11,17 @@ public class TweakboxApi : ITweakboxApiImpl, ITweakboxApi
     public List<string> LoadedMods { get; private set; } = new List<string>();
 
     private ICustomGearApi _customGearApi;
+    private ICustomCharacterApi _customCharacterApi;
     private IPhysicsApi _physicsApi;
 
-    private ApiGearImplementation _apiGearImplementation;
+    private ApiBehaviourImplementation _apiBehaviourImplementation;
 
     public TweakboxApi()
     {
         _physicsApi = new PhysicsApi();
         _customGearApi = IoC.Get<CustomGearApi>();
-        _apiGearImplementation = IoC.Get<ApiGearImplementation>();
+        _customCharacterApi = IoC.GetSingleton<CustomCharacterApi>();
+        _apiBehaviourImplementation = IoC.Get<ApiBehaviourImplementation>();
     }
 
     /// <inheritdoc />
@@ -27,6 +29,9 @@ public class TweakboxApi : ITweakboxApiImpl, ITweakboxApi
 
     /// <inheritdoc />
     public IPhysicsApi GetPhysicsApi() => _physicsApi;
+
+    /// <inheritdoc />
+    public ICustomCharacterApi GetCustomCharacterApi() => _customCharacterApi;
 
     // API Register/Unregister.
     public ITweakboxApiImpl Register(string modName)
@@ -36,4 +41,5 @@ public class TweakboxApi : ITweakboxApiImpl, ITweakboxApi
     }
 
     public void Unregister(string modName) => LoadedMods.Remove(modName);
+
 }

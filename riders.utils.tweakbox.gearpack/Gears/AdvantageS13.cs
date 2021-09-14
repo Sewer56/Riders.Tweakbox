@@ -19,7 +19,6 @@ public class AdvantageS13 : CustomGearBase, IExtremeGear
     {
         _runningProperties = new RunningProperties()
         {
-            Enabled = true,
             SetRunningProperties = SetRunningProperties
         };
 
@@ -50,6 +49,6 @@ public class AdvantageS13 : CustomGearBase, IExtremeGear
         return runningPhysics;
     }
 
-    // API Implementation
+    // IExtremeGear API Callbacks //
     public RunningProperties GetRunningProperties() => _runningProperties;
 }

@@ -22,13 +22,11 @@ public class DestroyerDX : CustomGearBase, IExtremeGear
     {
         _dashPanelProps = new DashPanelGearProperties()
         {
-            Enabled = true,
             SetSpeedGain = SetSpeedGainFromDashPanel
         };
 
         _monoTypeShortcutBehaviour = new MonoTypeShortcutBehaviourDX()
         {
-            Enabled = true,
             ExistingTypeSpeedModifierPercent = 1.15f,
             NewTypeSpeedModifierPercent = 0.95f
         };
@@ -38,6 +36,7 @@ public class DestroyerDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
+    // IExtremeGear API Callbacks //
     public MonoTypeShortcutBehaviourDX GetMonoTypeShortcutBehaviour() => _monoTypeShortcutBehaviour;
 
     public DashPanelGearProperties GetDashPanelProperties() => _dashPanelProps;

@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class AdvantageF13 : CustomGearBase, IExtremeGear
 {
+    private WallHitBehaviour _wallHitBehaviour = new WallHitBehaviour()
+    {
+        SpeedLossMultiplier = -8.5f
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class AdvantageF13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public WallHitBehaviour GetWallHitBehaviour() => new WallHitBehaviour()
-    {
-        Enabled = true,
-        SpeedLossMultiplier = -8.5f
-    };
+    // IExtremeGear API Callbacks //
+    public WallHitBehaviour GetWallHitBehaviour() => _wallHitBehaviour;
 }

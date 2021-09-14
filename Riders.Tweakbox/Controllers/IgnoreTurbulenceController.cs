@@ -20,7 +20,7 @@ public unsafe class IgnoreTurbulenceController : IController
         _config = config;
         EventController.CheckIfIgnoreTurbulence += CheckIfIgnoreTurbulence;
         EventController.AfterSetMovementFlagsOnInput += AfterSetMovementFlagsOnInput;
-        ApiGearImplementation.OnInitGearStats += ResetToggleStates;
+        ApiBehaviourImplementation.OnInitGearStats += ResetToggleStates;
     }
 
     private Player* AfterSetMovementFlagsOnInput(Player* player)

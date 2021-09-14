@@ -4,13 +4,8 @@ using System;
 
 namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
-public struct BoostProperties
+public class BoostProperties
 {
-    /// <summary>
-    /// True if enabled.
-    /// </summary>
-    public bool Enabled;
-
     /// <summary>
     /// Disables boosting; such that boosting can only be triggered by user code.
     /// </summary>

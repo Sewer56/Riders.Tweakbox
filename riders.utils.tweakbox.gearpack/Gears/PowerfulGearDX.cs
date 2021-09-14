@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class PowerfulGearDX : CustomGearBase, IExtremeGear
 {
+    private OffRoadProperties _offRoadProperties = new OffRoadProperties()
+    {
+        IgnoreSpeedLoss = true
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,9 +23,6 @@ public class PowerfulGearDX : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public OffRoadProperties GetOffroadProperties() => new OffRoadProperties()
-    {
-        Enabled = true, 
-        IgnoreSpeedLoss = true
-    };
+    // IExtremeGear API Callbacks //
+    public OffRoadProperties GetOffroadProperties() => _offRoadProperties;
 }

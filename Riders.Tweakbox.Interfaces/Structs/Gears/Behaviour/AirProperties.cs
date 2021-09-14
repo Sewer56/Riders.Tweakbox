@@ -6,14 +6,12 @@ namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 /// <summary>
 /// Modifies how ring gears behave.
 /// </summary>
-public struct AirProperties
+public class AirProperties
 {
-    public bool Enabled;
-    
     /// <summary>
-    /// True if the gear should gain rings.
+    /// True if the gear should gain rings from tricks, shortcuts etc.
     /// </summary>
-    public bool GainsRingsOnRingGear;
+    public bool? GainsRingsOnRingGear;
 
     /// <summary>
     /// Allows to override whether this gear should gain air for this frame.

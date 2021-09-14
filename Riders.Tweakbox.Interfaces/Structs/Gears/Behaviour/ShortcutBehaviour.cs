@@ -5,13 +5,8 @@ namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 /// <summary>
 /// Modifies shortcut behaviour for a specific gear.
 /// </summary>
-public struct ShortcutBehaviour
+public class ShortcutBehaviour
 {
-    /// <summary>
-    /// True if enabled, else false.
-    /// </summary>
-    public bool Enabled;
-
     /// <summary>
     /// Decimal by which to multiply shortcut speed for speed types.
     /// </summary>

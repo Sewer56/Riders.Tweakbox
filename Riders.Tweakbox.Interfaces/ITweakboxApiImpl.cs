@@ -30,6 +30,11 @@ public interface ITweakboxApiImpl
     public ICustomGearApi GetCustomGearApi();
 
     /// <summary>
+    /// Retrieves the API that allows you to modify character behaviour.
+    /// </summary>
+    public ICustomCharacterApi GetCustomCharacterApi();
+
+    /// <summary>
     /// Retrieves the API that allows you to interact with physics.
     /// </summary>
     public IPhysicsApi GetPhysicsApi();

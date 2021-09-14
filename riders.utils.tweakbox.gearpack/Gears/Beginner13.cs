@@ -9,6 +9,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Beginner13 : CustomGearBase, IExtremeGear
 {
+    private DriftDashProperties _driftDashProperties = new DriftDashProperties()
+    {
+        DriftDashCap = Utility.SpeedometerToFloat(300.0f)
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -19,9 +24,6 @@ public class Beginner13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public DriftDashProperties GetDriftDashProperties() => new DriftDashProperties()
-    {
-        Enabled = true,
-        DriftDashCap = Utility.SpeedometerToFloat(300.0f)
-    };
+    // IExtremeGear API Callbacks //
+    public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 }

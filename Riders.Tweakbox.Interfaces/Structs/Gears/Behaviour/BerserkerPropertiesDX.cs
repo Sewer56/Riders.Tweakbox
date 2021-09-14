@@ -3,13 +3,8 @@
 /// <summary>
 /// Properties for DX Berserker Mode.
 /// </summary>
-public struct BerserkerPropertiesDX
+public class BerserkerPropertiesDX
 {
-    /// <summary>
-    /// True if enabled, else false.
-    /// </summary>
-    public bool Enabled = false;
-
     /// <summary>
     /// Percentage of air above which berserk mode is triggered.
     /// </summary>

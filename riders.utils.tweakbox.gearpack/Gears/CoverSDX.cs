@@ -8,6 +8,11 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverSDX : CustomGearBase, IExtremeGear
 {
+    private BoostProperties _boostProperties = new BoostProperties()
+    {
+        BoostAcceleration = Utility.SpeedometerToFloat(10f / 60f)
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -17,9 +22,7 @@ public class CoverSDX : CustomGearBase, IExtremeGear
         data.Behaviour = this;
         gearApi.AddGear(data);
     }
-    public BoostProperties GetBoostProperties() => new BoostProperties()
-    {
-        Enabled = true,
-        BoostAcceleration = Utility.SpeedometerToFloat(10f / 60f)
-    };
+
+    // IExtremeGear API Callbacks //
+    public BoostProperties GetBoostProperties() => _boostProperties;
 }

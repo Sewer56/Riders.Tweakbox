@@ -6,13 +6,8 @@ namespace Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 /// Defines how shortcuts are modified when used with a gear granting the same shortcut type
 /// or a new shortcut type.
 /// </summary>
-public struct MonoTypeShortcutBehaviourDX
+public class MonoTypeShortcutBehaviourDX
 {
-    /// <summary>
-    /// True if used.
-    /// </summary>
-    public bool Enabled;
-
     /// <summary>
     /// The amount of percent (decimal) to slow the shortcut down if the type granted by
     /// this gear is a new type.

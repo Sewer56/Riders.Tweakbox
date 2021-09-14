@@ -8,6 +8,13 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverS13 : CustomGearBase, IExtremeGear
 {
+    private ShortcutBehaviour _shortcutBehaviour = new ShortcutBehaviour()
+    {
+        FlyShortcutModifier = 1.075f,
+        SpeedShortcutModifier = 1.075f,
+        PowerShortcutAddedSpeed = 1.075f,
+    };
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
@@ -18,11 +25,6 @@ public class CoverS13 : CustomGearBase, IExtremeGear
         gearApi.AddGear(data);
     }
 
-    public ShortcutBehaviour GetShortcutBehaviour() => new ShortcutBehaviour()
-    {
-        Enabled = true,
-        FlyShortcutModifier = 1.075f,
-        SpeedShortcutModifier = 1.075f,
-        PowerShortcutAddedSpeed = 1.075f,
-    };
+    // IExtremeGear API Callbacks //
+    public ShortcutBehaviour GetShortcutBehaviour() => _shortcutBehaviour;
 }
