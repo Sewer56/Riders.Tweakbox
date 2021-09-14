@@ -39,6 +39,9 @@ public unsafe partial class EventController : TaskEvents, IController
         var taskData = task->TaskData;
         var player = taskData->Player;
 
+        if (player == null)
+            return _exhaustTrailTaskHook.OriginalFunction.Value.Invoke();
+
         if (task->TaskStatus == 3 && SetExhaustTrailColour != null)
         {
             var originalColour = taskData->ExhaustTrailColour;
