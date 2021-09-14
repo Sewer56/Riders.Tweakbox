@@ -32,6 +32,9 @@ public struct GameModifiers : IReliableMessage
     public bool ReplaceAirMaxBox;
     public ItemBoxAttribute AirMaxReplacement;
 
+    public bool OverridePitAirGain;
+    public float PitAirGainMultiplier;
+
     public SlipstreamModifierSettings Slipstream;
     public RingLossBehaviour DeathRingLoss;
     public RingLossBehaviour HitRingLoss;
@@ -50,6 +53,7 @@ public struct GameModifiers : IReliableMessage
             RingLossPercentage = 0
         };
 
+        result.PitAirGainMultiplier = 1.0f;
         result.BerserkerTurbulenceFix = true;
         result.HitRingLoss = RingLossBehaviour.CreateDefault();
         return result;
@@ -77,6 +81,8 @@ public struct GameModifiers : IReliableMessage
         BerserkerTurbulenceFix = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableAttackDurationFrames = bitStream.ReadGeneric<ushort>();
+        OverridePitAirGain   = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        PitAirGainMultiplier = bitStream.ReadGeneric<float>();
 
         ReplaceRing100Box = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         Ring100Replacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
@@ -99,6 +105,8 @@ public struct GameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(BerserkerTurbulenceFix), 1);
         bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
         bitStream.Write(DisableAttackDurationFrames);
+        bitStream.Write(Convert.ToByte(OverridePitAirGain), 1);
+        bitStream.WriteGeneric(PitAirGainMultiplier);
 
         bitStream.WriteGeneric(ReplaceRing100Box, 1);
         bitStream.WriteGeneric(Ring100Replacement, EnumNumBits<ItemBoxAttribute>.Number);

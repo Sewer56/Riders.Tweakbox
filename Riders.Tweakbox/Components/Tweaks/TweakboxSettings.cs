@@ -170,6 +170,13 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.TreePop();
         }
 
+        if (ImGui.TreeNodeStr("Miscellaneous"))
+        {
+            var airGainPercent = 100f + (mods.PitAirGainMultiplier * 100f);
+            ImGui.DragFloat("Pit Air Gain Multiplier Offset", ref mods.PitAirGainMultiplier, 0.001f, -10000f, 10000f, $"{airGainPercent}%%", 1).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.TreePop();
+        }
+
         void SendUpdateNotification() => _modifiersController.InvokeOnEditModifiers();
 
         void RenderRingLossMenu(ref RingLossBehaviour behaviour)
