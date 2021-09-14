@@ -92,12 +92,11 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         {
             ImGui.Checkbox("Drift Charge Indicator", ref data.DriftChargeColour.HasValue).Notify(data, nameof(data.DriftChargeColour));
             if (data.DriftChargeColour.HasValue)
-            {
-                Span<float> values = stackalloc float[4];
-                ColourToFloat(data.DriftChargeColour.Value, values);
-                ImGui.Custom.ColorEdit4("Colour", (float*) Unsafe.AsPointer(ref values.GetPinnableReference()), 1);
-                data.DriftChargeColour.Value = FloatToColour(values);
-            }
+                RenderColourPickerForRgba(ref data.DriftChargeColour.Value, "Colour");
+
+            RenderColourPickerForRgba(ref data.IgnoreTurbulenceColour, "Turbulence Ignore Toggle Colour");
+            Tooltip.TextOnHover("Colour used when ignoring turbulence via toggle. To enable toggle, see `Race Tweaks -> Turbulence`.");
+
             ImGui.TreePop();
         }
 
@@ -149,6 +148,11 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.Checkbox("Always Turbulence", ref mods.AlwaysTurbulence).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Disable Thin Turbulence", ref mods.DisableSmallTurbulence).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Berserker Speed Fix", ref mods.BerserkerTurbulenceFix).ExecuteIfTrue(SendUpdateNotification);
+
+            ImGui.Checkbox("Ignore Turbulence (Toggle)", ref mods.IgnoreTurbulenceOnToggle).ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("Hotkey is DPAD_UP. Rebind this however you like using the Custom mapping mod.\n" +
+                                "This will be changed in the future when Tweakbox adds support for more buttons.");
+            
             ImGui.TreePop();
         }
 
@@ -432,7 +436,14 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         };
     }
 
-    // TODO: Add Float* Overload to 
+    private unsafe void RenderColourPickerForRgba(ref ColorRGBA color, string label)
+    {
+        Span<float> values = stackalloc float[4];
+        ColourToFloat(color, values);
+        ImGui.Custom.ColorEdit4(label, (float*)Unsafe.AsPointer(ref values.GetPinnableReference()), 1);
+        color = FloatToColour(values);
+    }
+
     private void ColourToFloat(ColorRGBA color, Span<float> colors)
     {
         colors[0] = color.Red   / 255.0f;

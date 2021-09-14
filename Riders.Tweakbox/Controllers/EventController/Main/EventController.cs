@@ -75,11 +75,15 @@ public unsafe partial class EventController : TaskEvents, IController
         InitOnCollectRing(hooks, utilities);
         InitSetPitAirGain(hooks, utilities);
         InitSetRunStateSpeed(hooks, utilities);
+        InitIgnoreTurbulenceCollision(hooks, utilities);
     }
 
     // Common. Do not Move.
     [Function(CallingConventions.Stdcall)]
     public delegate Enum<AsmFunctionResult> PlayerAsmFunc(Player* player);
+
+    [Function(CallingConventions.Stdcall)]
+    public struct PlayerAsmFuncPtr { public FuncPtr<BlittablePointer<Player>, Enum<AsmFunctionResult>> Value; }
 
     /// <summary>
     /// Generic function that acts upon a player.

@@ -24,6 +24,8 @@ namespace Riders.Tweakbox.Api;
 /// </summary>
 internal unsafe partial class ApiGearImplementation
 {
+    public static Action OnInitGearStats;
+
     private const int DefaultNumLevels = 3;
 
     private IHook<Functions.PlayerFnPtr> _setStatsForPlayerRaceHook;
@@ -46,6 +48,7 @@ internal unsafe partial class ApiGearImplementation
         int numLevels = DefaultNumLevels;
         bool result = false;
         extendedStats = default;
+        OnInitGearStats?.Invoke();
 
         // Now allocate memory as needed.
         if (TryGetGearBehaviour((int)player->ExtremeGear, out var behaviour))

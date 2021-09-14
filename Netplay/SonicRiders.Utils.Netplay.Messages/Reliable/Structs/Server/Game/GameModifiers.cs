@@ -39,6 +39,8 @@ public struct GameModifiers : IReliableMessage
     public RingLossBehaviour DeathRingLoss;
     public RingLossBehaviour HitRingLoss;
 
+    public bool IgnoreTurbulenceOnToggle;
+
     /// <summary>
     /// Creates a <see cref="GameModifiers"/> struct with the default parameters.
     /// </summary>
@@ -92,6 +94,8 @@ public struct GameModifiers : IReliableMessage
         Slipstream.FromStream(ref bitStream);
         DeathRingLoss.FromStream(ref bitStream);
         HitRingLoss.FromStream(ref bitStream);
+
+        IgnoreTurbulenceOnToggle = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
     }
 
     /// <inheritdoc />
@@ -116,6 +120,8 @@ public struct GameModifiers : IReliableMessage
         Slipstream.ToStream(ref bitStream);
         DeathRingLoss.ToStream(ref bitStream);
         HitRingLoss.ToStream(ref bitStream);
+
+        bitStream.Write(Convert.ToByte(IgnoreTurbulenceOnToggle), 1);
     }
 }
 

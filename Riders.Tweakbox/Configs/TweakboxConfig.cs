@@ -66,6 +66,14 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
             Alpha = 255
         }, false);
 
+        public ColorRGBA IgnoreTurbulenceColour = new ColorRGBA()
+        {
+            Red = 176,
+            Green = 10,
+            Blue = 248,
+            Alpha = 255
+        };
+
         public GameModifiers Modifiers = GameModifiers.CreateDefault();
     }
 
