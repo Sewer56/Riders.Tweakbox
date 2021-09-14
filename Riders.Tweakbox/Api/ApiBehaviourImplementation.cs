@@ -679,34 +679,7 @@ internal unsafe partial class ApiBehaviourImplementation
         return player->Air > airNeeded;
     }
 
-    private bool TryGetCustomBehaviour(Player* player, out List<ICustomStats> behaviours, out int playerIndex, out int playerLevel)
-    {
-        int gearIndex = (int)player->ExtremeGear;
-        behaviours = new List<ICustomStats>();
-
-        if (_customGearController.TryGetGearData_Internal(gearIndex, out var customData) && customData.Behaviour != null)
-            behaviours.Add(customData.Behaviour);
-
-        int characterIndex = (int) player->Character;
-        if (_customCharacterController.TryGetCharacterBehaviours_Internal(characterIndex, out var charRequests))
-        {
-            foreach (var charBehaviour in charRequests)
-                behaviours.Add(charBehaviour.Behaviour);
-        }
-
-        if (behaviours.Count <= 0)
-        {
-            playerIndex = -1;
-            playerLevel = -1;
-        }
-        else
-        {
-            playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
-            playerLevel = GetPlayerLevel(behaviours, player);
-        }
-
-        return behaviours.Count > 0;
-    }
+    
 
     #region Static Callbacks
     [UnmanagedCallersOnly]
