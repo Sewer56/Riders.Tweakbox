@@ -48,7 +48,9 @@ public unsafe class GearEditor : ComponentBase<GearEditorConfig>, IComponent
     {
         if (ImGui.Begin(Name, ref IsEnabled(), 0))
         {
-            ProfileSelector.Render();
+            if (_customGearController.VanillaGearsEnabled())
+                ProfileSelector.Render();
+
             EditGears();
         }
 

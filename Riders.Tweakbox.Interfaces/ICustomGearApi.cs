@@ -102,4 +102,10 @@ public interface ICustomGearApi
     /// </summary>
     /// <param name="clearGears">Removes all known gears if set to true.</param>
     void Reset(bool clearGears = true);
+
+    /// <summary>
+    /// Removes all vanilla gears from the game.
+    /// This action cannot be reversed.
+    /// </summary>
+    void RemoveVanillaGears();
 }

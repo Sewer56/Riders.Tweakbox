@@ -309,10 +309,10 @@ internal unsafe class CustomGearUiController
 
     private void SetCustomTextureIndexInGearselHook(Player* player, GearSelSys2DObject* object2d)
     {
-        var gear = player->ExtremeGear;
-        if (gear > ExtremeGear.Cannonball)
+        var gear = (int) player->ExtremeGear;
+        if (gear >= _codePatcher.OriginalGearCount)
         {
-            var gearOffset = (int) (gear - ExtremeGear.Cannonball) - 1;
+            var gearOffset = (int) (gear - _codePatcher.OriginalGearCount);
             object2d->GearTexNo = (ushort)(_iconAllocations.TextureIndex + gearOffset);
             object2d->GearNameTexNo = (ushort)(_nameAllocations.TextureIndex + gearOffset);
         }
@@ -320,10 +320,10 @@ internal unsafe class CustomGearUiController
 
     private void SetCustomTextureIndexInCharSelectedHook(Player* player, GearSelSys2DObject* object2d)
     {
-        var gear = player->ExtremeGear;
-        if (gear > ExtremeGear.Cannonball)
+        var gear = (int) player->ExtremeGear;
+        if (gear >= _codePatcher.OriginalGearCount)
         {
-            var gearOffset = (int)(gear - ExtremeGear.Cannonball) - 1;
+            var gearOffset = (int)(gear - _codePatcher.OriginalGearCount);
             object2d->PlayerIndexTexNo = (ushort)(_nameAllocations.TextureIndex + gearOffset);
             // Note: The above assignment assigns the gear name; I'm just lazy to make a new struct.
         }

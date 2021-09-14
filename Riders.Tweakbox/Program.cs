@@ -7,6 +7,7 @@ using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Controller.Hook.Interfaces;
+using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
@@ -65,6 +66,8 @@ public class Program : IMod, IExports
         // Tweak Process Priority
         var process = Process.GetCurrentProcess();
         process.PriorityClass = ProcessPriorityClass.High;
+
+        //IoC.GetSingleton<CustomGearController>().Reset(false, true);
     }
     
     /* Mod loader actions. */

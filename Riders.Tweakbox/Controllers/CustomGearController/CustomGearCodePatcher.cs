@@ -93,9 +93,12 @@ internal unsafe class CustomGearCodePatcher
     /// <summary>
     /// Resets all custom gear data.
     /// </summary>
-    internal void Reset()
+    internal void Reset(bool removeVanillaGears = false)
     {
         _log.WriteLine($"[{nameof(CustomGearCodePatcher)}] Resetting Gears");
+        if (removeVanillaGears)
+            OriginalGearCount = 0;
+
         SetNewGearCount(OriginalGearCount);
     }
 
@@ -107,14 +110,14 @@ internal unsafe class CustomGearCodePatcher
     internal void SetNewGearCount(int newCount)
     {
         _log.WriteLine($"[{nameof(CustomGearCodePatcher)}] Setting Gear Count of {newCount}");
-        PatchMaxGearId(newCount - 1);
+        PatchMaxGearId(Math.Max(0, newCount - 1));
         Cleanup(newCount);
         UpdateGearCount(newCount);
     }
 
     private void Cleanup(int newCount)
     {
-        for (int x = newCount - 1; x < GearCount; x++)
+        for (int x = Math.Max(0, newCount - 1); x < GearCount; x++)
         {
             _newGears[x] = default;
             _gearToModelMap[x] = 0;
@@ -169,7 +172,7 @@ internal unsafe class CustomGearCodePatcher
     private void UpdateGearCount(int newCount)
     {
         GearCount = newCount;
-        *_gearCountMinusOne = GearCount - 1;
+        *_gearCountMinusOne = Math.Max(0, GearCount - 1);
         Player.NumberOfGears = newCount;
         Player.Gears.Count = newCount;
     }
@@ -344,4 +347,5 @@ internal unsafe class CustomGearCodePatcher
         }
     }
     #endregion
+
 }

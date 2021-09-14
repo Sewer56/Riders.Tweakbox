@@ -39,7 +39,9 @@ public unsafe class CustomGearController : IController
     internal CustomGearUiController UiController;
     internal CustomGearPatches Patches;
 
-    internal Dictionary<string, CustomGearDataInternal> AvailableGears = new Dictionary<string, CustomGearDataInternal>();
+    internal Dictionary<string, CustomGearDataInternal> AvailableGears =
+        new Dictionary<string, CustomGearDataInternal>();
+
     internal List<CustomGearDataInternal> LoadedGears = new List<CustomGearDataInternal>();
 
     public CustomGearController(IReloadedHooks hooks)
@@ -49,6 +51,11 @@ public unsafe class CustomGearController : IController
         Patches = new CustomGearPatches(CodePatcher);
         UiController = new CustomGearUiController(CodePatcher);
     }
+
+    /// <summary>
+    /// Returns true if vanilla gears are enabled, else false.
+    /// </summary>
+    public bool VanillaGearsEnabled() => CodePatcher.OriginalGearCount == Sewer56.SonicRiders.API.Player.OriginalNumberOfGears;
 
     /// <summary>
     /// Adds a new extreme gear to the game.
@@ -254,11 +261,12 @@ public unsafe class CustomGearController : IController
     /// Resets all custom gear data.
     /// </summary>
     /// <param name="clearGears">Removes all known gears if set to true.</param>
-    public void Reset(bool clearGears = true)
+    /// <param name="removeVanillaGears">Removes all gears from the vanilla game.</param>
+    public void Reset(bool clearGears = true, bool removeVanillaGears = false)
     {
         OnReset?.Invoke();
         _log.WriteLine($"[{nameof(CustomGearController)}] Resetting Gears"); 
-        CodePatcher.Reset();
+        CodePatcher.Reset(removeVanillaGears);
         UiController.Reset();
         ClearGearIndices();
         if (clearGears)

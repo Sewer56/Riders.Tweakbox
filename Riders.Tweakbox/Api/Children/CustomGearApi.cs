@@ -51,7 +51,7 @@ public class CustomGearApi : ICustomGearApi
     public void ReloadAll() => _controller.ReloadAll();
 
     public void Reset(bool clearGears = true) => _controller.Reset(clearGears);
-
+    public void RemoveVanillaGears() => _controller.Reset(false, true);
     public bool TryGetGearData(string name, out CustomGearData data)
     {
         if (_controller.TryGetGearData(name, out var internalData))
