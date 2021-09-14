@@ -32,16 +32,12 @@ public class Program : IMod, IExports
 
     private Tweakbox _tweakbox;
 
-    /// <summary>
-    /// Entry point for your mod.
-    /// </summary>
-    public async void Start(IModLoaderV1 loader)
+    public async void StartEx(IModLoaderV1 loader, IModConfigV1 config)
     {
 #if DEBUG
         MessageBox.Show("Attach Debugger Now");
 #endif
         _modLoader = (IModLoader)loader;
-        _modLoader.ModLoaded += OnModLoaded;
         _logger = (ILogger)_modLoader.GetLogger();
 
         _modLoader.GetController<IReloadedHooks>().TryGetTarget(out var hooks);
@@ -55,6 +51,8 @@ public class Program : IMod, IExports
         Sewer56.SonicRiders.SDK.Init(hooks);
         Reloaded.Imgui.Hook.SDK.Init(hooks);
         AsmHelpers.Init(hooks);
+        Version = config.ModVersion;
+
 #if DEBUG
         Reloaded.Imgui.Hook.SDK.Debug += s => Log.WriteLine(s);
 #endif
@@ -68,14 +66,7 @@ public class Program : IMod, IExports
         var process = Process.GetCurrentProcess();
         process.PriorityClass = ProcessPriorityClass.High;
     }
-
-    // Get version of our own mod from callback.
-    private void OnModLoaded(IModV1 arg1, IModConfigV1 arg2)
-    {
-        if (arg2.ModId == MyModId)
-            Version = arg2.ModVersion;
-    }
-
+    
     /* Mod loader actions. */
     public void Suspend() { }
     public void Resume() { }

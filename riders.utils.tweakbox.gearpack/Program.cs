@@ -23,20 +23,17 @@ public class Program : IMod
     private IModLoader _modLoader;
     private CustomGearPack _customGearPack;
 
-    /// <summary>
-    /// Entry point for your mod.
-    /// </summary>
-    public void Start(IModLoaderV1 loader)
+    public void StartEx(IModLoaderV1 loader, IModConfigV1 config)
     {
         _modLoader = (IModLoader)loader;
         _logger = (ILogger)_modLoader.GetLogger();
 
         /* Your mod code starts here. */
         _modLoader.GetController<ITweakboxApi>().TryGetTarget(out var api);
-        var modImpl = api.Register(MyModId);
+        var modImpl = api.Register($"{config.ModId}.{config.ModVersion}");
         _customGearPack = new CustomGearPack(_modLoader.GetDirectoryForModId(MyModId), modImpl);
     }
-    
+
     /* Mod loader actions. */
     public void Suspend() { }
 
@@ -57,4 +54,5 @@ public class Program : IMod
        For more details see: https://github.com/Reloaded-Project/Reloaded-II/blob/master/Docs/ReadyToRun.md
     */
     public static void Main() { }
+
 }
