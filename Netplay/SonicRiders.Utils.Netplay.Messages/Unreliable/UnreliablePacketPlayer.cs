@@ -225,7 +225,12 @@ public struct UnreliablePacketPlayer
     public unsafe void ToGame(in int index)
     {
         ref var player = ref Player.Players[index];
-        if (Position.HasValue) player.Position = Position.Value;
+        if (Position.HasValue)
+        {
+            player.Position = Position.Value;
+            player.PositionAlt = Position.Value;
+        }
+
         if (RotationX.HasValue) player.Rotation.Y = RotationX.Value;
 
         if (Velocity.HasValue)
