@@ -40,7 +40,7 @@ public unsafe partial class EventController : TaskEvents, IController
         {
             PreferRelativeJump = true,
             MaxOpcodeSize = 5,
-            Behaviour = AsmHookBehaviour.ExecuteAfter
+            Behaviour = AsmHookBehaviour.ExecuteFirst
         }).Activate();
     }
 
