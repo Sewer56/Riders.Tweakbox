@@ -33,7 +33,7 @@ public unsafe class Random : INetplayComponent
     private Logger _logRandom = new Logger(LogCategory.Random);
     private Logger _logRandomSeed = new Logger(LogCategory.RandomSeed);
 
-    public Random(Socket socket)
+    public Random(Socket socket, EventController eventController)
     {
         Socket = socket;
         _framePacingController = IoC.Get<FramePacingController>();
@@ -43,6 +43,7 @@ public unsafe class Random : INetplayComponent
         EventController.Random += OnRandom;
         EventController.ItemPickupRandom += OnItemPickupRandom;
         EventController.OnCheckIfGiveAiRandomItems += OnCheckIfGiveAiRandomItems;
+        Event = eventController;
         _itemPickupRandom = new System.Random();
 
         if (Socket.GetSocketType() == SocketType.Host)
