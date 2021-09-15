@@ -48,6 +48,24 @@ public struct UnreliablePacketPlayer
     }
 
     /// <summary>
+    /// Rotation in the Pitch Direction
+    /// </summary>
+    public float? RotationY
+    {
+        get => _rotationY?.GetValue((Float)MaxRotation);
+        set => SetRotation(ref _rotationY, value);
+    }
+
+    /// <summary>
+    /// Rotation in the Roll Direction
+    /// </summary>
+    public float? RotationZ
+    {
+        get => _rotationZ?.GetValue((Float)MaxRotation);
+        set => SetRotation(ref _rotationZ, value);
+    }
+
+    /// <summary>
     /// Total amount of air the player contains.
     /// </summary>
     public uint? Air;
@@ -129,6 +147,8 @@ public struct UnreliablePacketPlayer
     public AnalogXY? AnalogXY;
 
     private CompressedNumber<float, Float, ushort, UShort>? _rotationX;
+    private CompressedNumber<float, Float, ushort, UShort>? _rotationY;
+    private CompressedNumber<float, Float, ushort, UShort>? _rotationZ;
     private CompressedNumber<float, Float, ushort, UShort>? _turnAmount;
     private CompressedNumber<float, Float, ushort, UShort>? _leanAmount;
 
@@ -138,7 +158,13 @@ public struct UnreliablePacketPlayer
     public unsafe void Serialize<TByteSource>(ref BitStream<TByteSource> bitStream, HasData data = HasDataAll) where TByteSource : IByteStream
     {
         if (data.HasAllFlags(HasData.HasPosition)) bitStream.WriteGeneric(Position.GetValueOrDefault());
-        if (data.HasAllFlags(HasData.HasRotation)) bitStream.WriteGeneric(_rotationX.GetValueOrDefault());
+        if (data.HasAllFlags(HasData.HasRotation))
+        {
+            bitStream.WriteGeneric(_rotationX.GetValueOrDefault());
+            bitStream.WriteGeneric(_rotationY.GetValueOrDefault());
+            bitStream.WriteGeneric(_rotationZ.GetValueOrDefault());
+        }
+
         if (data.HasAllFlags(HasData.HasVelocity)) bitStream.WriteGeneric(Velocity.GetValueOrDefault());
         if (data.HasAllFlags(HasData.HasTurnAndLean))
         {
@@ -174,6 +200,8 @@ public struct UnreliablePacketPlayer
 
         bitStream.ReadStructIfHasFlags(ref player.Position, fields, HasData.HasPosition);
         bitStream.ReadStructIfHasFlags(ref player._rotationX, fields, HasData.HasRotation);
+        bitStream.ReadStructIfHasFlags(ref player._rotationY, fields, HasData.HasRotation);
+        bitStream.ReadStructIfHasFlags(ref player._rotationZ, fields, HasData.HasRotation);
         bitStream.ReadStructIfHasFlags(ref player.Velocity, fields, HasData.HasVelocity);
         bitStream.ReadStructIfHasFlags(ref player._turnAmount, fields, HasData.HasTurnAndLean);
         bitStream.ReadStructIfHasFlags(ref player._leanAmount, fields, HasData.HasTurnAndLean);
@@ -202,6 +230,8 @@ public struct UnreliablePacketPlayer
         {
             Position = player.Position,
             RotationX = player.Rotation.Y,
+            RotationY = player.Rotation.X,
+            RotationZ = player.Rotation.Z,
             Velocity = new Vector2(player.Speed, player.VSpeed),
             Rings = (byte?)player.Rings,
             State = (byte?)player.PlayerState,
@@ -231,7 +261,12 @@ public struct UnreliablePacketPlayer
             player.PositionAlt = Position.Value;
         }
 
-        if (RotationX.HasValue) player.Rotation.Y = RotationX.Value;
+        if (RotationX.HasValue)
+        {
+            player.Rotation.Y = RotationX.Value;
+            player.Rotation.X = RotationY.Value;
+            player.Rotation.Z = RotationZ.Value;
+        }
 
         if (Velocity.HasValue)
         {

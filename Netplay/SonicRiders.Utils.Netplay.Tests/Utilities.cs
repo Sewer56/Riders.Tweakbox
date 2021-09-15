@@ -17,6 +17,8 @@ public class Utilities
 
         result.Position = new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
         result.RotationX = (float)random.NextDouble();
+        result.RotationY = (float)random.NextDouble();
+        result.RotationZ = (float)random.NextDouble();
         result.Air = (uint?)random.Next(0, 200000);
         result.Rings = (byte?)random.Next(0, 99);
         result.LastState = (byte?)random.Next(0, 32);
