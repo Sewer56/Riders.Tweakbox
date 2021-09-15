@@ -7,7 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>WinExe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	  <OutputPath>$(TWEAKBOX_DIR)</OutputPath>
+	  <OutputPath>$(RELOADEDIIMODS)/riders.utils.tweakbox/</OutputPath>
 	  <Version>0.6.7</Version>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>

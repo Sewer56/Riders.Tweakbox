@@ -5,7 +5,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>WinExe</OutputType>
-    <OutputPath>$(TWEAKBOX_GEARPACK_DIR)</OutputPath>
+    <OutputPath>$(RELOADEDIIMODS)/riders.utils.tweakbox.gearpack/</OutputPath>
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
