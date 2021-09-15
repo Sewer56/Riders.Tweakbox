@@ -12,7 +12,6 @@ public class GameModifiersSync : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
     private GameModifiersController _modifiersController;
 
     public unsafe GameModifiersSync(Socket socket, GameModifiersController modifiersController)

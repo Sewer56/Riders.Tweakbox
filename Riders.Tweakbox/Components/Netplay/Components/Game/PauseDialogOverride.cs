@@ -28,7 +28,6 @@ public class PauseDialogOverride : INetplayComponent
 {
     /// <inheritdoc />
     public Socket Socket { get; set; }
-    public EventController Event { get; set; }
 
     /// <summary>
     /// Sets the additional result screen items to be rendered.
@@ -53,7 +52,7 @@ public class PauseDialogOverride : INetplayComponent
     private PatchCollection _useCustomResultsScreenForTagAndSurvival;
     private PauseDialogTask _restartDialogTask;
 
-    public unsafe PauseDialogOverride(Socket socket,  Assembler asm)
+    public unsafe PauseDialogOverride(Socket socket, Assembler asm)
     {
         MakeCustomResultsScreenPatchCollection(asm);
         Socket = socket;
