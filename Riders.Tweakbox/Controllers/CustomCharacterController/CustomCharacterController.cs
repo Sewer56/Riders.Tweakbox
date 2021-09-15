@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using Sewer56.SonicRiders.API;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Structures.Enums;
+using Riders.Tweakbox.Controllers.Interfaces;
 
 namespace Riders.Tweakbox.Controllers.CustomCharacterController;
 
-public class CustomCharacterController
+public class CustomCharacterController : IController
 {
     public List<ModifyCharacterRequest>[] CharacterOverrides;
     public Dictionary<string, ModifyCharacterRequest> AllOverrides;
