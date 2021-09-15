@@ -58,7 +58,7 @@ public class CustomCharacterController
     /// <param name="behaviours">The list of character behaviours.</param>
     public bool TryGetAllCharacterBehaviours(int index, out List<ModifyCharacterRequest> behaviours)
     {
-        if (index < 0 || index > CharacterOverrides.Length)
+        if (index < 0 || index >= CharacterOverrides.Length)
         {
             behaviours = default;
             return false;
@@ -91,7 +91,7 @@ public class CustomCharacterController
     
     internal bool TryGetCharacterBehaviours_Internal(int index, out List<ModifyCharacterRequest> behaviours)
     {
-        if (index < 0 || index > CharacterOverrides.Length)
+        if (index < 0 || index >= CharacterOverrides.Length)
         {
             behaviours = default;
             return false;

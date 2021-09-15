@@ -18,7 +18,7 @@ public class ModifyCharacterRequest
     /// <summary>
     /// Represents custom character behaviour.
     /// </summary>
-    public ICustomStats Behaviour;
+    public ICustomCharacter Behaviour;
 
     /// <summary>
     /// This custom character behaviour stacks and can be applied on top of

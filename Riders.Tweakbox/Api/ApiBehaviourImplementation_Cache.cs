@@ -27,6 +27,8 @@ using Sewer56.SonicRiders.Structures.Misc;
 using Riders.Tweakbox.Controllers.CustomCharacterController;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
+using Riders.Tweakbox.Interfaces.Structs.Characters;
 
 namespace Riders.Tweakbox.Api;
 
@@ -41,54 +43,63 @@ internal unsafe partial class ApiBehaviourImplementation
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveOptimization)]
-    private bool TryGetCustomBehaviour(Player* player, out List<ICustomStats> behaviours, out int playerIndex, out int playerLevel)
+    private bool TryGetCustomBehaviourEx(Player* player, out List<ICustomStats> behaviours, out int playerIndex, out int playerLevel, out CustomGearDataInternal customGearData, out List<ModifyCharacterRequest> modifyCharacterRequests)
     {
         playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
 
         // Cached read: Subsequent times since initial stat calculation.
-        if (TryGetCustomBehaviourFromCache(playerIndex, out behaviours, out playerLevel))
+        if (TryGetCustomBehaviourFromCache(playerIndex, out behaviours, out playerLevel, out customGearData, out modifyCharacterRequests))
             return true;
 
         // Non cached read (1st time every race)
         int gearIndex = (int)player->ExtremeGear;
         behaviours = new List<ICustomStats>();
 
-        if (_customGearController.TryGetGearData_Internal(gearIndex, out var customData) && customData.Behaviour != null)
-            behaviours.Add(customData.Behaviour);
+        if (_customGearController.TryGetGearData_Internal(gearIndex, out customGearData) && customGearData.Behaviour != null)
+            behaviours.Add(customGearData.Behaviour);
 
         int characterIndex = (int)player->Character;
-        if (_customCharacterController.TryGetCharacterBehaviours_Internal(characterIndex, out var charRequests))
+        if (_customCharacterController.TryGetCharacterBehaviours_Internal(characterIndex, out modifyCharacterRequests))
         {
-            foreach (var charBehaviour in charRequests)
+            foreach (var charBehaviour in modifyCharacterRequests)
                 behaviours.Add(charBehaviour.Behaviour);
         }
 
-        if (behaviours.Count <= 0)
+        playerLevel = GetPlayerLevel(behaviours, player);
+        _behaviourCache[playerIndex] = new BehaviourCacheData()
         {
-            playerIndex = -1;
-            playerLevel = -1;
-        }
-        else
-        {
-            playerLevel = GetPlayerLevel(behaviours, player);
-        }
+            GearData = customGearData,
+            Behaviours = behaviours,
+            ModifyRequests = modifyCharacterRequests,
+            PlayerLevel = playerLevel
+        };
 
         return behaviours.Count > 0;
     }
 
-    private bool TryGetCustomBehaviourFromCache(int playerIndex, out List<ICustomStats> behaviours, out int playerLevel)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveOptimization)]
+    private bool TryGetCustomBehaviour(Player* player, out List<ICustomStats> behaviours, out int playerIndex, out int playerLevel)
+    {
+        return TryGetCustomBehaviourEx(player, out behaviours, out playerIndex, out playerLevel, out _, out _);
+    }
+
+    private bool TryGetCustomBehaviourFromCache(int playerIndex, out List<ICustomStats> behaviours, out int playerLevel, out CustomGearDataInternal customGearDataInternal, out List<ModifyCharacterRequest> modifyCharacterRequests)
     {
         var cache = _behaviourCache[playerIndex];
         if (cache.Behaviours != null)
         {
             behaviours  = cache.Behaviours;
             playerLevel = cache.PlayerLevel;
+            customGearDataInternal = cache.GearData;
+            modifyCharacterRequests = cache.ModifyRequests;
             return true;
         }
         else
         {
             behaviours = default;
             playerLevel = default;
+            customGearDataInternal = default;
+            modifyCharacterRequests = default;
             return false;
         }
     }
@@ -96,6 +107,8 @@ internal unsafe partial class ApiBehaviourImplementation
     private struct BehaviourCacheData
     {
         public List<ICustomStats> Behaviours;
+        public CustomGearDataInternal GearData;
+        public List<ModifyCharacterRequest> ModifyRequests;
         public int PlayerLevel;
     }
 }

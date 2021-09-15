@@ -51,8 +51,18 @@ internal unsafe partial class ApiBehaviourImplementation
         OnInitGearStats?.Invoke();
 
         // Now allocate memory as needed.
-        if (TryGetCustomBehaviour(player, out var behaviours, out _, out var level))
+        if (TryGetCustomBehaviourEx(player, out var behaviours, out _, out var level, out _, out var modifyCharacterRequests))
         {
+            // Set Character Stats
+            foreach (var modifyCharacterRequest in modifyCharacterRequests)
+            {
+                var character  = modifyCharacterRequest.CharacterId;
+                var customParams = modifyCharacterRequest.Behaviour.GetCharacterParameters();
+                var characterParams = Sewer56.SonicRiders.API.Player.CharacterParameters.Pointer + character;
+                customParams.MapToNative(characterParams);
+            }
+
+            // Set Gear Behaviours
             foreach (var behaviour in behaviours)
             {
                 var stats = behaviour.GetExtendedLevelStats();
