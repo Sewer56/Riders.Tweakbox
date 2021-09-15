@@ -206,14 +206,14 @@ public class FramePacer
         double timeLeft = double.MaxValue;
         while ((timeLeft = StatSleepTime - _sleepWatch.Elapsed.TotalMilliseconds) > 0)
         {
-            if (spin && timeLeft < TimerGranularity)
+            if (spin && (timeLeft < TimerGranularity))
             {
                 Spin(allowThreadYield);
                 break;
             }
 
             var sleepTimeLeft = (double)(timeLeft - TimerGranularity);
-            Thread.Sleep(sleepTimeLeft >= (1 + TimerGranularity) ? (int) sleepTimeLeft : 0);
+            Thread.Sleep(sleepTimeLeft >= 1 ? (int) sleepTimeLeft : 0);
         }
 
         double timeSlept = (_frameTimeWatch.Elapsed.TotalMilliseconds - sleepStart);
@@ -227,30 +227,27 @@ public class FramePacer
     {
         var lastYieldTime = new TimeSpan();
         double timeLeft;
-        while ((timeLeft = _sleepWatch.Elapsed.TotalMilliseconds - StatSleepTime) < 0)
+        while ((timeLeft = StatSleepTime - _sleepWatch.Elapsed.TotalMilliseconds) > 0)
         {
             if (!allowThreadYield)
                 continue;
 
             if (lastYieldTime.TotalMilliseconds > 0)
             {
-                /*
-                    The 0.15 value is derived from hand testing on Windows 10 20H2 with
-                    an i7 4790k and 98-100% CPU load.
-
-                    The 99.9th percentile for calling Sleep(0) has been ~0.13ms, hence I am
-                    adding a tiny bit extra to compensate.
-                */
-
-                if (timeLeft > lastYieldTime.TotalMilliseconds || timeLeft > 0.16)
-                    Thread.Sleep(0);
+                if (timeLeft > lastYieldTime.TotalMilliseconds)
+                    RunSpinIteration();
             }
             else
             {
-                _threadYieldWatch.Restart();
-                Thread.Sleep(0);
-                lastYieldTime = _threadYieldWatch.Elapsed;
+                RunSpinIteration();
             }
+        }
+
+        void RunSpinIteration()
+        {
+            _threadYieldWatch.Restart();
+            Thread.Sleep(0);
+            lastYieldTime = _threadYieldWatch.Elapsed;
         }
     }
 }

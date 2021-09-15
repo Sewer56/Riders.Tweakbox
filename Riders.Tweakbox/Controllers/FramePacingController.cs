@@ -136,7 +136,7 @@ public unsafe class FramePacingController : IController
                 /* Game is Stupid */
             }
 
-            Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage < _config.Data.DisableYieldThreshold, _config.Data.RemoveFpsCap);
+            Fps.EndFrame(_config.Data.MaxSpeedupTimeMillis, true, !_resetSpeedup && _config.Data.FramePacingSpeedup, CpuUsage <= _config.Data.DisableYieldThreshold, _config.Data.RemoveFpsCap);
             _lastFrameCounter = *State.TotalFrameCounter;
             *State.TotalFrameCounter += 1;
 
