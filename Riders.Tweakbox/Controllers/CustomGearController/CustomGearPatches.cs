@@ -79,8 +79,6 @@ internal unsafe class CustomGearPatches
         return new string[]
         {
             "use32",
-            $"cmp {returnReg}, {Player.OriginalNumberOfGears}", // Original
-            "jle exit",
 
             // Save Register
             $"push {r2}",
