@@ -334,6 +334,7 @@ public struct UnreliablePacketPlayer
             case PlayerState.ElectricShock:
             case PlayerState.FreeFalling:
             case PlayerState.Turbulence:
+            case PlayerState.Retire:
                 return true;
 
             default:
@@ -345,7 +346,6 @@ public struct UnreliablePacketPlayer
             case PlayerState.TrickJumpTurbulence:
             case PlayerState.ElectricShockCrash:
             case PlayerState.Reset:
-            case PlayerState.Retire:
             case PlayerState.Grinding:
             case PlayerState.RotateSection:
             case PlayerState.Attacking:
