@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using DotNext.Buffers;
@@ -85,10 +86,11 @@ public unsafe struct GameData : IReliableMessage
     /// Writes the contents of this packet to the game memory.
     /// </summary>
     /// <param name="applyCustomGears">A function which applies custom gears to the game. Returns true on success, else false.</param>
-    public unsafe void ToGame(Func<string[], bool> applyCustomGears)
+    /// <param name="applyModifiedCharacters">A function which applies modified gears to the game. Returns true on success, else false.</param>
+    public unsafe void ToGame(Func<string[], bool> applyCustomGears, Func<List<string>[], bool> applyModifiedCharacters)
     {
         // TODO: Custom Gear Support
-        if (GearData.ToGame(applyCustomGears))
+        if (GearData.ToGame(applyCustomGears, applyModifiedCharacters))
         {
             *Player.RunPhysics = RunningPhysics1;
             *Player.RunPhysics2 = RunningPhysics2;
@@ -104,14 +106,15 @@ public unsafe struct GameData : IReliableMessage
     /// Retrieves gear information from the game.
     /// </summary>
     /// <param name="customGears">List of custom gear names.</param>
-    public static unsafe GameData FromGame(string[] customGears)
+    /// <param name="modifiedCharacters">Modified character names for each character.</param>
+    public static unsafe GameData FromGame(string[] customGears, List<string>[] modifiedCharacters)
     {
         var data = new GameData
         {
             RunningPhysics1 = *Player.RunPhysics,
             RunningPhysics2 = *Player.RunPhysics2,
             RaceSettings = *State.CurrentRaceSettings,
-            GearData = GearData.FromGame(customGears),
+            GearData = GearData.FromGame(customGears, modifiedCharacters),
             TurbulenceProperties = Player.TurbulenceProperties.ToArray(),
             PanelProperties = Static.PanelProperties,
             SpeedShoeProperties = Static.SpeedShoeProperties,

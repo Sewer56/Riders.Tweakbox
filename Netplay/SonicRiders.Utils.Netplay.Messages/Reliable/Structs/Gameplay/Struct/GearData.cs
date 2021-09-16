@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc.BitStream;
@@ -27,6 +29,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
         public string[] CustomGears;
 
         /// <summary>
+        /// Currently used list of modified characters.
+        /// </summary>
+        public List<string>[] ModifiedCharacters;
+
+        /// <summary>
         /// Extreme gears of the host player.
         /// </summary>
         public ExtremeGear[] Gears;
@@ -38,39 +45,55 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
         {
             var gearDataSize = StructArray.GetSize<ExtremeGear>(NumGears);
             if (CustomGears != null)
+            {
                 foreach (var gear in CustomGears)
-                    gearDataSize += _encoding.GetByteCount(gear) + _nullTerminatorLength; // Null terminated.
+                    gearDataSize += _encoding.GetByteCount(gear) + _nullTerminatorLength;
 
-            // + 1 for bool flag at start of struct.
-            // + ushort for array size
+                gearDataSize += sizeof(ushort); // Array size
+            }
+
+            if (ModifiedCharacters != null)
+            {
+                foreach (var characterModifiers in ModifiedCharacters)
+                    foreach (var characterModifier in characterModifiers)
+                        gearDataSize += _encoding.GetByteCount(characterModifier) + _nullTerminatorLength;
+
+                gearDataSize += sizeof(ushort) * ModifiedCharacters.Length;
+            }
+
+            // + 1 for bool flags at start of struct.
+            // ushort for number of modified characters.
             return gearDataSize + 1 + sizeof(ushort);
         }
-
         /// <summary>
         /// Writes the contents of this packet to the game memory.
         /// </summary>
         /// <param name="applyCustomGears">A function which applies custom gears to the game. Returns true on success, else false.</param>
+        /// <param name="applyModifiedCharacters">A function which applies modified gears to the game. Returns true on success, else false.</param>
         /// <returns>True on success, else false.</returns>
-        public unsafe bool ToGame(Func<string[], bool> applyCustomGears)
+        public unsafe bool ToGame(Func<string[], bool> applyCustomGears, Func<List<string>[], bool> applyModifiedCharacters)
         {
             // TODO: Custom Gear Support
-            bool result = applyCustomGears != null ? applyCustomGears.Invoke(CustomGears) : true; 
-            if (result)
+            bool resultGears = applyCustomGears != null ? applyCustomGears.Invoke(CustomGears) : true; 
+            if (resultGears)
                 Player.Gears.CopyFrom(Gears, Gears.Length);
 
-            return result;
+            bool resultCharacters = applyModifiedCharacters != null ? applyModifiedCharacters.Invoke(ModifiedCharacters) : true;
+            return resultGears && resultCharacters;
         }
 
         /// <summary>
         /// Retrieves gear information from the game.
         /// </summary>
         /// <param name="customGears">List of custom gear names.</param>
-        public static unsafe GearData FromGame(string[] customGears)
+        /// <param name="modifiedCharacters">List of modified character names.</param>
+        public static unsafe GearData FromGame(string[] customGears, List<string>[] modifiedCharacters)
         {
             var data = new GearData()
             {
                 CustomGears = customGears,
                 Gears = Player.Gears.ToArray(),
+                ModifiedCharacters = modifiedCharacters
             };
 
             return data;
@@ -85,6 +108,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
             // Read header.
             byte gearCount = bitStream.Read<byte>();
             byte hasCustomGear = bitStream.ReadBit();
+            byte hasCustomCharacter = bitStream.ReadBit();
 
             // Get raw gear data.
             Gears = new ExtremeGear[gearCount];
@@ -93,7 +117,15 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
 
             // Get custom gear data.
             if (hasCustomGear > 0)
-                CustomGears = bitStream.ReadStringArray();
+                CustomGears = bitStream.ReadStringArray(1024, _encoding);
+
+            // Get custom character data
+            if (hasCustomCharacter > 0)
+            {
+                ModifiedCharacters = new List<string>[bitStream.Read<ushort>()];
+                for (int x = 0; x < ModifiedCharacters.Length; x++)
+                    ModifiedCharacters[x] = bitStream.ReadStringList(1024, _encoding);
+            }
         }
 
         /// <summary>
@@ -104,8 +136,11 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
         {
             // Write Header
             byte hasCustomGear = CustomGears == null || CustomGears.Length <= 0 ? (byte)0 : (byte)1;
+            byte hasCustomCharacter = ModifiedCharacters == null || ModifiedCharacters.All(x => x.Count <= 0) ? (byte)0 : (byte)1;
+
             bitStream.Write<byte>((byte)NumGears);
             bitStream.WriteBit(hasCustomGear);
+            bitStream.WriteBit(hasCustomCharacter);
 
             // Write raw gear data.
             for (int x = 0; x < NumGears; x++)
@@ -113,7 +148,15 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
 
             // Write Custom Gear Data
             if (hasCustomGear > 0)
-                bitStream.WriteStringArray(CustomGears);
+                bitStream.WriteStringArray(CustomGears, 1024, _encoding);
+
+            // Write custom character data.
+            if (hasCustomCharacter > 0)
+            {
+                bitStream.Write<ushort>((ushort)ModifiedCharacters.Length);
+                foreach (var modifiedCharacter in ModifiedCharacters)
+                    bitStream.WriteStringArray(CollectionsMarshal.AsSpan(modifiedCharacter).Slice(0, modifiedCharacter.Count), 1024, _encoding);
+            }
         }
     }
 }

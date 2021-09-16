@@ -20,9 +20,13 @@ public class CustomCharacterApi : ICustomCharacterApi
 
     public ModifyCharacterRequest AddCharacterBehaviour(ModifyCharacterRequest request) => _controller.AddCharacterBehaviour(request);
 
-    public bool RemoveCharacterBehaviour(string name) => _controller.RemoveCharacterBehaviour(name);
+    public bool RemoveCharacterBehaviour(string name, bool clearCharacter = true) => _controller.RemoveCharacterBehaviour(name, clearCharacter);
 
     public bool TryGetAllCharacterBehaviours(int index, out List<ModifyCharacterRequest> behaviours) => _controller.TryGetAllCharacterBehaviours(index, out behaviours);
 
     public bool TryGetCharacterBehaviours(int index, out List<ModifyCharacterRequest> behaviours) => _controller.TryGetCharacterBehaviours(index, out behaviours);
+    public void Reset(bool clearCharacters = true) => _controller.Reset(clearCharacters);
+    public void Reload(IEnumerable<string> names) => _controller.Reload(names);
+    public void ReloadAll() => _controller.ReloadAll();
+    public bool UnloadCharacter(string name) => _controller.UnloadCharacter(name);
 }

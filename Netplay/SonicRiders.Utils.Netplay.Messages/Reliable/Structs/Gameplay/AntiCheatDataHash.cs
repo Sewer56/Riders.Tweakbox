@@ -1,6 +1,8 @@
 ﻿using K4os.Hash.xxHash;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
+using System.Collections.Generic;
+
 namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 
 [Equals(DoNotAddEqualityOperators = true)]
@@ -12,9 +14,9 @@ public struct AntiCheatDataHash : IReliableMessage
     /// <summary>
     /// Gets a hash of the current game data.
     /// </summary>
-    public static AntiCheatDataHash FromGame(string[] customGears = null)
+    public static AntiCheatDataHash FromGame(string[] customGears = null, List<string>[] modifiedCharacters = null)
     {
-        using var data = GameData.FromGame(customGears);
+        using var data = GameData.FromGame(customGears, modifiedCharacters);
         using var bytes = data.ToCompressedBytes(out int bytesWritten);
 
         return new AntiCheatDataHash(XXH64.DigestOf(bytes.Span.Slice(0, bytesWritten)));

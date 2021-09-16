@@ -15,6 +15,7 @@ using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers;
+using Riders.Tweakbox.Controllers.CustomCharacterController;
 using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
@@ -43,6 +44,7 @@ public class ConnectionManager : INetplayComponent
     private VersionInformation _currentVersionInformation = new VersionInformation(Program.Version);
     private Logger _log = new Logger(LogCategory.Socket);
     private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
+    private CustomCharacterController _customCharacterController = IoC.GetSingleton<CustomCharacterController>();
     private TweakboxApi _tweakboxApi;
 
     public ConnectionManager(Socket socket, EventController @event, TweakboxApi tweakboxApi)
@@ -90,7 +92,8 @@ public class ConnectionManager : INetplayComponent
         unsafe
         {
             _customGearController.GetCustomGearNames(out var loadedGears, out _);
-            using var gameData = GameData.FromGame(loadedGears);
+            var chars = _customCharacterController.GetAllCharacterBehaviours_Internal().Select(x => x.Select(x => x.CharacterName).ToList()).ToArray();
+            using var gameData = GameData.FromGame(loadedGears, chars);
             using var courseSelectSync = CourseSelectSync.FromGame(Event.CourseSelect);
             Socket.SendAndFlush(peer, ReliablePacket.Create(gameData), DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
             Socket.SendAndFlush(peer, ReliablePacket.Create(courseSelectSync), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
@@ -255,16 +258,30 @@ public class ConnectionManager : INetplayComponent
         else if (packet.MessageType == MessageType.GameData)
         {
             var data = packet.GetMessage<GameData>();
-            data.ToGame(strings =>
+            data.ToGame(gearNames =>
             {
-                if (_customGearController.HasAllGears(strings, out var missingGears))
+                if (_customGearController.HasAllGears(gearNames, out var missingGears))
                 {
-                    _customGearController.Reload(strings);
+                    _customGearController.Reload(gearNames);
                     return true;
                 }
                 else
                 {
                     ForceDisconnect($"Client is missing custom gears being used by the host.\nGear List:\n\n{string.Join("\n", missingGears)}");
+                    return false;
+                }
+            }, 
+            characterLists =>
+            {
+                var allCharacters = characterLists.SelectMany(x => x);
+                if (_customCharacterController.HasAllCharacters(allCharacters, out var missingChars))
+                {
+                    _customCharacterController.Reload(allCharacters);
+                    return true;
+                }
+                else
+                {
+                    ForceDisconnect($"Client is missing modified characters being used by the host.\nCharacter List:\n\n{string.Join("\n", missingChars)}");
                     return false;
                 }
             });
