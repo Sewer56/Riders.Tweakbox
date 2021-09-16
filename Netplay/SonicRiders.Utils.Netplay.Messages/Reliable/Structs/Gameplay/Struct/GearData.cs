@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using Reloaded.Memory;
+using Riders.Netplay.Messages.Misc.BitStream;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -41,7 +42,8 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
                     gearDataSize += _encoding.GetByteCount(gear) + _nullTerminatorLength; // Null terminated.
 
             // + 1 for bool flag at start of struct.
-            return gearDataSize + 1;
+            // + ushort for array size
+            return gearDataSize + 1 + sizeof(ushort);
         }
 
         /// <summary>
@@ -91,12 +93,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
 
             // Get custom gear data.
             if (hasCustomGear > 0)
-            {
-                int customGearCount = gearCount - Player.OriginalNumberOfGears;
-                CustomGears = new string[customGearCount];
-                for (int x = 0; x < customGearCount; x++)
-                    CustomGears[x] = bitStream.ReadString(1024, _encoding);
-            }
+                CustomGears = bitStream.ReadStringArray();
         }
 
         /// <summary>
@@ -116,10 +113,7 @@ namespace Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct
 
             // Write Custom Gear Data
             if (hasCustomGear > 0)
-            {
-                foreach (var customGear in CustomGears)
-                    bitStream.WriteString(customGear, 1024, _encoding);
-            }
+                bitStream.WriteStringArray(CustomGears);
         }
     }
 }
