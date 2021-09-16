@@ -9,6 +9,7 @@ using Riders.Netplay.Messages.Reliable.Structs;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay;
 using Riders.Netplay.Messages.Reliable.Structs.Menu;
 using Riders.Netplay.Messages.Reliable.Structs.Server;
+using Riders.Tweakbox.Api;
 using Riders.Tweakbox.Components.Netplay.Components.Game;
 using Riders.Tweakbox.Components.Netplay.Sockets;
 using Riders.Tweakbox.Components.Netplay.Sockets.Helpers;
@@ -42,13 +43,15 @@ public class ConnectionManager : INetplayComponent
     private VersionInformation _currentVersionInformation = new VersionInformation(Program.Version);
     private Logger _log = new Logger(LogCategory.Socket);
     private CustomGearController _customGearController = IoC.GetSingleton<CustomGearController>();
+    private TweakboxApi _tweakboxApi;
 
-    public ConnectionManager(Socket socket, EventController @event)
+    public ConnectionManager(Socket socket, EventController @event, TweakboxApi tweakboxApi)
     {
         Socket = socket;
         Event = @event;
         Manager = Socket.Manager;
         State = Socket.State;
+        _tweakboxApi = tweakboxApi;
 
         HostSettings = Socket.Config.Data.HostSettings;
         ClientSettings = Socket.Config.Data.ClientSettings;
@@ -108,8 +111,7 @@ public class ConnectionManager : INetplayComponent
 
         unsafe
         {
-            var mode = Event.CourseSelect->TaskData->RaceMode;
-            var versionEx = new VersionInformationEx() { GameMode = (VersionInformationEx.RaceMode)mode };
+            var versionEx = GetCurrentVersionInformationEx();
             _versionExMap.Remove(peer.Id, out VersionInformationEx infoEx);
             if (!versionEx.Verify(infoEx, out string errors))
             {
@@ -142,9 +144,8 @@ public class ConnectionManager : INetplayComponent
 
     private unsafe void OnClientPeerConnected(NetPeer peer)
     {
-        var mode = Event.CourseSelect->TaskData->RaceMode;
         Socket.SendAndFlush(peer, ReliablePacket.Create(_currentVersionInformation), DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Version Information", LogCategory.Socket);
-        Socket.SendAndFlush(peer, ReliablePacket.Create(new VersionInformationEx() { GameMode = (VersionInformationEx.RaceMode)mode }), DeliveryMethod.ReliableOrdered, "[Client] Sending Extended Version Information", LogCategory.Socket);
+        Socket.SendAndFlush(peer, ReliablePacket.Create(GetCurrentVersionInformationEx()), DeliveryMethod.ReliableOrdered, "[Client] Sending Extended Version Information", LogCategory.Socket);
 
         using var packet = ReliablePacket.Create(new ClientSetPlayerData() { Data = State.SelfInfo });
         Socket.SendAndFlush(peer, packet, DeliveryMethod.ReliableOrdered, "[Client] Connected to Host, Sending Player Data", LogCategory.Socket);
@@ -154,6 +155,15 @@ public class ConnectionManager : INetplayComponent
     {
         HostState.ClientMap.RemovePeer(peer);
         HostUpdatePlayerMap();
+    }
+
+    private unsafe VersionInformationEx GetCurrentVersionInformationEx()
+    {
+        return new VersionInformationEx()
+        {
+            GameMode = (VersionInformationEx.RaceMode)Event.CourseSelect->TaskData->RaceMode,
+            Mods = _tweakboxApi.LoadedMods.ToArray()
+        };
     }
 
     /// <summary>
@@ -315,5 +325,4 @@ public class ConnectionManager : INetplayComponent
             OnClientPeerDisconnected(peer, disconnectInfo);
     }
     #endregion
-
 }

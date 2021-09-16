@@ -1,6 +1,11 @@
-﻿using Riders.Netplay.Messages.Helpers;
+﻿using System;
+using System.Linq;
+using Riders.Netplay.Messages.Helpers;
+using Riders.Netplay.Messages.Misc.BitStream;
 using Sewer56.BitStream;
 using Sewer56.BitStream.Interfaces;
+using StructLinq;
+
 namespace Riders.Netplay.Messages.Reliable.Structs.Server;
 
 public struct VersionInformationEx : IReliableMessage
@@ -9,6 +14,11 @@ public struct VersionInformationEx : IReliableMessage
     /// The current game mode.
     /// </summary>
     public RaceMode GameMode;
+
+    /// <summary>
+    /// Lists the mods loaded in by the client.
+    /// </summary>
+    public string[] Mods;
 
     /// <inheritdoc />
     public MessageType GetMessageType() => MessageType.VersionEx;
@@ -32,6 +42,16 @@ public struct VersionInformationEx : IReliableMessage
             errors += $"Game Mode does not match | Host: {GameMode}, Client: {other.GameMode}";
         }
 
+        var modsMap = Mods.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var mod in other.Mods)
+        {
+            if (!modsMap.Contains(mod))
+            {
+                errors += $"\nMod is missing: {mod}";
+                areEqual = false;
+            }
+        }
+
         return areEqual;
     }
 
@@ -39,12 +59,14 @@ public struct VersionInformationEx : IReliableMessage
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
         GameMode = bitStream.ReadGeneric<RaceMode>(EnumNumBits<RaceMode>.Number);
+        Mods = bitStream.ReadStringArray();
     }
 
     /// <inheritdoc />
     public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
     {
         bitStream.WriteGeneric(GameMode, EnumNumBits<RaceMode>.Number);
+        bitStream.WriteStringArray(Mods);
     }
 
     /// <summary>
