@@ -158,13 +158,13 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
 
         if (ImGui.TreeNodeStr("Fair Play"))
         {
-            ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Box).ExecuteIfTrue(SendUpdateNotification);
-            if (mods.ReplaceRing100Box)
-                Reflection.MakeControlEnum(ref mods.Ring100Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Settings.Enabled).ExecuteIfTrue(SendUpdateNotification);
+            if (mods.ReplaceRing100Settings.Enabled)
+                Reflection.MakeControlEnum(ref mods.ReplaceRing100Settings.Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
 
-            ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceAirMaxBox).ExecuteIfTrue(SendUpdateNotification);
-            if (mods.ReplaceAirMaxBox)
-                Reflection.MakeControlEnum(ref mods.AirMaxReplacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceMaxAirSettings.Enabled).ExecuteIfTrue(SendUpdateNotification);
+            if (mods.ReplaceMaxAirSettings.Enabled)
+                Reflection.MakeControlEnum(ref mods.ReplaceMaxAirSettings.Replacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
 
             ImGui.TreePop();
         }

@@ -17,8 +17,6 @@ public struct GameModifiers : IReliableMessage
 {
     public bool DisableTornadoes;
     public bool DisableAttacks;
-    public ushort DisableAttackDurationFrames;
-
     public bool AlwaysTurbulence;
     public bool NoTurbulence;
     public bool DisableSmallTurbulence;
@@ -26,15 +24,12 @@ public struct GameModifiers : IReliableMessage
     public bool BerserkerTurbulenceFix;
     public bool NoScreenpeek;
 
-    public bool ReplaceRing100Box;
-    public ItemBoxAttribute Ring100Replacement;
-
-    public bool ReplaceAirMaxBox;
-    public ItemBoxAttribute AirMaxReplacement;
-
+    public ushort DisableAttackDurationFrames;
     public bool OverridePitAirGain;
     public float PitAirGainMultiplier;
 
+    public ReplaceItemSettings ReplaceRing100Settings;
+    public ReplaceItemSettings ReplaceMaxAirSettings;
     public SlipstreamModifierSettings Slipstream;
     public RingLossBehaviour DeathRingLoss;
     public RingLossBehaviour HitRingLoss;
@@ -80,17 +75,15 @@ public struct GameModifiers : IReliableMessage
         AlwaysTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         DisableSmallTurbulence = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+
         BerserkerTurbulenceFix = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
-        DisableAttackDurationFrames = bitStream.ReadGeneric<ushort>();
+        DisableAttackDurationFrames = bitStream.Read<ushort>();
         OverridePitAirGain   = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         PitAirGainMultiplier = bitStream.ReadGeneric<float>();
-
-        ReplaceRing100Box = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
-        Ring100Replacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
-        ReplaceAirMaxBox = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
-        AirMaxReplacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
-
+        
+        ReplaceRing100Settings.FromStream(ref bitStream);
+        ReplaceMaxAirSettings.FromStream(ref bitStream);
         Slipstream.FromStream(ref bitStream);
         DeathRingLoss.FromStream(ref bitStream);
         HitRingLoss.FromStream(ref bitStream);
@@ -106,22 +99,40 @@ public struct GameModifiers : IReliableMessage
         bitStream.Write(Convert.ToByte(AlwaysTurbulence), 1);
         bitStream.Write(Convert.ToByte(NoTurbulence), 1);
         bitStream.Write(Convert.ToByte(DisableSmallTurbulence), 1);
+
         bitStream.Write(Convert.ToByte(BerserkerTurbulenceFix), 1);
         bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
-        bitStream.Write(DisableAttackDurationFrames);
+        bitStream.Write<ushort>(DisableAttackDurationFrames);
         bitStream.Write(Convert.ToByte(OverridePitAirGain), 1);
         bitStream.WriteGeneric(PitAirGainMultiplier);
-
-        bitStream.WriteGeneric(ReplaceRing100Box, 1);
-        bitStream.WriteGeneric(Ring100Replacement, EnumNumBits<ItemBoxAttribute>.Number);
-        bitStream.WriteGeneric(ReplaceAirMaxBox, 1);
-        bitStream.WriteGeneric(AirMaxReplacement, EnumNumBits<ItemBoxAttribute>.Number);
-
+        
+        ReplaceRing100Settings.ToStream(ref bitStream);
+        ReplaceMaxAirSettings.ToStream(ref bitStream);
         Slipstream.ToStream(ref bitStream);
         DeathRingLoss.ToStream(ref bitStream);
         HitRingLoss.ToStream(ref bitStream);
 
         bitStream.Write(Convert.ToByte(IgnoreTurbulenceOnToggle), 1);
+    }
+}
+
+public struct ReplaceItemSettings
+{
+    public bool Enabled;
+    public ItemBoxAttribute Replacement;
+
+    /// <inheritdoc />
+    public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        Enabled = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        Replacement = bitStream.ReadGeneric<ItemBoxAttribute>(EnumNumBits<ItemBoxAttribute>.Number);
+    }
+
+    /// <inheritdoc />
+    public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        bitStream.Write(Convert.ToByte(Enabled), 1);
+        bitStream.WriteGeneric(Replacement, EnumNumBits<ItemBoxAttribute>.Number);
     }
 }
 

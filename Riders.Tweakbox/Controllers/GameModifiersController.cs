@@ -141,11 +141,11 @@ public unsafe class GameModifiersController : IController
             if (obj.Type != ObjectId.oItemBox)
                 continue;
 
-            if (Modifiers.ReplaceAirMaxBox && obj.Attribute == (int)ItemBoxAttribute.AirMax)
-                obj.Attribute = (int)Modifiers.AirMaxReplacement;
+            if (Modifiers.ReplaceMaxAirSettings.Enabled && obj.Attribute == (int)ItemBoxAttribute.AirMax)
+                obj.Attribute = (int)Modifiers.ReplaceMaxAirSettings.Replacement;
 
-            if (Modifiers.ReplaceRing100Box && obj.Attribute == (int)ItemBoxAttribute.Ring100)
-                obj.Attribute = (int)Modifiers.Ring100Replacement;
+            if (Modifiers.ReplaceRing100Settings.Enabled && obj.Attribute == (int)ItemBoxAttribute.Ring100)
+                obj.Attribute = (int)Modifiers.ReplaceRing100Settings.Replacement;
         }
     }
 
