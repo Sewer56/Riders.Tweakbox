@@ -48,7 +48,7 @@ internal unsafe partial class ApiBehaviourImplementation
         playerIndex = Sewer56.SonicRiders.API.Player.GetPlayerIndex(player);
 
         // Cached read: Subsequent times since initial stat calculation.
-        if (TryGetCustomBehaviourFromCache(playerIndex, out behaviours, out playerLevel, out customGearData, out modifyCharacterRequests))
+        if (TryGetCustomBehaviourFromCache(player, playerIndex, out behaviours, out playerLevel, out customGearData, out modifyCharacterRequests))
             return true;
 
         // Non cached read (1st time every race)
@@ -70,8 +70,7 @@ internal unsafe partial class ApiBehaviourImplementation
         {
             GearData = customGearData,
             Behaviours = behaviours,
-            ModifyRequests = modifyCharacterRequests,
-            PlayerLevel = playerLevel
+            ModifyRequests = modifyCharacterRequests
         };
 
         return behaviours.Count > 0;
@@ -83,14 +82,14 @@ internal unsafe partial class ApiBehaviourImplementation
         return TryGetCustomBehaviourEx(player, out behaviours, out playerIndex, out playerLevel, out _, out _);
     }
 
-    private bool TryGetCustomBehaviourFromCache(int playerIndex, out List<ICustomStats> behaviours, out int playerLevel, out CustomGearDataInternal customGearDataInternal, out List<ModifyCharacterRequest> modifyCharacterRequests)
+    private bool TryGetCustomBehaviourFromCache(Player* player, int playerIndex, out List<ICustomStats> behaviours, out int playerLevel, out CustomGearDataInternal customGearDataInternal, out List<ModifyCharacterRequest> modifyCharacterRequests)
     {
         var cache = _behaviourCache[playerIndex];
         if (cache.Behaviours != null)
         {
             behaviours  = cache.Behaviours;
-            playerLevel = cache.PlayerLevel;
             customGearDataInternal = cache.GearData;
+            playerLevel = GetPlayerLevel(behaviours, player);
             modifyCharacterRequests = cache.ModifyRequests;
             return true;
         }
@@ -109,6 +108,5 @@ internal unsafe partial class ApiBehaviourImplementation
         public List<ICustomStats> Behaviours;
         public CustomGearDataInternal GearData;
         public List<ModifyCharacterRequest> ModifyRequests;
-        public int PlayerLevel;
     }
 }
