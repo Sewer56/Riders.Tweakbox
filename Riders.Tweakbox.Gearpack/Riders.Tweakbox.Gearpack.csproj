@@ -50,6 +50,7 @@
   <!-- Delete old Assets in case stuff moved -->
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <RemoveDir Directories="$(RELOADEDIIMODS)/riders.utils.tweakbox.gearpack/Tweakbox" />
+    <RemoveDir Directories="$(RELOADEDIIMODS)/riders.utils.tweakbox.gearpack/x86" />
   </Target>
 
 </Project>

@@ -32,6 +32,10 @@
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.0" />
   </ItemGroup>
 
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <RemoveDir Directories="$(RELOADEDIIMODS)/riders.utils.tweakbox.characterpack.dx/x86" />
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\Riders.Tweakbox.Interfaces\Riders.Tweakbox.Interfaces.csproj" />
     <ProjectReference Include="..\Submodules\Sewer56.SonicRiders\Sewer56.SonicRiders\Sewer56.SonicRiders.csproj" />

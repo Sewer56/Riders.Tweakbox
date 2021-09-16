@@ -81,7 +81,7 @@
   </ItemGroup>
 	
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-	  <RemoveDir Directories="$(TWEAKBOX_DIR)/x86" />
+	  <RemoveDir Directories="$(RELOADEDIIMODS)/riders.utils.tweakbox/x86" />
   </Target>
 
 </Project>
