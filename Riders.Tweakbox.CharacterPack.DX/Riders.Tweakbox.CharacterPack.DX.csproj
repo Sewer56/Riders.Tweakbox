@@ -21,6 +21,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Tweakbox\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.0" />
