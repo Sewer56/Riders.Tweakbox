@@ -45,9 +45,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Interfaces"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Controller.Hook.Interfaces", "Submodules\Riders.Controller.Hook\Riders.Controller.Hook\Riders.Controller.Hook.Interfaces\Riders.Controller.Hook.Interfaces.csproj", "{5C10C194-93A1-4419-B7FC-12A83A5F6DEA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Gearpack", "riders.utils.tweakbox.gearpack\Riders.Tweakbox.Gearpack.csproj", "{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Riders.Tweakbox.Gearpack", "Riders.Tweakbox.Gearpack\Riders.Tweakbox.Gearpack.csproj", "{5B6FAB85-22B7-4DD0-8DD9-60EFD81F4B27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Riders.Tweakbox.CharacterPack.DX", "Riders.Tweakbox.Gearpack.DX\Riders.Tweakbox.CharacterPack.DX.csproj", "{CF07569E-381D-4DB2-8091-296D647D4FB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Riders.Tweakbox.CharacterPack.DX", "Riders.Tweakbox.CharacterPack.DX\Riders.Tweakbox.CharacterPack.DX.csproj", "{CF07569E-381D-4DB2-8091-296D647D4FB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
