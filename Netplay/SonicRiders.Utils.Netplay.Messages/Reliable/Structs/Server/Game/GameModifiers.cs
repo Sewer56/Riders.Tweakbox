@@ -23,6 +23,7 @@ public struct GameModifiers : IReliableMessage
 
     public bool BerserkerTurbulenceFix;
     public bool NoScreenpeek;
+    public bool NormalizedBoostDurations;
 
     public ushort DisableAttackDurationFrames;
     public bool OverridePitAirGain;
@@ -78,6 +79,8 @@ public struct GameModifiers : IReliableMessage
 
         BerserkerTurbulenceFix = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         NoScreenpeek = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+        NormalizedBoostDurations = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
+
         DisableAttackDurationFrames = bitStream.Read<ushort>();
         OverridePitAirGain   = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
         PitAirGainMultiplier = bitStream.ReadGeneric<float>();
@@ -102,6 +105,8 @@ public struct GameModifiers : IReliableMessage
 
         bitStream.Write(Convert.ToByte(BerserkerTurbulenceFix), 1);
         bitStream.Write(Convert.ToByte(NoScreenpeek), 1);
+        bitStream.Write(Convert.ToByte(NormalizedBoostDurations), 1);
+
         bitStream.Write<ushort>(DisableAttackDurationFrames);
         bitStream.Write(Convert.ToByte(OverridePitAirGain), 1);
         bitStream.WriteGeneric(PitAirGainMultiplier);

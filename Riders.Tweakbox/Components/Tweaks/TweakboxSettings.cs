@@ -122,6 +122,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         {
             ImGui.Checkbox("Disable Tornadoes", ref mods.DisableTornadoes).ExecuteIfTrue(SendUpdateNotification);
             ImGui.Checkbox("Disable Attacks", ref mods.DisableAttacks).ExecuteIfTrue(SendUpdateNotification);
+            ImGui.Checkbox("Normalize Boost Durations", ref mods.NormalizedBoostDurations).ExecuteIfTrue(SendUpdateNotification);
 
             ref var atkDurFrm = ref mods.DisableAttackDurationFrames;
             Reflection.MakeControl(ref atkDurFrm, "Disable Race Start Attack", 0.5f, $"{atkDurFrm} ({mods.GetDisableAttackDuration().TotalMilliseconds:##}ms)").ExecuteIfTrue(SendUpdateNotification);
