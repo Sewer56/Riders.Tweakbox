@@ -314,9 +314,9 @@ public struct UnreliablePacketPlayer
             player.PlayerControlFlags |= PlayerControlFlags.IsFloored;
             player.FallingMode = FallingMode.Ground;
         }
-
+        
         // TODO: The flag below can cause the game to crash for unexpected reasons; we're removing it for now.
-        player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
+        //player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
     }
 
     public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
@@ -333,6 +333,7 @@ public struct UnreliablePacketPlayer
             case PlayerState.RunningAfterStart:
             case PlayerState.ElectricShock:
             case PlayerState.FreeFalling:
+            case PlayerState.Turbulence:
                 return true;
 
             default:
@@ -341,7 +342,6 @@ public struct UnreliablePacketPlayer
             case PlayerState.TrickJumpVertical:
             case PlayerState.TrickJumpUnknown2:
             case PlayerState.TrickJumpHorizontal:
-            case PlayerState.Turbulence:
             case PlayerState.TrickJumpTurbulence:
             case PlayerState.ElectricShockCrash:
             case PlayerState.Reset:
@@ -361,7 +361,7 @@ public struct UnreliablePacketPlayer
             default:
             case PlayerState.Attacking:
             case PlayerState.GettingAttacked:
-            case PlayerState.Turbulence:
+            //case PlayerState.Turbulence:
                 return true;
 
             case PlayerState.FreeFalling:
