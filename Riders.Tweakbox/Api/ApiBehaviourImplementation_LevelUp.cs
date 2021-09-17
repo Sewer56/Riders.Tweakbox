@@ -103,9 +103,9 @@ internal unsafe partial class ApiBehaviourImplementation
         if (playerIndex == -1)
             return _setStatsForPlayerRaceHook.OriginalFunction.Value.Invoke(player);
 
+        ResetCache();
         bool hasExtendedGears = InitStats(player, playerIndex, out var extendedStats);
         ResetState();
-        ResetCache();
 
         // Note: We will hook the native code to initialise these stats.
         var result = _setStatsForPlayerRaceHook.OriginalFunction.Value.Invoke(player);
