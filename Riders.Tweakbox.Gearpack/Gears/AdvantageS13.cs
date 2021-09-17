@@ -30,7 +30,9 @@ public class AdvantageS13 : CustomGearBase, IExtremeGear
     private unsafe IntPtr SetRunningProperties(IntPtr playerPtr, int playerIndex, int playerLevel, IntPtr runningPhysics)
     {
         var runPhysics = (RunningPhysics2*)runningPhysics;
-        runPhysics->GearOneAcceleration = (float)(0.006172839087 * 3f);
+        runPhysics->GearOneAcceleration   = (float)(0.006172839087 * 3f);
+        runPhysics->GearTwoAcceleration   = (float)(0.003858024487 * 3f);
+        runPhysics->GearThreeAcceleration = (float)(0.001421377412 * 3f);
         switch (playerLevel)
         {
             case 0:
