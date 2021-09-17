@@ -29,7 +29,7 @@ public static class ApiExtensions
         SetValueIfNotNull((CharacterType*)(&native->StatsType), parameters.StatsType);
         SetValueIfNotNull((Gender*)&native->Gender, parameters.Gender);
         SetValueIfNotNull(&native->Height, parameters.Height);
-        SetValueIfNotNull(&native->SpeedMultiplier, parameters.SpeedMultiplier);
+        SetValueIfNotNull(&native->SpeedMultiplier, parameters.SpeedMultiplierOffset);
 
         SetValueIfNotNull(&native->StatDashLv1, parameters.StatDashLv1);
         SetValueIfNotNull(&native->StatDashLv2, parameters.StatDashLv2);

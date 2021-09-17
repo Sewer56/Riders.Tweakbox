@@ -15,7 +15,7 @@ public abstract class CombatCharacter : CustomCharacterBase, ICustomStats
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
-        SpeedMultiplier = 1f
+        SpeedMultiplierOffset = 0f
     };
 
     public BoostProperties GetBoostProperties() => _boostProperties;

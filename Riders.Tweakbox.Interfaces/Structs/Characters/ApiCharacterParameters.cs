@@ -26,7 +26,7 @@ public struct ApiCharacterParameters
     /// The character's speed multiplier (inversely affects accel).
     /// This value is relative to 0, so for 98% use -0.02.
     /// </summary>
-    public float? SpeedMultiplier;
+    public float? SpeedMultiplierOffset;
 
     public byte? StatDashLv1;
     public byte? StatDashLv2;

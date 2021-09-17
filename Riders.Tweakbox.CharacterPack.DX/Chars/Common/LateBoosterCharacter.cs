@@ -14,7 +14,7 @@ public abstract class LateBoosterCharacter : CustomCharacterBase, ICustomCharact
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
-        SpeedMultiplier = 1f
+        SpeedMultiplierOffset = 0f
     };
 
     public BoostProperties GetBoostProperties() => _boostProperties;

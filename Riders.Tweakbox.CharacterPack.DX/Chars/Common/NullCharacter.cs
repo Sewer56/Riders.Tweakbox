@@ -37,7 +37,7 @@ public abstract class NullCharacter : CustomCharacterBase, ICustomCharacter
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
-        SpeedMultiplier = 1.068f,
+        SpeedMultiplierOffset = 0.068f,
         ShortcutType = (CharacterType?) 3,
         StatsType = CharacterType.Speed
     };

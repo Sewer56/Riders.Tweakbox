@@ -36,7 +36,7 @@ public abstract class AllRoundCharacter : CustomCharacterBase, ICustomCharacter
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
-        SpeedMultiplier = 1.025f
+        SpeedMultiplierOffset = 0.025f
     };
 
     public BoostProperties GetBoostProperties() => _boostProperties;

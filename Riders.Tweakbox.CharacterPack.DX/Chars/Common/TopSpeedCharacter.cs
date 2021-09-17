@@ -15,7 +15,7 @@ public abstract class TopSpeedCharacter : CustomCharacterBase, ICustomCharacter
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
-        SpeedMultiplier = 1.05f
+        SpeedMultiplierOffset = 0.05f
     };
 
     public BoostProperties GetBoostProperties() => _boostProperties;
