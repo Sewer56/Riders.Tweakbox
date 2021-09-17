@@ -12,7 +12,7 @@ public abstract class AllRoundCharacter : CustomCharacterBase
         AddedBoostDurationLv1 = 20,
         AddedBoostDurationLv2 = 20,
         AddedBoostDurationLv3 = 20,
-        AddedBoostChainMultiplier = 1.015f
+        AddedBoostChainMultiplier = 0.015f
     };
 
     private DriftDashProperties _dashProperties = new DriftDashProperties()

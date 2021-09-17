@@ -8,7 +8,7 @@ public abstract class CombatCharacter : CustomCharacterBase, ICustomStats
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
-        AddedBoostChainMultiplier = 1.03f,
+        AddedBoostChainMultiplier = 0.03f,
         AddedBoostDurationLv1 = 70,
         AddedBoostDurationLv2 = 70,
     };

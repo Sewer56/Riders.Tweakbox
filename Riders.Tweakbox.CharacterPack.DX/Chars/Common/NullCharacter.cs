@@ -12,7 +12,7 @@ public abstract class NullCharacter : CustomCharacterBase
         AddedBoostDurationLv1 = 70,
         AddedBoostDurationLv2 = 70,
         AddedBoostDurationLv3 = 70,
-        AddedBoostChainMultiplier = 1.03f
+        AddedBoostChainMultiplier = 0.03f
     };
 
     private DriftDashProperties _dashProperties = new DriftDashProperties()
