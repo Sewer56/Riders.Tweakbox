@@ -1,11 +1,12 @@
 ﻿using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Characters;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 using System;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars.Common;
 
-public abstract class AllRoundCharacter : CustomCharacterBase
+public abstract class AllRoundCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {

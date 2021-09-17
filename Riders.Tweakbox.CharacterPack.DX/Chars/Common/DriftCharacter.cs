@@ -1,10 +1,11 @@
 ﻿using Riders.Tweakbox.Interfaces;
+using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 using System;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars.Common;
 
-public abstract class DriftCharacter : CustomCharacterBase
+public abstract class DriftCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
