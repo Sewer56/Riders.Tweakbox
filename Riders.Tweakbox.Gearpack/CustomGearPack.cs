@@ -18,7 +18,7 @@ public class CustomGearPack
     public CustomGearPack(string modFolder, ITweakboxApiImpl api)
     {
         var gearApi = api.GetCustomGearApi();
-        //gearApi.RemoveVanillaGears();
+        gearApi.RemoveVanillaGears();
         var gearPath = Path.Combine(modFolder, "Tweakbox/Custom");
 
         // Get all implemented gears via reflection
