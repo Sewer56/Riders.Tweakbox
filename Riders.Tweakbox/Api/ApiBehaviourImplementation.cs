@@ -188,8 +188,8 @@ internal unsafe partial class ApiBehaviourImplementation
                 if (props == null)
                     continue;
 
-                var ignoreSpeedLoss = props.CheckIfIgnoreSpeedLoss.QueryIfNotNull((IntPtr)player, playerIndex, level);
-                if (ignoreSpeedLoss != null && ignoreSpeedLoss.Value.TryConvertToBool(out bool result))
+                var ignoreSpeedLoss = props.CheckIfIgnoreSpeedLoss.QueryIfNotNull((IntPtr)player, playerIndex, level).GetValueOrDefault(QueryResult.Indeterminate);
+                if (ignoreSpeedLoss.TryConvertToBool(out bool result))
                     return result;
 
                 if (props.IgnoreSpeedLoss.HasValue)
@@ -236,9 +236,9 @@ internal unsafe partial class ApiBehaviourImplementation
                     continue;
 
                 // Query from Mod
-                var result = legendProperties.OverrideLegendEffect.QueryIfNotNull((IntPtr)player, playerIndex, level);
+                var result = legendProperties.OverrideLegendEffect.QueryIfNotNull((IntPtr)player, playerIndex, level).GetValueOrDefault(QueryResult.Indeterminate);
                 if (result != QueryResult.Indeterminate)
-                    asmFunctionResult = result.Value.ToAsmFunctionResult();
+                    asmFunctionResult = result.ToAsmFunctionResult();
 
                 // Otherwise standard behaviour.
                 if (legendProperties.IgnoreOnState.ContainsState((int)player->LastPlayerState))
@@ -382,8 +382,9 @@ internal unsafe partial class ApiBehaviourImplementation
     {
         // Determine if Remove Boost
         bool cannotBoost = boostProps.CannotBoost.GetValueOrDefault(false);
-        var result = boostProps.CheckIfCanBoost.QueryIfNotNull((IntPtr)player, playerIndex, playerLevel);
-        result.GetValueOrDefault(QueryResult.Indeterminate).TryConvertToBool(out cannotBoost);
+        var result = boostProps.CheckIfCanBoost.QueryIfNotNull((IntPtr)player, playerIndex, playerLevel).GetValueOrDefault(QueryResult.Indeterminate);
+        if (result.TryConvertToBool(out var asBool))
+            cannotBoost = asBool;
 
         // Remove Boost
         if (cannotBoost && player->PlayerInput->ButtonsPressed.HasAllFlags(Buttons.Decline))
@@ -413,7 +414,7 @@ internal unsafe partial class ApiBehaviourImplementation
                 if (boostProps != null)
                 {
                     var additionalBcm = 0.0f;
-                    additionalBcm = boostProps.GetAddedBoostChainMultiplier.QueryIfNotNull((IntPtr)player, playerIndex, level).Value;
+                    additionalBcm = boostProps.GetAddedBoostChainMultiplier.QueryIfNotNull((IntPtr)player, playerIndex, level).GetValueOrDefault(0.0f);
                     additionalBcm += boostProps.AddedBoostChainMultiplier.GetValueOrDefault(0.0F);
                     value += additionalBcm;
                 }
@@ -433,7 +434,7 @@ internal unsafe partial class ApiBehaviourImplementation
 
                 if (boostProps != null)
                 {
-                    addedBoostFrames += boostProps.GetAddedBoostDuration.QueryIfNotNull((IntPtr)player, playerIndex, level).Value;
+                    addedBoostFrames += boostProps.GetAddedBoostDuration.QueryIfNotNull((IntPtr)player, playerIndex, level).GetValueOrDefault(0);
                     addedBoostFrames += boostProps.GetExtraBoostDurationForLevel(player->Level);
                 }
 

@@ -136,7 +136,7 @@ public static class ICustomStatsExtensions
         if (handler != null)
             return handler(playerPtr, playerIndex, playerLevel);
 
-        return new T();
+        return null;
     }
 }
 
