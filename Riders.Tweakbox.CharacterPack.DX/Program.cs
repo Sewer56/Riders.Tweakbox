@@ -33,8 +33,11 @@ namespace Riders.Tweakbox.CharacterPack.DX
             _modLoader.GetController<ITweakboxApi>().TryGetTarget(out var api);
             var modImpl = api.Register($"{config.ModId}.{config.ModVersion}");
             _customCharacterPack = new CustomCharacterPack(_modLoader.GetDirectoryForModId(MyModId), modImpl);
+            _modLoader.OnModLoaderInitialized += AfterAllModsLoaded;
         }
-        
+
+        private void AfterAllModsLoaded() => _customCharacterPack.SetCharacterStats();
+
         /* Mod loader actions. */
         public void Suspend() { }
 
