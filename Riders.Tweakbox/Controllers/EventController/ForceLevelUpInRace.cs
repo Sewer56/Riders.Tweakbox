@@ -38,16 +38,24 @@ public unsafe partial class EventController : TaskEvents, IController
         {
             $"{utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x0042DD4B, false)}"
         };
-
+        
         _initForceLevelUpHook = hooks.CreateAsmHook(new string[]
         {
             "use32",
 
+            $"{utilities.PushCdeclCallerSavedRegisters()}",
             $"mov [{(int)_tempPlayerPointer.Pointer}], edi",
-            $"{utilities.AssembleAbsoluteCall<AsmFuncPtr>(typeof(EventController), nameof(SetForceLevelUpInRace), ifLevelUp, ifNotLevelUp, null)}",
+            $"{utilities.AssembleAbsoluteCall<AsmFuncPtr>(typeof(EventController), nameof(SetForceLevelUpInRace), false)}",
+            $"cmp eax, 1",
+            $"{utilities.PopCdeclCallerSavedRegisters()}",
+            $"{utilities.AssembleTrueFalseForAsmFunctionResult(ifLevelUp, ifNotLevelUp, null)}"
 
-        }, 0x42DBF6, AsmHookBehaviour.ExecuteFirst).Activate();
-
+        }, 0x42DBF6, new AsmHookOptions()
+        {
+            Behaviour = AsmHookBehaviour.ExecuteAfter,
+            MaxOpcodeSize = 5,
+            PreferRelativeJump = true
+        }).Activate();
 
         string[] ifLevelDown = new string[]
         {
@@ -58,13 +66,16 @@ public unsafe partial class EventController : TaskEvents, IController
         {
             $"{utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x0042DDA6, false)}"
         };
-
+        
         _initForceLevelDownHook = hooks.CreateAsmHook(new string[]
         {
             "use32",
-
+            $"{utilities.PushCdeclCallerSavedRegisters()}",
             $"mov [{(int)_tempPlayerPointer.Pointer}], edi",
-            $"{utilities.AssembleAbsoluteCall<AsmFuncPtr>(typeof(EventController), nameof(SetForceLevelDownInRace), ifLevelDown, ifNotLevelDown, null)}",
+            $"{utilities.AssembleAbsoluteCall<AsmFuncPtr>(typeof(EventController), nameof(SetForceLevelDownInRace), false)}",
+            $"cmp eax, 1",
+            $"{utilities.PopCdeclCallerSavedRegisters()}",
+            $"{utilities.AssembleTrueFalseForAsmFunctionResult(ifLevelDown, ifNotLevelDown, null)}"
 
         }, 0x42DD4B, AsmHookBehaviour.ExecuteFirst).Activate();
     }

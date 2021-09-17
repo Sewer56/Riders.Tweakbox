@@ -48,7 +48,6 @@ public interface ICustomStats
 
     /// <summary>
     /// Gets level information for each of the gear levels. Starting from level 1.
-    /// Note: Changing stats in real time is okay but  is not.
     /// </summary>
     public ExtendedLevelStats GetExtendedLevelStats() => default;
 
@@ -109,14 +108,14 @@ public interface ICustomStats
     public ApiEventHandler OnReset() => default;
 
     /// <summary>
-    /// Returns the player's current level. Including extended levels.
+    /// Returns the player's current extended level.
     /// </summary>
-    /// <param name="playerLevel">The level of the player as set in the player struct.</param>
     /// <param name="rings">The amount of rings in the player's posession.</param>
-    public byte GetPlayerLevel(byte playerLevel, int rings)
+    /// <returns>Null if the custom levels feature is unused, else the custom level.</returns>
+    public byte? TryGetPlayerLevel(int rings)
     {
         var stats = GetExtendedLevelStats();
-        return stats != null ? stats.GetPlayerLevel(playerLevel, rings) : playerLevel;
+        return stats != null ? stats.TryGetPlayerLevel(rings) : null;
     }
 }
 

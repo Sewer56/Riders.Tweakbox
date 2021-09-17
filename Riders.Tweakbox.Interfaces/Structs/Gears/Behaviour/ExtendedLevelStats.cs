@@ -20,12 +20,11 @@ public class ExtendedLevelStats
     /// <summary>
     /// Returns the player's current level. Including extended levels.
     /// </summary>
-    /// <param name="playerLevel">The level of the player as set in the player struct.</param>
     /// <param name="rings">The amount of rings in the player's posession.</param>
-    public byte GetPlayerLevel(byte playerLevel, int rings)
+    public byte? TryGetPlayerLevel(int rings)
     {
         if (ExtendedStats == null)
-            return playerLevel;
+            return null;
 
         for (int x = 0; x < ExtendedStats.Length - 1; x++)
         {

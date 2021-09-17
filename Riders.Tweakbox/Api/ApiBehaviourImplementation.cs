@@ -652,18 +652,26 @@ internal unsafe partial class ApiBehaviourImplementation
 
     private int GetPlayerLevel(List<ICustomStats> behaviours, Player* player)
     {
-        int maxLevel = 0;
+        int? maxLevel = null;
         foreach (var behaviour in behaviours)
         {
             var level = GetPlayerLevel(behaviour, player);
-            if (level > maxLevel)
-                maxLevel = level;
+            if (level.HasValue)
+            {
+                if (maxLevel == null)
+                    maxLevel = level;
+                else if (level.Value > maxLevel.Value)
+                    maxLevel = level.Value;
+            }
         }
 
-        return maxLevel;
+        if (maxLevel != null)
+            return maxLevel.Value;
+
+        return player->Level;
     }
 
-    private int GetPlayerLevel(ICustomStats behaviour, Player* player) => behaviour.GetPlayerLevel(player->Level, player->Rings);
+    private int? GetPlayerLevel(ICustomStats behaviour, Player* player) => behaviour.TryGetPlayerLevel(player->Rings);
 
     private bool IsMonoShortcut(int character, int gearIndex)
     {
@@ -678,8 +686,6 @@ internal unsafe partial class ApiBehaviourImplementation
         var airNeeded = triggerPercentage * stats->GearStats.MaxAir;
         return player->Air > airNeeded;
     }
-
-    
 
     #region Static Callbacks
     [UnmanagedCallersOnly]

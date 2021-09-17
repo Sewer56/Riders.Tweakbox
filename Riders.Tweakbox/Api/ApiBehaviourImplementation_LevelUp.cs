@@ -16,6 +16,7 @@ using Sewer56.NumberUtilities.Helpers;
 using Sewer56.Hooks.Utilities.Enums;
 using Riders.Tweakbox.Controllers;
 using Sewer56.SonicRiders.Structures.Enums;
+using Sewer56.SonicRiders.Structures.Tasks.Base;
 
 namespace Riders.Tweakbox.Api;
 
@@ -29,15 +30,19 @@ internal unsafe partial class ApiBehaviourImplementation
     private const int DefaultNumLevels = 3;
 
     private IHook<Functions.PlayerFnPtr> _setStatsForPlayerRaceHook;
+    private IHook<Functions.CdeclReturnByteFnPtr> _showLevelDownAnimationHook;
 
     // Base stats (as initialised by game) and real time stats.
     private PlayerLevelStats[][] _basePlayerLevelStats = new PlayerLevelStats[Player.NumberOfPlayers][];
     private PlayerLevelStats[][] _currentPlayerLevelStats = new PlayerLevelStats[Player.NumberOfPlayers][];
+    private Logger _log = new Logger(LogCategory.Default);
 
     // Constructor
     private void InitCustomLevels()
     {
         _setStatsForPlayerRaceHook = Functions.SetPlayerStatsForRaceMode.HookAs<Functions.PlayerFnPtr>(typeof(ApiBehaviourImplementation), nameof(OnSetPlayerStatsForRaceModeStatic)).Activate();
+        _showLevelDownAnimationHook = Functions.ShowLevelDownAnimationTask.HookAs<Functions.CdeclReturnByteFnPtr>(typeof(ApiBehaviourImplementation), nameof(OhShowLevelDownTaskStatic)).Activate();
+
         Sewer56.SonicRiders.API.Event.AfterEndScene += UpdateGearDataAfterRenderFrame;
         EventController.ForceLevelUpHandler += ForceLevelUpHandler;
         EventController.ForceLevelDownHandler += ForceLevelDownHandler;
@@ -153,46 +158,52 @@ internal unsafe partial class ApiBehaviourImplementation
             if (!TryGetCustomBehaviour(playerPtr, out var behaviours, out int playerIndex, out var level))
                 continue;
 
+            // Override Current Stats with base stats.
+            for (int y = 0; y < currentStats.Length; y++)
+                currentStats[y] = baseStats[y];
+
             foreach (var behaviour in behaviours)
             {
                 // Update state.
                 behaviour.OnFrame()?.Invoke((IntPtr)playerPtr, x, level);
 
                 // Update gear data for all levels.
-                for (int levelIndex = 0; levelIndex < baseStats.Length; levelIndex++)
+                for (int lvIndex = 0; lvIndex < baseStats.Length; lvIndex++)
                 {
-                    var stats = baseStats[levelIndex];
-                    UpdateGearData(ref stats, ref Unsafe.AsRef<Player>(playerPtr), behaviour, levelIndex);
-                    currentStats[levelIndex] = stats;
-                }
-
-                // Copy data to player struct.
-                var playerLevelStats = new Span<PlayerLevelStats>(&playerPtr->LevelOneStats, DefaultNumLevels);
-                var numStats = Math.Min(DefaultNumLevels, currentStats.Length);
-                currentStats.AsSpan(0, numStats).CopyTo(playerLevelStats);
-
-                // Write extended stats.
-                var extendedStats = behaviour.GetExtendedLevelStats();
-                if (extendedStats != null)
-                {
-                    // Get Level
-                    var existingLevel = _playerState[x].PlayerLevel;
-                    var overWriteLevel = Math.Min((byte)(DefaultNumLevels - 1), level);
-
-                    // Check for level up.
-                    if (level > existingLevel)
-                        _playerState[x].ForceLevelUp = true;
-                    else if (level < existingLevel)
-                        _playerState[x].ForceLevelDown = true;
-
-                    // Copy stats.
-                    playerLevelStats[overWriteLevel] = currentStats[level];
-
-                    // Force up to lv3.
-                    playerPtr->Level = (byte) overWriteLevel;
-                    _playerState[x].PlayerLevel = (byte) level;
+                    var stats = currentStats[lvIndex];
+                    UpdateGearData(ref stats, ref Unsafe.AsRef<Player>(playerPtr), behaviour, lvIndex);
+                    currentStats[lvIndex] = stats;
                 }
             }
+
+            // Copy data to player struct.
+            var playerLevelStats = new Span<PlayerLevelStats>(&playerPtr->LevelOneStats, DefaultNumLevels);
+            var numStats = Math.Min(DefaultNumLevels, currentStats.Length);
+            currentStats.AsSpan(0, numStats).CopyTo(playerLevelStats);
+
+            // Write extended stats (if necessary).
+            // Get Level
+            var existingLevel = _playerState[x].PlayerLevel;
+            var overWriteLevel = Math.Min((byte)(DefaultNumLevels - 1), level);
+            playerPtr->Level = (byte)overWriteLevel;
+
+            // Check for level up.
+            if (level > existingLevel)
+            {
+                _playerState[x].ForceLevelUp = true;
+                _log.WriteLine("Set LvUp");
+            }
+            else if (level < existingLevel)
+            {
+                _playerState[x].ForceLevelDown = true;
+                _log.WriteLine("Set LvDown");
+            }
+
+            // Copy stats.
+            playerLevelStats[overWriteLevel] = currentStats[level];
+
+            // Force up to lv3.
+            _playerState[x].PlayerLevel = (byte)level;
         }
     }
 
@@ -280,8 +291,25 @@ internal unsafe partial class ApiBehaviourImplementation
         return AsmFunctionResult.Indeterminate;
     }
 
+    private byte ShowLevelDownTaskHook()
+    {
+        var taskData    = *(Task**)State.CurrentTask;
+        var playerPtr   = *(Player**)taskData->TaskDataPtr;
+        var level = playerPtr->Level;
+
+        if (level >= 2)
+            playerPtr->Level = 1;
+
+        var result = _showLevelDownAnimationHook.OriginalFunction.Value.Invoke();
+        playerPtr->Level = level;
+        return result;
+    }
+
     #region Static Callbacks
     [UnmanagedCallersOnly]
     private static unsafe int OnSetPlayerStatsForRaceModeStatic(Player* player) => Instance.OnSetPlayerStatsForRaceMode(player);
+
+    [UnmanagedCallersOnly]
+    private static unsafe byte OhShowLevelDownTaskStatic() => Instance.ShowLevelDownTaskHook();
     #endregion
 }
