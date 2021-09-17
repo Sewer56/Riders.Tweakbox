@@ -35,7 +35,6 @@ internal unsafe partial class ApiBehaviourImplementation
     // Base stats (as initialised by game) and real time stats.
     private PlayerLevelStats[][] _basePlayerLevelStats = new PlayerLevelStats[Player.NumberOfPlayers][];
     private PlayerLevelStats[][] _currentPlayerLevelStats = new PlayerLevelStats[Player.NumberOfPlayers][];
-    private Logger _log = new Logger(LogCategory.Default);
 
     // Constructor
     private void InitCustomLevels()
@@ -189,15 +188,9 @@ internal unsafe partial class ApiBehaviourImplementation
 
             // Check for level up.
             if (level > existingLevel)
-            {
                 _playerState[x].ForceLevelUp = true;
-                _log.WriteLine("Set LvUp");
-            }
             else if (level < existingLevel)
-            {
                 _playerState[x].ForceLevelDown = true;
-                _log.WriteLine("Set LvDown");
-            }
 
             // Copy stats.
             playerLevelStats[overWriteLevel] = currentStats[level];
