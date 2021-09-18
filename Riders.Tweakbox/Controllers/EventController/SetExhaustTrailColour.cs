@@ -44,9 +44,16 @@ public unsafe partial class EventController : TaskEvents, IController
 
         if (task->TaskStatus == 3 && SetExhaustTrailColour != null)
         {
-            var originalColour = taskData->ExhaustTrailColour;
+            var originalColour = taskData->ExhaustTrailColour; // Get original colour.
             SetExhaustTrailColour(&taskData->ExhaustTrailColour, player);
+            var newColour = taskData->ExhaustTrailColour;      // Get new colour, in case it changed.
+
             var result = _exhaustTrailTaskHook.OriginalFunction.Value.Invoke();
+            // Game might have changed exhaust colour, update it stat.
+
+            if (!taskData->ExhaustTrailColour.Equals(newColour)) 
+                return result;
+
             taskData->ExhaustTrailColour = originalColour;
             return result;
         }
