@@ -316,7 +316,7 @@ public struct UnreliablePacketPlayer
         }
         
         // TODO: The flag below can cause the game to crash for unexpected reasons; we're removing it for now.
-        //player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
+        // player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
     }
 
     public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());

@@ -77,6 +77,7 @@ public unsafe partial class EventController : TaskEvents, IController
         InitSetRunStateSpeed(hooks, utilities);
         InitIgnoreTurbulenceCollision(hooks, utilities);
         InitCheckIfSetAfterBoostFunction(hooks, utilities);
+        InitCheckIfTurbIsDrifting(hooks, utilities);
     }
 
     // Common. Do not Move.

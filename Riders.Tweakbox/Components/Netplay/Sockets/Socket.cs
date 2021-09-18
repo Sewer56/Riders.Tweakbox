@@ -155,6 +155,7 @@ public abstract class Socket : IDisposable
         AddComponent(IoC.Get<Components.Misc.TimeSynchronization>());
         AddComponent(IoC.Get<Components.Misc.Random>());
         AddComponent(IoC.Get<Components.Misc.LatencyUpdate>());
+        AddComponent(IoC.Get<Components.Misc.TurbulenceCrashFix>());
 
         // API
         AddComponent(IoC.Get<Components.Api.ServerReporter>());
