@@ -35,8 +35,8 @@ public class CustomCharacterPack
     public void SetCharacterStats()
     {
         var stats = Player.TypeStats;
-        stats[0].LevelTwo.AdditiveSpeed = 0.791666687f;
-        stats[1].LevelTwo.AdditiveSpeed = 0.777777791f;
-        stats[2].LevelTwo.AdditiveSpeed = 0.791666687f;
+        stats[0].LevelTwo.SpeedCap3 = 0.791666687f;
+        stats[1].LevelTwo.SpeedCap3 = 0.777777791f;
+        stats[2].LevelTwo.SpeedCap3 = 0.791666687f;
     }
 }

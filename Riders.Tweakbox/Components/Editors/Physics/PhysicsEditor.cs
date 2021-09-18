@@ -213,13 +213,13 @@ public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, ICompone
     {
         if (ImGui.TreeNodeStr($"Level {level}"))
         {
-            Reflection.MakeControl(&characterTypeStats->AdditiveSpeed, nameof(CharacterTypeLevelStats.AdditiveSpeed), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->AdditiveSpeed)})");
-            Reflection.MakeControl(&characterTypeStats->LowSpeedAccel, nameof(CharacterTypeLevelStats.LowSpeedAccel), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->LowSpeedAccel)})");
-            Reflection.MakeControl(&characterTypeStats->HighSpeedAccel, nameof(CharacterTypeLevelStats.HighSpeedAccel), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->HighSpeedAccel)})");
-            Reflection.MakeControl(&characterTypeStats->OffRoadCruisingResistance, nameof(CharacterTypeLevelStats.OffRoadCruisingResistance), 1.0f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->OffRoadCruisingResistance)})");
-            Reflection.MakeControl(&characterTypeStats->Field_14, nameof(CharacterTypeLevelStats.Field_14), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->Field_14)})");
-            Reflection.MakeControl(&characterTypeStats->Field_18, nameof(CharacterTypeLevelStats.Field_18), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->Field_18)})");
-
+            Reflection.MakeControl(&characterTypeStats->SpeedCap1, nameof(CharacterTypeLevelStats.SpeedCap1), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->SpeedCap1)})");
+            Reflection.MakeControl(&characterTypeStats->SpeedCap2, nameof(CharacterTypeLevelStats.SpeedCap2), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->SpeedCap2)})");
+            Reflection.MakeControl(&characterTypeStats->SpeedCap3, nameof(CharacterTypeLevelStats.SpeedCap3), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->SpeedCap3)})");
+            Reflection.MakeControl(&characterTypeStats->AccelToSpeedCap1, nameof(CharacterTypeLevelStats.AccelToSpeedCap1), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->AccelToSpeedCap1)})");
+            Reflection.MakeControl(&characterTypeStats->AccelToSpeedCap2, nameof(CharacterTypeLevelStats.AccelToSpeedCap2), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->AccelToSpeedCap2)})");
+            Reflection.MakeControl(&characterTypeStats->AccelToSpeedCap3, nameof(CharacterTypeLevelStats.AccelToSpeedCap3), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->AccelToSpeedCap3)})");
+            Reflection.MakeControl(&characterTypeStats->Offroad, nameof(CharacterTypeLevelStats.Offroad), 0.05f, $"%f ({Formula.SpeedToSpeedometer(characterTypeStats->Offroad)})");
             ImGui.TreePop();
         }
     }
