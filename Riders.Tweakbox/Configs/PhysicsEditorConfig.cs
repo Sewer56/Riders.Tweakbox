@@ -111,7 +111,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
                 bufferedStreamReader.Read(out Contents);
                 bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
                 bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
-                bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
+                ReadTypeStats(bufferedStreamReader);
                 bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
                 bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
                 bufferedStreamReader.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
@@ -120,13 +120,24 @@ public unsafe class PhysicsEditorConfig : IConfiguration
             }
         }
 
+        private void ReadTypeStats(BufferedStreamReader bufferedStreamReader)
+        {
+            // Ignore Obsolete Stats.
+            CharacterTypeStats[] dummy = default;
+            bufferedStreamReader.ReadIfHasFlags(ref dummy, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
+
+            // Read non-obsolete version.
+            bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStatsFixed);
+        }
+
         public enum PhysicsEditorContents : int
         {
             Running = 1 << 0,
-            TypeStats = 1 << 1,
+            TypeStats = 1 << 1, // Obsolete/Unused
             TurbulenceProperties = 1 << 2,
             PanelAndDecelProperties = 1 << 3,
             SpeedShoeProperties = 1 << 4,
+            TypeStatsFixed = 1 << 5,
         }
     }
 }
