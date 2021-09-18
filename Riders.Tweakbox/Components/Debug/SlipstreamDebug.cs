@@ -17,9 +17,9 @@ public class SlipstreamDebug : ComponentBase
 
     public unsafe override void Render()
     {
+        ref var slipStream = ref _modifiersController.Slipstream;
         if (ImGui.Begin(Name, ref Enabled, 0))
         {
-            ref var slipStream = ref _modifiersController.Slipstream;
             slipStream.AlwaysCalculateSlipstream = true;
 
             // Set font
@@ -48,7 +48,7 @@ public class SlipstreamDebug : ComponentBase
         }
         else
         {
-            _modifiersController.Slipstream.AlwaysCalculateSlipstream = false;
+            slipStream.AlwaysCalculateSlipstream = false;
         }
 
         ImGui.End();

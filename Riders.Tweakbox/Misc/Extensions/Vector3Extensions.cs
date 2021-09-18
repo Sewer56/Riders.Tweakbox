@@ -23,12 +23,27 @@ public static class Vector3Extensions
         return (float)(arcCos / Math.PI * 180.0);
     }
     
+    /// <summary>
     /// Returns a forward vector given a rotation.
     /// </summary>
     /// <param name="rotation">Rotation with the X,Y,Z components as radians.</param>
     public static Vector3 GetForwardVector(this in Vector3 rotation)
     {
         var result = Matrix4x4.CreateFromYawPitchRoll(rotation.X, rotation.Y, rotation.Z);
+        var forwardVector = Vector3.Transform(new Vector3(0, 0, -1), result); // 0, 0, -1 is forward in right hand system.
+        return Vector3.Normalize(forwardVector);
+    }
+
+    /// <summary>
+    /// Returns a forward vector given a rotation.
+    /// </summary>
+    /// <param name="rotation">
+    /// Rotation with the X,Y,Z components as radians.
+    /// X contains vertical, Y contains horizontal, Z contains roll.
+    /// </param>
+    public static Vector3 GetForwardVectorForRidersRotation(this in Vector3 rotation)
+    {
+        var result = Matrix4x4.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
         var forwardVector = Vector3.Transform(new Vector3(0, 0, -1), result); // 0, 0, -1 is forward in right hand system.
         return Vector3.Normalize(forwardVector);
     }

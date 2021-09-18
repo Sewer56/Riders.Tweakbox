@@ -72,13 +72,16 @@ public unsafe class GameModifiersController : IController
         EventController.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
         EventController.ShouldKillTurbulence += ShouldKillTurbulence;
         EventController.ForceTurbulenceType += ForceTurbulenceType;
-        EventController.AfterRunPhysicsSimulation += Slipstream.OnAfterRunPhysicsSimulation;
+        EventController.AfterRunPhysicsSimulation += OnAfterRunPhysicsSimulation;
         EventController.OnShouldRejectAttackTask += OnShouldRejectAttackTask;
         EventController.SetRingsOnHit += SetRingsOnHit;
         EventController.SetRingsOnDeath += SetRingsOnDeath;
         EventController.OnShouldRejectAttackTask += ShouldRejectAttack;
         _layoutController.OnLoadLayout += OnLoadLayout;
     }
+
+    // Note: Do not subscribe to Slipstream directly as that creates a struct copy.
+    private int OnAfterRunPhysicsSimulation() => Slipstream.OnAfterRunPhysicsSimulation();
 
     private int ShouldRejectAttack(Player* playerone, Player* playertwo, int a3)
     {

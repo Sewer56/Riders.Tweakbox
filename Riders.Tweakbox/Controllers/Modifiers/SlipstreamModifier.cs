@@ -6,6 +6,7 @@ using Sewer56.SonicRiders.API;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 using PlayerAPI = Sewer56.SonicRiders.API.Player;
 using Riders.Tweakbox.Interfaces.Structs.Enums;
+using Riders.Tweakbox.Misc.Log;
 
 namespace Riders.Tweakbox.Controllers.Modifiers;
 
@@ -44,7 +45,8 @@ public struct SlipstreamModifier
         if (!Modifiers.Slipstream.Enabled)
             return 0;
 
-        for (int x = 0; x < PlayerAPI.Players.Count; x++)
+        var maxPlayers = *State.NumberOfRacers;
+        for (int x = 0; x < maxPlayers; x++)
         {
             // Check if player eligible for slipstream.
             ref var player = ref PlayerAPI.Players[x];
@@ -53,7 +55,7 @@ public struct SlipstreamModifier
                 continue;
 
             float slipPower = 0;
-            for (int y = 0; y < PlayerAPI.Players.Count; y++)
+            for (int y = 0; y < maxPlayers; y++)
             {
                 if (x == y)
                     continue;
@@ -87,7 +89,7 @@ public struct SlipstreamModifier
         double slipAnglePower = default;
 
         // Get Slipstream Angle & Distance Bonus
-        var firstForwardVector = first.Rotation.GetForwardVector();
+        var firstForwardVector = first.Rotation.GetForwardVectorForRidersRotation();
         var directionToSecond = Vector3.Normalize(first.Position - second.Position);
         var angle    = Vector3Extensions.CalcAngle(firstForwardVector, directionToSecond);
         if (float.IsNaN(angle))
