@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars.Common;
 
-public abstract class CombatCharacter : CustomCharacterBase, ICustomStats
+public abstract class CombatCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
