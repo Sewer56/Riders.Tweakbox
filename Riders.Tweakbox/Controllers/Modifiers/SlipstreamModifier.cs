@@ -87,36 +87,43 @@ public struct SlipstreamModifier
         // Prepare Variables.
         double slipDistanceMult = default;
         double slipAnglePower = default;
+        double slipAlignmentPower = default;
 
         // Get Slipstream Angle & Distance Bonus
-        var firstForwardVector = first.Rotation.GetForwardVectorForRidersRotation();
-        var directionToSecond = Vector3.Normalize(first.Position - second.Position);
-        var angle    = Vector3Extensions.CalcAngle(firstForwardVector, directionToSecond);
-        if (float.IsNaN(angle))
-        {
-            slipPower = 0;
-            return;
-        }
-        
-        var distance = Vector3.Distance(first.Position, second.Position);
+        var secondForwardVector = second.Rotation.GetForwardVectorForRidersRotation();
+        var directionToSecond   = Vector3.Normalize(first.Position - second.Position);
+        var angle               = Vector3Extensions.CalcAngle(secondForwardVector, directionToSecond);
+        if (float.IsNaN(angle)) { slipPower = 0; return; }
 
-        if (angle > modifier.SlipstreamMaxAngle || distance > modifier.SlipstreamMaxDistance)
+        var firstForwardVector = first.Rotation.GetForwardVectorForRidersRotation();
+        var alignment          = Vector3Extensions.CalcAngle(firstForwardVector, secondForwardVector);
+        if (float.IsNaN(alignment)) { slipPower = 0; return; }
+
+        var distance  = Vector3.Distance(first.Position, second.Position);
+
+        if (angle > modifier.SlipstreamMaxAngle || alignment > modifier.SlipstreamMaxAngle || distance > modifier.SlipstreamMaxDistance)
         {
             slipAnglePower = 0;
             slipDistanceMult = 0;
+            slipAlignmentPower = 0;
         }
         else
         {
-            slipAnglePower = ((1 - (angle / modifier.SlipstreamMaxAngle)) * modifier.SlipstreamMaxStrength);
+            slipAlignmentPower = ((1 - (alignment / modifier.SlipstreamMaxAngle)));
+            slipAnglePower = ((1 - (angle / modifier.SlipstreamMaxAngle)));
             slipDistanceMult = (1 - (distance / modifier.SlipstreamMaxDistance));
         }
 
-        slipPower = (float)(slipAnglePower * modifier.EasingSetting.GetEasingFunction().Ease(slipDistanceMult));
+        var combinedStrength = slipAlignmentPower * slipAnglePower * modifier.SlipstreamMaxStrength;
+        slipPower = (float)(combinedStrength * modifier.EasingSetting.GetEasingFunction().Ease(slipDistanceMult));
 
         // Assign debug info.
         debugInfo.SlipPower = slipPower;
         debugInfo.SlipAnglePower = (float)slipAnglePower;
+        debugInfo.SlipAlignmentPower = (float)slipAlignmentPower;
         debugInfo.SlipDistanceMult = (float)slipDistanceMult;
+
+        debugInfo.Alignment = alignment;
         debugInfo.Angle = angle;
         debugInfo.Distance = distance;
     }
@@ -127,7 +134,10 @@ public struct SlipstreamModifier
     public struct SlipstreamDebugInfo
     {
         public float Angle;
+        public float Alignment;
         public float SlipPower;
+
+        public float SlipAlignmentPower;
         public float SlipAnglePower;
         public float SlipDistanceMult;
         public float Distance;

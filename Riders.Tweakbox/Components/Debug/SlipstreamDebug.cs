@@ -36,7 +36,7 @@ public class SlipstreamDebug : ComponentBase
                     for (int y = 0; y < maxPlayers; y++)
                     {
                         var info = slipStream.SlipstreamDebugInformation[x, y];
-                        ImGui.TextWrapped($"From Player {y} | Angle: {info.Angle:00.000}, Dist: {info.Distance:00.000}, Power: {info.SlipPower:0.0000000}, AnglePower: {info.SlipAnglePower:0.0000000}, DistMult: {info.SlipDistanceMult:0.0000000}");
+                        ImGui.TextWrapped($"From Player {y} | Angle: {info.Angle:00.000}, Alignment: {info.Alignment:00.000}, Dist: {info.Distance:00.000}, Power: {info.SlipPower:0.0000000}, AnglePower: {info.SlipAnglePower:0.000}, AlignPower: {info.SlipAlignmentPower:0.000} DistMult: {info.SlipDistanceMult:0.0000000}");
                     }
 
                     ImGui.TreePop();
