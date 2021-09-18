@@ -1,5 +1,6 @@
 ﻿using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
+using Riders.Tweakbox.Interfaces.Structs.Characters;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 using System;
 
@@ -21,6 +22,11 @@ public abstract class DriftCharacter : CustomCharacterBase, ICustomCharacter
     private ExtendedLevelStats _extendedLevelStats = new ExtendedLevelStats()
     {
         SetPlayerStats = SetPlayerStats
+    };
+
+    public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
+    {
+        SpeedMultiplierOffset = 0f
     };
 
     private unsafe static void SetPlayerStats(IntPtr levelstatsptr, IntPtr playerptr, int playerindex, int playerlevel)
