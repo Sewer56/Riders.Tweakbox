@@ -178,8 +178,8 @@ public struct SlipstreamModifierSettings
         return new SlipstreamModifierSettings()
         {
             Enabled = true,
-            SlipstreamMaxAngle = 24.00f,
-            SlipstreamMaxStrength = 0.0072f,
+            SlipstreamMaxAngle = 25.000f,
+            SlipstreamMaxStrength = 0.0082f,
             SlipstreamMaxDistance = 100.000f,
             EasingSetting = EasingSetting.CircleEase
         };
