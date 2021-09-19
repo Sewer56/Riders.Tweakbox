@@ -33,14 +33,18 @@ public unsafe class CustomGearController : IController
     /// <summary>
     /// Executed when the gear list is being reloaded.
     /// </summary>
-    public event Action OnReset;
+    public event Action AfterReset;
+
+    /// <summary>
+    /// Executed when the gear count changes.
+    /// </summary>
+    public event Action AfterGearCountChanged;
 
     internal CustomGearCodePatcher CodePatcher;
     internal CustomGearUiController UiController;
     internal CustomGearPatches Patches;
 
-    internal Dictionary<string, CustomGearDataInternal> AvailableGears =
-        new Dictionary<string, CustomGearDataInternal>();
+    internal Dictionary<string, CustomGearDataInternal> AvailableGears = new Dictionary<string, CustomGearDataInternal>();
 
     internal List<CustomGearDataInternal> LoadedGears = new List<CustomGearDataInternal>();
 
@@ -264,7 +268,6 @@ public unsafe class CustomGearController : IController
     /// <param name="removeVanillaGears">Removes all gears from the vanilla game.</param>
     public void Reset(bool clearGears = true, bool removeVanillaGears = false)
     {
-        OnReset?.Invoke();
         _log.WriteLine($"[{nameof(CustomGearController)}] Resetting Gears"); 
         CodePatcher.Reset(removeVanillaGears);
         UiController.Reset();
@@ -273,6 +276,7 @@ public unsafe class CustomGearController : IController
             AvailableGears.Clear();
 
         LoadedGears.Clear();
+        AfterReset?.Invoke();
     }
 
     internal bool TryGetGearData_Internal(int index, out CustomGearDataInternal data)
@@ -302,6 +306,8 @@ public unsafe class CustomGearController : IController
         // and/or add/replace dictionary items.
         AvailableGears[data.GearName] = data;
         LoadedGears.Add(data);
+
+        AfterGearCountChanged?.Invoke();
     }
 
     private void ClearGearIndices()

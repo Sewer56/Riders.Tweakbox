@@ -48,7 +48,7 @@ internal unsafe partial class ApiBehaviourImplementation
         _hooks = SDK.ReloadedHooks;
         _customGearController = customGearController;
         _customCharacterController = customCharacterController;
-        _customGearController.OnReset += ResetState;
+        _customGearController.AfterReset += ResetState;
         _eventController = IoC.GetSingleton<EventController>(); // Ensure load order
 
         ResetState();

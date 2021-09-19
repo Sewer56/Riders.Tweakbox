@@ -1,4 +1,6 @@
-﻿namespace Riders.Tweakbox.Interfaces;
+﻿using Riders.Tweakbox.Interfaces.Structs;
+
+namespace Riders.Tweakbox.Interfaces;
 
 /// <summary>
 /// Provides access to all other sub APIs available from Tweakbox.
@@ -38,4 +40,9 @@ public interface ITweakboxApiImpl
     /// Retrieves the API that allows you to interact with physics.
     /// </summary>
     public IPhysicsApi GetPhysicsApi();
+
+    /// <summary>
+    /// Retrieves a copy of the class sing
+    /// </summary>
+    public ApiPointers GetPointers();
 }
