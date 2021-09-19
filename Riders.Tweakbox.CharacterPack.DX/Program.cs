@@ -2,6 +2,8 @@
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces;
 using System;
+using Reloaded.Memory.Pointers;
+using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.CharacterPack.DX
 {

@@ -34,7 +34,10 @@ nav:
     - Custom Gears: custom-gears.md
     - Optimizing Textures: optimizing-textures.md
     - Animated Textures: animated-textures.md
-    
+  - Preview:
+    - About: Preview/preview.md 
+    - Tweakbox API: Preview/tweakbox-api.md 
+
   - Changelog:
     - 0.6.0:  Changelogs/0.6.0/0.6.0.md
     - 0.5.0:  Changelogs/0.5.0/0.5.0.md
