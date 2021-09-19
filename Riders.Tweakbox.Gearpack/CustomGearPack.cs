@@ -44,7 +44,6 @@ public class CustomGearPack
     public void Unload(ITweakboxApiImpl api)
     {
         var gearApi = api.GetCustomGearApi();
-        foreach (var gear in Gears)
-            gearApi.RemoveGear(gear.Request.GearName);
+        gearApi.RemoveGears(Gears.Select(x => x.Request.GearName));
     }
 }

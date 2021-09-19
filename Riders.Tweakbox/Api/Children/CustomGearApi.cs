@@ -41,6 +41,7 @@ public class CustomGearApi : ICustomGearApi
     public bool UnloadGear(string name) => _controller.UnloadGear(name);
 
     public bool RemoveGear(string name, bool clearGear = true) => _controller.RemoveGear(name, clearGear);
+    public void RemoveGears(IEnumerable<string> names, bool clearGear = true) => _controller.RemoveGears(names, clearGear);
 
     public bool IsGearLoaded(string name) => _controller.IsGearLoaded(name);
 

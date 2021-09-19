@@ -76,6 +76,14 @@ public interface ICustomGearApi
     bool RemoveGear(string name, bool clearGear = true);
 
     /// <summary>
+    /// Removes a set of custom gears with a specific name.
+    /// </summary>
+    /// <param name="names">Names of the gears used in <see cref="AddGearRequest.GearName"/> when the gear was added.</param>
+    /// <param name="clearGear">Removes the gears from the available/unloaded set of gears.</param>
+    /// <returns>True on success, else false.</returns>
+    void RemoveGears(IEnumerable<string> names, bool clearGear = true);
+
+    /// <summary>
     /// Returns true if the gear is loaded, else false.
     /// </summary>
     /// <param name="name">The name of the gear.</param>

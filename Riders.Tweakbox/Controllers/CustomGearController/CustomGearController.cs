@@ -209,6 +209,25 @@ public unsafe class CustomGearController : IController
     }
 
     /// <summary>
+    /// Removes a custom gear with a specific name.
+    /// </summary>
+    /// <param name="names">Names of the gear used in <see cref="AddGearRequest.GearName"/> when the gear was added.</param>
+    /// <param name="clearGear">Removes the gears from the available/unloaded set of gears.</param>
+    /// <returns>True on success, else false.</returns>
+    public void RemoveGears(IEnumerable<string> names, bool clearGear = true)
+    {
+        foreach (var name in names)
+        {
+            _log.WriteLine($"[{nameof(CustomGearController)}] Removing Gear: {name}");
+            LoadedGears.Remove(AvailableGears[name]);
+            if (clearGear)
+                AvailableGears.Remove(name, out var value);
+        }
+
+        Reload(LoadedGears.Select(x => x.GearName).ToArray());
+    }
+
+    /// <summary>
     /// Returns true if the gear is loaded, else false.
     /// </summary>
     /// <param name="name">The name of the gear.</param>
