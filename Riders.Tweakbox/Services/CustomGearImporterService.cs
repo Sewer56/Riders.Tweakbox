@@ -9,6 +9,7 @@ using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Controllers.CustomGearController;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Interfaces.Structs.Gears;
+using System.Linq;
 
 namespace Riders.Tweakbox.Services
 {
@@ -19,7 +20,7 @@ namespace Riders.Tweakbox.Services
     {
         private IModLoader _modLoader;
         private Logger _log = new Logger(LogCategory.Default);
-        private List<AddGearRequest> _requests = new List<AddGearRequest>();
+        private Dictionary<string, List<AddGearRequest>> _requests = new Dictionary<string, List<AddGearRequest>>();
         private CustomGearService _customGearService = IoC.GetSingleton<CustomGearService>();
         private CustomGearController _customGearController; 
 
@@ -37,6 +38,7 @@ namespace Riders.Tweakbox.Services
             if (!Directory.Exists(folder))
                 return;
 
+            var requests = new List<AddGearRequest>();
             var directories = Directory.GetDirectories(folder);
             foreach (var subDirectory in directories)
             {
@@ -47,22 +49,22 @@ namespace Riders.Tweakbox.Services
 
                     var request = _customGearService.ImportFromFolder(subDirectory);
                     _customGearController.AddGear(request);
-                    _requests.Add(request);
+                    requests.Add(request);
                 }
                 catch (Exception e)
                 {
                     _log.WriteLine($"Failed to Import Custom Gear\n{e.Message}\n{e.StackTrace}");
                 }
             }
+
+            _requests[config.ModId] = requests;
         }
 
         private void Remove(IModConfigV1 config)
         {
             EnsureControllerAvailable();
-            foreach (var request in _requests)
-            {
-                _customGearController.RemoveGear(request.GearName);
-            }
+            if (_requests.Remove(config.ModId, out var list))
+                _customGearController.RemoveGears(list.Select(x => x.GearName));
         }
 
         private void OnModUnloading(IModV1 arg1, IModConfigV1 arg2) => Remove(arg2);

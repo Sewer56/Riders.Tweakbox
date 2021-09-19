@@ -57,7 +57,7 @@ public class Program : IMod
     /*  If CanSuspend == false, suspend and resume button are disabled in Launcher and Suspend()/Resume() will never be called.
         If CanUnload == false, unload button is disabled in Launcher and Unload() will never be called.
     */
-    public bool CanUnload() => false;
+    public bool CanUnload() => true;
     public bool CanSuspend() => true;
 
     /* Automatically called by the mod loader when the mod is about to be unloaded. */
