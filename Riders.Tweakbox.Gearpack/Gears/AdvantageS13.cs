@@ -3,7 +3,6 @@ using Riders.Tweakbox.Gearpack.Gears.Common;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-using System.IO;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
@@ -12,19 +11,17 @@ public class AdvantageS13 : CustomGearBase, IExtremeGear
 {
     private RunningProperties _runningProperties;
 
+    public override string FolderName { get; set; } = "AdvantageS 1.3";
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
-    public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
+    public override void InitializeGear(string gearsFolder, Interfaces.ICustomGearApi gearApi)
     {
         _runningProperties = new RunningProperties()
         {
             SetRunningProperties = SetRunningProperties
         };
-
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "AdvantageS 1.3"));
-        data.Behaviour = this;
-        gearApi.AddGear(data);
     }
 
     private unsafe IntPtr SetRunningProperties(IntPtr playerPtr, int playerIndex, int playerLevel, IntPtr runningPhysics)

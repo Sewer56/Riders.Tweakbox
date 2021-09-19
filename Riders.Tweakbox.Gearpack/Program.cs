@@ -22,6 +22,10 @@ public class Program : IMod
     /// </summary>
     private IModLoader _modLoader;
     private CustomGearPack _customGearPack;
+    private ITweakboxApi _api;
+    private ITweakboxApiImpl _apiImpl;
+
+    private string _apiModName;
 
     public void StartEx(IModLoaderV1 loader, IModConfigV1 config)
     {
@@ -29,23 +33,32 @@ public class Program : IMod
         _logger = (ILogger)_modLoader.GetLogger();
 
         /* Your mod code starts here. */
-        _modLoader.GetController<ITweakboxApi>().TryGetTarget(out var api);
-        var modImpl = api.Register($"{config.ModId}.{config.ModVersion}");
-        _customGearPack = new CustomGearPack(_modLoader.GetDirectoryForModId(MyModId), modImpl);
+        _modLoader.GetController<ITweakboxApi>().TryGetTarget(out _api);
+        _apiModName = $"{config.ModId}.{config.ModVersion}";
+        _apiImpl = _api.Register(_apiModName);
+        _customGearPack = new CustomGearPack(_modLoader.GetDirectoryForModId(MyModId), _apiImpl);
     }
 
     /* Mod loader actions. */
-    public void Suspend() { }
+    public void Suspend() { Unload(); }
 
-    public void Resume() { }
+    public void Resume()
+    {
+        _apiImpl = _api.Register(_apiModName);
+        _customGearPack.Unload(_apiImpl);
+    }
 
-    public void Unload() { }
+    public void Unload()
+    {
+        _customGearPack.Unload(_apiImpl);
+        _api.Unregister(_apiModName);
+    }
 
     /*  If CanSuspend == false, suspend and resume button are disabled in Launcher and Suspend()/Resume() will never be called.
         If CanUnload == false, unload button is disabled in Launcher and Unload() will never be called.
     */
     public bool CanUnload() => false;
-    public bool CanSuspend() => false;
+    public bool CanSuspend() => true;
 
     /* Automatically called by the mod loader when the mod is about to be unloaded. */
     public Action Disposing { get; }

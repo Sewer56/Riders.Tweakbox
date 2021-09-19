@@ -1,9 +1,7 @@
 ﻿using System;
 using Riders.Tweakbox.Gearpack.Gears.Common;
-using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-using System.IO;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
@@ -12,19 +10,17 @@ public class AdvantageFDX : CustomGearBase, IExtremeGear
 {
     private TrickBehaviour _behaviour;
 
+    public override string FolderName { get; set; } = "AdvantageF DX";
+
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
-    public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
+    public override void InitializeGear(string gearsFolder, Interfaces.ICustomGearApi gearApi)
     {
         _behaviour = new TrickBehaviour()
         {
             SetSpeedGain = SetSpeedGainFromTrick
         };
-
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "AdvantageF DX"));
-        data.Behaviour = this;
-        gearApi.AddGear(data);
     }
 
     // IExtremeGear API Callbacks //

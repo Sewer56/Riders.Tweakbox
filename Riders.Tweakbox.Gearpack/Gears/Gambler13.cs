@@ -3,20 +3,21 @@ using Riders.Tweakbox.Gearpack.Gears.Common;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-using System.IO;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class Gambler13 : CustomGearBase, IExtremeGear
 {
+    public override string FolderName { get; set; } = "Gambler 1.3";
+
     private ItemProperties _itemProperties;
     private BoostProperties _boostProperties;
 
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
-    public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
+    public override void InitializeGear(string gearsFolder, ICustomGearApi gearApi)
     {
         _itemProperties = new ItemProperties()
         {
@@ -29,10 +30,6 @@ public class Gambler13 : CustomGearBase, IExtremeGear
             OnBoost = OnBoost,
             GetAddedBoostChainMultiplier = GetAddedBoostChainMultiplier
         };
-
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "Gambler 1.3"));
-        data.Behaviour = this;
-        gearApi.AddGear(data);
     }
 
     private unsafe float GetAddedBoostChainMultiplier(IntPtr playerPtr, int playerIndex, int level)

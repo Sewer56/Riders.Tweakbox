@@ -2,12 +2,13 @@
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-using System.IO;
 
 namespace Riders.Tweakbox.Gearpack.Gears;
 
 public class CoverPDX : CustomGearBase, IExtremeGear
 {
+    public override string FolderName { get; set; } = "CoverP DX";
+
     private DriftDashProperties _driftDashProperties = new DriftDashProperties()
     {
         DriftDashCap = Utility.SpeedometerToFloat(280.0f)
@@ -22,17 +23,7 @@ public class CoverPDX : CustomGearBase, IExtremeGear
     {
         AddedBoostSpeedFromRingCount = Utility.SpeedometerToFloat(0.5f),
     };
-
-    /// <summary>
-    /// Initializes this custom gear.
-    /// </summary>
-    public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
-    {
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "CoverP DX"));
-        data.Behaviour = this;
-        gearApi.AddGear(data);
-    }
-
+    
     // IExtremeGear API Callbacks //
     public DriftDashProperties GetDriftDashProperties() => _driftDashProperties;
 

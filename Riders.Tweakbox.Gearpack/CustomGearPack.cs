@@ -33,4 +33,18 @@ public class CustomGearPack
             Gears.Add(gear);
         }
     }
+
+    public void Resume(ITweakboxApiImpl api)
+    {
+        var gearApi = api.GetCustomGearApi();
+        foreach (var gear in Gears)
+            gearApi.AddGear(gear.Request);
+    }
+
+    public void Unload(ITweakboxApiImpl api)
+    {
+        var gearApi = api.GetCustomGearApi();
+        foreach (var gear in Gears)
+            gearApi.RemoveGear(gear.Request.GearName);
+    }
 }

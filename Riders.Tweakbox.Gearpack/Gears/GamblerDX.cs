@@ -4,7 +4,6 @@ using Riders.Tweakbox.Gearpack.Gears.Common;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Interfaces;
 using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
-using System.IO;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Gameplay;
@@ -16,6 +15,8 @@ namespace Riders.Tweakbox.Gearpack.Gears;
 
 public unsafe class GamblerDX : CustomGearBase, IExtremeGear
 {
+    public override string FolderName { get; set; } = "Gambler DX";
+
     private const int ExhaustCycleTime = 120;
     private ExtendedLevelStats _extendedLevelStats;
     private OverclockModeDX _overclockProperties = new OverclockModeDX()
@@ -44,7 +45,7 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
     /// <summary>
     /// Initializes this custom gear.
     /// </summary>
-    public override void Initialize(string gearsFolder, ICustomGearApi gearApi)
+    public override void InitializeGear(string gearsFolder, ICustomGearApi gearApi)
     {
         _extendedLevelStats = new ExtendedLevelStats()
         {
@@ -55,10 +56,6 @@ public unsafe class GamblerDX : CustomGearBase, IExtremeGear
         {
             GetExhaustTrailColour = GetExhaustTrailColour
         };
-
-        var data = gearApi.ImportFromFolder(Path.Combine(gearsFolder, "Gambler DX"));
-        data.Behaviour = this;
-        gearApi.AddGear(data);
     }
 
 
