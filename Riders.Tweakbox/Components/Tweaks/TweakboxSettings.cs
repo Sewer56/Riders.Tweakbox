@@ -167,7 +167,11 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             if (mods.ReplaceMaxAirSettings.Enabled)
                 Reflection.MakeControlEnum(ref mods.ReplaceMaxAirSettings.Replacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
 
-            Reflection.MakeControl(ref mods.ItemBoxProperties.RespawnTimerFrames, "Itembox Respawn Timer", 0.1f).ExecuteIfTrue(SendUpdateNotification);
+            var minTime = 0;
+            var maxTime = int.MaxValue;
+            Reflection.MakeControl(ref mods.ItemBoxProperties.RespawnTimerFrames, "Itembox Respawn Timer", 0.1f, ref minTime, ref maxTime).ExecuteIfTrue(SendUpdateNotification);
+            Tooltip.TextOnHover("A value of 0 will make the item never respawn.");
+
             ImGui.TreePop();
         }
 
