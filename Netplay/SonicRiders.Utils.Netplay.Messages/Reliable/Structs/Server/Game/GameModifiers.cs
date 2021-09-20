@@ -13,52 +13,37 @@ using static Riders.Netplay.Messages.Reliable.Structs.Server.Game.SlipstreamModi
 
 namespace Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 
-public struct GameModifiers : IReliableMessage
+public class GameModifiers : IReliableMessage
 {
     public bool DisableTornadoes;
     public bool DisableAttacks;
     public bool AlwaysTurbulence;
     public bool NoTurbulence;
-    public bool DisableSmallTurbulence;
+    public bool DisableSmallTurbulence = true;
 
-    public bool BerserkerTurbulenceFix;
+    public bool BerserkerTurbulenceFix = true;
     public bool NoScreenpeek;
-    public bool NormalizedBoostDurations;
+    public bool NormalizedBoostDurations = true;
 
     public ushort DisableAttackDurationFrames;
     public bool OverridePitAirGain;
-    public float PitAirGainMultiplier;
+    public float PitAirGainMultiplier = 1.0f;
 
-    public ReplaceItemSettings ReplaceRing100Settings;
-    public ReplaceItemSettings ReplaceMaxAirSettings;
-    public SlipstreamModifierSettings Slipstream;
-    public RingLossBehaviour DeathRingLoss;
-    public RingLossBehaviour HitRingLoss;
-    public ItemBoxProperties ItemBoxProperties;
-
-    public bool IgnoreTurbulenceOnToggle;
-
-    /// <summary>
-    /// Creates a <see cref="GameModifiers"/> struct with the default parameters.
-    /// </summary>
-    public static GameModifiers CreateDefault()
+    public ReplaceItemSettings ReplaceRing100Settings = new ReplaceItemSettings();
+    public ReplaceItemSettings ReplaceMaxAirSettings = new ReplaceItemSettings();
+    public SlipstreamModifierSettings Slipstream = new SlipstreamModifierSettings();
+    public RingLossBehaviour DeathRingLoss = new RingLossBehaviour()
     {
-        var result = new GameModifiers();
-        result.Slipstream = SlipstreamModifierSettings.CreateDefault();
-        result.DeathRingLoss = new RingLossBehaviour()
-        {
-            Enabled = true,
-            RingLossBefore = 0,
-            RingLossPercentage = 0
-        };
+        Enabled = true,
+        RingLossBefore = 0,
+        RingLossPercentage = 0
+    };
 
-        result.ItemBoxProperties = ItemBoxProperties.CreateDefault();
-        result.PitAirGainMultiplier = 1.0f;
-        result.BerserkerTurbulenceFix = true;
-        result.HitRingLoss = RingLossBehaviour.CreateDefault();
-        return result;
-    }
+    public RingLossBehaviour HitRingLoss = new RingLossBehaviour();
+    public ItemBoxProperties ItemBoxProperties = new ItemBoxProperties();
 
+    public bool IgnoreTurbulenceOnToggle = true;
+    
     /// <inheritdoc />
     public void Dispose() { }
 
@@ -125,7 +110,7 @@ public struct GameModifiers : IReliableMessage
     }
 }
 
-public struct ReplaceItemSettings
+public class ReplaceItemSettings
 {
     public bool Enabled;
     public ItemBoxAttribute Replacement;
@@ -145,20 +130,12 @@ public struct ReplaceItemSettings
     }
 }
 
-public struct ItemBoxProperties
+public class ItemBoxProperties
 {
     /// <summary>
     /// Amount of frames until an itembox respawns.
     /// </summary>
-    public int RespawnTimerFrames;
-
-    public static ItemBoxProperties CreateDefault()
-    {
-        return new ItemBoxProperties()
-        {
-            RespawnTimerFrames = 180
-        };
-    }
+    public int RespawnTimerFrames = 180;
 
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
@@ -174,48 +151,36 @@ public struct ItemBoxProperties
 }
 
 // TODO: Optimize Message Size of This Struct
-public struct SlipstreamModifierSettings
+public class SlipstreamModifierSettings
 {
     /// <summary>
     /// True to enable slipstream.
     /// </summary>
-    public bool Enabled;
+    public bool Enabled = true;
 
     /// <summary>
     /// Maximum slipstream angle.
     /// Slipstream strength is scaled depending on the rotation.
     /// </summary>
-    public float SlipstreamMaxAngle;
+    public float SlipstreamMaxAngle = 25.000f;
 
     /// <summary>
     /// Max multiplier of player speed every frame.
     /// The actual slip power is based on how perfectly you follow; with this being the upper bound.
     /// </summary>
-    public float SlipstreamMaxStrength;
+    public float SlipstreamMaxStrength = 0.0082f;
 
     /// <summary>
     /// Max distance for slipstream.
     /// The closer the player, the more slipstream is applied.
     /// At the distance here, minimum slipstream is applied.
     /// </summary>
-    public float SlipstreamMaxDistance;
+    public float SlipstreamMaxDistance = 100.000f;
 
     /// <summary>
     /// Easing functions allow you to apply custom mathematical formulas to your slipstream.
     /// </summary>
-    public EasingSetting EasingSetting;
-
-    public static SlipstreamModifierSettings CreateDefault()
-    {
-        return new SlipstreamModifierSettings()
-        {
-            Enabled = true,
-            SlipstreamMaxAngle = 25.000f,
-            SlipstreamMaxStrength = 0.0082f,
-            SlipstreamMaxDistance = 100.000f,
-            EasingSetting = EasingSetting.CircleEase
-        };
-    }
+    public EasingSetting EasingSetting = EasingSetting.CircleEase;
 
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
@@ -250,7 +215,7 @@ public enum EasingSetting
 }
 
 // Defines how ring loss is handled.
-public struct RingLossBehaviour
+public class RingLossBehaviour
 {
     public const int MaxRingLoss = 100;
     public const int MinRingLoss = 0;
@@ -263,24 +228,24 @@ public struct RingLossBehaviour
     /// <summary>
     /// True if this override is enabled, else false.
     /// </summary>
-    public bool Enabled;
+    public bool Enabled = true;
 
     /// <summary>
     /// Flat amount of rings lost.
     /// This is applied after the percentage cut.
     /// </summary>
-    public byte RingLossAfter;
+    public byte RingLossAfter = 10;
 
     /// <summary>
     /// Flat amount of rings lost.
     /// This is applied before the percentage cut.
     /// </summary>
-    public byte RingLossBefore;
+    public byte RingLossBefore = 0;
 
     /// <summary>
     /// Percentage of rings lost, the result is rounded down to nearest integer.
     /// </summary>
-    public float RingLossPercentage;
+    public float RingLossPercentage = 20f;
 
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
@@ -298,17 +263,6 @@ public struct RingLossBehaviour
         bitStream.Write(RingLossBefore, RingLossNumBits);
         bitStream.Write(RingLossAfter, RingLossNumBits);
         bitStream.WriteGeneric<float>(RingLossPercentage);
-    }
-
-    public static RingLossBehaviour CreateDefault()
-    {
-        return new RingLossBehaviour()
-        {
-            Enabled = true,
-            RingLossBefore = 0,
-            RingLossAfter = 10,
-            RingLossPercentage = 20f
-        };
     }
 }
 

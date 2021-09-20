@@ -74,7 +74,7 @@ public class TweakboxConfig : JsonConfigBase<TweakboxConfig, TweakboxConfig.Inte
             Alpha = 255
         };
 
-        public GameModifiers Modifiers = GameModifiers.CreateDefault();
+        public GameModifiers Modifiers = new GameModifiers();
     }
 
     public enum MemoryLimit : int

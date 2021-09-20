@@ -96,7 +96,7 @@ public unsafe class GameModifiersController : IController
     /// Updates the current set of game modifiers.
     /// </summary>
     /// <param name="modifiers">The new modifiers.</param>
-    public void SetModifiers(in GameModifiers modifiers)
+    public void SetModifiers(GameModifiers modifiers)
     {
         Modifiers = modifiers;
         InvokeOnEditModifiers();
