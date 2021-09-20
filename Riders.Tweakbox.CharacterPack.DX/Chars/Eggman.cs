@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Interfaces;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Eggman : AllRoundCharacter, ICustomStats
+public class Eggman : AllRoundCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Eggman DX";
 

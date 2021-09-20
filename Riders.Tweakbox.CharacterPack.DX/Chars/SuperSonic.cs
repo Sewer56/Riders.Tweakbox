@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Interfaces;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class SuperSonic : CustomCharacterBase, ICustomStats
+public class SuperSonic : CustomCharacterBase, ICustomCharacter
 {
     public override string Name { get; } = "SuperSonic DX";
 

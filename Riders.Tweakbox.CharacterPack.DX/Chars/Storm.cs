@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Storm : TopSpeedCharacter, ICustomStats
+public class Storm : TopSpeedCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Storm DX";
 

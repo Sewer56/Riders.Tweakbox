@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Wave : TopSpeedCharacter, ICustomStats
+public class Wave : TopSpeedCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Wave DX";
 

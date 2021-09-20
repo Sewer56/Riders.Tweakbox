@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Interfaces;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Ulala : AllRoundCharacter, ICustomStats
+public class Ulala : AllRoundCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Ulala DX";
 

@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class AiAi : LateBoosterCharacter, ICustomStats
+public class AiAi : LateBoosterCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Saru DX"; // Monke!
 

@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Interfaces;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Nights : AllRoundCharacter, ICustomStats
+public class Nights : AllRoundCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Nights DX";
 

@@ -4,7 +4,7 @@ using Riders.Tweakbox.Interfaces.Interfaces;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Rouge : DriftCharacter, ICustomStats
+public class Rouge : DriftCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Rouge DX";
 

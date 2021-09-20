@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Sonic : LateBoosterCharacter, ICustomStats
+public class Sonic : LateBoosterCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Sonic DX";
 

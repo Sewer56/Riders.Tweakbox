@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Jet : TopSpeedCharacter, ICustomStats
+public class Jet : TopSpeedCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Jet DX";
 

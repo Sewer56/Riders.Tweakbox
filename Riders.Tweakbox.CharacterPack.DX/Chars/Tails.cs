@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Tails : LateBoosterCharacter, ICustomStats
+public class Tails : LateBoosterCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Tails DX";
 

@@ -5,7 +5,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 
 namespace Riders.Tweakbox.CharacterPack.DX.Chars;
 
-public class Shadow : CombatCharacter, ICustomStats
+public class Shadow : CombatCharacter, ICustomCharacter
 {
     public override string Name { get; } = "Shadow DX";
 
