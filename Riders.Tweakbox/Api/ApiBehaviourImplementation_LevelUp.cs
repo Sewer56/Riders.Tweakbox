@@ -17,6 +17,8 @@ using Sewer56.Hooks.Utilities.Enums;
 using Riders.Tweakbox.Controllers;
 using Sewer56.SonicRiders.Structures.Enums;
 using Sewer56.SonicRiders.Structures.Tasks.Base;
+using System.Collections.Generic;
+using Riders.Tweakbox.Interfaces.Structs.Characters;
 
 namespace Riders.Tweakbox.Api;
 
@@ -47,6 +49,18 @@ internal unsafe partial class ApiBehaviourImplementation
         EventController.ForceLevelDownHandler += ForceLevelDownHandler;
     }
 
+    private void SetCharacterParameters(List<ModifyCharacterRequest> modifyCharacterRequests)
+    {
+        // Set Character Stats
+        foreach (var modifyCharacterRequest in modifyCharacterRequests)
+        {
+            var character = modifyCharacterRequest.CharacterId;
+            var customParams = modifyCharacterRequest.Behaviour.GetCharacterParameters();
+            var characterParams = Sewer56.SonicRiders.API.Player.CharacterParameters.Pointer + character;
+            customParams.MapToNative(characterParams);
+        }
+    }
+
     private bool InitStats(Player* player, int playerIndex, out Span<ExtendedExtremeGearLevelStats> extendedStats)
     {
         int numLevels = DefaultNumLevels;
@@ -57,14 +71,7 @@ internal unsafe partial class ApiBehaviourImplementation
         // Now allocate memory as needed.
         if (TryGetCustomBehaviourEx(player, out var behaviours, out _, out var level, out _, out var modifyCharacterRequests))
         {
-            // Set Character Stats
-            foreach (var modifyCharacterRequest in modifyCharacterRequests)
-            {
-                var character  = modifyCharacterRequest.CharacterId;
-                var customParams = modifyCharacterRequest.Behaviour.GetCharacterParameters();
-                var characterParams = Sewer56.SonicRiders.API.Player.CharacterParameters.Pointer + character;
-                customParams.MapToNative(characterParams);
-            }
+            SetCharacterParameters(modifyCharacterRequests);
 
             // Set Gear Behaviours
             foreach (var behaviour in behaviours)

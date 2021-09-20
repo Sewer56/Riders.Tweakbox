@@ -26,6 +26,7 @@ using Riders.Tweakbox.Interfaces.Structs.Gears.Behaviour;
 using Sewer56.SonicRiders.Structures.Misc;
 using Riders.Tweakbox.Controllers.CustomCharacterController;
 using System.Collections.Generic;
+using Riders.Tweakbox.Interfaces.Structs.Characters;
 
 namespace Riders.Tweakbox.Api;
 
@@ -54,6 +55,8 @@ internal unsafe partial class ApiBehaviourImplementation
         ResetState();
         InitCustomLevels();
         _applyTurningSpeedLossHook = Functions.ApplyTurningSpeedLoss.HookAs<Functions.ApplyTurningSpeedLossFnPtr>(typeof(ApiBehaviourImplementation), nameof(ApplyTurningSpeedLossImplStatic)).Activate();
+        customCharacterController.OnAddCustomCharacter    += OnAddOrRemoveCustomCharacter;
+        customCharacterController.OnRemoveCustomCharacter += OnAddOrRemoveCustomCharacter;
         EventController.SetAirGainedThisFrame += SetAirGainedThisFrame;
         EventController.SetAirGainedThisFrameFromGrind += SetAirGainedThisFrameFromGrind;
         EventController.SetAirGainedThisFrameFromFly += SetAirGainedThisFrameFromFly;
@@ -76,6 +79,12 @@ internal unsafe partial class ApiBehaviourImplementation
         EventController.SetPitAirGain += SetPitAirGain;
         EventController.SetRunningSpeedHook += SetRunningSpeedHook;
         EventController.SetSpeedShoesSpeed += SetSpeedShoesSpeed;
+    }
+
+    private void OnAddOrRemoveCustomCharacter(ModifyCharacterRequest obj)
+    {
+        if (_customCharacterController.TryGetCharacterBehaviours_Internal(obj.CharacterId, out var modifyCharacterRequests))
+            SetCharacterParameters(modifyCharacterRequests);
     }
 
     private void ResetState() => _playerState = new ApiPlayerState[Sewer56.SonicRiders.API.Player.MaxNumberOfPlayers];

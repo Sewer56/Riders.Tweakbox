@@ -12,9 +12,10 @@ public class E10000R : DriftCharacter, ICustomCharacter
 
     public override Characters Character { get; } = Characters.E10000R;
 
-    public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
+    public new ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()
     {
         SpeedMultiplierOffset = 0f,
-        ShortcutType = CharacterType.Power
+        ShortcutType = CharacterType.Power,
+        StatsType = CharacterType.Power
     };
 }

@@ -14,6 +14,8 @@ namespace Riders.Tweakbox.Controllers.CustomCharacterController;
 public class CustomCharacterController : IController
 {
     public readonly int MaxCharacters;
+    public event Action<ModifyCharacterRequest> OnAddCustomCharacter;
+    public event Action<ModifyCharacterRequest> OnRemoveCustomCharacter;
 
     private List<ModifyCharacterRequest>[] _characterOverrides;
     private Dictionary<string, ModifyCharacterRequest> _allOverrides;
@@ -44,6 +46,7 @@ public class CustomCharacterController : IController
 
         _allOverrides[request.CharacterName] = request;
         _characterOverrides[request.CharacterId].Add(request);
+        OnAddCustomCharacter(request);
         return request;
     }
 
@@ -126,6 +129,7 @@ public class CustomCharacterController : IController
             return false;
 
         _characterOverrides[request.CharacterId].Remove(request);
+        OnRemoveCustomCharacter(request);
         return true;
     }
 
