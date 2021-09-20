@@ -35,8 +35,17 @@ public class CustomCharacterPack
     public void SetCharacterStats()
     {
         var stats = Player.TypeStats;
-        stats[0].LevelTwo.SpeedCap3 = 0.791666687f;
+
+        stats[0].LevelOne.SpeedCap3 = 0.75f;
+        stats[0].LevelTwo.SpeedCap3 = 0.810185194f;
+        stats[0].LevelThree.SpeedCap3 = 0.870370f;
+
+        stats[1].LevelOne.SpeedCap3 = 0.717592597f;
         stats[1].LevelTwo.SpeedCap3 = 0.777777791f;
+        stats[1].LevelThree.SpeedCap3 = 0.837962985f;
+
+        stats[2].LevelOne.SpeedCap3 = 0.731481493f;
         stats[2].LevelTwo.SpeedCap3 = 0.791666687f;
+        stats[2].LevelThree.SpeedCap3 = 0.851851881f;
     }
 }
