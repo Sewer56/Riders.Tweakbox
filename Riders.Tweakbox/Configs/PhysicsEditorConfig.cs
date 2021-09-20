@@ -28,7 +28,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
     /// </summary>
     public static PhysicsEditorConfig FromGame()
     {
-        var config = new PhysicsEditorConfig();
+        var config   = new PhysicsEditorConfig();
         ref var data = ref config.Data;
 
         data.Contents = EnumsNET.FlagEnums.GetAllFlags<PhysicsEditorContents>();
@@ -124,7 +124,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         {
             // Ignore Obsolete Stats.
             CharacterTypeStats[] dummy = default;
-            bufferedStreamReader.ReadIfHasFlags(ref dummy, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStats);
+            bufferedStreamReader.ReadIfHasFlags(ref dummy, Player.TypeStats.Count, Contents, (PhysicsEditorContents)(1 << 1));
 
             // Read non-obsolete version.
             bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStatsFixed);
@@ -133,7 +133,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         public enum PhysicsEditorContents : int
         {
             Running = 1 << 0,
-            TypeStats = 1 << 1, // Obsolete/Unused
+            //TypeStats = 1 << 1, // Obsolete/Unused
             TurbulenceProperties = 1 << 2,
             PanelAndDecelProperties = 1 << 3,
             SpeedShoeProperties = 1 << 4,
