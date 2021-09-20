@@ -2,7 +2,7 @@
   "ModId": "Riders.Tweakbox.CharacterPack.DX",
   "ModName": "Riders Tweakbox DX Character Pack",
   "ModAuthor": "Sewer56",
-  "ModVersion": "1.0.1",
+  "ModVersion": "1.0.2",
   "ModDescription": "Contains an re-implementation of the characters present in Sonic Riders DX.",
   "ModDll": "Riders.Tweakbox.CharacterPack.DX.dll",
   "ModIcon": "Preview.png",
