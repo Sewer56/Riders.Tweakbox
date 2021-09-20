@@ -77,6 +77,7 @@ public unsafe class GameModifiersController : IController
         EventController.SetRingsOnHit += SetRingsOnHit;
         EventController.SetRingsOnDeath += SetRingsOnDeath;
         EventController.OnShouldRejectAttackTask += ShouldRejectAttack;
+        EventController.SetItemboxRespawnTimer += SetItemboxRespawnTimer;
         _layoutController.OnLoadLayout += OnLoadLayout;
     }
 
@@ -225,6 +226,11 @@ public unsafe class GameModifiersController : IController
             return true;
 
         return Convert.ToBoolean(hook.OriginalFunction.Value.Invoke(player));
+    }
+
+    private int SetItemboxRespawnTimer()
+    {
+        return _config.Data.Modifiers.ItemBoxProperties.RespawnTimerFrames;
     }
 
     private bool IsNonPlayerTurbulence(Player* player)

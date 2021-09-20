@@ -157,7 +157,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             ImGui.TreePop();
         }
 
-        if (ImGui.TreeNodeStr("Fair Play"))
+        if (ImGui.TreeNodeStr("Item Properties"))
         {
             ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Settings.Enabled).ExecuteIfTrue(SendUpdateNotification);
             if (mods.ReplaceRing100Settings.Enabled)
@@ -167,6 +167,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             if (mods.ReplaceMaxAirSettings.Enabled)
                 Reflection.MakeControlEnum(ref mods.ReplaceMaxAirSettings.Replacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
 
+            Reflection.MakeControl(ref mods.ItemBoxProperties.RespawnTimerFrames, "Itembox Respawn Timer", 0.1f).ExecuteIfTrue(SendUpdateNotification);
             ImGui.TreePop();
         }
 

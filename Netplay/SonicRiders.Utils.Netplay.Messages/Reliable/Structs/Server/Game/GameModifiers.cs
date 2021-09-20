@@ -34,6 +34,7 @@ public struct GameModifiers : IReliableMessage
     public SlipstreamModifierSettings Slipstream;
     public RingLossBehaviour DeathRingLoss;
     public RingLossBehaviour HitRingLoss;
+    public ItemBoxProperties ItemBoxProperties;
 
     public bool IgnoreTurbulenceOnToggle;
 
@@ -51,6 +52,7 @@ public struct GameModifiers : IReliableMessage
             RingLossPercentage = 0
         };
 
+        result.ItemBoxProperties = ItemBoxProperties.CreateDefault();
         result.PitAirGainMultiplier = 1.0f;
         result.BerserkerTurbulenceFix = true;
         result.HitRingLoss = RingLossBehaviour.CreateDefault();
@@ -90,6 +92,7 @@ public struct GameModifiers : IReliableMessage
         Slipstream.FromStream(ref bitStream);
         DeathRingLoss.FromStream(ref bitStream);
         HitRingLoss.FromStream(ref bitStream);
+        ItemBoxProperties.FromStream(ref bitStream);
 
         IgnoreTurbulenceOnToggle = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
     }
@@ -116,6 +119,7 @@ public struct GameModifiers : IReliableMessage
         Slipstream.ToStream(ref bitStream);
         DeathRingLoss.ToStream(ref bitStream);
         HitRingLoss.ToStream(ref bitStream);
+        ItemBoxProperties.ToStream(ref bitStream);
 
         bitStream.Write(Convert.ToByte(IgnoreTurbulenceOnToggle), 1);
     }
@@ -138,6 +142,34 @@ public struct ReplaceItemSettings
     {
         bitStream.Write(Convert.ToByte(Enabled), 1);
         bitStream.WriteGeneric(Replacement, EnumNumBits<ItemBoxAttribute>.Number);
+    }
+}
+
+public struct ItemBoxProperties
+{
+    /// <summary>
+    /// Amount of frames until an itembox respawns.
+    /// </summary>
+    public int RespawnTimerFrames;
+
+    public static ItemBoxProperties CreateDefault()
+    {
+        return new ItemBoxProperties()
+        {
+            RespawnTimerFrames = 180
+        };
+    }
+
+    /// <inheritdoc />
+    public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        RespawnTimerFrames = bitStream.Read<int>();
+    }
+
+    /// <inheritdoc />
+    public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        bitStream.Write<int>(RespawnTimerFrames);
     }
 }
 
