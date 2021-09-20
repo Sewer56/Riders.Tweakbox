@@ -245,7 +245,7 @@ public class RingLossBehaviour
     /// <summary>
     /// Percentage of rings lost, the result is rounded down to nearest integer.
     /// </summary>
-    public float RingLossPercentage = 20f;
+    public float RingLossPercentage = 15f;
 
     /// <inheritdoc />
     public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
