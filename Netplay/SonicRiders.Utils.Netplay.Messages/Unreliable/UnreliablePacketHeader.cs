@@ -12,7 +12,7 @@ namespace Riders.Netplay.Messages.Unreliable;
 [Equals(DoNotAddEqualityOperators = true)]
 public struct UnreliablePacketHeader
 {
-    public static readonly BitField SequenceNumberBitfield = new BitField(8);
+    public static readonly BitField SequenceNumberBitfield = new BitField(10);
 
     /// <summary>
     /// Sequence number assigned to this packet.
