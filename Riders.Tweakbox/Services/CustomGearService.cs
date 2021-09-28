@@ -14,6 +14,7 @@ using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Riders.Tweakbox.Misc.Extensions;
 using Riders.Tweakbox.Interfaces.Structs.Gears;
 using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
+using Riders.Tweakbox.Misc.Data;
 
 namespace Riders.Tweakbox.Services
 {
@@ -22,8 +23,8 @@ namespace Riders.Tweakbox.Services
     /// </summary>
     public unsafe class CustomGearService : ISingletonService
     {
-        private const string _iconFileName  = "icon.png";
-        private const string _titleFileName = "title.png";
+        private const string _iconFileName  = "icon";
+        private const string _titleFileName = "title";
         private const string _dataFileName = "data.bin";
         private const string _instructionsFileName = "instructions.txt";
         private const string _instructions = "Create a new Reloaded mod and create the folders `Tweakbox` and inside it `Gears`. Copy the folder containing this file to that folder.\n\nPlease refer to the Tweakbox wiki for more guidance.";
@@ -48,8 +49,9 @@ namespace Riders.Tweakbox.Services
 
             SetAnimatedTexturePath(ref result.AnimatedIconFolder, folder, _iconFileName);
             SetAnimatedTexturePath(ref result.AnimatedNameFolder, folder, _titleFileName);
-            result.IconPath = Path.Combine(folder, _iconFileName);
-            result.NamePath = Path.Combine(folder, _titleFileName);
+            DirectorySearcher.TryGetDirectoryContents(folder, out var files, out var directories);
+            result.IconPath = DirectoryExtensions.GetFileWithName(files, _iconFileName);
+            result.NamePath = DirectoryExtensions.GetFileWithName(files, _titleFileName);
             UpdateTexturePaths(result, ref result.GearData);
 
             return Mapping.Mapper.Map<AddGearRequest>(result);
