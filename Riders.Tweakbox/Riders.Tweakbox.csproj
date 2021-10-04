@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
 	  <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -70,6 +70,7 @@
   <ItemGroup>
     <Folder Include="Components\Netplay\Components\Game\Structs\" />
     <Folder Include="Controllers\CustomGearController\Behaviour\" />
+    <Folder Include="Definitions\Serializers\Json\" />
     <Folder Include="Misc\Graphics\" />
     <Folder Include="Services\TextureGen\Structs\" />
   </ItemGroup>
