@@ -99,7 +99,7 @@ public unsafe static class AsmHelpers
     /// </summary>
     public static string PushXmmRegister(this IReloadedHooksUtilities utilities, string register = "xmm0")
     {
-        return $"sub {_esp}, {SizeOfXmmRegister}\nvmovdqu [{_esp}],{register}";
+        return $"sub {_esp}, {SizeOfXmmRegister}\nmovdqu [{_esp}],{register}";
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ public unsafe static class AsmHelpers
     /// </summary>
     public static string PushXmmRegisterFloat(this IReloadedHooksUtilities utilities, string register = "xmm0")
     {
-        return $"sub {_esp}, {sizeof(float)}\nvmovss [{_esp}],{register}";
+        return $"sub {_esp}, {sizeof(float)}\nmovss [{_esp}],{register}";
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public unsafe static class AsmHelpers
     {
         return $"sub {_esp}, {sizeof(float)}\n" +
                $"fst dword [{_esp}]\n" +
-               $"vmovss {register}, [{_esp}]\n" +
+               $"movss {register}, [{_esp}]\n" +
                $"add {_esp}, {sizeof(float)}";
     }
 
@@ -128,7 +128,7 @@ public unsafe static class AsmHelpers
     {
         return $"sub {_esp}, {sizeof(float)}\n" +
                $"fstp dword [{_esp}]\n" +
-               $"vmovss {register}, [{_esp}]\n" +
+               $"movss {register}, [{_esp}]\n" +
                $"add {_esp}, {sizeof(float)}";
     }
 
@@ -235,7 +235,7 @@ public unsafe static class AsmHelpers
     /// </summary>
     public static string PopXmmRegisterFloat(this IReloadedHooksUtilities utilities, string register = "xmm0")
     {
-        return $"vmovss {register}, [{_esp}]\nadd {_esp}, {sizeof(float)}";
+        return $"movss {register}, [{_esp}]\nadd {_esp}, {sizeof(float)}";
     }
 
     /// <summary>
