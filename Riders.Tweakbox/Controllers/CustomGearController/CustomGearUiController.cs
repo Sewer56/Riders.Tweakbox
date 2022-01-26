@@ -1,25 +1,16 @@
 ﻿using Reloaded.Hooks.Definitions;
-using Riders.Tweakbox.Services.Placeholder;
 using Riders.Tweakbox.Services.Texture;
-using Sewer56.SonicRiders.Structures.Enums;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using Sewer56.SonicRiders.Structures.Gameplay;
 using Reloaded.Hooks.Definitions.X86;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using Reloaded.Hooks.Definitions.Enums;
-using Reloaded.Memory.Pointers;
-using Sewer56.SonicRiders;
 using Riders.Tweakbox.Services.TextureGen;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Misc;
-using Riders.Tweakbox.Controllers.CustomGearController.Structs;
 using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders.Parser.Menu.Metadata;
 using Sewer56.SonicRiders.Parser.Menu.Metadata.Structs;
@@ -29,13 +20,13 @@ using Sewer56.SonicRiders.Structures.Functions;
 using StructLinq;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 using static Reloaded.Hooks.Definitions.X86.FunctionAttribute.Register;
-using ExtremeGear = Sewer56.SonicRiders.Structures.Enums.ExtremeGear;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
 using Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal;
 using Riders.Tweakbox.Services;
 using Riders.Tweakbox.Services.TextureGen.Structs;
-using Riders.Tweakbox.Interfaces.Structs.Gears;
+using Sewer56.SonicRiders.API;
 using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
+using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -69,7 +60,7 @@ internal unsafe class CustomGearUiController
     // Hooks
     private Functions.Spani_SABInitFn _initFn = Functions.Initialize2dMetadataFile.GetWrapper();
     private Functions.GetSet_TexFn _loadXvrsFromArchiveFn = Functions.LoadXvrsFromArchive.GetWrapper();
-
+    private IHook<Functions.Spani_SABInitWrapperFn> _initWrapperFn;
 
     private IAsmHook _setGearTextureIndexHook;
     private IAsmHook _setEntrySelectionTextureIndexHook;
@@ -79,7 +70,7 @@ internal unsafe class CustomGearUiController
     internal CustomGearUiController(CustomGearCodePatcher codePatcher)
     {
         _codePatcher = codePatcher;
-        _customGearService = IoC.GetSingleton<CustomGearService>();
+        _customGearService  = IoC.GetSingleton<CustomGearService>();
         _allocatorService   = IoC.GetSingleton<PvrtTextureInjectionAllocatorService>();
         _textureService     = IoC.GetSingleton<TextureService>();
         
@@ -139,27 +130,7 @@ internal unsafe class CustomGearUiController
         _setEntrySelectionTextureIndexHook = hooks.CreateAsmHook(setTextureIdOnceSelectedHook, 0x00461B81).Activate();
 
         // Create Metadata Hook
-        string[] createMetadataHook = new[]
-        {
-            "use32",
-
-            // Save Registers
-            "push ecx", 
-            "push edx",
-
-            "push 0x17DD640", // Re-push parameter.
-            $"{utilities.AssembleAbsoluteCall<Spani_SABInitWrapper>(SabInitHook, false)}",
-            
-            // Restore registers
-            "pop edx",
-            "pop ecx",
-            // Note: No pop after original call; so no add esp 4 here.
-
-            // Original Code
-            "mov ecx, [esp + 78h]"
-        };
-
-        _createMetadataHook = hooks.CreateAsmHook(createMetadataHook, 0x0040656A, AsmHookBehaviour.DoNotExecuteOriginal).Activate();
+        _initWrapperFn = Functions.Initialize2dMetadataFileWrapper.Hook(SabInitWrapperHook).Activate();
 
         // Create Metadata Hook
         string[] loadXvrsHook = new[]
@@ -238,37 +209,42 @@ internal unsafe class CustomGearUiController
     }
 
     // Modify the Menu Metadata file as its loaded to define new textures.
-    private int SabInitHook(int* pFileoffset, byte* pRidersarchivedata, void** ppmetadata)
+    private int SabInitWrapperHook(int* pFileOffset, void* pRidersArchiveData, void** ppMetadata)
     {
-        // Just in case!
+        // Ignore other menus.
+        if (ppMetadata != Menu.CharacterSelect.LayoutPointer)
+            return _initWrapperFn.OriginalFunction(pFileOffset, pRidersArchiveData, ppMetadata);
+
+        // Reuse our new metadata.
+        int newFileOffset = 0;
         if (_newMetadataPointer != (void*)0)
         {
-            *ppmetadata = _newMetadataPointer;
-            _initFn(_newMetadataPointer);
-            return 1;
+            pFileOffset = &newFileOffset;
+            pRidersArchiveData = _newMetadataPointer;
+            return _initWrapperFn.OriginalFunction(pFileOffset, pRidersArchiveData, ppMetadata);
         }
 
         // Parse original file
-        _originalMetadataPointer = (pRidersarchivedata + *pFileoffset);
+        _originalMetadataPointer = ((byte*)pRidersArchiveData + *pFileOffset);
         _originalMetadata.Initialize((MetadataHeader*)_originalMetadataPointer, false);
 
         // Calculate sizes and indexes.
         var fileSize = (int)_originalMetadata.FileSize;
         var additionalTextures = _allAllocations.ToStructEnumerable().Sum(x => x.Count, x => x);
-        var additionalEntriesSize = sizeof(TextureIdEntry) * (additionalTextures);
+        var additionalEntriesSize = sizeof(TextureEntry) * (additionalTextures);
         var nextXvrsTextureId = GetHighestTextureId(_originalMetadata.TextureIdEntries, _originalMetadata.TextureIdHeader->NumTextures) + 1;
-        
+
         // Allocate & Copy Data
-        _newMetadataPointer = (void*) Marshal.AllocHGlobal(fileSize + additionalEntriesSize);
+        _newMetadataPointer = (void*)Marshal.AllocHGlobal(fileSize + additionalEntriesSize);
         Unsafe.CopyBlockUnaligned(_newMetadataPointer, _originalMetadataPointer, (uint)fileSize);
 
         // Add entries
         _newMetadata.Initialize((MetadataHeader*)_newMetadataPointer, false);
         var textureHeader = &_newMetadata.TextureIdEntries[_newMetadata.TextureIdHeader->NumTextures];
-        
+
         for (int x = 0; x < additionalTextures; x++)
         {
-            textureHeader[x] = new TextureIdEntry()
+            textureHeader[x] = new TextureEntry()
             {
                 NormalizedHeight = 1,
                 NormalizedPosX = 0,
@@ -289,12 +265,12 @@ internal unsafe class CustomGearUiController
         _newMetadata.TextureIdHeader->NumTextures += additionalTextures;
 
         // Initialize with new pointer.
-        *ppmetadata = _newMetadataPointer;
-        _initFn(_newMetadataPointer);
-        return 1;
+        pFileOffset = &newFileOffset;
+        pRidersArchiveData = _newMetadataPointer;
+        return _initWrapperFn.OriginalFunction(pFileOffset, pRidersArchiveData, ppMetadata);
     }
 
-    private int GetHighestTextureId(TextureIdEntry* firstEntry, int entryCount)
+    private int GetHighestTextureId(TextureEntry* firstEntry, int entryCount)
     {
         int max = firstEntry->XvrsTextureId;
         for (int x = 1; x < entryCount; x++)
@@ -395,8 +371,6 @@ internal unsafe class CustomGearUiController
     }
 
     #region Definitions
-    [Function(new Register[] { eax, edx }, eax, StackCleanup.Callee)]
-    internal delegate int Spani_SABInitWrapper(int* pFileOffset, byte* pRidersArchiveData, void** ppMetadata);
 
     [Function(CallingConventions.Stdcall)]
     internal delegate void Tm2dPlayerFunction(Player* player, GearSelSys2DObject* object2d);

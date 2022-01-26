@@ -92,9 +92,9 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         {
             ImGui.Checkbox("Drift Charge Indicator", ref data.DriftChargeColour.HasValue).Notify(data, nameof(data.DriftChargeColour));
             if (data.DriftChargeColour.HasValue)
-                RenderColourPickerForRgba(ref data.DriftChargeColour.Value, "Colour");
+                ImGuiExtensions.RenderColourPickerForRgba(ref data.DriftChargeColour.Value, "Colour");
 
-            RenderColourPickerForRgba(ref data.IgnoreTurbulenceColour, "Turbulence Ignore Toggle Colour");
+            ImGuiExtensions.RenderColourPickerForRgba(ref data.IgnoreTurbulenceColour, "Turbulence Ignore Toggle Colour");
             Tooltip.TextOnHover("Colour used when ignoring turbulence via toggle. To enable toggle, see `Race Tweaks -> Turbulence`.");
 
             ImGui.TreePop();
@@ -439,33 +439,6 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
             Height = data.ResolutionY,
             Width = data.ResolutionX,
             RefreshRate = 0
-        };
-    }
-
-    private unsafe void RenderColourPickerForRgba(ref ColorRGBA color, string label)
-    {
-        Span<float> values = stackalloc float[4];
-        ColourToFloat(color, values);
-        ImGui.Custom.ColorEdit4(label, (float*)Unsafe.AsPointer(ref values.GetPinnableReference()), 1);
-        color = FloatToColour(values);
-    }
-
-    private void ColourToFloat(ColorRGBA color, Span<float> colors)
-    {
-        colors[0] = color.Red   / 255.0f;
-        colors[1] = color.Green / 255.0f;
-        colors[2] = color.Blue  / 255.0f;
-        colors[3] = color.Alpha / 255.0f;
-    }
-
-    private ColorRGBA FloatToColour(Span<float> colors)
-    {
-        return new ColorRGBA()
-        {
-            Red = (byte)(colors[0] * 255.0f),
-            Green = (byte)(colors[1] * 255.0f),
-            Blue = (byte)(colors[2] * 255.0f),
-            Alpha = (byte)(colors[3] * 255.0f)
         };
     }
 }
