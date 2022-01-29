@@ -31,6 +31,7 @@
   <ItemGroup>
     <PackageReference Include="Bogus" Version="33.0.2" Condition="'$(Configuration)'=='Debug'" />
     <PackageReference Include="ByteSize" Version="2.0.0" />
+    <PackageReference Include="DearImguiSharp" Version="1.83.1" />
     <PackageReference Include="DiscordRichPresence" Version="1.0.175" />
     <PackageReference Include="Dolphin.Memory.Access" Version="1.0.3" />
     <PackageReference Include="Enums.NET" Version="4.0.0" />

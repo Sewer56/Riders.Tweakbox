@@ -108,4 +108,12 @@ public static class ImGuiExtensions
             Alpha = (byte)(colors[3] * 255.0f)
         };
     }
+
+    public static void RenderLabel(string label, int spacing)
+    {
+        ImGui.TextWrapped(label);
+        ImGui.SameLine(0, spacing);
+        ImGui.SeparatorEx((int)ImGuiSeparatorFlags.ImGuiSeparatorFlagsVertical);
+        ImGui.SameLine(0, spacing);
+    }
 }

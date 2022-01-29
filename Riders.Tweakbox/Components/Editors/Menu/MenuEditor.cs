@@ -243,26 +243,18 @@ public class MenuEditor : ComponentBase, IComponent
 
             // Render current address.
             // 4 byte
-            RenderLabel($"4 Bytes (0x{offset:X2})");
+            ImGuiExtensions.RenderLabel($"4 Bytes (0x{offset:X2})", spacing);
             ImGui.PushID_Int(id++);
             ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU32, (IntPtr)(currentAddress), 0.1f, (IntPtr)(&min), (IntPtr)(&max), $"{*currentAddress:X8}", (int)1);
             ImGui.PopID();
 
-            RenderLabel($"2 Bytes (0x{offset:X2})");
+            ImGuiExtensions.RenderLabel($"2 Bytes (0x{offset:X2})", spacing);
             ImGuiExtensions.RenderIntAsShortsHex(currentAddress, spacing, ref id);
 
-            RenderLabel($"1 Bytes (0x{offset:X2})");
+            ImGuiExtensions.RenderLabel($"1 Bytes (0x{offset:X2})", spacing);
             ImGuiExtensions.RenderIntAsBytesHex(currentAddress, spacing, ref id);
 
             currentAddress++;
-        }
-
-        void RenderLabel(string label)
-        {
-            ImGui.TextWrapped(label);
-            ImGui.SameLine(0, spacing);
-            ImGui.SeparatorEx((int)ImGuiSeparatorFlags.ImGuiSeparatorFlagsVertical);
-            ImGui.SameLine(0, spacing);
         }
 
         ImGui.TreePop();
