@@ -27,8 +27,6 @@ public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, ICompone
     }
 
     public bool IsAvailable() => !_netplayController.IsConnected();
-    private float _testDecelSpeed = 250;
-    private float _testMaxSpeed = 200;
 
     public override void Render()
     {
@@ -146,19 +144,14 @@ public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, ICompone
 
             if (ImGui.CollapsingHeaderTreeNodeFlags("Deceleration Properties", 0))
             {
-                ref var props = ref Static.DecelProperties.Value;
+                ref var props = ref Static.DecelProperties;
                 Reflection.MakeControlEnum(ref props.Mode, "Deceleration Mode");
                 switch (props.Mode)
                 {
                     case DecelMode.Default: break;
                     case DecelMode.Linear:
                         Reflection.MakeControl(ref props.LinearSpeedCapOverride, "Speed Cap Override", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearSpeedCapOverride)})");
-
-                        ImGui.Text("Test");
-                        Reflection.MakeControl(ref _testDecelSpeed, "Current Speed", 0.1f);
-                        Reflection.MakeControl(ref _testMaxSpeed, "Speed Cap", 0.1f);
-                        float decel = (float)((Formula.SpeedometerToFloat(_testDecelSpeed) - Formula.SpeedometerToFloat(_testMaxSpeed)) / (1.2037038 - props.LinearSpeedCapOverride));
-                        ImGui.TextWrapped($"Speed loss constant per frame {decel}.");
+                        Reflection.MakeControl(ref props.LinearMaxSpeedOverCap, "Max Speed Over Cap", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearMaxSpeedOverCap)})");
 
                         break;
                     default:

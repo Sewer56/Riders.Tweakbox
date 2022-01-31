@@ -98,7 +98,7 @@ public unsafe struct GameData : IReliableMessage
             Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
             Static.PanelProperties = PanelProperties;
             Static.SpeedShoeProperties = SpeedShoeProperties;
-            Static.DecelProperties.Value = DecelProperties;
+            Static.DecelProperties = DecelProperties;
         }
     }
 
@@ -118,7 +118,7 @@ public unsafe struct GameData : IReliableMessage
             TurbulenceProperties = Player.TurbulenceProperties.ToArray(),
             PanelProperties = Static.PanelProperties,
             SpeedShoeProperties = Static.SpeedShoeProperties,
-            DecelProperties = Static.DecelProperties.Value
+            DecelProperties = Static.DecelProperties
         };
 
         return data;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using Reloaded.Memory.Interop;
 using Riders.Tweakbox.Interfaces.Structs;
 namespace Riders.Tweakbox.Interfaces.Internal;
 
@@ -24,5 +23,5 @@ public static class Static
     /// <summary>
     /// The current acceleration settings.
     /// </summary>
-    public static Pinnable<DecelProperties> DecelProperties = new Pinnable<DecelProperties>(Structs.DecelProperties.GetDefault());
+    public static DecelProperties DecelProperties = DecelProperties.GetDefault();
 }
