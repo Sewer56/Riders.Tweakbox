@@ -4,6 +4,7 @@ using System.Numerics;
 using DearImguiSharp;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Misc.Log;
 using Sewer56.SonicRiders.Utility.Math;
 using static Riders.Tweakbox.Components.Debug.NN.Native.MEM_PROTECTION;
 using Constants = Sewer56.Imgui.Misc.Constants;
@@ -86,21 +87,13 @@ public unsafe class BonePreviewer : ComponentBase
                     bonePtr->Scale = scale;
                     bonePtr->Position = new Vector3(translation.X, translation.Y, translation.Z);
 
-                    CreateYawPitchRollXZY(rotation, out Vector3 rotationVector);
+                    var rotationVector = ToEulerAnglesZYX(rotation);
 
                     // Based on game code
                     if ((bonePtr->BoneFlags & 0x1C000) != 0)
                     {
                         rotationVector.Y = 0;
                         rotationVector.Z = 0;
-                    }
-
-                    // This is a hack that fixes rotations in certain bones.
-                    if ((bonePtr->BoneFlags & 0x1C0000) == 0)
-                    {
-                        var secondByte = (byte*)(&bonePtr->BoneFlags);
-                        if (secondByte[1] == 0x01)
-                            secondByte[1] = 0x04;
                     }
 
                     if (float.IsNaN(rotationVector.X))
@@ -111,21 +104,51 @@ public unsafe class BonePreviewer : ComponentBase
 
                     if (float.IsNaN(rotationVector.Z))
                         rotationVector.Z = 0;
-
+                    
                     bonePtr->Rotation = VectorExtensions.RadiansToBamsInt(rotationVector);
                 }
             }
         }
     }
 
-    public static void CreateYawPitchRollXZY(Quaternion r, out Vector3 rotation)
+    /// <summary>
+    /// Converts the values from an Quaternion into Euler angles.
+    /// </summary>
+    /// <param name="q">The Quaternion to convert.</param>
+    public static Vector3 ToEulerAnglesZYX(Quaternion q)
     {
-        rotation = new Vector3();
-        rotation.Y = MathF.Atan2(2.0f * (r.Y * r.W + r.X * r.Z), 1.0f - 2.0f * (r.X * r.X + r.Y * r.Y));
-        rotation.X = MathF.Asin(2.0f * (r.X * r.W - r.Y * r.Z));
-        rotation.Z = MathF.Atan2(2.0f * (r.X * r.Y + r.Z * r.W), 1.0f - 2.0f * (r.X * r.X + r.Z * r.Z));
-    }
+        // Adapted from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+        // Not sure why the algorithms posted on the web which use `2 * (q.w * q.x + q.y * q.z)` for heading don't work. (incl. StackOverflow, Wikipedia).
+        // Below algorithm is based on the website above, and based on combining `Quaternion -> Matrix` and `Matrix -> Euler`.
+        float sqw  = q.W * q.W;
+        float sqx  = q.X * q.X;
+        float sqy  = q.Y * q.Y;
+        float sqz  = q.Z * q.Z;
 
+        float test = q.X * q.Y + q.Z * q.W;
+
+        // Unit vector to correct for non-normalised quaternions. Just in case.
+        double unit = sqx + sqy + sqz + sqw;
+
+        if (test > 0.499 * unit)
+            return GetVect(0, 2 * Math.Atan2(q.X, q.W), Math.PI * 0.5f);
+
+        if (test < -0.499 * unit)
+            return GetVect(0, -2 * Math.Atan2(q.X, q.W), -Math.PI * 0.5f);
+
+        // Angle applied first: Heading (X)
+        // Angle applied second: Attitude (Y)
+        // Angle applied third: Bank (Z)
+        double heading  = Math.Atan2(2.0f * q.Y * q.W - 2.0f * q.X * q.Z, 1.0f - 2.0f * (sqy + sqz)); // Y
+        double attitude = Math.Asin(2.0f * q.X * q.Y + 2.0f * q.Z * q.W);                             // X
+        double bank     = Math.Atan2(2.0f * q.X * q.W - 2.0f * q.Y * q.Z, 1.0f - 2.0f * (sqx + sqz)); // Z
+
+        return GetVect(bank, heading, attitude); // ZYX
+
+        // Utility method.
+        Vector3 GetVect(double x, double y, double z) => new((float)x, (float)y, (float)z);
+    }
+    
     private void RenderBone(string label, Bone* bonePtr, Bone* bones, int index, Matrix4x4[] boneMatrices, ref int uiIndex)
     {
         //var customMatrix = boneMatrices[index];
@@ -276,7 +299,10 @@ public unsafe class BonePreviewer : ComponentBase
 
     private enum AxisOrder
     {
-        XYZ, XZY, YXZ, YZX, ZXY, ZYX, None
+        XYZ,
+        XZY, 
+        ZXY,
+        None
     }
 
     private static Quaternion EulerToQuat(float yaw, float pitch, float roll, AxisOrder rotationOrder)
@@ -289,10 +315,7 @@ public unsafe class BonePreviewer : ComponentBase
         {
             case AxisOrder.XYZ: return (xRot * yRot) * zRot;
             case AxisOrder.XZY: return (xRot * zRot) * yRot;
-            case AxisOrder.YXZ: return (yRot * xRot) * zRot;
-            case AxisOrder.YZX: return (yRot * zRot) * xRot;
             case AxisOrder.ZXY: return (zRot * xRot) * yRot;
-            case AxisOrder.ZYX: return (zRot * yRot) * xRot;
         }
 
         return Quaternion.Identity;
