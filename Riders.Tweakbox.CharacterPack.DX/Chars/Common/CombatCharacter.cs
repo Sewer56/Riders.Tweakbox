@@ -9,8 +9,7 @@ public abstract class CombatCharacter : CustomCharacterBase, ICustomCharacter
     private BoostProperties _boostProperties = new BoostProperties()
     {
         AddedBoostChainMultiplier = 0.03f,
-        AddedBoostDurationLv1 = 70,
-        AddedBoostDurationLv2 = 70,
+        AddedBoostDuration = new[] { 70, 70, 0 }
     };
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()

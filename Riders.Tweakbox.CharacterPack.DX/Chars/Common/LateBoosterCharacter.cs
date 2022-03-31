@@ -8,8 +8,7 @@ public abstract class LateBoosterCharacter : CustomCharacterBase, ICustomCharact
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
-        AddedBoostDurationLv2 = 60,
-        AddedBoostDurationLv3 = 60,
+        AddedBoostDuration = new[] { 0, 60, 60 }
     };
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()

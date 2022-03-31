@@ -10,9 +10,7 @@ public abstract class AllRoundCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
-        AddedBoostDurationLv1 = 20,
-        AddedBoostDurationLv2 = 20,
-        AddedBoostDurationLv3 = 20,
+        AddedBoostDuration = new []{ 20, 20, 20 },
         AddedBoostChainMultiplier = 0.015f
     };
 
@@ -26,7 +24,7 @@ public abstract class AllRoundCharacter : CustomCharacterBase, ICustomCharacter
         SetPlayerStats = SetPlayerStats
     };
 
-    private unsafe static void SetPlayerStats(IntPtr levelstatsptr, IntPtr playerptr, int playerindex, int playerlevel)
+    private static unsafe void SetPlayerStats(IntPtr levelstatsptr, IntPtr playerptr, int playerindex, int playerlevel)
     {
         var stats = (Sewer56.SonicRiders.Structures.Gameplay.PlayerLevelStats*)(levelstatsptr);
         stats->GearStats.SpeedGainedFromDriftDash += Utility.SpeedometerToFloat(10);

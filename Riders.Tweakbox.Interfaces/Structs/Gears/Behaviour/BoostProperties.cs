@@ -51,19 +51,9 @@ public class BoostProperties
     public float? AirPercentageOnBoost;
 
     /// <summary>
-    /// Increased boost duration on level 1.
+    /// Increased boost duration for each level.
     /// </summary>
-    public int? AddedBoostDurationLv1;
-
-    /// <summary>
-    /// Increased boost duration on level 2.
-    /// </summary>
-    public int? AddedBoostDurationLv2;
-
-    /// <summary>
-    /// Increased boost duration on level 3.
-    /// </summary>
-    public int? AddedBoostDurationLv3;
+    public int[] AddedBoostDuration;
 
     /// <summary>
     /// Allows you to specify added boost duration.
@@ -81,25 +71,12 @@ public class BoostProperties
     /// </summary>
     public int GetExtraBoostDurationForLevel(int level)
     {
-        switch (level)
-        {
-            case 0:
-                if (AddedBoostDurationLv1.HasValue)
-                    return AddedBoostDurationLv1.Value;
-                break;
+        if (AddedBoostDuration == null || AddedBoostDuration.Length == 0)
+            return 0;
 
-            case 1:
-                if (AddedBoostDurationLv2.HasValue)
-                    return AddedBoostDurationLv2.Value;
-                break;
-
-            case 2:
-                if (AddedBoostDurationLv3.HasValue)
-                    return AddedBoostDurationLv3.Value;
-                break;
-        }
-
-        return 0;
+        return level < AddedBoostDuration.Length 
+            ? AddedBoostDuration[level] 
+            : AddedBoostDuration[^1];
     }
 }
 

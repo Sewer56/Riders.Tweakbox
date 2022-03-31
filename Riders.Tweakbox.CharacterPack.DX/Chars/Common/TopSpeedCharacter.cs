@@ -8,9 +8,7 @@ public abstract class TopSpeedCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
-        AddedBoostDurationLv1 = 40,
-        AddedBoostDurationLv2 = 40,
-        AddedBoostDurationLv3 = 40
+        AddedBoostDuration = new[] { 40, 40, 40 },
     };
 
     public ApiCharacterParameters GetCharacterParameters() => new ApiCharacterParameters()

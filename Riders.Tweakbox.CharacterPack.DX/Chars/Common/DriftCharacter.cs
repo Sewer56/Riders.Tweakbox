@@ -10,8 +10,7 @@ public abstract class DriftCharacter : CustomCharacterBase, ICustomCharacter
 {
     private BoostProperties _boostProperties = new BoostProperties()
     {
-        AddedBoostDurationLv1 = 30,
-        AddedBoostDurationLv2 = 15,
+        AddedBoostDuration = new[] { 30, 15, 0 }
     };
 
     private DriftDashProperties _dashProperties = new DriftDashProperties()
@@ -29,7 +28,7 @@ public abstract class DriftCharacter : CustomCharacterBase, ICustomCharacter
         SpeedMultiplierOffset = 0f
     };
 
-    private unsafe static void SetPlayerStats(IntPtr levelstatsptr, IntPtr playerptr, int playerindex, int playerlevel)
+    private static unsafe void SetPlayerStats(IntPtr levelstatsptr, IntPtr playerptr, int playerindex, int playerlevel)
     {
         var stats = (Sewer56.SonicRiders.Structures.Gameplay.PlayerLevelStats*)(levelstatsptr);
         stats->GearStats.SpeedGainedFromDriftDash += Utility.SpeedometerToFloat(20);

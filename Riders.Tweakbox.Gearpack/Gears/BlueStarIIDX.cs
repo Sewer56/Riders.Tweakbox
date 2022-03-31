@@ -11,7 +11,7 @@ public class BlueStarIIDX : CustomGearBase, IExtremeGear
     private BoostProperties _boostProperties = new BoostProperties()
     {
         AddedBoostChainMultiplier = 0.15f,
-        AddedBoostDurationLv3 = 30
+        AddedBoostDuration = new[] { 0, 0, 30 }
     };
     
     // IExtremeGear API Callbacks //
