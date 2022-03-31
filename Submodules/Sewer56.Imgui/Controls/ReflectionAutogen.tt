@@ -87,6 +87,35 @@ for (int x = 0; x < types.Length; x++)
         /// <param name="speed">The speed of the slider.</param>
         /// <param name="min">The minimum value allowed.</param>
         /// <param name="max">The maximum value allowed.</param>
+        public static bool MakeControl(<#=types[x]#>* value, string name, float speed, <#=types[x]#> min)
+        {
+            var minPtr = &min;
+            return ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) value, speed, (IntPtr) minPtr, IntPtr.Zero, null, 1);
+        }
+
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        /// <param name="speed">The speed of the slider.</param>
+        /// <param name="min">The minimum value allowed.</param>
+        /// <param name="max">The maximum value allowed.</param>
+        public static bool MakeControl(<#=types[x]#>* value, string name, float speed, <#=types[x]#> min, <#=types[x]#> max)
+        {
+            var minPtr = &min;
+            var maxPtr = &max;
+            return ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) value, speed, (IntPtr) minPtr, (IntPtr) maxPtr, null, 1);
+        }
+
+        /// <summary>
+        /// Adds a Dear Imgui Control to the scene for a specified type.
+        /// </summary>
+        /// <param name="value">The value to bind to the UI.</param>
+        /// <param name="name">The name of the field.</param>
+        /// <param name="speed">The speed of the slider.</param>
+        /// <param name="min">The minimum value allowed.</param>
+        /// <param name="max">The maximum value allowed.</param>
         public static bool MakeControl(ref <#=types[x]#> value, string name, float speed, ref <#=types[x]#> min, ref <#=types[x]#> max)
         {
             return ImGui.DragScalar(name, (int)<#=imguiTypes[x]#>, (IntPtr) Unsafe.AsPointer(ref value), speed, (IntPtr) Unsafe.AsPointer(ref min), (IntPtr) Unsafe.AsPointer(ref max), null, 1);

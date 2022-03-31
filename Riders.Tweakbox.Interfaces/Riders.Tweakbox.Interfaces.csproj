@@ -5,8 +5,4 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
-  </ItemGroup>
-
 </Project>

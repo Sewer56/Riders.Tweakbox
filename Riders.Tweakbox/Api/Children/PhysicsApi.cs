@@ -14,5 +14,5 @@ public class PhysicsApi : IPhysicsApi
     public ref SpeedShoeProperties GetSpeedShoePropertiesRef() => ref Static.SpeedShoeProperties;
 
     /// <inheritdoc />
-    public ref DecelProperties GetDecelPropertiesRef() => ref Static.DecelProperties.Value;
+    public ref DecelProperties GetDecelPropertiesRef() => ref Static.DecelProperties;
 }

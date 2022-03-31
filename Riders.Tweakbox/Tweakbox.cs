@@ -40,6 +40,8 @@ using Riders.Tweakbox.Misc.Data;
 using Reloaded.Memory.Streams;
 using Reloaded.Memory.Streams.Writers;
 using Riders.Tweakbox.Api;
+using Riders.Tweakbox.Components.Debug.NN;
+using Riders.Tweakbox.Components.Editors.Menu;
 using Riders.Tweakbox.Interfaces;
 
 namespace Riders.Tweakbox;
@@ -122,6 +124,9 @@ public class Tweakbox
                     Benchmark(() => IoC.GetSingleton<HeapViewerWindow>(), nameof(HeapViewerWindow)),
                     Benchmark(() => IoC.GetSingleton<ChatMenuDebug>(), nameof(ChatMenuDebug)),
                     Benchmark(() => IoC.GetSingleton<SlipstreamDebug>(), nameof(SlipstreamDebug)),
+                    Benchmark(() => IoC.GetSingleton<MenuEditor>(), nameof(MenuEditor)),
+
+                    Benchmark(() => IoC.GetSingleton<BonePreviewer>(), nameof(BonePreviewer)),
 #if DEBUG
                     Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
 #endif

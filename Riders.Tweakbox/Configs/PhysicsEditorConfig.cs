@@ -42,7 +42,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         Player.TurbulenceProperties.CopyTo(data.TurbulenceProperties, Player.TurbulenceProperties.Count);
 
         data.PanelProperties = Static.PanelProperties;
-        data.DecelProperties = Static.DecelProperties.Value;
+        data.DecelProperties = Static.DecelProperties;
         data.SpeedShoeProperties = Static.SpeedShoeProperties;
         return config;
     }
@@ -67,7 +67,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
             Player.TurbulenceProperties.CopyFrom(Data.TurbulenceProperties, Data.TurbulenceProperties.Length);
 
         Static.PanelProperties = Data.PanelProperties;
-        Static.DecelProperties.Value = Data.DecelProperties;
+        Static.DecelProperties = Data.DecelProperties;
         Static.SpeedShoeProperties = Data.SpeedShoeProperties;
     }
 
@@ -84,7 +84,7 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         public CharacterTypeStats[] CharacterTypeStats;
         public TurbulenceProperties[] TurbulenceProperties;
         public DashPanelProperties PanelProperties = Static.PanelProperties;
-        public DecelProperties DecelProperties = Static.DecelProperties.Value;
+        public DecelProperties DecelProperties = Static.DecelProperties;
         public SpeedShoeProperties SpeedShoeProperties = Static.SpeedShoeProperties;
 
         public byte[] ToBytes()

@@ -109,6 +109,7 @@ public enum LogCategory : int
     CustomGear = 1 << 15,
     TextureDebug = 1 << 16,
     NetplayChat = 1 << 17,
+    MenuEditor = 1 << 18,
 }
 
 /// <summary>
