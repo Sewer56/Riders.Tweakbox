@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Reloaded.Hooks.Definitions;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Reloaded.Hooks.Definitions.X86;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Log;
@@ -40,7 +40,7 @@ public class DllNotifier
         Log.WriteLine($"[{nameof(DllNotifier)}] Initialising.");
 
         var ntdll = PInvoke.LoadLibrary("ntdll.dll");
-        var ldrLoadDll = hooks.CreateFunction<LdrLoadDll>((long)Native.GetProcAddress(ntdll, nameof(LdrLoadDll)));
+        var ldrLoadDll = hooks.CreateFunction<LdrLoadDll>((long)Native.GetProcAddress(ntdll.DangerousGetHandle(), nameof(LdrLoadDll)));
 
         _ldrLoadDllHook = ldrLoadDll.Hook(LdrLoadDllImpl).Activate();
     }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Hooks.Definitions.X86;
@@ -27,7 +27,7 @@ namespace Riders.Tweakbox.Misc
             var hooks = IoC.GetSingleton<IReloadedHooks>();
             var d3dx9Handle = PInvoke.LoadLibrary("d3dx9_25.dll");
             var dx9Hook = Sewer56.SonicRiders.API.Misc.DX9Hook.Value;
-            CreateTexture  = hooks.CreateFunction<D3DXCreateTextureFromFileInMemoryExPtr>((long)Native.GetProcAddress(d3dx9Handle, "D3DXCreateTextureFromFileInMemoryEx"));
+            CreateTexture  = hooks.CreateFunction<D3DXCreateTextureFromFileInMemoryExPtr>((long)Native.GetProcAddress(d3dx9Handle.DangerousGetHandle(), "D3DXCreateTextureFromFileInMemoryEx"));
             SetTexture     = hooks.CreateFunction<SetTexturePtr>((long) dx9Hook.DeviceVTable[(int)IDirect3DDevice9.SetTexture].FunctionPointer);
             AddRefTexture  = hooks.CreateFunction<ComReleasePtr>((long) dx9Hook.Texture9VTable[(int)IDirect3DTexture9.AddRef].FunctionPointer);
             ReleaseTexture = hooks.CreateFunction<ComReleasePtr>((long) dx9Hook.Texture9VTable[(int)IDirect3DTexture9.Release].FunctionPointer);

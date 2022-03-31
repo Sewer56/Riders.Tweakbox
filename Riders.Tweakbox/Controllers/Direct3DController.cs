@@ -7,13 +7,16 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Sewer56.SonicRiders.Internal.DirectX;
 using SharpDX.Direct3D9;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Reloaded.Hooks.Definitions.X86;
 using SharpDX;
 using Riders.Tweakbox.Configs;
 using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using Riders.Tweakbox.Misc.Log;
+#if DEBUG
+using Windows.Win32.Foundation;
+#endif
 
 namespace Riders.Tweakbox.Controllers;
 

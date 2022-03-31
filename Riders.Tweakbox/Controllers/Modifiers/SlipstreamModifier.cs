@@ -35,7 +35,7 @@ public struct SlipstreamModifier
     private ref GameModifiers Modifiers => ref _modifiersController.Modifiers;
     private GameModifiersController _modifiersController;
 
-    public SlipstreamModifier(GameModifiersController gameModifiersController) : this()
+    public SlipstreamModifier(GameModifiersController gameModifiersController)
     {
         _modifiersController = gameModifiersController;
     }

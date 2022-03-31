@@ -6,7 +6,7 @@ using static Riders.Tweakbox.Misc.Native;
 using Task = System.Threading.Tasks.Task;
 
 // ReSharper disable once RedundantUsingDirective
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Riders.Tweakbox.Configs.Json;
 using Riders.Tweakbox.Misc.Extensions;
 using Sewer56.SonicRiders.Structures.Enums;

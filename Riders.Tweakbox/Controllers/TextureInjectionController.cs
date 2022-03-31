@@ -9,7 +9,7 @@ using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using SharpDX.Direct3D9;
 using SharpDX.Mathematics.Interop;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Structs;
 using Reloaded.Memory.Pointers;

@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using EnumsNET;
-using Microsoft.Windows.Sdk;
+
+using Windows.Win32;
+using Windows.Win32.Storage.FileSystem;
+using Windows.Win32.Foundation;
 
 namespace Riders.Tweakbox.Misc.Data;
 
@@ -65,7 +68,7 @@ public static class DirectorySearcher
         // Native Init
         WIN32_FIND_DATAW findData;
         var findHandle = PInvoke.FindFirstFile($@"{path}\*", out findData);
-        if (findHandle == INVALID_HANDLE_VALUE)
+        if (findHandle.DangerousGetHandle() == INVALID_HANDLE_VALUE)
             return false;
         
         do
@@ -99,10 +102,10 @@ public static class DirectorySearcher
                 });
             }
         }
-        while (FindNextFile(findHandle, out findData));
+        while (FindNextFile(findHandle.DangerousGetHandle(), out findData));
 
-        if (findHandle != INVALID_HANDLE_VALUE)
-            PInvoke.FindClose((HANDLE) findHandle.Value);
+        if (findHandle.DangerousGetHandle() != INVALID_HANDLE_VALUE)
+            PInvoke.FindClose(new FindFileHandle(findHandle.DangerousGetHandle()));
         
         return true;
     }
@@ -132,8 +135,7 @@ public static class FindDataExtensions
 {
     internal static unsafe string GetFileName(this WIN32_FIND_DATAW value)
     {
-        fixed (ushort* data = value.cFileName)
-            return Marshal.PtrToStringUni((IntPtr)data);
+        return Marshal.PtrToStringUni((IntPtr)(&value.cFileName));
     }
 }
 

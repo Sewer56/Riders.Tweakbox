@@ -1,5 +1,5 @@
 ﻿// ReSharper disable once RedundantUsingDirective
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 
 using System;
 using System.Runtime.CompilerServices;

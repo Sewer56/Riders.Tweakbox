@@ -4,7 +4,7 @@ using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Utilities = Sewer56.SonicRiders.Utilities;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Riders.Tweakbox.Configs;
 using Sewer56.SonicRiders.API;
 using Sewer56.SonicRiders.Structures.Functions;

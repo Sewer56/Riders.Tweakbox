@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 using Reloaded.Memory;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.Interfaces;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.WindowsAndMessaging;
+using Windows.Win32.Graphics.Gdi;
 namespace Riders.Tweakbox.Services;
 
 /// <summary>
@@ -18,8 +21,7 @@ public class WindowService : ISingletonService
     /// </summary>
     public unsafe void SetBorderless(bool borderless, IntPtr handle)
     {
-        const int GWL_STYLE = -16;
-        var style = PInvoke.GetWindowLong(new HWND(handle), GWL_STYLE);
+        var style = PInvoke.GetWindowLong(new HWND(handle), WINDOW_LONG_PTR_INDEX.GWL_STYLE);
 
         if (style == 0)
             return;
@@ -27,7 +29,7 @@ public class WindowService : ISingletonService
         var flags = (Native.WindowStyles)style;
         ToggleBorder(borderless, ref flags);
 
-        PInvoke.SetWindowLong(new HWND(handle), GWL_STYLE, (int)flags);
+        PInvoke.SetWindowLong(new HWND(handle), WINDOW_LONG_PTR_INDEX.GWL_STYLE, (int)flags);
         Task.Delay(100).ContinueWith((x) => ResizeWindow(*Sewer56.SonicRiders.API.Misc.ResolutionX, *Sewer56.SonicRiders.API.Misc.ResolutionY, handle));
     }
 
@@ -40,7 +42,6 @@ public class WindowService : ISingletonService
     /// <param name="centered">Whether the window should be centered to screen.</param>
     public void ResizeWindow(int x, int y, IntPtr handle, bool centered = true)
     {
-        const int GWL_STYLE = -16;
         var rect = new RECT()
         {
             left = 0,
@@ -49,8 +50,8 @@ public class WindowService : ISingletonService
             right = x
         };
 
-        var style = PInvoke.GetWindowLong((HWND)handle, GWL_STYLE);
-        var adjust = PInvoke.AdjustWindowRect(ref rect, (uint)style, false);
+        var style = PInvoke.GetWindowLong((HWND)handle, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+        var adjust = PInvoke.AdjustWindowRect(ref rect, (WINDOW_STYLE)style, false);
 
         int left = 0;
         int top = 0;
@@ -59,7 +60,7 @@ public class WindowService : ISingletonService
 
         if (centered)
         {
-            var monitor = PInvoke.MonitorFromWindow(new HWND(handle), Native.MONITOR_DEFAULTTONEAREST);
+            var monitor = PInvoke.MonitorFromWindow(new HWND(handle), MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST);
             var info = new MONITORINFO { cbSize = (uint)Struct.GetSize<MONITORINFO>() };
 
             if (PInvoke.GetMonitorInfo(monitor, ref info))

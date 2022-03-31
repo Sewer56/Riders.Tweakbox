@@ -12,7 +12,7 @@ using Sewer56.SonicRiders;
 using Sewer56.SonicRiders.API;
 using static Sewer56.SonicRiders.Functions.Functions;
 using CallingConventions = Reloaded.Hooks.Definitions.X86.CallingConventions;
-using Microsoft.Windows.Sdk;
+using Windows.Win32;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Misc.Extensions;
 using Task = System.Threading.Tasks.Task;
@@ -75,8 +75,8 @@ public unsafe class FramePacingController : IController
 
         // Hook and disable frequency adjusting functions.
         var winmm = PInvoke.LoadLibrary("winmm.dll");
-        var timeBeginPeriod = SDK.ReloadedHooks.CreateFunction<TimeBeginPeriod>((long)Native.GetProcAddress(winmm, "timeBeginPeriod"));
-        var timeEndPeriod = SDK.ReloadedHooks.CreateFunction<TimeEndPeriod>((long)Native.GetProcAddress(winmm, "timeEndPeriod"));
+        var timeBeginPeriod = SDK.ReloadedHooks.CreateFunction<TimeBeginPeriod>((long)Native.GetProcAddress(winmm.DangerousGetHandle(), "timeBeginPeriod"));
+        var timeEndPeriod = SDK.ReloadedHooks.CreateFunction<TimeEndPeriod>((long)Native.GetProcAddress(winmm.DangerousGetHandle(), "timeEndPeriod"));
         var beginEndPeriodPtr = (delegate* unmanaged[Stdcall]<int, int>)&TimeBeginEndPeriodImpl;
         _beginPeriodHook = timeBeginPeriod.Hook(Unsafe.AsRef<TimeBeginPeriod>((void*)&beginEndPeriodPtr)).Activate();
         _endPeriodHook = timeEndPeriod.Hook(Unsafe.AsRef<TimeEndPeriod>((void*)&beginEndPeriodPtr)).Activate();
