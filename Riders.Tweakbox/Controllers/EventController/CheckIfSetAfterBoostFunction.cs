@@ -21,15 +21,15 @@ public unsafe partial class EventController : TaskEvents, IController
 
     public void InitCheckIfSetAfterBoostFunction(IReloadedHooks hooks, IReloadedHooksUtilities utilities)
     {
-        var ifDisable = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr) 0x004CDCD1, false) };
-        var onCheckIsHumanInputAsm = new[]
+        var ifDisable = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004CCCFE, false) };
+        var asm = new[]
         {
             $"use32",
             $"mov [{(int)_tempPlayerPointer.Pointer}], edi",
             $"{utilities.AssembleAbsoluteCall<AsmFuncPtr>(typeof(EventController), nameof(OnCheckIfSetAfterBoostFunctionHook), ifDisable, null, null)}"
         };
 
-        _onCheckIfSetAfterBoostFunction = hooks.CreateAsmHook(onCheckIsHumanInputAsm, 0x4CDC70, AsmHookBehaviour.ExecuteFirst).Activate();
+        _onCheckIfSetAfterBoostFunction = hooks.CreateAsmHook(asm, 0x4CCCA2, AsmHookBehaviour.ExecuteFirst).Activate();
     }
 
     [UnmanagedCallersOnly]
