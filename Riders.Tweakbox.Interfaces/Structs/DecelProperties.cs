@@ -2,10 +2,12 @@
 using System.Runtime.InteropServices;
 namespace Riders.Tweakbox.Interfaces.Structs;
 
-// Size contains extra space for future additions.
+// TODO: Remove this when removing legacy physics config support
 [StructLayout(LayoutKind.Explicit, Size = 0x40)]
 public struct DecelProperties
 {
+    // Reminder: Update DashPanelPropertiesSerializer in Riders.Tweakbox if updating.
+
     [FieldOffset(0)]
     public DecelMode Mode;
 

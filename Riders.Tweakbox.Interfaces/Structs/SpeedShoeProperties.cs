@@ -1,9 +1,12 @@
 ﻿using System.Runtime.InteropServices;
 namespace Riders.Tweakbox.Interfaces.Structs;
 
+// TODO: Remove this when removing legacy physics config support
 [StructLayout(LayoutKind.Explicit, Size = 0x40)]
 public struct SpeedShoeProperties
 {
+    // Reminder: Update SpeedShoePropertiesSerializer in Riders.Tweakbox if updating.
+
     /// <summary>
     /// Mode describing how speed shoes operate.
     /// </summary>

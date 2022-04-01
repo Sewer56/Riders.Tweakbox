@@ -1,0 +1,27 @@
+﻿using Riders.Tweakbox.Interfaces.Structs;
+using Sewer56.BitStream;
+using Sewer56.BitStream.Interfaces;
+
+namespace Riders.Tweakbox.Definitions.Serializers.Binary.Serializer.Physics;
+
+public struct DecelPropertiesSerializer
+{
+    /// <summary>
+    /// Node ID.
+    /// </summary>
+    public const int Id = 0x4445434C; // DECL
+
+    public static int Serialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data) where TByteStream : IByteStream
+    {
+        bitStream.WriteGeneric(data.Mode);
+        bitStream.Write(data.LinearSpeedCapOverride);
+        bitStream.Write(data.LinearMaxSpeedOverCap);
+        return Id;
+    }
+    public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data) where TByteStream : IByteStream
+    {
+        data.Mode = bitStream.ReadGeneric<DecelMode>();
+        data.LinearSpeedCapOverride = bitStream.Read<float>();
+        data.LinearMaxSpeedOverCap = bitStream.Read<float>();
+    }
+}

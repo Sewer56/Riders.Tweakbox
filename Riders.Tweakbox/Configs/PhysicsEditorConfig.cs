@@ -1,9 +1,13 @@
 ﻿using System;
 using System.IO;
+using DotNext;
+using EnumsNET;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
 using Riders.Netplay.Messages.Misc.BitStream;
 using Riders.Tweakbox.Definitions.Interfaces;
+using Riders.Tweakbox.Definitions.Serializers.Binary;
+using Riders.Tweakbox.Definitions.Serializers.Binary.Serializer.Physics;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces.Structs;
@@ -94,19 +98,20 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         public byte[] ToBytes()
         {
             using var extendedMemoryStream = new ExtendedMemoryStream();
-            var bitStream = new BitStream<StreamByteStream>(new StreamByteStream(extendedMemoryStream));
+            var bitStream       = new BitStream<StreamByteStream>(new StreamByteStream(extendedMemoryStream));
+            var frameFileWriter = new FrameFileWriterHelper<StreamByteStream>(ref bitStream);
 
-            bitStream.WriteGeneric(Contents);
-            bitStream.WriteGeneric(ref RunningPhysics1);
-            bitStream.WriteGeneric(ref RunningPhysics2);
-            
-            bitStream.WriteGeneric(CharacterTypeStats.AsSpan());
-            bitStream.WriteGeneric(TurbulenceProperties.AsSpan());
-            
-            bitStream.WriteGeneric(ref PanelProperties);
-            bitStream.WriteGeneric(ref DecelProperties);
-            bitStream.WriteGeneric(ref SpeedShoeProperties);
+            FrameGeneric.Write(ref bitStream, ref RunningPhysics1, GenericSerializer.Serialize, GenericSerializer.IdRunningPhysics1);
+            FrameGeneric.Write(ref bitStream, ref RunningPhysics2, GenericSerializer.Serialize, GenericSerializer.IdRunningPhysics2);
 
+            FrameGeneric.Write(ref bitStream, CharacterTypeStats.AsSpan(), GenericSpanSerializer.Serialize, GenericSpanSerializer.IdCharaTypeStats);
+            FrameGeneric.Write(ref bitStream, TurbulenceProperties.AsSpan(), GenericSpanSerializer.Serialize, GenericSpanSerializer.IdTurb);
+
+            FrameGeneric.Write(ref bitStream, ref PanelProperties, DashPanelPropertiesSerializer.Serialize);
+            FrameGeneric.Write(ref bitStream, ref DecelProperties, DecelPropertiesSerializer.Serialize);
+            FrameGeneric.Write(ref bitStream, ref SpeedShoeProperties, SpeedShoePropertiesSerializer.Serialize);
+
+            frameFileWriter.Write(ref bitStream);
             return extendedMemoryStream.ToArray();
         }
 
@@ -115,21 +120,54 @@ public unsafe class PhysicsEditorConfig : IConfiguration
             fixed (byte* bytePtr = &bytes[0])
             {
                 using var stream = new UnmanagedMemoryStream(bytePtr, bytes.Length);
-                var bitStream = new BitStream<StreamByteStream>(new StreamByteStream(stream));
+                var bitStream    = new BitStream<StreamByteStream>(new StreamByteStream(stream));
 
-                bitStream.ReadGeneric(out Contents);
-                bitStream.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
-                bitStream.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
-                ReadTypeStats(ref bitStream);
-                bitStream.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
-                bitStream.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
-                bitStream.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
-                bitStream.ReadIfHasFlags(ref SpeedShoeProperties, Contents, PhysicsEditorContents.SpeedShoeProperties);
+                if (FrameFileHeader.TryReadFrameHeader(ref bitStream, out var fileHeader))
+                {
+                    // New Binary Format: 0.7.0 and above.
+                    var bitsRead = 0;
+                    var initialOffset = bitStream.BitIndex;
+
+                    while (bitsRead < fileHeader.SizeInBits)
+                    {
+                        bitsRead += FrameGeneric.Read(ref bitStream, out var frame);
+                        bitsRead += frame.SizeInBits;
+
+                        switch (frame.Id)
+                        {
+                            case GenericSerializer.IdRunningPhysics1: GenericSerializer.Deserialize(ref bitStream, ref RunningPhysics1); break;
+                            case GenericSerializer.IdRunningPhysics2: GenericSerializer.Deserialize(ref bitStream, ref RunningPhysics2); break;
+
+                            case GenericSpanSerializer.IdCharaTypeStats: GenericSpanSerializer.DeserializeToNewArray(ref bitStream, ref CharacterTypeStats, Player.TypeStats.Count); break;
+                            case GenericSpanSerializer.IdTurb: GenericSpanSerializer.DeserializeToNewArray(ref bitStream, ref TurbulenceProperties, Player.TurbulenceProperties.Count); break;
+
+                            case DashPanelPropertiesSerializer.Id:  DashPanelPropertiesSerializer.Deserialize(ref bitStream, ref PanelProperties);     break;
+                            case DecelPropertiesSerializer.Id:      DecelPropertiesSerializer.Deserialize(ref bitStream, ref DecelProperties);         break;
+                            case SpeedShoePropertiesSerializer.Id:  SpeedShoePropertiesSerializer.Deserialize(ref bitStream, ref SpeedShoeProperties); break;
+                        }
+
+                        bitStream.BitIndex = initialOffset + bitsRead;
+                    }
+                }
+                else
+                {
+                    // TODO: Remove legacy config support in 0.8.0
+                    // Legacy format support.
+                    bitStream.ReadGeneric(out Contents);
+                    bitStream.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
+                    bitStream.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
+                    ReadTypeStatsLegacy(ref bitStream);
+                    bitStream.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
+                    bitStream.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                    bitStream.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                    bitStream.ReadIfHasFlags(ref SpeedShoeProperties, Contents, PhysicsEditorContents.SpeedShoeProperties);
+                }
+                
                 numBytesRead = (int)bitStream.NextByteIndex;
             }
         }
 
-        private void ReadTypeStats<TStreamType>(ref BitStream<TStreamType> bitStream) where TStreamType : IByteStream
+        private void ReadTypeStatsLegacy<TStreamType>(ref BitStream<TStreamType> bitStream) where TStreamType : IByteStream
         {
             // Ignore Obsolete Stats.
             CharacterTypeStats[] dummy = default;
