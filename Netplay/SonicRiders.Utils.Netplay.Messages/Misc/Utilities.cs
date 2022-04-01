@@ -24,6 +24,31 @@ public static class Utilities
     /// <summary>
     /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
     /// </summary>
+    public static void ReadIfHasFlags<TStreamType, TType, TEnum>(this ref BitStream<TStreamType> reader, ref TType value, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum where TStreamType : IByteStream
+    {
+        if (flags.HasAllFlags(flagsToCheck))
+        {
+            reader.ReadGeneric(out TType result);
+            value = result;
+        }
+    }
+
+    /// <summary>
+    /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
+    /// </summary>
+    public static void ReadIfHasFlags<TStreamType, TType, TEnum>(this ref BitStream<TStreamType> reader, ref TType[] value, int numElements, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum where TStreamType : IByteStream
+    {
+        if (flags.HasAllFlags(flagsToCheck))
+        {
+            value = new TType[numElements];
+            for (int x = 0; x < numElements; x++)
+                reader.ReadGeneric(out value[x]);
+        }
+    }
+
+    /// <summary>
+    /// Sets a given parameter marked by <see cref="value"/> if <see cref="flags"/> contains a flag <see cref="flagsToCheck"/>.
+    /// </summary>
     public static void ReadIfHasFlags<TType, TEnum>(this BufferedStreamReader reader, ref TType value, TEnum flags, TEnum flagsToCheck) where TType : unmanaged where TEnum : struct, Enum
     {
         if (flags.HasAllFlags(flagsToCheck))
@@ -71,6 +96,15 @@ public static class Utilities
     {
         if (flags.HasAllFlags(flagsToCheck))
             value = reader.Read<TType>(numBits);
+    }
+
+    /// <summary>
+    /// Writes a generic span to a given BitStream.
+    /// </summary>
+    public static void WriteGeneric<T, TStreamType>(ref this BitStream<TStreamType> bitStream, Span<T> value) where T : unmanaged where TStreamType : IByteStream
+    {
+        for (int x = 0; x < value.Length; x++)
+            bitStream.WriteGeneric(value[x]);
     }
 
     /// <summary>

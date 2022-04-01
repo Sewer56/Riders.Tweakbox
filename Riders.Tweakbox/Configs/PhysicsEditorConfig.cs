@@ -2,10 +2,14 @@
 using System.IO;
 using Reloaded.Memory.Streams;
 using Riders.Netplay.Messages.Misc;
+using Riders.Netplay.Messages.Misc.BitStream;
 using Riders.Tweakbox.Definitions.Interfaces;
 using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces.Structs;
+using Sewer56.BitStream;
+using Sewer56.BitStream.ByteStreams;
+using Sewer56.BitStream.Interfaces;
 using Sewer56.SonicRiders.Structures.Gameplay;
 using static Riders.Tweakbox.Configs.PhysicsEditorConfig.Internal;
 using Player = Sewer56.SonicRiders.API.Player;
@@ -90,14 +94,19 @@ public unsafe class PhysicsEditorConfig : IConfiguration
         public byte[] ToBytes()
         {
             using var extendedMemoryStream = new ExtendedMemoryStream();
-            extendedMemoryStream.Write(Contents);
-            extendedMemoryStream.Write(RunningPhysics1);
-            extendedMemoryStream.Write(RunningPhysics2);
-            extendedMemoryStream.Write(CharacterTypeStats);
-            extendedMemoryStream.Write(TurbulenceProperties);
-            extendedMemoryStream.Write(PanelProperties);
-            extendedMemoryStream.Write(DecelProperties);
-            extendedMemoryStream.Write(SpeedShoeProperties);
+            var bitStream = new BitStream<StreamByteStream>(new StreamByteStream(extendedMemoryStream));
+
+            bitStream.WriteGeneric(Contents);
+            bitStream.WriteGeneric(ref RunningPhysics1);
+            bitStream.WriteGeneric(ref RunningPhysics2);
+            
+            bitStream.WriteGeneric(CharacterTypeStats.AsSpan());
+            bitStream.WriteGeneric(TurbulenceProperties.AsSpan());
+            
+            bitStream.WriteGeneric(ref PanelProperties);
+            bitStream.WriteGeneric(ref DecelProperties);
+            bitStream.WriteGeneric(ref SpeedShoeProperties);
+
             return extendedMemoryStream.ToArray();
         }
 
@@ -106,28 +115,28 @@ public unsafe class PhysicsEditorConfig : IConfiguration
             fixed (byte* bytePtr = &bytes[0])
             {
                 using var stream = new UnmanagedMemoryStream(bytePtr, bytes.Length);
-                using var bufferedStreamReader = new BufferedStreamReader(stream, 512);
+                var bitStream = new BitStream<StreamByteStream>(new StreamByteStream(stream));
 
-                bufferedStreamReader.Read(out Contents);
-                bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
-                bufferedStreamReader.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
-                ReadTypeStats(bufferedStreamReader);
-                bufferedStreamReader.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
-                bufferedStreamReader.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
-                bufferedStreamReader.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
-                bufferedStreamReader.ReadIfHasFlags(ref SpeedShoeProperties, Contents, PhysicsEditorContents.SpeedShoeProperties);
-                numBytesRead = (int)bufferedStreamReader.Position();
+                bitStream.ReadGeneric(out Contents);
+                bitStream.ReadIfHasFlags(ref RunningPhysics1, Contents, PhysicsEditorContents.Running);
+                bitStream.ReadIfHasFlags(ref RunningPhysics2, Contents, PhysicsEditorContents.Running);
+                ReadTypeStats(ref bitStream);
+                bitStream.ReadIfHasFlags(ref TurbulenceProperties, Player.TurbulenceProperties.Count, Contents, PhysicsEditorContents.TurbulenceProperties);
+                bitStream.ReadIfHasFlags(ref PanelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                bitStream.ReadIfHasFlags(ref DecelProperties, Contents, PhysicsEditorContents.PanelAndDecelProperties);
+                bitStream.ReadIfHasFlags(ref SpeedShoeProperties, Contents, PhysicsEditorContents.SpeedShoeProperties);
+                numBytesRead = (int)bitStream.NextByteIndex;
             }
         }
 
-        private void ReadTypeStats(BufferedStreamReader bufferedStreamReader)
+        private void ReadTypeStats<TStreamType>(ref BitStream<TStreamType> bitStream) where TStreamType : IByteStream
         {
             // Ignore Obsolete Stats.
             CharacterTypeStats[] dummy = default;
-            bufferedStreamReader.ReadIfHasFlags(ref dummy, Player.TypeStats.Count, Contents, (PhysicsEditorContents)(1 << 1));
+            bitStream.ReadIfHasFlags(ref dummy, Player.TypeStats.Count, Contents, (PhysicsEditorContents)(1 << 1));
 
             // Read non-obsolete version.
-            bufferedStreamReader.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStatsFixed);
+            bitStream.ReadIfHasFlags(ref CharacterTypeStats, Player.TypeStats.Count, Contents, PhysicsEditorContents.TypeStatsFixed);
         }
 
         public enum PhysicsEditorContents : int
