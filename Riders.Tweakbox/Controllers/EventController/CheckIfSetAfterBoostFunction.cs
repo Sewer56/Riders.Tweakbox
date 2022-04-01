@@ -21,7 +21,18 @@ public unsafe partial class EventController : TaskEvents, IController
 
     public void InitCheckIfSetAfterBoostFunction(IReloadedHooks hooks, IReloadedHooksUtilities utilities)
     {
-        var ifDisable = new string[] { utilities.GetAbsoluteJumpMnemonics((IntPtr)0x004CCCFE, false) };
+        var ifDisable = new string[]
+        {
+            "movzx edx, byte [eax+14h]",
+            "cmp edx, 1",
+            "je exit",
+
+            "notexiting:",
+            "mov [eax+14h], dword 0",
+
+            "exit:"
+        };
+
         var asm = new[]
         {
             $"use32",
