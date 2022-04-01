@@ -11,7 +11,7 @@ public class InfoEditor : ComponentBase<InfoEditorConfig>, IComponent
 {
     public override string Name { get; set; } = "Info Editor";
 
-    public InfoEditor(IO io) : base(io, io.InfoConfigFolder, io.GetInfoConfigFiles)
+    public InfoEditor(IO io) : base(io, io.InfoConfigFolder, io.GetInfoConfigFiles, ".json")
     {
 
     }
