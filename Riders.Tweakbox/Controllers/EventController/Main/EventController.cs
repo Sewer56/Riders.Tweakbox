@@ -80,6 +80,7 @@ public unsafe partial class EventController : TaskEvents, IController
         InitCheckIfTurbIsDrifting(hooks, utilities);
 
         InitSetItemBoxRespawnTimer(hooks, utilities);
+        InitForceExitPit(hooks, utilities);
     }
 
     // Common. Do not Move.
