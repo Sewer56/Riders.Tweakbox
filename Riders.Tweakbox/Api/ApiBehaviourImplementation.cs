@@ -79,6 +79,10 @@ internal unsafe partial class ApiBehaviourImplementation
         EventController.SetPitAirGain += SetPitAirGain;
         EventController.SetRunningSpeedHook += SetRunningSpeedHook;
         EventController.SetSpeedShoesSpeed += SetSpeedShoesSpeed;
+
+        // Make sure `DecelerationController` applies first.
+        // This should be the case as controllers are initialised before the API.
+        EventController.SetDeceleration += SetDeceleration;
     }
 
     private void OnAddOrRemoveCustomCharacter(ModifyCharacterRequest obj)
@@ -634,6 +638,19 @@ internal unsafe partial class ApiBehaviourImplementation
                     targetSpeed += dashProps.AdditionalSpeed.GetValueOrDefault(0.0f);
                 }
             }
+        }
+    }
+
+    private void SetDeceleration(ref float deceleration, Player* player)
+    {
+        if (!TryGetCustomBehaviour(player, out var behaviours, out var playerIndex, out var level)) 
+            return;
+
+        foreach (var behaviour in behaviours)
+        {
+            // Boost Properties
+            var cruisingProps = behaviour.GetCruisingProperties();
+            cruisingProps?.SetDecelerationSpeed.InvokeIfNotNull(ref deceleration, (IntPtr)player, playerIndex, level);
         }
     }
 

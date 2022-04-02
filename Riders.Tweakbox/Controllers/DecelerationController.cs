@@ -1,14 +1,7 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using Reloaded.Hooks.Definitions;
-using Reloaded.Hooks.Definitions.Enums;
-using Reloaded.Hooks.Definitions.Structs;
-using Reloaded.Hooks.Definitions.X86;
-using Reloaded.Memory.Pointers;
+﻿using Reloaded.Hooks.Definitions;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces.Structs;
-using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders.Structures.Gameplay;
 
 namespace Riders.Tweakbox.Controllers;
@@ -18,27 +11,14 @@ namespace Riders.Tweakbox.Controllers;
 /// </summary>
 public unsafe class DecelerationController : IController
 {
-    private IAsmHook _decelAsmHook;
-
     public unsafe DecelerationController(IReloadedHooks hooks)
     {
-        var utilities = hooks.Utilities;
-
-        _decelAsmHook = hooks.CreateAsmHook(new[]
-        {
-            "use32",
-
-            $"{utilities.PushCdeclCallerSavedRegisters()}",
-            $"push ebx", // Player
-            $"{utilities.AssembleAbsoluteCall<ModifyDecelerationFnPtr>(typeof(DecelerationController), nameof(CalculateDecelerationHook), false)}",
-            $"{utilities.PopFromX87ToXmm()}",
-            $"{utilities.PopCdeclCallerSavedRegisters()}",
-
-        }, 0x004BAAE2, AsmHookBehaviour.DoNotExecuteOriginal, 36).Activate();
+        EventController.SetDeceleration += SetDeceleration;
     }
 
-    [UnmanagedCallersOnly]
-    private static float CalculateDecelerationHook(Player* player)
+    private void SetDeceleration(ref float value, Player* player) => value = CalculateDecelerationTweakbox(player);
+
+    private static float CalculateDecelerationTweakbox(Player* player)
     {
         ref var decelProps = ref Static.DecelProperties;
         if (decelProps.Mode == DecelMode.Linear)
@@ -73,7 +53,4 @@ public unsafe class DecelerationController : IController
 
         return result;
     }
-
-    [Function(CallingConventions.Stdcall)]
-    public struct ModifyDecelerationFnPtr { public FuncPtr<BlittablePointer<Player>, float> Value; }
 }

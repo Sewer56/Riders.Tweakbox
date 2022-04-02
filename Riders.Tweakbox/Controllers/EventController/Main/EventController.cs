@@ -81,6 +81,7 @@ public unsafe partial class EventController : TaskEvents, IController
 
         InitSetItemBoxRespawnTimer(hooks, utilities);
         InitForceExitPit(hooks, utilities);
+        InitSetDeceleration(hooks, utilities);
     }
 
     // Common. Do not Move.
