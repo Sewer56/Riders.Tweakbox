@@ -7,6 +7,7 @@ Split-Path $MyInvocation.MyCommand.Path | Push-Location
               -PackageName "Riders.Tweakbox" `
               -PublishOutputDir "Publish/ToUpload/Tweakbox" `
               -MetadataFileName "Riders.Tweakbox.ReleaseMetadata.json" `
+              -IgnoreRegexes ".*\.json .*\.nuspec Riders\.Tweakbox\.ReleaseMetadata\.json Configurations\*" `
 
 ./Publish.ps1 -ProjectPath "Riders.Tweakbox.CharacterPack.DX/Riders.Tweakbox.CharacterPack.DX.csproj" `
               -PackageName "Riders.Tweakbox.CharacterPack.DX" `

@@ -20,6 +20,17 @@
     Default: "Publish/ToUpload"
     Declares the directory for placing the output files.
 
+.PARAMETER IncludeRegexes
+    Default: "ModConfig\.json \.deps\.json \.runtimeconfig\.json" 
+    Regexes of files to make sure are included in the archive. 
+    Can also be used to prevent files from being deleted on mod update. 
+
+.PARAMETER IgnoreRegexes
+    Default: ".*\.json .*\.nuspec"
+    Regexes of files to make sure are ignored in the archive. 
+    Can be used to prevent, e.g. config files from being included. 
+    Can also be used to prevent files from being deleted on mod update. 
+
 .PARAMETER BuildR2R
     Default: $False
 
@@ -154,6 +165,10 @@ param (
     $ProjectPath = "Reloaded.Hooks.ReloadedII/Reloaded.Hooks.ReloadedII.csproj",
     $PackageName = "Reloaded.Hooks.ReloadedII",
     $PublishOutputDir = "Publish/ToUpload",
+
+    ## => User: Config for Including/Excluding Files in Publisher
+    $IncludeRegexes = "",
+    $IgnoreRegexes = "",
 
     ## => User: Delta Config
     # Pick one and configure settings below.
@@ -316,7 +331,16 @@ function Publish-Common {
     
     Remove-Item $Directory -Recurse -ErrorAction SilentlyContinue
     New-Item $Directory -ItemType Directory -ErrorAction SilentlyContinue
-	$arguments = "$(Get-Common-Publish-Args -AllowDeltas $AllowDeltas) --outputfolder `"$Directory`" --publishtarget $PublishTarget"
+	$arguments = "$(Get-Common-Publish-Args -AllowDeltas $AllowDeltas) --outputfolder `"$Directory`" --publishtarget $PublishTarget "
+
+    if ($IncludeRegexes) { 
+        $arguments += "--includeregexes $IncludeRegexes "
+    }
+
+    if ($IgnoreRegexes) { 
+        $arguments += "--ignoreregexes $IgnoreRegexes "
+    }
+
 	$command = "$reloadedToolPath $arguments"
 	Write-Host "$command`r`n`r`n"
 	Invoke-Expression $command
