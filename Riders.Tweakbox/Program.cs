@@ -19,7 +19,11 @@ namespace Riders.Tweakbox;
 public class Program : IMod, IExports
 {
     public static string Version = "0.7.0";
-    private const string MyModId = "Riders.Tweakbox";
+    
+    /// <summary>
+    /// ID of the mod.
+    /// </summary>
+    public string ModId = "Riders.Tweakbox";
 
     /// <summary>
     /// Used for writing text to the console window.
@@ -57,6 +61,7 @@ public class Program : IMod, IExports
 #if DEBUG
         Reloaded.Imgui.Hook.SDK.Debug += s => Log.WriteLine(s);
 #endif
+        ModId = config.ModId;
         _tweakbox = await Tweakbox.Create(hooks, hooksUtilities, redirector, _modLoader, controllerHook, this);
 
         // Tweak Garbage Collection.

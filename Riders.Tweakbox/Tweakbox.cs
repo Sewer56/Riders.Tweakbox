@@ -75,7 +75,8 @@ public class Tweakbox
     /// </summary>
     public static async Task<Tweakbox> Create(IReloadedHooks hooks, IReloadedHooksUtilities hooksUtilities, IRedirectorController redirector, IModLoader modLoader, IControllerHook controllerHook, Program program)
     {
-        var modFolder = modLoader.GetDirectoryForModId("Riders.Tweakbox");
+        var modFolder    = modLoader.GetDirectoryForModId(program.ModId);
+        var configFolder = modLoader.GetModConfigDirectory(program.ModId);
         var tweakBox = new Tweakbox();
 
         tweakBox._notifier = new DllNotifier(hooks);
@@ -85,7 +86,7 @@ public class Tweakbox
         tweakBox.HooksUtilities = hooksUtilities;
         tweakBox.Redirector = redirector;
         tweakBox.TryDecompressFiles();
-        tweakBox.InitializeIoC(modFolder);
+        tweakBox.InitializeIoC(modFolder, configFolder);
 
         tweakBox.MenuBar = new MenuBar()
         {
@@ -165,9 +166,9 @@ public class Tweakbox
     /// <summary>
     /// Initializes global bindings.
     /// </summary>
-    private void InitializeIoC(string modFolder)
+    private void InitializeIoC(string modFolder, string configFolder)
     {
-        var io = new IO(modFolder);
+        var io = new IO(modFolder, configFolder);
         IoC.Kernel.Bind<IO>().ToConstant(io);
         IoC.Kernel.Bind<Tweakbox>().ToConstant(this);
         IoC.Kernel.Bind<IControllerHook>().ToConstant(_controllerHook);

@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+
 namespace Riders.Tweakbox.Misc;
 
 public class IO
@@ -17,7 +20,8 @@ public class IO
     private Dictionary<string, string> _licenseNameToTextMap = new Dictionary<string, string>();
 
     // Configuration Directories.
-    public string ConfigFolder => Path.Combine(ModFolder, "Configurations");
+    public string ConfigFolder => Path.Combine(ReloadedConfigFolder, "Configurations");
+    public string ConfigFolderOld => Path.Combine(ModFolder, "Configurations"); // Obsolete
 
     public string FixesConfigFolder => Path.Combine(ConfigFolder, "FixesConfigurations");
     public string GearConfigFolder => Path.Combine(ConfigFolder, "GearConfigurations");
@@ -43,9 +47,19 @@ public class IO
     /// </summary>
     public string ModFolder;
 
-    public IO(string modFolder)
+    /// <summary>
+    /// Folder in which Reloaded stores its configurations.
+    /// </summary>
+    public string ReloadedConfigFolder;
+
+    public IO(string modFolder, string configFolder)
     {
         ModFolder = modFolder;
+        ReloadedConfigFolder = configFolder;
+
+        try { MoveDirectory(ConfigFolderOld, ConfigFolder); }
+        catch (Exception) { /* Ignored */ }
+
         Directory.CreateDirectory(FixesConfigFolder);
         Directory.CreateDirectory(GearConfigFolder);
         Directory.CreateDirectory(PhysicsConfigFolder);
@@ -87,5 +101,83 @@ public class IO
         }
 
         return "";
+    }
+
+    /// <summary>
+    /// Moves a directory from a given source path to a target path, overwriting all files.
+    /// </summary>
+    /// <param name="source">The source path.</param>
+    /// <param name="target">The target path.</param>
+    public static void MoveDirectory(string source, string target)
+    {
+        MoveDirectory(source, target, (x, y) =>
+        {
+            File.Copy(x, y, true);
+            File.Delete(x);
+        });
+    }
+    
+    private static void MoveDirectory(string source, string target, Action<string, string> moveDirectoryAction)
+    {
+        Directory.CreateDirectory(target);
+
+        // Get all files in source directory.
+        var sourceFilePaths = Directory.EnumerateFiles(source);
+
+        // Move them.
+        foreach (var sourceFilePath in sourceFilePaths)
+        {
+            // Get destination file path
+            var destFileName = Path.GetFileName(sourceFilePath);
+            var destFilePath = Path.Combine(target, destFileName);
+
+            while (File.Exists(destFilePath) && !CheckFileAccess(destFilePath, FileMode.Open, FileAccess.Write))
+                Thread.Sleep(100);
+
+            if (File.Exists(destFilePath))
+                File.Delete(destFilePath);
+
+            moveDirectoryAction(sourceFilePath, destFilePath);
+        }
+
+        // Get all subdirectories in source directory.
+        var sourceSubDirPaths = Directory.EnumerateDirectories(source);
+
+        // Recursively move them.
+        foreach (var sourceSubDirPath in sourceSubDirPaths)
+        {
+            var destSubDirName = Path.GetFileName(sourceSubDirPath);
+            var destSubDirPath = Path.Combine(target, destSubDirName);
+            MoveDirectory(sourceSubDirPath, destSubDirPath, moveDirectoryAction);
+        }
+    }
+
+    /// <summary>
+    /// Tries to open a stream for a specified file.
+    /// Returns null if it fails due to file lock.
+    /// </summary>
+    public static FileStream TryOpenOrCreateFileStream(string filePath, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite)
+    {
+        try
+        {
+            return File.Open(filePath, mode, access);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Checks whether a file with a specific path can be opened.
+    /// </summary>
+    public static bool CheckFileAccess(string filePath, FileMode mode = FileMode.Open, FileAccess access = FileAccess.ReadWrite)
+    {
+        using var stream = TryOpenOrCreateFileStream(filePath, mode, access);
+        return stream != null;
     }
 }

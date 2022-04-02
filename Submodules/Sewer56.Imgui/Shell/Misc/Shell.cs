@@ -26,7 +26,7 @@ public static partial class Shell
     /// </summary>
     public static ImFont MonoFont;
 
-    public static unsafe void SetupImGuiConfig(string configFolder)
+    public static unsafe void SetupImGuiConfig(string modFolder)
     {
         IO = ImGui.GetIO();
         IO.BackendFlags |= (int)ImGuiBackendFlags.ImGuiBackendFlagsHasSetMousePos;
@@ -34,10 +34,10 @@ public static partial class Shell
         IO.ConfigFlags &= ~(int)ImGuiConfigFlags.ImGuiConfigFlagsNavEnableSetMousePos;
         ((ImGuiIO.__Internal*)IO.__Instance)->IniFilename = Marshal.StringToHGlobalAnsi("tweakbox.imgui.ini");
 
-        var monoFontPath = Path.Combine(configFolder, "Assets/Fonts/RobotoMono-Bold.ttf");
+        var monoFontPath = Path.Combine(modFolder, "Assets/Fonts/RobotoMono-Bold.ttf");
         MonoFont = ImGui.ImFontAtlasAddFontFromFileTTF(IO.Fonts, monoFontPath, 15.0f, null, ref Constants.NullReference<ushort>());
 
-        var fontPath = Path.Combine(configFolder, "Assets/Fonts/Ruda-Bold.ttf");
+        var fontPath = Path.Combine(modFolder, "Assets/Fonts/Ruda-Bold.ttf");
         using var font = ImGui.ImFontAtlasAddFontFromFileTTF(IO.Fonts, fontPath, 15.0f, null, ref Constants.NullReference<ushort>());
         if (font != null)
             IO.FontDefault = font;
