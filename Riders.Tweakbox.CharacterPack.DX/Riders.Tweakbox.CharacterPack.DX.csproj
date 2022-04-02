@@ -8,7 +8,22 @@
     <OutputPath>$(RELOADEDIIMODS)/riders.utils.tweakbox.characterpack.dx/</OutputPath>
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RobustILLink>true</RobustILLink>
   </PropertyGroup>
+
+  <Import Project="../Robust.Trimming.targets" />
+
+  <ItemGroup>
+    <RobustLinkRoots Include="Riders.Tweakbox.CharacterPack.DX" />
+    <RobustLinkAssemblies Include="Sewer56.SonicRiders" />
+
+    <!-- Sewer56.SonicRiders -->
+    <RobustLinkAssemblies Include="Reloaded.Memory" />
+    <RobustLinkAssemblies Include="Sewer56.BitStream" />
+    <RobustLinkAssemblies Include="SharpDX.Direct3D9" />
+    <RobustLinkAssemblies Include="SharpDX" />
+    <RobustLinkAssemblies Include="Reloaded.Hooks.Definitions" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="ModConfig.json" />
@@ -29,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.0" />
+    <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.1.0" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

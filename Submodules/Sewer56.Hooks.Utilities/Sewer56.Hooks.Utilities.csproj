@@ -8,8 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Reloaded.Assembler" Version="1.0.10" />
-    <PackageReference Include="Reloaded.Hooks.Definitions" Version="1.10.0" />
-    <PackageReference Include="Reloaded.Memory.Buffers" Version="1.4.0" />
+    <PackageReference Include="Reloaded.Hooks.Definitions" Version="1.12.0" />
+    <PackageReference Include="Reloaded.Memory.Buffers" Version="1.4.2" />
   </ItemGroup>
 
   <ItemGroup>

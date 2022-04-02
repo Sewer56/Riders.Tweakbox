@@ -2,15 +2,84 @@
   "ModId": "Riders.Tweakbox",
   "ModName": "Sonic Riders Tweakbox",
   "ModAuthor": "Sewer56",
-  "ModVersion": "0.7.0",
+  "ModVersion": "0.7.0-rc0",
   "ModDescription": "The all-in-one Riders mod. Like Heroes Tweakbox but on steroids.",
   "ModDll": "Riders.Tweakbox.dll",
   "ModIcon": "Preview.png",
-  "ModR2RManagedDll32": "x86/Riders.Tweakbox.dll",
-  "ModR2RManagedDll64": "x64/Riders.Tweakbox.dll",
+  "ModR2RManagedDll32": "",
+  "ModR2RManagedDll64": "",
   "ModNativeDll32": "",
   "ModNativeDll64": "",
-  "ModDependencies": [ "reloaded.sharedlib.hooks", "Reloaded.Universal.DInputPleaseCooperate", "reloaded.universal.redirector", "criware.filesystem.hook", "Riders.Controller.Hook" ],
+  "IsLibrary": false,
+  "ReleaseMetadataFileName": "Riders.Tweakbox.ReleaseMetadata.json",
+  "PluginData": {
+    "GitHubDependencies": {
+      "IdToConfigMap": {
+        "reloaded.sharedlib.hooks": {
+          "Config": {
+            "UserName": "Reloaded.SharedLib.Hooks.ReloadedII",
+            "RepositoryName": "Sewer56",
+            "UseReleaseTag": true,
+            "AssetFileName": "reloaded.sharedlib.hooks.zip"
+          }
+        },
+        "Reloaded.Universal.DInputPleaseCooperate": {
+          "Config": {
+            "UserName": "Reloaded-Project",
+            "RepositoryName": "Reloaded.Universal.DInputPleaseCooperate",
+            "UseReleaseTag": true,
+            "AssetFileName": "Mod.zip"
+          }
+        },
+        "reloaded.universal.redirector": {
+          "Config": {
+            "UserName": "Reloaded-Project",
+            "RepositoryName": "Reloaded.Universal.Redirector",
+            "UseReleaseTag": false,
+            "AssetFileName": ""
+          }
+        },
+        "criware.filesystem.hook": {
+          "Config": {
+            "UserName": "Sewer56",
+            "RepositoryName": "CriFsHook.ReloadedII",
+            "UseReleaseTag": true,
+            "AssetFileName": "Mod.zip"
+          }
+        },
+        "Riders.Controller.Hook": {
+          "Config": {
+            "UserName": "Sewer56",
+            "RepositoryName": "Riders.Controller.Hook",
+            "UseReleaseTag": false,
+            "AssetFileName": "Mod.zip"
+          }
+        }
+      }
+    },
+    "NuGet": {
+      "AllowUpdateFromAnyRepository": false,
+      "DefaultRepositoryUrls": [
+        "http://packages.sewer56.moe:5000/v3/index.json"
+      ]
+    },
+    "GitHubRelease": {
+      "UserName": "Sewer56",
+      "RepositoryName": "Riders.Tweakbox",
+      "UseReleaseTag": false,
+      "AssetFileName": "Mod.zip"
+    }
+  },
+  "IsUniversalMod": false,
+  "ModDependencies": [
+    "reloaded.sharedlib.hooks",
+    "criware.filesystem.hook",
+    "Riders.Controller.Hook",
+    "Reloaded.Universal.DInputPleaseCooperate",
+    "reloaded.universal.redirector"
+  ],
   "OptionalDependencies": [],
-  "SupportedAppId": [ "sonicriders.exe" ]
+  "SupportedAppId": [
+    "sonicriders.exe"
+  ]
 }

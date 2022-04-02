@@ -11,7 +11,45 @@
 	  <Version>0.7.0</Version>
     <LangVersion>preview</LangVersion>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <RobustILLink>false</RobustILLink>
   </PropertyGroup>
+
+  <Import Project="../Robust.Trimming.targets" />
+
+  <ItemGroup>
+    <!-- 
+        Current Settings should be safe but need confirmation 
+        Should first make sub-libraries trimmable.
+    -->
+    <RobustLinkRoots Include="Riders.Tweakbox" />
+    <RobustLinkRoots Include="Riders.Netplay.Messages" />
+    <RobustLinkRoots Include="Riders.Tweakbox.Interfaces" />
+    <RobustLinkRoots Include="Sewer56.SonicRiders" />
+    <RobustLinkRoots Include="Sewer56.Hooks.Utilities" />
+    <RobustLinkRoots Include="Reloaded.Imgui.Hook" />
+    <RobustLinkRoots Include="Reloaded.Imgui.Hook.Direct3D9" />
+    <RobustLinkRoots Include="Riders.Tweakbox.API.SDK" />
+    <RobustLinkRoots Include="Riders.Tweakbox.API.Application.Commands" />
+
+    <RobustLinkAssemblies Include="SharpDX.Direct3D9" />
+    <RobustLinkAssemblies Include="StructLinq" />
+    <RobustLinkAssemblies Include="Standart.Hash.xxHash" />
+    <RobustLinkAssemblies Include="K4os.Compression.LZ4" />
+    <RobustLinkAssemblies Include="K4os.Compression.LZ4.Streams" />
+    <RobustLinkAssemblies Include="K4os.Hash.xxHash" />
+    <RobustLinkAssemblies Include="Reloaded.WPF.Animations" />
+    <RobustLinkAssemblies Include="Reloaded.WPF.ColorMineLite" />
+    <RobustLinkAssemblies Include="Sewer56.NumberUtilities" />
+    <RobustLinkAssemblies Include="DotNext" />
+
+    <!--
+    <RobustLinkAssemblies Include="OneOf" />
+    <RobustLinkAssemblies Include="Polly" />
+    <RobustLinkAssemblies Include="System.IdentityModel.Tokens.Jwt" />
+    <RobustLinkAssemblies Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <RobustLinkAssemblies Include="SimpleBase" />
+    -->
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="ModConfig.json" />
@@ -21,10 +59,6 @@
 
   <ItemGroup>
     <Content Include="ModConfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-	
-    <Content Include="ReloadedGithubUpdater.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

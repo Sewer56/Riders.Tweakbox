@@ -2,15 +2,80 @@
   "ModId": "Riders.Tweakbox.Gearpack",
   "ModName": "Riders Tweakbox Sample Gear Pack",
   "ModAuthor": "Sewer56",
-  "ModVersion": "1.0.1",
+  "ModVersion": "1.0.2",
   "ModDescription": "Provides backports of gears from Sonic Riders Netplay, TE and DX.",
   "ModDll": "Riders.Tweakbox.Gearpack.dll",
   "ModIcon": "Preview.png",
-  "ModR2RManagedDll32": "x86/Riders.Tweakbox.Gearpack.dll",
-  "ModR2RManagedDll64": "x64/Riders.Tweakbox.Gearpack.dll",
+  "ModR2RManagedDll32": "",
+  "ModR2RManagedDll64": "",
   "ModNativeDll32": "",
   "ModNativeDll64": "",
-  "ModDependencies": [ "Riders.Tweakbox" ],
-  "OptionalDependencies": null,
-  "SupportedAppId": [ "sonicriders.exe" ]
+  "IsLibrary": false,
+  "ReleaseMetadataFileName": "Riders.Tweakbox.Gearpack.ReleaseMetadata.json",
+  "PluginData": {
+    "GitHubDependencies": {
+      "IdToConfigMap": {
+        "reloaded.sharedlib.hooks": {
+          "Config": {
+            "UserName": "Reloaded.SharedLib.Hooks.ReloadedII",
+            "RepositoryName": "Sewer56",
+            "UseReleaseTag": true,
+            "AssetFileName": "reloaded.sharedlib.hooks.zip"
+          }
+        },
+        "Reloaded.Universal.DInputPleaseCooperate": {
+          "Config": {
+            "UserName": "Reloaded-Project",
+            "RepositoryName": "Reloaded.Universal.DInputPleaseCooperate",
+            "UseReleaseTag": true,
+            "AssetFileName": "Mod.zip"
+          }
+        },
+        "reloaded.universal.redirector": {
+          "Config": {
+            "UserName": "Reloaded-Project",
+            "RepositoryName": "Reloaded.Universal.Redirector",
+            "UseReleaseTag": false,
+            "AssetFileName": ""
+          }
+        },
+        "criware.filesystem.hook": {
+          "Config": {
+            "UserName": "Sewer56",
+            "RepositoryName": "CriFsHook.ReloadedII",
+            "UseReleaseTag": true,
+            "AssetFileName": "Mod.zip"
+          }
+        },
+        "Riders.Controller.Hook": {
+          "Config": {
+            "UserName": "Sewer56",
+            "RepositoryName": "Riders.Controller.Hook",
+            "UseReleaseTag": false,
+            "AssetFileName": "Mod.zip"
+          }
+        }
+      }
+    },
+    "NuGet": {
+      "AllowUpdateFromAnyRepository": false,
+      "DefaultRepositoryUrls": [
+        "http://packages.sewer56.moe:5000/v3/index.json"
+      ]
+    },
+    "GitHubRelease": {
+      "UserName": "Sewer56",
+      "RepositoryName": "Riders.Tweakbox",
+      "UseReleaseTag": false,
+      "AssetFileName": "Mod.zip"
+    }
+  },
+  "IsUniversalMod": false,
+  "ModDependencies": [
+    "Riders.Tweakbox"
+  ],
+  "OptionalDependencies": [],
+  "SupportedAppId": [
+    "sonicriders.exe"
+  ]
 }

@@ -8,10 +8,22 @@
     <OutputPath>$(RELOADEDIIMODS)/riders.utils.tweakbox.gearpack/</OutputPath>
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RobustILLink>true</RobustILLink>
   </PropertyGroup>
 
+  <Import Project="../Robust.Trimming.targets" />
+
   <ItemGroup>
-    <Compile Remove="Gears\Common\PowerfulGear1.3.cs" />
+    <RobustLinkRoots Include="Riders.Tweakbox.Gearpack" />
+    <RobustLinkAssemblies Include="Sewer56.SonicRiders" />
+    <RobustLinkAssemblies Include="Colourful" />
+
+    <!-- Sewer56.SonicRiders -->
+    <RobustLinkAssemblies Include="Reloaded.Memory" />
+    <RobustLinkAssemblies Include="Sewer56.BitStream" />
+    <RobustLinkAssemblies Include="SharpDX.Direct3D9" />
+    <RobustLinkAssemblies Include="SharpDX" />
+    <RobustLinkAssemblies Include="Reloaded.Hooks.Definitions" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,8 +55,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Colourful" Version="3.0.0" />
-    <PackageReference Include="Reloaded.Mod.Interfaces" Version="1.10.0" />
+    <PackageReference Include="Colourful" Version="3.1.0" />
+    <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.1.0" />
   </ItemGroup>
 
   <!-- Delete old Assets in case stuff moved -->
