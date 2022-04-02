@@ -13,7 +13,7 @@ namespace Riders.Tweakbox.Controllers;
 public unsafe partial class EventController : TaskEvents, IController
 {
     /// <summary>
-    /// Performed when the check for legend effect is performed.
+    /// Performed when the check for pit exit is performed.
     /// </summary>
     public static event PlayerAsmFunc OnCheckIfExitPit;
 
@@ -24,7 +24,13 @@ public unsafe partial class EventController : TaskEvents, IController
     /// </summary>
     public static event PlayerAsmFunc SetForceExitPit;
 
+    /// <summary>
+    /// Executed when the player exits a pit.
+    /// </summary>
+    public static event GenericPlayerFn OnExitPit;
+
     private static IAsmHook _forceExitPitHook;
+    private static IAsmHook _onExitPitHook;
 
     public void InitForceExitPit(IReloadedHooks hooks, IReloadedHooksUtilities utilities)
     {
@@ -38,6 +44,15 @@ public unsafe partial class EventController : TaskEvents, IController
         };
 
         _forceLegendEffectStateHook = hooks.CreateAsmHook(onCheckIfOverrideExitPit, 0x4A18D0, AsmHookBehaviour.ExecuteFirst).Activate();
+
+        var onExitPit = new[]
+        {
+            $"use32",
+            $"mov dword [{(int)_tempPlayerPointer.Pointer}], edi",
+            utilities.AssembleAbsoluteCall<AsmActionPtr>(typeof(EventController), nameof(OnExitPitHook))
+        };
+
+        _onExitPitHook = hooks.CreateAsmHook(onExitPit, 0x4A1902, AsmHookBehaviour.ExecuteFirst).Activate();
     }
 
     [UnmanagedCallersOnly]
@@ -49,4 +64,7 @@ public unsafe partial class EventController : TaskEvents, IController
 
         return (int)AsmFunctionResult.Indeterminate;
     }
+
+    [UnmanagedCallersOnly]
+    private static void OnExitPitHook() => OnExitPit?.Invoke(_tempPlayerPointer.Pointer->Pointer);
 }

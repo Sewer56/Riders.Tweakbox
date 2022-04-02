@@ -149,6 +149,7 @@ public abstract class Socket : IDisposable
         AddComponent(IoC.Get<Components.Game.RacePlayerEventSync>());
         AddComponent(IoC.Get<Components.Game.SetupRace>());
         AddComponent(IoC.Get<Components.Game.PauseDialogOverride>());
+        AddComponent(IoC.Get<Components.Game.PitExitSync>());
 
         // Misc
         AddComponent(IoC.Get<Components.Misc.DisconnectOnCourseLeave>());

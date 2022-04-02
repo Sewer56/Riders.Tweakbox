@@ -30,6 +30,7 @@ public enum MessageType : byte
     LapCounters,        // Host -> Client && Client -> Host: Set Lap counters for each player.
     Attack,             // Host -> Client && Client -> Host: Inform client/host of 1 or more attacks.
     EndGame,            // Host -> Client: Ends or restarts the current race.
+    PitExit,            // Host -> Client && Client -> Host: Client has left pit during race.
 
     // Anti-Cheat
     SetAntiCheatTypes,  // Host -> Client: Sets the enabled Anti-Cheat modules.
@@ -81,6 +82,7 @@ public static class MessageTypeExtensions
             MessageType.LapCounters => new LapCountersPacked(),
             MessageType.Attack => new AttackPacked(),
             MessageType.EndGame => new EndNetplayGame(),
+            MessageType.PitExit => new PitExitPacked(),
 
             // Cheat
             MessageType.SetAntiCheatTypes => new SetAntiCheat(),
