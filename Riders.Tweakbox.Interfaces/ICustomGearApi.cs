@@ -22,7 +22,7 @@ public interface ICustomGearApi
     /// <summary>
     /// Retrieves the data of a given gear.
     /// </summary>
-    /// <param name="name">The index of the gear.</param>
+    /// <param name="index">The index of the gear.</param>
     /// <param name="data">The custom gear details.</param>
     /// <returns>True if the gear data was found, else false.</returns>
     bool TryGetGearData(int index, out CustomGearData data);
@@ -38,7 +38,8 @@ public interface ICustomGearApi
     /// <summary>
     /// Retrieves the names of all custom gears.
     /// </summary>
-    /// <param name="names">The span to receive the names of the custom gears.</param>
+    /// <param name="loadedNames">The span to receive the names of all currently loaded custom gears.</param>
+    /// <param name="unloadedNames">The span to receive the names of all currently unloaded custom gears.</param>
     void GetCustomGearNames(Span<string> loadedNames, Span<string> unloadedNames);
 
     /// <summary>
@@ -49,7 +50,7 @@ public interface ICustomGearApi
     void GetCustomGearNames(out string[] loadedGears, out string[] unloadedGears);
 
     /// <summary>
-    /// Retrieves the names of all loaded custom gears.
+    /// Retrieves the amount of all loaded custom gears.
     /// </summary>
     void GetCustomGearCount(out int loadedGears, out int unloadedGears);
 

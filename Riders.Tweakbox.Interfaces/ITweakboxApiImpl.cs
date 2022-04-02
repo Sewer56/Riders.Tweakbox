@@ -42,7 +42,9 @@ public interface ITweakboxApiImpl
     public IPhysicsApi GetPhysicsApi();
 
     /// <summary>
-    /// Retrieves a copy of the class sing
+    /// Retrieves new pointers for data such as gears.
+    /// When writing your own mods, please copy these pointers to <see cref="Sewer56.SonicRiders.API.Players.Gears"/> and other relevant
+    /// APIs.
     /// </summary>
     public ApiPointers GetPointers();
 }
