@@ -17,11 +17,15 @@ public struct DecelProperties
     [FieldOffset(8)]
     public float LinearMaxSpeedOverCap;
 
+    [FieldOffset(12)]
+    public bool EnableMaxSpeedOverCap;
+
     public static DecelProperties GetDefault() => new DecelProperties()
     {
         Mode = DecelMode.Default,
         LinearSpeedCapOverride = 0.926000f, // ~200
-        LinearMaxSpeedOverCap  = 0.87041667f
+        LinearMaxSpeedOverCap  = 0.87041667f,
+        EnableMaxSpeedOverCap = false
     };
 }
 

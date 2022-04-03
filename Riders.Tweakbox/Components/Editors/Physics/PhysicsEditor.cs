@@ -151,7 +151,9 @@ public unsafe class PhysicsEditor : ComponentBase<PhysicsEditorConfig>, ICompone
                     case DecelMode.Default: break;
                     case DecelMode.Linear:
                         Reflection.MakeControl(ref props.LinearSpeedCapOverride, "Speed Cap Override", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearSpeedCapOverride)})");
-                        Reflection.MakeControl(ref props.LinearMaxSpeedOverCap, "Max Speed Over Cap", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearMaxSpeedOverCap)})");
+                        Reflection.MakeControl(ref props.EnableMaxSpeedOverCap, "Enable Max Speed Over Cap");
+                        if (props.EnableMaxSpeedOverCap)
+                            Reflection.MakeControl(ref props.LinearMaxSpeedOverCap, "Max Speed Over Cap", 0.001f, $"%f ({Formula.SpeedToSpeedometer(props.LinearMaxSpeedOverCap)})");
 
                         break;
                     default:
