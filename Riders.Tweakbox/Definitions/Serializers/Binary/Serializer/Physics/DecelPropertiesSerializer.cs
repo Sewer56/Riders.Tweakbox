@@ -20,11 +20,22 @@ public struct DecelPropertiesSerializer
         bitStream.Write(Convert.ToByte(data.EnableMaxSpeedOverCap));
         return Id;
     }
-    public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data) where TByteStream : IByteStream
+    public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data, int sizeInBits) where TByteStream : IByteStream
     {
+        // Sanity Check.
+        if (sizeInBits <= 4 * 8)
+            return;
+
         data.Mode = bitStream.ReadGeneric<DecelMode>();
         data.LinearSpeedCapOverride = bitStream.ReadGeneric<float>();
         data.LinearMaxSpeedOverCap = bitStream.ReadGeneric<float>();
+        
+        // Version 0. 12 Bytes.
+        if (sizeInBits <= 12 * 8) return;
+
         data.EnableMaxSpeedOverCap = Convert.ToBoolean(bitStream.Read<byte>());
+
+        // Version 1. 13 Bytes.
+        if (sizeInBits <= 13 * 8) return;
     }
 }

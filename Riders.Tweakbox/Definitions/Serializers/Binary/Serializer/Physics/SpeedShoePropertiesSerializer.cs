@@ -20,12 +20,20 @@ public struct SpeedShoePropertiesSerializer
         bitStream.WriteGeneric(data.MultiplicativeMinSpeed);
         return Id;
     }
-    public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref SpeedShoeProperties data) where TByteStream : IByteStream
+    public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref SpeedShoeProperties data, int sizeInBits) where TByteStream : IByteStream
     {
+        // Sanity Check.
+        if (sizeInBits <= 4 * 8)
+            return;
+
         data.Mode = bitStream.ReadGeneric<SpeedShoesMode>();
         data.FixedSpeed = bitStream.ReadGeneric<float>();
         data.AdditiveSpeed = bitStream.ReadGeneric<float>();
         data.MultiplicativeSpeed = bitStream.ReadGeneric<float>();
         data.MultiplicativeMinSpeed = bitStream.ReadGeneric<float>();
+
+        // Version 0. 20 Bytes.
+        if (sizeInBits <= 20 * 8)
+            return;
     }
 }

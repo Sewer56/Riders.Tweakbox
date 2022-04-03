@@ -141,9 +141,9 @@ public unsafe class PhysicsEditorConfig : IConfiguration
                             case GenericSpanSerializer.IdCharaTypeStats: GenericSpanSerializer.DeserializeToNewArray(ref bitStream, ref CharacterTypeStats, Player.TypeStats.Count); break;
                             case GenericSpanSerializer.IdTurb: GenericSpanSerializer.DeserializeToNewArray(ref bitStream, ref TurbulenceProperties, Player.TurbulenceProperties.Count); break;
 
-                            case DashPanelPropertiesSerializer.Id:  DashPanelPropertiesSerializer.Deserialize(ref bitStream, ref PanelProperties);     break;
-                            case DecelPropertiesSerializer.Id:      DecelPropertiesSerializer.Deserialize(ref bitStream, ref DecelProperties);         break;
-                            case SpeedShoePropertiesSerializer.Id:  SpeedShoePropertiesSerializer.Deserialize(ref bitStream, ref SpeedShoeProperties); break;
+                            case DashPanelPropertiesSerializer.Id:  DashPanelPropertiesSerializer.Deserialize(ref bitStream, ref PanelProperties, frame.SizeInBits);     break;
+                            case DecelPropertiesSerializer.Id:      DecelPropertiesSerializer.Deserialize(ref bitStream, ref DecelProperties, frame.SizeInBits);         break;
+                            case SpeedShoePropertiesSerializer.Id:  SpeedShoePropertiesSerializer.Deserialize(ref bitStream, ref SpeedShoeProperties, frame.SizeInBits); break;
                         }
 
                         bitStream.BitIndex = initialOffset + bitsRead;
