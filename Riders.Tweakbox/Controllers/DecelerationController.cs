@@ -44,11 +44,11 @@ public unsafe class DecelerationController : IController
         float const260     = *(float*)0x5C08FC;
         float constEpsilon = *(float*)0x5AFFFC;
 
-        var numerator   = player->Speed - props.LinearSpeedCapOverride;
+        var numerator   = player->Speed - player->SpeedCap;
         if (props.EnableMaxSpeedOverCap && numerator > props.LinearMaxSpeedOverCap)
             numerator = props.LinearMaxSpeedOverCap;
 
-        var denominator = (const260 - player->SpeedCap) + constEpsilon;
+        var denominator = (const260 - props.LinearSpeedCapOverride) + constEpsilon;
         var result = numerator / denominator;
 
         return result;
