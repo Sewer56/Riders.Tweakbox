@@ -14,14 +14,14 @@ public struct DecelPropertiesSerializer
     public static int Serialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data) where TByteStream : IByteStream
     {
         bitStream.WriteGeneric(data.Mode);
-        bitStream.Write(data.LinearSpeedCapOverride);
-        bitStream.Write(data.LinearMaxSpeedOverCap);
+        bitStream.WriteGeneric(data.LinearSpeedCapOverride);
+        bitStream.WriteGeneric(data.LinearMaxSpeedOverCap);
         return Id;
     }
     public static void Deserialize<TByteStream>(ref BitStream<TByteStream> bitStream, ref DecelProperties data) where TByteStream : IByteStream
     {
         data.Mode = bitStream.ReadGeneric<DecelMode>();
-        data.LinearSpeedCapOverride = bitStream.Read<float>();
-        data.LinearMaxSpeedOverCap = bitStream.Read<float>();
+        data.LinearSpeedCapOverride = bitStream.ReadGeneric<float>();
+        data.LinearMaxSpeedOverCap = bitStream.ReadGeneric<float>();
     }
 }
