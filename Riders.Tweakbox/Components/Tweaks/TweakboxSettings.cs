@@ -207,7 +207,7 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
                     Tooltip.TextOnHover("Amount of frames reserved for vanish animation.\n" +
                                         "A value of 0 will cause the object to never respawn.");
 
-                    Reflection.MakeControl(ref settings.RespawnTimerFrames, "Respawn Timer Frames", 0.1f).ExecuteIfTrue(SendUpdateNotification);
+                    Reflection.MakeControl(ref settings.RespawnTimerFrames, "Respawn Timer Frames", 0.1f, 0, int.MaxValue).ExecuteIfTrue(SendUpdateNotification);
                     Tooltip.TextOnHover("Amount of frames before object can spawn, after vanish animation finished.\n" +
                                         "A value of 0 will cause the object to never respawn.");
                     
