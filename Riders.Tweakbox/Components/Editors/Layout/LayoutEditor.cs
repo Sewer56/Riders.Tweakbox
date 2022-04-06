@@ -58,7 +58,6 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     {
         if (ImGui.Begin(Name, ref IsEnabled(), 0))
         {
-            var ptr = *State.CurrentStageObjectLayout;
             var contentRegionWidth = ImGui.GetWindowContentRegionWidth();
 
             if (_layoutController.LoadedLayouts.Count > 0)
@@ -73,13 +72,14 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
                 _currentObject = null;
             }
 
-            ImGui.TextWrapped($"Layout Data Address: {(int)ptr:X}");
             ImGui.End();
         }
     }
 
     private void RenderInternal(float contentRegionWidth)
     {
+        ImGui.BeginGroup();
+
         // Display a few columns:
         // Name, Type, Continent, Ping
         const int tableWidth = 200;
@@ -149,10 +149,24 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
             File.WriteAllBytesAsync(filePath, data);
         }
 
+        // Debug Information
+        var tablePtr = *State.CurrentStageObjectLayout;
+        ImGui.TextWrapped($"Layout Data Address: {(int)tablePtr:X}");
+
         // Render Current Item
         if (_currentObject == (void*)0)
+        {
+            ImGui.EndGroup();
             return;
+        }
 
+        // Render Task Address
+        if (_layoutController.TryFindObjectTask(_currentObject, out var task))
+        {
+            ImGui.TextWrapped($"Item Task Address: {(int)task.Pointer:X}");
+        }
+
+        ImGui.EndGroup();
         RenderObject(_currentObject, remainingWidth);
     }
 
