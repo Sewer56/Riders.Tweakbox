@@ -58,8 +58,9 @@ In this mode, you can add a music track to be (randomly) played on a specific st
 
 To use this mode, name your music file `STGXX` where `XX` represents the index of the track, for example:
 
-- 00 = Metal City 
-- 01 = Splash Canyon
+- 00 = Test Level
+- 01 = Metal City 
+- 02 = Splash Canyon
 - 09 = Night Chase
 
 ![Screenshot](./Images/Music_Tutorial_6.png)
