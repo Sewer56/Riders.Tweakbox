@@ -6,6 +6,7 @@ using Riders.Tweakbox.Misc;
 using Riders.Netplay.Messages.Reliable.Structs.Server.Game;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Enums;
+using Reloaded.Memory.Interop;
 using Sewer56.SonicRiders.Functions;
 using Sewer56.SonicRiders.Parser.Layout.Objects.ItemBox;
 using Sewer56.SonicRiders.Parser.Layout.Enums;
@@ -47,6 +48,9 @@ public unsafe class GameModifiersController : IController
     private TweakboxConfig _config;
     private IAsmHook _noBerserkerOnTurbulence;
 
+    private IAsmHook _setBreakableObjectMinRespawnRadius;
+    private Pinnable<float> _newRespawnRadius = new Pinnable<float>(20.0f);
+
     /// <summary>
     /// Creates the controller which controls game behaviour.
     /// </summary>
@@ -67,6 +71,12 @@ public unsafe class GameModifiersController : IController
             $"{hooks.Utilities.GetAbsoluteJumpMnemonics((IntPtr)0x4CFDAE, false)}", // Dip out of speed loss func.
             $"exit:"
         }, 0x4CFD74, new AsmHookOptions() { Behaviour = AsmHookBehaviour.ExecuteFirst, MaxOpcodeSize = 6 }).Activate();
+
+        _setBreakableObjectMinRespawnRadius = hooks.CreateAsmHook(new string[]
+        {
+            "use32",
+            $"movss xmm0, [{(IntPtr)_newRespawnRadius.Pointer}]"
+        }, 0x4A2C05, new AsmHookOptions() { Behaviour = AsmHookBehaviour.DoNotExecuteOriginal }).Activate();
 
         EventController.AfterSetMovementFlagsOnInput += OnAfterSetMovementFlagsOnInput;
         EventController.ShouldSpawnTurbulence += ShouldSpawnTurbulence;
@@ -112,6 +122,23 @@ public unsafe class GameModifiersController : IController
             _noBerserkerOnTurbulence.Enable();
         else
             _noBerserkerOnTurbulence.Disable();
+
+        // Apply breakable item properties.
+        if (Modifiers.BreakableItemSettings != null)
+        {
+            ref var settings = ref Modifiers.BreakableItemSettings;
+            _newRespawnRadius.Value = settings.NoRespawnRadius;
+            ApplyBreakableItemProps(ref settings.PutBreak00_03, (byte*)0x497A5C, (int*)0x497AFC);
+            ApplyBreakableItemProps(ref settings.PutBreak01, (byte*)0x497B78, (int*)0x497B99);
+            ApplyBreakableItemProps(ref settings.PutBreak02, (byte*)0x497C12, (int*)0x497C6E);
+            ApplyBreakableItemProps(ref settings.PutBreak04, (byte*)0x4A22CA, (int*)0x4A26CA);
+
+            void ApplyBreakableItemProps(ref BreakableItemSettings.PutBreakItemSettings putBreakSettings, byte* vanishAnimationFramesPtr, int* respawnFramesPtr)
+            {
+                *vanishAnimationFramesPtr = putBreakSettings.VanishAnimationFrames;
+                *respawnFramesPtr = putBreakSettings.RespawnTimerFrames;
+            }
+        }
     }
 
     /// <summary>

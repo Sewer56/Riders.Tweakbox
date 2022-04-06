@@ -140,6 +140,19 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
                 ImGui.TreePop();
             }
 
+            void RenderRingLossMenu(ref RingLossBehaviour behaviour)
+            {
+                ImGui.Checkbox("Enabled", ref behaviour.Enabled).ExecuteIfTrue(SendUpdateNotification);
+                var minPercent = 0.0f;
+                var maxPercent = 100f;
+                var minLoss = (byte)0;
+                var maxLoss = (byte)100;
+
+                Reflection.MakeControl(ref behaviour.RingLossBefore, "Loss Before Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
+                Reflection.MakeControl(ref behaviour.RingLossPercentage, "Loss Percentage", 0.01f, ref minPercent, ref maxPercent).ExecuteIfTrue(SendUpdateNotification);
+                Reflection.MakeControl(ref behaviour.RingLossAfter, "Loss After Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
+            }
+
             ImGui.TreePop();
         }
 
@@ -159,18 +172,68 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
 
         if (ImGui.TreeNodeStr("Item Properties"))
         {
-            ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Settings.Enabled).ExecuteIfTrue(SendUpdateNotification);
-            if (mods.ReplaceRing100Settings.Enabled)
-                Reflection.MakeControlEnum(ref mods.ReplaceRing100Settings.Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
+            if (ImGui.TreeNodeStr("Power Objects"))
+            {
+                Reflection.MakeControl(ref mods.BreakableItemSettings.NoRespawnRadius, "No Respawn Radius", 0.1f).ExecuteIfTrue(SendUpdateNotification);
+                Tooltip.TextOnHover("If any player is within this radius of the item, it will not respawn.");
 
-            ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceMaxAirSettings.Enabled).ExecuteIfTrue(SendUpdateNotification);
-            if (mods.ReplaceMaxAirSettings.Enabled)
-                Reflection.MakeControlEnum(ref mods.ReplaceMaxAirSettings.Replacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
+                if (ImGui.TreeNodeStr("Type 0 & Type 3 (oPutBreak00 & oPutBreak03)"))
+                {
+                    RenderBreakableItemProps(ref mods.BreakableItemSettings.PutBreak00_03);
+                    ImGui.TreePop();
+                }
 
-            var minTime = 0;
-            var maxTime = int.MaxValue;
-            Reflection.MakeControl(ref mods.ItemBoxProperties.RespawnTimerFrames, "Itembox Respawn Timer", 0.1f, ref minTime, ref maxTime).ExecuteIfTrue(SendUpdateNotification);
-            Tooltip.TextOnHover("A value of 0 will make the item never respawn.");
+                if (ImGui.TreeNodeStr("Type 1 (oPutBreak01)"))
+                {
+                    RenderBreakableItemProps(ref mods.BreakableItemSettings.PutBreak01);
+                    ImGui.TreePop();
+                }
+
+                if (ImGui.TreeNodeStr("Type 2 (oPutBreak02)"))
+                {
+                    RenderBreakableItemProps(ref mods.BreakableItemSettings.PutBreak02);
+                    ImGui.TreePop();
+                }
+
+                if (ImGui.TreeNodeStr("Type 4 (oPutBreak04)"))
+                {
+                    RenderBreakableItemProps(ref mods.BreakableItemSettings.PutBreak04);
+                    ImGui.TreePop();
+                }
+
+                void RenderBreakableItemProps(ref BreakableItemSettings.PutBreakItemSettings settings)
+                {
+                    Reflection.MakeControl(ref settings.VanishAnimationFrames, "Vanish Animation Frames", 0.1f).ExecuteIfTrue(SendUpdateNotification);
+                    Tooltip.TextOnHover("Amount of frames reserved for vanish animation.\n" +
+                                        "A value of 0 will cause the object to never respawn.");
+
+                    Reflection.MakeControl(ref settings.RespawnTimerFrames, "Respawn Timer Frames", 0.1f).ExecuteIfTrue(SendUpdateNotification);
+                    Tooltip.TextOnHover("Amount of frames before object can spawn, after vanish animation finished.\n" +
+                                        "A value of 0 will cause the object to never respawn.");
+                    
+                    ImGui.TextWrapped("Approx. Frames Before Respawn: " + (settings.RespawnTimerFrames + settings.VanishAnimationFrames + 2));
+                }
+
+                ImGui.TreePop();
+            }
+
+            if (ImGui.TreeNodeStr("Item Boxes"))
+            {
+                ImGui.Checkbox("Replace 100 Ring Box", ref mods.ReplaceRing100Settings.Enabled).ExecuteIfTrue(SendUpdateNotification);
+                if (mods.ReplaceRing100Settings.Enabled)
+                    Reflection.MakeControlEnum(ref mods.ReplaceRing100Settings.Replacement, "Ring 100 Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+                ImGui.Checkbox("Replace Air Max Box", ref mods.ReplaceMaxAirSettings.Enabled).ExecuteIfTrue(SendUpdateNotification);
+                if (mods.ReplaceMaxAirSettings.Enabled)
+                    Reflection.MakeControlEnum(ref mods.ReplaceMaxAirSettings.Replacement, "Air Max Replacement").ExecuteIfTrue(SendUpdateNotification);
+
+                var minTime = 0;
+                var maxTime = int.MaxValue;
+                Reflection.MakeControl(ref mods.ItemBoxProperties.RespawnTimerFrames, "Itembox Respawn Timer", 0.1f, ref minTime, ref maxTime).ExecuteIfTrue(SendUpdateNotification);
+                Tooltip.TextOnHover("A value of 0 will make the item never respawn.");
+
+                ImGui.TreePop();
+            }
 
             ImGui.TreePop();
         }
@@ -203,19 +266,6 @@ public class TweakboxSettings : ComponentBase<TweakboxConfig>, IComponent
         }
 
         void SendUpdateNotification() => _modifiersController.InvokeOnEditModifiers();
-
-        void RenderRingLossMenu(ref RingLossBehaviour behaviour)
-        {
-            ImGui.Checkbox("Enabled", ref behaviour.Enabled).ExecuteIfTrue(SendUpdateNotification);
-            var minPercent = 0.0f;
-            var maxPercent = 100f;
-            var minLoss = (byte) 0;
-            var maxLoss = (byte) 100;
-
-            Reflection.MakeControl(ref behaviour.RingLossBefore, "Loss Before Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
-            Reflection.MakeControl(ref behaviour.RingLossPercentage, "Loss Percentage", 0.01f, ref minPercent, ref maxPercent).ExecuteIfTrue(SendUpdateNotification);
-            Reflection.MakeControl(ref behaviour.RingLossAfter, "Loss After Percentage", 0.1f, ref minLoss, ref maxLoss).ExecuteIfTrue(SendUpdateNotification);
-        }
     }
 
     private void RenderGraphicsMenu(TweakboxConfig.Internal data)

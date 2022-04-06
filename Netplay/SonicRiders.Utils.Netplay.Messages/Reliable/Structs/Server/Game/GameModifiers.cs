@@ -41,6 +41,7 @@ public class GameModifiers : IReliableMessage
 
     public RingLossBehaviour HitRingLoss = new RingLossBehaviour();
     public ItemBoxProperties ItemBoxProperties = new ItemBoxProperties();
+    public BreakableItemSettings BreakableItemSettings = new BreakableItemSettings();
 
     public bool IgnoreTurbulenceOnToggle = true;
     
@@ -78,6 +79,7 @@ public class GameModifiers : IReliableMessage
         DeathRingLoss.FromStream(ref bitStream);
         HitRingLoss.FromStream(ref bitStream);
         ItemBoxProperties.FromStream(ref bitStream);
+        BreakableItemSettings.FromStream(ref bitStream);
 
         IgnoreTurbulenceOnToggle = Convert.ToBoolean(bitStream.ReadGeneric<byte>(1));
     }
@@ -105,6 +107,7 @@ public class GameModifiers : IReliableMessage
         DeathRingLoss.ToStream(ref bitStream);
         HitRingLoss.ToStream(ref bitStream);
         ItemBoxProperties.ToStream(ref bitStream);
+        BreakableItemSettings.ToStream(ref bitStream);
 
         bitStream.Write(Convert.ToByte(IgnoreTurbulenceOnToggle), 1);
     }
@@ -127,6 +130,68 @@ public class ReplaceItemSettings
     {
         bitStream.Write(Convert.ToByte(Enabled), 1);
         bitStream.WriteGeneric(Replacement, EnumNumBits<ItemBoxAttribute>.Number);
+    }
+}
+
+public class BreakableItemSettings
+{
+    /// <summary>
+    /// Power object wouldn't respawn if any player is withing this radius of the object.
+    /// </summary>
+    public float NoRespawnRadius = 20.0f;
+
+    public PutBreakItemSettings PutBreak00_03 = new PutBreakItemSettings();
+    public PutBreakItemSettings PutBreak01    = new PutBreakItemSettings();
+    public PutBreakItemSettings PutBreak02    = new PutBreakItemSettings();
+    public PutBreakItemSettings PutBreak04    = new PutBreakItemSettings();
+
+    /// <inheritdoc />
+    public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        NoRespawnRadius = bitStream.ReadGeneric<float>();
+        PutBreak00_03.FromStream(ref bitStream);
+        PutBreak01.FromStream(ref bitStream);
+        PutBreak02.FromStream(ref bitStream);
+        PutBreak04.FromStream(ref bitStream);
+    }
+
+    /// <inheritdoc />
+    public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+    {
+        bitStream.WriteGeneric(NoRespawnRadius);
+        PutBreak00_03.ToStream(ref bitStream);
+        PutBreak01.ToStream(ref bitStream);
+        PutBreak02.ToStream(ref bitStream);
+        PutBreak04.ToStream(ref bitStream);
+    }
+
+    public class PutBreakItemSettings
+    {
+        /// <summary>
+        /// Amount of frames reserved for animation of power object being broken (Task State 6).
+        /// Delays object respawn.
+        /// </summary>
+        public byte VanishAnimationFrames = 60;
+
+        /// <summary>
+        /// Amount of frames object spends waiting to be able to respawn (Task State 8).
+        /// Delays object respawn.
+        /// </summary>
+        public int RespawnTimerFrames = 600;
+
+        /// <inheritdoc />
+        public void FromStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+        {
+            VanishAnimationFrames = bitStream.Read<byte>();
+            RespawnTimerFrames    = bitStream.Read<int>();
+        }
+
+        /// <inheritdoc />
+        public void ToStream<TByteStream>(ref BitStream<TByteStream> bitStream) where TByteStream : IByteStream
+        {
+            bitStream.Write(VanishAnimationFrames);
+            bitStream.Write(RespawnTimerFrames);
+        }
     }
 }
 
