@@ -59,28 +59,28 @@ public unsafe class ObjectLayoutController : IController
     // Gathering these wasn't fun!
     // If you want to contribute to this list, look at 004032B0 inside IDA.
     private Dictionary<ushort, VoidPtrPtr> _itemIdToSomeLoadedPtrMap = new Dictionary<ushort, VoidPtrPtr>()
-        {
-            // Mission
-            { 44100, new VoidPtrPtr((void**) 0x017DF400) },
-            { 44110, new VoidPtrPtr((void**) 0x017DF404) }, // Unused?
-            { 44120, new VoidPtrPtr((void**) 0x017DF490) }, // Unused?
-            { 44160, new VoidPtrPtr((void**) 0x017DF4D0) },
-            { 44170, new VoidPtrPtr((void**) 0x017DF494) },
-            { 44180, new VoidPtrPtr((void**) 0x017DEF1C) },
+    {
+        // Mission
+        { 44100, new VoidPtrPtr((void**) 0x017DF400) },
+        { 44110, new VoidPtrPtr((void**) 0x017DF404) }, // Unused?
+        { 44120, new VoidPtrPtr((void**) 0x017DF490) }, // Unused?
+        { 44160, new VoidPtrPtr((void**) 0x017DF4D0) },
+        { 44170, new VoidPtrPtr((void**) 0x017DF494) },
+        { 44180, new VoidPtrPtr((void**) 0x017DEF1C) },
 
-            // SurvivalRace & SurvivalBattle
-            { 48000, new VoidPtrPtr((void**) 0x017DF524) },
-            { 48010, new VoidPtrPtr((void**) 0x017DF530) },
-            { 48020, new VoidPtrPtr((void**) 0x017DF51C) },
-            { 48030, new VoidPtrPtr((void**) 0x017DF550) },
-            { 48040, new VoidPtrPtr((void**) 0x0696EBC) },
-            { 48050, new VoidPtrPtr((void**) 0x017DF564) },
-            { 48060, new VoidPtrPtr((void**) 0x017DF574) },
-            { 48070, new VoidPtrPtr((void**) 0x017DF5B8) },
-            { 48071, new VoidPtrPtr((void**) 0x017DF5BC) },
-            { 48072, new VoidPtrPtr((void**) 0x017DF5C0) },
-            { 48073, new VoidPtrPtr((void**) 0x017DF5C4) },
-        };
+        // SurvivalRace & SurvivalBattle
+        { 48000, new VoidPtrPtr((void**) 0x017DF524) },
+        { 48010, new VoidPtrPtr((void**) 0x017DF530) },
+        { 48020, new VoidPtrPtr((void**) 0x017DF51C) },
+        { 48030, new VoidPtrPtr((void**) 0x017DF550) },
+        { 48040, new VoidPtrPtr((void**) 0x0696EBC) },
+        { 48050, new VoidPtrPtr((void**) 0x017DF564) },
+        { 48060, new VoidPtrPtr((void**) 0x017DF574) },
+        { 48070, new VoidPtrPtr((void**) 0x017DF5B8) },
+        { 48071, new VoidPtrPtr((void**) 0x017DF5BC) },
+        { 48072, new VoidPtrPtr((void**) 0x017DF5C0) },
+        { 48073, new VoidPtrPtr((void**) 0x017DF5C4) }
+    };
 
     public ObjectLayoutController(EventController @event, IReloadedHooks hooks)
     {
@@ -92,9 +92,9 @@ public unsafe class ObjectLayoutController : IController
 
         string[] setLoadingObjectAsm = new[]
         {
-                "use32",
-                $"mov dword [{(int)_currentLoadingObjectIndex.Pointer}], ebx"
-            };
+            "use32",
+            $"mov dword [{(int)_currentLoadingObjectIndex.Pointer}], ebx"
+        };
 
         _checkResetTaskHook = Functions.CheckResetTask.HookAs<Functions.CheckResetTaskFnPtr>(typeof(ObjectLayoutController), nameof(CheckResetTaskImplStatic)).Activate();
         _setCurrentLoadingObjectIndex = hooks.CreateAsmHook(setLoadingObjectAsm, 0x00419880, AsmHookBehaviour.ExecuteFirst).Activate();
