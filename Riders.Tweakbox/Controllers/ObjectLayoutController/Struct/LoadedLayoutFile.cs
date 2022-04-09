@@ -29,11 +29,15 @@ public unsafe class LoadedLayoutFile : IDisposable
 
     public LoadedLayoutFile() { }
 
+    ~LoadedLayoutFile() => Dispose();
+
     /// <inheritdoc />
     public void Dispose()
     {
         if (_ownsMemory)
             Marshal.FreeHGlobal((IntPtr)LayoutFile.Header);
+
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -104,7 +108,7 @@ public unsafe class LoadedLayoutFile : IDisposable
         header->Initialise(numItems);
 
         // Make file and pointers
-        var file = new LoadedLayoutFile(new InMemoryLayoutFile(layoutPtr));
+        var file = new LoadedLayoutFile(new InMemoryLayoutFile(layoutPtr), true);
         file.ObjectTasks = new BlittablePointer<SetObjectTask<SetObjectTaskData>>?[numItems];
 
         // Setup remaining data.
