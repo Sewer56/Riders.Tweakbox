@@ -325,10 +325,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
             saveFileDialog.FileName = "00000.bin";
             var result = saveFileDialog.ShowDialog();
             if (result == true && !string.IsNullOrEmpty(saveFileDialog.FileName))
-            {
-                _layoutController.Import(File.ReadAllBytes(saveFileDialog.FileName));
-                _layoutController.FastRestart();
-            }
+                _layoutController.ImportAndRestart(File.ReadAllBytes(saveFileDialog.FileName));
         }
 
         ImGui.SameLine(0, Constants.Spacing);

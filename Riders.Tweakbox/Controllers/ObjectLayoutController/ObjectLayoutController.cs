@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -310,8 +311,9 @@ public unsafe class ObjectLayoutController : IController
 
     /// <summary>
     /// Disposes of all layouts and imports a new layout from file.
+    /// Then restarts the stage.
     /// </summary>
-    public void Import(byte[] data)
+    public void ImportAndRestart(byte[] data)
     {
         // Copy layout data.
         var alloc = Marshal.AllocHGlobal(data.Length);
@@ -324,7 +326,11 @@ public unsafe class ObjectLayoutController : IController
 
         // Kill all existing layouts.
         DisposeAllLayouts();
+        LoadedLayouts.Add(loadedLayout);
         *State.CurrentStageObjectLayout = loadedLayout.LayoutFile.Header;
+
+        _currentLayoutFile = loadedLayout;
+        FastRestart();
     }
 
     private void DisposeAllLayouts()
@@ -337,6 +343,7 @@ public unsafe class ObjectLayoutController : IController
 
     private int CheckResetTaskImpl(int a1, int a2)
     {
+        // Dispose all layouts when exiting stage to avoid memory leaks.
         if (*State.ResetTask != (void*)0 && *State.EndOfGameMode != EndOfGameMode.Restart)
             DisposeAllLayouts();
 
@@ -352,17 +359,28 @@ public unsafe class ObjectLayoutController : IController
 
     private unsafe int InitializeLayoutImpl()
     {
+        // TODO: Add Layout Replace.
+
         // Add initial Layout File
-        _currentLayoutFile = new LoadedLayoutFile(InMemoryLayoutFile.Current);
-        if (LoadedLayouts.Count < 1)
-            LoadedLayouts.Add(_currentLayoutFile);
+        var knownLayoutFile = LoadedLayouts.FirstOrDefault(x => x.LayoutFile.Header == InMemoryLayoutFile.Current.Header);
+        if (knownLayoutFile != null)
+        {
+            // Necessary to prevent out of bounds in CollectObjectTask
+            _currentLayoutFile = knownLayoutFile;
+        }
         else
-            LoadedLayouts[0] = _currentLayoutFile;
+        {
+            _currentLayoutFile = new LoadedLayoutFile(InMemoryLayoutFile.Current);
+            if (LoadedLayouts.Count < 1)
+                LoadedLayouts.Add(_currentLayoutFile);
+            else
+                LoadedLayouts[0] = _currentLayoutFile;
+        }
 
         // Initialise original.
         Event.AfterSetTask += CollectObjectTask;
-        RemoveUnloadedItemsFromCurrentLayout();
-        var result = LoadLayout();
+        RemoveUnloadedItemsFromLayoutFile(ref _currentLayoutFile.LayoutFile);
+        var result = LoadCurrentLayout();
         Event.AfterSetTask -= CollectObjectTask;
 
         // Initialise all added layouts.
@@ -373,9 +391,9 @@ public unsafe class ObjectLayoutController : IController
         return result;
     }
 
-    private void RemoveUnloadedItemsFromCurrentLayout()
+    private void RemoveUnloadedItemsFromLayoutFile(ref InMemoryLayoutFile layoutFile)
     {
-        var objects = _currentLayoutFile.LayoutFile.Objects;
+        var objects = layoutFile.Objects;
         for (int x = 0; x < objects.Count; x++)
         {
             ref var obj = ref objects[x];
@@ -397,8 +415,9 @@ public unsafe class ObjectLayoutController : IController
 
         _currentLayoutFile = targetFile;
         *State.CurrentStageObjectLayout = targetFile.LayoutFile.Header;
-        RemoveUnloadedItemsFromCurrentLayout();
-        LoadLayout();
+        RemoveUnloadedItemsFromLayoutFile(ref _currentLayoutFile.LayoutFile);
+        LoadCurrentLayout();
+
         _skipPortalInit.Disable();
         Event.AfterSetTask -= CollectObjectTask;
 
@@ -406,7 +425,7 @@ public unsafe class ObjectLayoutController : IController
         *State.CurrentStageObjectLayout = originalPtr;
     }
 
-    private int LoadLayout()
+    private int LoadCurrentLayout()
     {
         OnLoadLayout?.Invoke(ref _currentLayoutFile.LayoutFile);
         return _initializeObjectLayoutOriginal();
