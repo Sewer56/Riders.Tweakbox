@@ -36,7 +36,7 @@ public class MusicService : ISingletonService
     }
 
     /// <summary>
-    /// Gets the data for a specific texture.
+    /// Gets the name of a random alternative track for a given file name.
     /// </summary>
     /// <param name="fileName">The file name for which to get a replacement track.</param>
     /// <param name="includeVanilla">Whether to include vanilla tracks or not.</param>
@@ -51,7 +51,7 @@ public class MusicService : ISingletonService
 
         GetTracksForFileName(fileName, options);
 
-        if ((options.Count < 1 || includeVanilla) && _vanillaDict.TryGetTrack(fileName, out var vanillaTracks))
+        if ((options.Count < 1 || includeVanilla) && _vanillaDict.TryGetValue(fileName, out var vanillaTracks))
             options.AddRange(vanillaTracks);
 
         var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count);
@@ -74,7 +74,7 @@ public class MusicService : ISingletonService
     {
         foreach (var dictionary in _dictionaries)
         {
-            if (dictionary.TryGetTrack(fileName, out var modTracks))
+            if (dictionary.TryGetValue(fileName, out var modTracks))
                 files.AddRange(modTracks);
         }
     }
