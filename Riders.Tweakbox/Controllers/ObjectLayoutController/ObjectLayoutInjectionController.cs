@@ -23,7 +23,7 @@ public unsafe class ObjectLayoutInjectionController : IController
 
     private byte[] ReplaceStageLayout(int stageid)
     {
-        var layout = _layoutService.GetRandomLayoutForStage(stageid);
+        var layout = _layoutService.GetRandomLayoutForStage(stageid, true);
         if (!string.IsNullOrEmpty(layout))
             return File.ReadAllBytes(layout);
 

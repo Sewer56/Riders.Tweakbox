@@ -33,15 +33,21 @@ public class ObjectLayoutService : ISingletonService
     /// Gets the file path to an alternative track layout for a given file name.
     /// </summary>
     /// <param name="fileName">The file name for which to get a replacement layout.</param>
-    /// <returns>Path to the replacement layout. Null if no replacement exists.</returns>
-    public unsafe string GetRandomLayout(string fileName)
+    /// <param name="allowVanillaFile">Set to true if the vanilla file should be allowed to be used.</param>
+    /// <returns>Path to the replacement layout. Null if no replacement exists or should use vanilla file.</returns>
+    public unsafe string GetRandomLayout(string fileName, bool allowVanillaFile = true)
     {
         var options = new List<string>();
         GetLayoutsForFileName(fileName, options);
         if (options.Count <= 0)
             return null;
 
-        var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count);
+        var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count + Convert.ToInt32(allowVanillaFile));
+        
+        // If last item, assume vanilla layout.
+        if (allowVanillaFile && random == options.Count)
+            return null;
+
         return options[random];
     }
 
@@ -56,8 +62,9 @@ public class ObjectLayoutService : ISingletonService
     /// Obtains a random alternative stage layout for a given stage.
     /// </summary>
     /// <param name="stageId">The stage index.</param>
-    /// <returns>Path to the replacement layout. Null if no replacement exists.</returns>
-    public string GetRandomLayoutForStage(int stageId) => GetRandomLayout(GetFileNameForStageId(stageId));
+    /// <param name="allowVanillaFile">Set to true if the vanilla file should be allowed to be used.</param>
+    /// <returns>Path to the replacement layout. Null if no replacement exists or should use vanilla file.</returns>
+    public string GetRandomLayoutForStage(int stageId, bool allowVanillaFile = true) => GetRandomLayout(GetFileNameForStageId(stageId), allowVanillaFile);
 
     /// <summary>
     /// Obtains the file name for a given stage id.
