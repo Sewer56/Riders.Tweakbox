@@ -38,6 +38,11 @@ public unsafe class ObjectLayoutController : IController
     /// </summary>
     public event OnLoadLayoutEventHandler OnLoadLayout;
 
+    /// <summary>
+    /// Allows you to replace the stage layout file.
+    /// </summary>
+    public event ReplaceStageLayoutHandler ReplaceStageLayout;
+
     private LoadedLayoutFile _currentLayoutFile;
 
     private IHook<Functions.InitializeObjectLayoutFn> _initialiseLayoutHook;
@@ -315,6 +320,19 @@ public unsafe class ObjectLayoutController : IController
     /// </summary>
     public void ImportAndRestart(byte[] data)
     {
+        var loadedLayout = LoadLayoutFromBytes(data);
+
+        // Kill all existing layouts.
+        DisposeAllLayouts();
+        LoadedLayouts.Add(loadedLayout);
+        *State.CurrentStageObjectLayout = loadedLayout.LayoutFile.Header;
+
+        _currentLayoutFile = loadedLayout;
+        FastRestart();
+    }
+
+    private LoadedLayoutFile LoadLayoutFromBytes(byte[] data)
+    {
         // Copy layout data.
         var alloc = Marshal.AllocHGlobal(data.Length);
         fixed (byte* dataPtr = &data[0])
@@ -324,13 +342,7 @@ public unsafe class ObjectLayoutController : IController
         var loadedLayout = new LoadedLayoutFile(new InMemoryLayoutFile((void*)alloc), true);
         loadedLayout.LayoutFile.Header->Magic = 0; // Loaded.
 
-        // Kill all existing layouts.
-        DisposeAllLayouts();
-        LoadedLayouts.Add(loadedLayout);
-        *State.CurrentStageObjectLayout = loadedLayout.LayoutFile.Header;
-
-        _currentLayoutFile = loadedLayout;
-        FastRestart();
+        return loadedLayout;
     }
 
     private void DisposeAllLayouts()
@@ -359,22 +371,37 @@ public unsafe class ObjectLayoutController : IController
 
     private unsafe int InitializeLayoutImpl()
     {
-        // TODO: Add Layout Replace.
-
-        // Add initial Layout File
-        var knownLayoutFile = LoadedLayouts.FirstOrDefault(x => x.LayoutFile.Header == InMemoryLayoutFile.Current.Header);
-        if (knownLayoutFile != null)
+        void AddOrSetFirstLayoutFile()
         {
-            // Necessary to prevent out of bounds in CollectObjectTask
-            _currentLayoutFile = knownLayoutFile;
-        }
-        else
-        {
-            _currentLayoutFile = new LoadedLayoutFile(InMemoryLayoutFile.Current);
             if (LoadedLayouts.Count < 1)
                 LoadedLayouts.Add(_currentLayoutFile);
             else
                 LoadedLayouts[0] = _currentLayoutFile;
+        }
+
+        // Try get Alternative Stage Layout Initial Layout File
+        var replacedLayout = TryGetAlternativeStageLayout();
+        if (replacedLayout == null)
+        {
+            var knownLayoutFile = LoadedLayouts.FirstOrDefault(x => x.LayoutFile.Header == InMemoryLayoutFile.Current.Header);
+            if (knownLayoutFile != null)
+            {
+                // This is a layout file we injected via import function.
+                // Necessary to prevent out of bounds in CollectObjectTask
+                _currentLayoutFile = knownLayoutFile;
+            }
+            else
+            {
+                // Alternatively it belongs to the game, add it to the list of known loaded layout.
+                _currentLayoutFile = new LoadedLayoutFile(InMemoryLayoutFile.Current);
+                AddOrSetFirstLayoutFile();
+            }
+        }
+        else
+        {
+            *State.CurrentStageObjectLayout = replacedLayout.LayoutFile.Header;
+            _currentLayoutFile = replacedLayout;
+            AddOrSetFirstLayoutFile();
         }
 
         // Initialise original.
@@ -389,6 +416,13 @@ public unsafe class ObjectLayoutController : IController
             LoadExtraLayoutFile(LoadedLayouts[x]);
 
         return result;
+    }
+
+    private LoadedLayoutFile TryGetAlternativeStageLayout()
+    {
+        // Replace stage layout if requested.
+        var bytes = ReplaceStageLayout?.Invoke((int)*State.Level);
+        return bytes != null ? LoadLayoutFromBytes(bytes) : null;
     }
 
     private void RemoveUnloadedItemsFromLayoutFile(ref InMemoryLayoutFile layoutFile)
@@ -455,4 +489,6 @@ public unsafe class ObjectLayoutController : IController
     #endregion
 
     public delegate void OnLoadLayoutEventHandler(ref InMemoryLayoutFile layout);
+
+    public delegate byte[] ReplaceStageLayoutHandler(int stageId);
 }
