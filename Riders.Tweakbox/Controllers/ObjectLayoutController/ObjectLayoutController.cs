@@ -59,6 +59,7 @@ public unsafe class ObjectLayoutController : IController
     private Pinnable<int> _currentLoadingObjectIndex = new Pinnable<int>(0);
     private IAsmHook _setCurrentLoadingObjectIndex;
     private static ObjectLayoutController _this;
+    private bool _isUsingImportedLayout;
 
     /// <summary>
     /// Skips map portal initialisation.
@@ -334,6 +335,8 @@ public unsafe class ObjectLayoutController : IController
 
         _currentLayoutFile = loadedLayout;
         FastRestart();
+
+        _isUsingImportedLayout = true;
     }
 
     private void DisposeAllLayouts()
@@ -351,6 +354,7 @@ public unsafe class ObjectLayoutController : IController
         {
             DisposeAllLayouts();
             OriginalLayout = null;
+            _isUsingImportedLayout = false;
         }
 
         return _checkResetTaskHook.OriginalFunction.Value.Invoke(a1, a2);
@@ -376,7 +380,7 @@ public unsafe class ObjectLayoutController : IController
         OriginalLayout ??= new LoadedLayoutFile(new InMemoryLayoutFile(*State.CurrentStageObjectLayout), false);
         
         // Try get Alternative Stage Layout Initial Layout File
-        var replacedLayout = ReplaceStageLayout?.Invoke((int)*State.Level);
+        var replacedLayout = !_isUsingImportedLayout ? ReplaceStageLayout?.Invoke((int)*State.Level) : null;
         if (replacedLayout == null)
         {
             // Check in case we used the import function to exchange layout.
