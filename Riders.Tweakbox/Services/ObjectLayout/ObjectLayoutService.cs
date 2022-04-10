@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
+using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Interfaces;
 
 namespace Riders.Tweakbox.Services.ObjectLayout;
@@ -12,14 +13,23 @@ namespace Riders.Tweakbox.Services.ObjectLayout;
 /// </summary>
 public class ObjectLayoutService : ISingletonService
 {
+    /// <summary>
+    /// Random number generator tied to this service.
+    /// </summary>
+    private Random _random;
+
+    private Logger _log = new Logger(LogCategory.Random);
+
     private List<ObjectLayoutDictionary> _dictionaries = new List<ObjectLayoutDictionary>();
     private IModLoader _modLoader;
+    private int _seed = DateTime.UtcNow.Second;
 
     public ObjectLayoutService(IModLoader modLoader)
     {
         _modLoader = modLoader;
         _modLoader.ModLoading += OnModLoading;
         _modLoader.ModUnloading += OnModUnloading;
+        _random = new Random(_seed);
 
         // Fill in textures from already loaded mods.
         var existingMods = _modLoader.GetActiveMods().Select(x => x.Generic);
@@ -27,6 +37,15 @@ public class ObjectLayoutService : ISingletonService
         {
             Add(mod);
         }
+    }
+
+    /// <summary>
+    /// Seeds the random number generator tied to this service.
+    /// </summary>
+    public void SeedRandom(int seed)
+    {
+        _random = new Random(seed);
+        _log.WriteLine($"[{nameof(ObjectLayoutService)}] Seeding with {seed}");
     }
 
     /// <summary>
@@ -42,7 +61,7 @@ public class ObjectLayoutService : ISingletonService
         if (options.Count <= 0)
             return null;
 
-        var random = Misc.Extensions.SharedRandom.Instance.Next(0, options.Count + Convert.ToInt32(allowVanillaFile));
+        var random = _random.Next(0, options.Count + Convert.ToInt32(allowVanillaFile));
         
         // If last item, assume vanilla layout.
         if (allowVanillaFile && random == options.Count)
