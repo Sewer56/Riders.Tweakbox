@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Reloaded.Memory.Pointers;
 using Sewer56.SonicRiders.Parser.Layout;
@@ -20,14 +21,28 @@ public unsafe class LoadedLayoutFile : IDisposable
     public InMemoryLayoutFile LayoutFile;
     private bool _ownsMemory;
 
-    public LoadedLayoutFile(InMemoryLayoutFile layoutFile, bool ownsMemory = false)
+    public LoadedLayoutFile(InMemoryLayoutFile layoutFile, bool ownsMemory = false) { Init(layoutFile, ownsMemory); }
+
+    public LoadedLayoutFile(byte[] data)
+    {
+        // Copy layout data.
+        var alloc = Marshal.AllocHGlobal(data.Length);
+        fixed (byte* dataPtr = &data[0])
+            Unsafe.CopyBlockUnaligned((void*)alloc, dataPtr, (uint)data.Length);
+
+        // Open layout data
+        Init(new InMemoryLayoutFile((void*)alloc), true);
+        LayoutFile.Header->Magic = 0; // Loaded.
+    }
+
+    public LoadedLayoutFile() { }
+
+    private void Init(InMemoryLayoutFile layoutFile, bool ownsMemory = false)
     {
         LayoutFile = layoutFile;
         ObjectTasks = new BlittablePointer<SetObjectTask<SetObjectTaskData>>?[LayoutFile.Header->ObjectCount];
         _ownsMemory = ownsMemory;
     }
-
-    public LoadedLayoutFile() { }
 
     ~LoadedLayoutFile() => Dispose();
 

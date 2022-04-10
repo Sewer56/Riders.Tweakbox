@@ -43,6 +43,11 @@ public unsafe class ObjectLayoutController : IController
     /// </summary>
     public event ReplaceStageLayoutHandler ReplaceStageLayout;
 
+    /// <summary>
+    /// Contains the original object layout for this stage.
+    /// </summary>
+    public LoadedLayoutFile OriginalLayout { get; private set; }
+
     private LoadedLayoutFile _currentLayoutFile;
 
     private IHook<Functions.InitializeObjectLayoutFn> _initialiseLayoutHook;
@@ -320,7 +325,7 @@ public unsafe class ObjectLayoutController : IController
     /// </summary>
     public void ImportAndRestart(byte[] data)
     {
-        var loadedLayout = LoadLayoutFromBytes(data);
+        var loadedLayout = new LoadedLayoutFile(data);
 
         // Kill all existing layouts.
         DisposeAllLayouts();
@@ -329,20 +334,6 @@ public unsafe class ObjectLayoutController : IController
 
         _currentLayoutFile = loadedLayout;
         FastRestart();
-    }
-
-    private LoadedLayoutFile LoadLayoutFromBytes(byte[] data)
-    {
-        // Copy layout data.
-        var alloc = Marshal.AllocHGlobal(data.Length);
-        fixed (byte* dataPtr = &data[0])
-            Unsafe.CopyBlockUnaligned((void*)alloc, dataPtr, (uint)data.Length);
-
-        // Open layout data
-        var loadedLayout = new LoadedLayoutFile(new InMemoryLayoutFile((void*)alloc), true);
-        loadedLayout.LayoutFile.Header->Magic = 0; // Loaded.
-
-        return loadedLayout;
     }
 
     private void DisposeAllLayouts()
@@ -357,7 +348,10 @@ public unsafe class ObjectLayoutController : IController
     {
         // Dispose all layouts when exiting stage to avoid memory leaks.
         if (*State.ResetTask != (void*)0 && *State.EndOfGameMode != EndOfGameMode.Restart)
+        {
             DisposeAllLayouts();
+            OriginalLayout = null;
+        }
 
         return _checkResetTaskHook.OriginalFunction.Value.Invoke(a1, a2);
     }
@@ -379,10 +373,13 @@ public unsafe class ObjectLayoutController : IController
                 LoadedLayouts[0] = _currentLayoutFile;
         }
 
+        OriginalLayout ??= new LoadedLayoutFile(new InMemoryLayoutFile(*State.CurrentStageObjectLayout), false);
+        
         // Try get Alternative Stage Layout Initial Layout File
-        var replacedLayout = TryGetAlternativeStageLayout();
+        var replacedLayout = ReplaceStageLayout?.Invoke((int)*State.Level);
         if (replacedLayout == null)
         {
+            // Check in case we used the import function to exchange layout.
             var knownLayoutFile = LoadedLayouts.FirstOrDefault(x => x.LayoutFile.Header == InMemoryLayoutFile.Current.Header);
             if (knownLayoutFile != null)
             {
@@ -416,13 +413,6 @@ public unsafe class ObjectLayoutController : IController
             LoadExtraLayoutFile(LoadedLayouts[x]);
 
         return result;
-    }
-
-    private LoadedLayoutFile TryGetAlternativeStageLayout()
-    {
-        // Replace stage layout if requested.
-        var bytes = ReplaceStageLayout?.Invoke((int)*State.Level);
-        return bytes != null ? LoadLayoutFromBytes(bytes) : null;
     }
 
     private void RemoveUnloadedItemsFromLayoutFile(ref InMemoryLayoutFile layoutFile)
@@ -490,5 +480,5 @@ public unsafe class ObjectLayoutController : IController
 
     public delegate void OnLoadLayoutEventHandler(ref InMemoryLayoutFile layout);
 
-    public delegate byte[] ReplaceStageLayoutHandler(int stageId);
+    public delegate LoadedLayoutFile ReplaceStageLayoutHandler(int stageId);
 }

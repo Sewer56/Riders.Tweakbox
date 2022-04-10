@@ -2,6 +2,7 @@
 using Reloaded.Universal.Redirector.Interfaces;
 using Riders.Tweakbox.Configs;
 using Riders.Tweakbox.Controllers.Interfaces;
+using Riders.Tweakbox.Controllers.ObjectLayoutController.Struct;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Services.ObjectLayout;
 
@@ -21,12 +22,12 @@ public unsafe class ObjectLayoutInjectionController : IController
         _objectLayoutController.ReplaceStageLayout += ReplaceStageLayout;
     }
 
-    private byte[] ReplaceStageLayout(int stageid)
+    private LoadedLayoutFile ReplaceStageLayout(int stageid)
     {
         var layout = _layoutService.GetRandomLayoutForStage(stageid, true);
         if (!string.IsNullOrEmpty(layout))
-            return File.ReadAllBytes(layout);
+            return new LoadedLayoutFile(File.ReadAllBytes(layout));
 
-        return null;
+        return _objectLayoutController.OriginalLayout;
     }
 }
