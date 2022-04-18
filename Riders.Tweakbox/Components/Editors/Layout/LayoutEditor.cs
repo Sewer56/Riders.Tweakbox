@@ -241,7 +241,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
 
         // Row 2
         if (ImGui.Button("Teleport to Item", Constants.Zero))
-            TeleportPlayer(item->Position, item->Rotation.DegreesToRadians());
+            Player.Players[0].Teleport(item->Position, item->Rotation.DegreesToRadians());
 
         ImGui.SameLine(0, Constants.Spacing);
         if (ImGui.Button("Teleport to Nearest Item", Constants.Zero))
@@ -252,7 +252,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
                 _currentObject = nearest;
                 _currentIndex = nearestIndex;
                 _scrollTable = true;
-                TeleportPlayer(_currentObject->Position, _currentObject->Rotation.DegreesToRadians());
+                Player.Players[0].Teleport(_currentObject->Position, _currentObject->Rotation.DegreesToRadians());
             }
         }
 
@@ -265,7 +265,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
                 _currentObject = nearest;
                 _currentIndex = nearestIndex;
                 _scrollTable = true;
-                TeleportPlayer(_currentObject->Position, _currentObject->Rotation.DegreesToRadians());
+                Player.Players[0].Teleport(_currentObject->Position, _currentObject->Rotation.DegreesToRadians());
             }
         }
 
@@ -279,7 +279,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         ImGui.SameLine(0, Constants.Spacing);
         ImGui.Checkbox("Player Follow Item", ref _freezePlayerToItem);
         if (_freezePlayerToItem)
-            TeleportPlayer(item->Position, item->Rotation.DegreesToRadians());
+            Player.Players[0].Teleport(item->Position, item->Rotation.DegreesToRadians());
 
         ImGui.SameLine(0, Constants.Spacing);
         ImGui.Checkbox("Item Follow Player", ref _freezeItemToPlayer);
@@ -349,20 +349,6 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
                 _layoutController.SetPortalChar(item, item->PortalChar);
             }
         }
-    }
-
-    private void TeleportPlayer(Vector3 position, Vector3 rotation)
-    {
-        ref var player = ref Player.Players[0];
-        player.Position = position;
-        player.PositionAlt = position;
-        player.Rotation = rotation;
-        player.Speed = 0;
-        player.VSpeed = 0;
-        player.Acceleration = 0;
-        player.FallingMode = FallingMode.Ground;
-        player.LastMovementFlags = 0;
-        player.MovementFlags = 0;
     }
 
     private string GetAutosaveFileName()

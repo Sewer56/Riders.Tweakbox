@@ -26,6 +26,11 @@ public unsafe class FramePacingController : IController
     private static FramePacingController _controller;
 
     /// <summary>
+    /// An action to run before the frame finishes rendering.
+    /// </summary>
+    public Action OnEndFrame { get; set; }
+
+    /// <summary>
     /// An action to run after the frame finishes rendering.
     /// </summary>
     public Action AfterEndFrame { get; set; }
@@ -118,8 +123,9 @@ public unsafe class FramePacingController : IController
             if (_cpuCounter != null)
                 CpuUsage = _cpuCounter.NextValue();
         }
-        
+
         // Seed number generator.
+        OnEndFrame?.Invoke();
         SharedRandom.Instance.Next();
         if (_config.Data.FramePacing)
         {

@@ -42,6 +42,7 @@ using Reloaded.Memory.Streams.Writers;
 using Riders.Tweakbox.Api;
 using Riders.Tweakbox.Components.Debug.NN;
 using Riders.Tweakbox.Components.Editors.Menu;
+using Riders.Tweakbox.Components.Editors.Rail;
 using Riders.Tweakbox.Interfaces;
 
 namespace Riders.Tweakbox;
@@ -111,6 +112,7 @@ public class Tweakbox
                     Benchmark(() => IoC.GetSingleton<GearEditor>(), nameof(GearEditor)),
                     Benchmark(() => IoC.GetSingleton<PhysicsEditor>(), nameof(PhysicsEditor)),
                     Benchmark(() => IoC.GetSingleton<LayoutEditor>(), nameof(LayoutEditor)),
+                    Benchmark(() => IoC.GetSingleton<RailSpeedEditor>(), nameof(RailSpeedEditor)),
                 }),
                 new MenuBarItem("Debug", new List<IComponent>()
                 {

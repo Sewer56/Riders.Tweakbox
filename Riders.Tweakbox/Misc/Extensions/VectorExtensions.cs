@@ -19,4 +19,6 @@ public static class VectorExtensions
 
     public static float BamsToRadians(this int value) => (float)(value / 10430.378350470452724949566316381);
     public static int RadiansToBams(this float value) => (int)(Math.Round(value * 10430.378350470452724949566316381));
+
+    public static Vector3 ToVector3(this Vector4 value) => new(value.X, value.Y, value.Z);
 }

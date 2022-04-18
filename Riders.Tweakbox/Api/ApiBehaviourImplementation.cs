@@ -62,6 +62,7 @@ internal unsafe partial class ApiBehaviourImplementation
         EventController.SetAirGainedThisFrameFromFly += SetAirGainedThisFrameFromFly;
         EventController.SetAirGainedThisFrameFromPower += SetAirGainedThisFrameFromPower;
         EventController.HandleCustomOffroadFn += CustomOffroadFunction;
+        EventController.SetRailInitialSpeedCap += SetRailSpeedCap;
         EventController.SetRailSpeedCap += SetRailSpeedCap;
         EventController.SetFlyRingSpeedX += SetFlySpeedX;
         EventController.SetFlyRingSpeedY += SetFlySpeedY;
@@ -216,7 +217,7 @@ internal unsafe partial class ApiBehaviourImplementation
         return false;
     }
 
-    private void SetRailSpeedCap(ref float value, Player* player)
+    private void SetRailSpeedCap(ref float value, Player* player, int numFramesOnRail)
     {
         if (TryGetCustomBehaviour(player, out var behaviours, out var playerIndex, out var level))
         {
