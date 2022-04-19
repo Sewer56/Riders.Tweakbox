@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -6,6 +7,7 @@ using Riders.Tweakbox.Configs.Misc;
 using Riders.Tweakbox.Controllers.Interfaces;
 using Riders.Tweakbox.Misc;
 using Riders.Tweakbox.Misc.Extensions;
+using Riders.Tweakbox.Services.Rails;
 using Sewer56.SonicRiders.API;
 using Player = Sewer56.SonicRiders.Structures.Gameplay.Player;
 
@@ -19,8 +21,11 @@ public unsafe class RailController : IController
 
     private FramePacingController _framePacingController = IoC.GetSingleton<FramePacingController>();
 
-    public RailController()
+    private RailService _railService;
+
+    public RailController(RailService railService)
     {
+        _railService = railService;
         EventController.SetRailInitialSpeedCap += SetRailInitialSpeedCap;
         EventController.SetRailSpeedCap += SetRailSpeedCap;
         EventController.AfterSetRailSpeedCap += AfterSetRailSpeedCap;
@@ -37,12 +42,17 @@ public unsafe class RailController : IController
         if (railPtr == (void*)0)
         {
             Configuration.Data = new CustomRailConfiguration.Internal();
+            LastRailFilePtr = railPtr;
         }
         else
         {
             // Load new file.
-            LastRailFilePtr    = *State.CurrentRailFile;
-            Configuration.Data = new CustomRailConfiguration.Internal(InMemorySplineFile.CurrentRail.NumSplines);
+            LastRailFilePtr = *State.CurrentRailFile;
+            var rails = _railService.GetRandomRailsForStage((int)(*State.Level), false);
+            if (!string.IsNullOrEmpty(rails))
+                Configuration.FromBytes(File.ReadAllBytes(rails));
+            else
+                Configuration.Data = new CustomRailConfiguration.Internal(InMemorySplineFile.CurrentRail.NumSplines);
         }
     }
 
