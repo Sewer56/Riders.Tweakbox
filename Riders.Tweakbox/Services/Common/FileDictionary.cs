@@ -29,10 +29,20 @@ public class FileDictionary
 
     private FileSystemWatcher _watcher;
 
+    public FileDictionary() { }
+
     /// <summary/>
     /// <param name="source">Path to the folder where files are sourced from.</param>
     /// <param name="extension">The file extension tracked, e.g. ".adx".</param>
-    public FileDictionary(string source, string extension)
+    public FileDictionary(string source, string extension) => InitializeBase(source, extension);
+
+    /// <summary>
+    /// Initializes the file dictionary using a given source and the default extension.
+    /// </summary>
+    /// <param name="source">Path to the folder where files are sourced from.</param>
+    public virtual void Initialize(string source) => throw new Exception("Please override this from a derived class.");
+
+    protected void InitializeBase(string source, string extension)
     {
         Source = source;
         Extension = extension;

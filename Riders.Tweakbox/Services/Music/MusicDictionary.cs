@@ -9,4 +9,8 @@ namespace Riders.Tweakbox.Services.Music;
 public class MusicDictionary : FileDictionary
 {
     public MusicDictionary(string source, string extension = MusicCommon.AdxExtension) : base(source, extension) { }
+
+    public MusicDictionary() { }
+
+    public override void Initialize(string source) => InitializeBase(source, MusicCommon.AdxExtension);
 }

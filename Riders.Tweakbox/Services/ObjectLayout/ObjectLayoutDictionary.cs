@@ -8,5 +8,11 @@ namespace Riders.Tweakbox.Services.ObjectLayout;
 /// </summary>
 public class ObjectLayoutDictionary : FileDictionary
 {
-    public ObjectLayoutDictionary(string source, string extension = ".layout") : base(source, extension) { }
+    public const string LayoutExtension = ".layout";
+
+    public ObjectLayoutDictionary(string source, string extension = LayoutExtension) : base(source, extension) { }
+
+    public ObjectLayoutDictionary() { }
+
+    public override void Initialize(string source) => InitializeBase(source, LayoutExtension);
 }
