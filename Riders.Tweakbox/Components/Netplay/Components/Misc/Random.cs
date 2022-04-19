@@ -14,6 +14,7 @@ using Sewer56.Hooks.Utilities.Enums;
 using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
 using Riders.Tweakbox.Misc.Log;
+using Riders.Tweakbox.Services.Common;
 using Riders.Tweakbox.Services.ObjectLayout;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc;
@@ -145,7 +146,7 @@ public unsafe class Random : INetplayComponent
         // Seed a new random value for item pickups.
         _logRandom.WriteLine($"[{nameof(Random)} / Host] Seeding: {(int)seed}");
         _itemPickupRandom = new System.Random((int)seed);
-        _layoutService.SeedRandom((int)seed);
+        IFileService.SeedAll((int)seed);
 
         // TODO: Handle error when time component is not available.
 
@@ -181,7 +182,7 @@ public unsafe class Random : INetplayComponent
         _logRandom.WriteLine($"[{nameof(Random)} / Client] Seeding: {srand.Seed}");
         Event.InvokeSeedRandom(srand.Seed);
         _itemPickupRandom = new System.Random(srand.Seed);
-        _layoutService.SeedRandom((int)srand.Seed);
+        IFileService.SeedAll((int)srand.Seed);
 
         Socket.TryGetComponent(out TimeSynchronization time);
         var localTime = time.ToLocalTime(srand.StartTime);
