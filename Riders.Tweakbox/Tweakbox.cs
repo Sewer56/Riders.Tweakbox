@@ -130,6 +130,8 @@ public class Tweakbox
                     Benchmark(() => IoC.GetSingleton<MenuEditor>(), nameof(MenuEditor)),
 
                     Benchmark(() => IoC.GetSingleton<BonePreviewer>(), nameof(BonePreviewer)),
+                    Benchmark(() => IoC.GetSingleton<AFSTester>(), nameof(AFSTester)),
+
 #if DEBUG
                     Benchmark(() => IoC.GetSingleton<ServerBrowserDebugWindow>(), nameof(ServerBrowserDebugWindow)),
 #endif
