@@ -84,16 +84,23 @@ public unsafe class BonePreviewer : ComponentBase
 
                     // Apply properties
                     Matrix4x4.Decompose(childOriginal, out var scale, out Quaternion rotation, out Vector3 translation);
-                    bonePtr->Scale = scale;
-                    bonePtr->Position = new Vector3(translation.X, translation.Y, translation.Z);
 
-                    var rotationVector = ToEulerAnglesZYX(rotation);
-
-                    // Based on game code
-                    if ((bonePtr->BoneFlags & 0x1C000) != 0)
+                    // Discard rotation based on flag.
+                    Vector3 rotationVector;
+                    if ((bonePtr->BoneFlags & 2) != 0)
                     {
-                        rotationVector.Y = 0;
-                        rotationVector.Z = 0;
+                        rotationVector = new Vector3(0, 0, 0);
+                    }
+                    else
+                    {
+                        rotationVector = ToEulerAnglesZYX(rotation);
+
+                        // Based on game code
+                        if ((bonePtr->BoneFlags & 0x1C000) != 0)
+                        {
+                            rotationVector.Y = 0;
+                            rotationVector.Z = 0;
+                        }
                     }
 
                     if (float.IsNaN(rotationVector.X))
@@ -104,11 +111,89 @@ public unsafe class BonePreviewer : ComponentBase
 
                     if (float.IsNaN(rotationVector.Z))
                         rotationVector.Z = 0;
-                    
+
+                    bonePtr->Scale = scale;
+                    bonePtr->Position = new Vector3(translation.X, translation.Y, translation.Z);
                     bonePtr->Rotation = VectorExtensions.RadiansToBamsInt(rotationVector);
+
+                    //MirrorAngleIfClose(parent->Rotation, ref bonePtr->Rotation);
+
+                    if (x == 51)
+                    {
+                        /*
+                         * Old: -605, 1106, 29259
+                         * New: 32163, -31662, 3509
+                         * Subtract/Add short.MaxValue + 1 to match rotation of parent bone???
+                         */
+
+
+                        //SetClosestAngle(parent->Rotation, ref bonePtr->Rotation);
+                        //rotation *= -1;
+                        //translation *= -1;
+                        //rotationVector *= -1;
+
+                        //rotation = Quaternion.Inverse(rotation);
+                    }
                 }
             }
         }
+    }
+
+    void MirrorAngleIfClose(Vector3Int parent, ref Vector3Int toChange)
+    {
+        const int MaxAngle = 1200; // ~20 degrees / 4
+
+        // Two ways to represent an angle, e.g. 181, or -179
+        // Get the value that's the closest and constrain to the legal limit.
+        var deltaX = toChange.X - parent.X;
+        var deltaY = toChange.Y - parent.Y;
+        var deltaZ = toChange.Z - parent.Z;
+
+        var altX = GetAlternativeAngle(toChange.X);
+        var altY = GetAlternativeAngle(toChange.Y);
+        var altZ = GetAlternativeAngle(toChange.Z);
+
+        var deltaAltX = altX - parent.X;
+        var deltaAltY = altY - parent.Y;
+        var deltaAltZ = altZ - parent.Z;
+
+        Misc.Log.Log.WriteLine($"===============");
+        Misc.Log.Log.WriteLine($"ToChange: {toChange.X}, {toChange.Y}, {toChange.Z}");
+        Misc.Log.Log.WriteLine($"Parent: {parent.X}, {parent.Y}, {parent.Z}");
+        Misc.Log.Log.WriteLine($"Delta: {deltaX}, {deltaY}, {deltaZ}");
+        Misc.Log.Log.WriteLine($"Delta Alt: {deltaAltX}, {deltaAltY}, {deltaAltZ}");
+
+        // Math.Abs(altX) <= MaxAngle identifies if the angle is close to the crossing point.
+        if (Math.Abs(deltaAltX) < Math.Abs(deltaX) && IsAngleNearCrossingPoint(toChange.X, altX, MaxAngle))
+        {
+            Misc.Log.Log.WriteLine($"Changed X: {toChange.X} -> {altX}");
+            toChange.X = deltaAltX;
+        }
+
+        if (Math.Abs(deltaAltY) < Math.Abs(deltaY) && IsAngleNearCrossingPoint(toChange.Y, altY, MaxAngle))
+        {
+            Misc.Log.Log.WriteLine($"Changed Y: {toChange.Y} -> {altY}");
+            toChange.Y = deltaAltY;
+        }
+
+        if (Math.Abs(deltaAltZ) < Math.Abs(deltaZ) && IsAngleNearCrossingPoint(toChange.Z, altZ, MaxAngle))
+        {
+            Misc.Log.Log.WriteLine($"Changed Z: {toChange.Z} -> {altZ}");
+            toChange.Z = deltaAltZ;
+        }
+    }
+
+    private static bool IsAngleNearCrossingPoint(int angleBefore, int angleAfter, int maxAngle)
+    {
+        // e.g. -605 -> 32163
+        //      1106 -> -31662
+        // One of the angles will be offset from 0 and will test true.
+        return Math.Abs(angleBefore) <= maxAngle || Math.Abs(angleAfter) <= maxAngle;
+    }
+
+    private static int GetAlternativeAngle(int angle)
+    {
+        return angle >= 0 ? angle - (short.MaxValue + 1) : angle + (short.MaxValue + 1);
     }
 
     /// <summary>
@@ -120,28 +205,38 @@ public unsafe class BonePreviewer : ComponentBase
         // Adapted from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
         // Not sure why the algorithms posted on the web which use `2 * (q.w * q.x + q.y * q.z)` for heading don't work. (incl. StackOverflow, Wikipedia).
         // Below algorithm is based on the website above, and based on combining `Quaternion -> Matrix` and `Matrix -> Euler`.
-        float sqw  = q.W * q.W;
-        float sqx  = q.X * q.X;
-        float sqy  = q.Y * q.Y;
-        float sqz  = q.Z * q.Z;
+        double sqw  = q.W * q.W;
+        double sqx  = q.X * q.X;
+        double sqy  = q.Y * q.Y;
+        double sqz  = q.Z * q.Z;
 
-        float test = q.X * q.Y + q.Z * q.W;
+        double test = q.X * q.Y + q.Z * q.W;
 
         // Unit vector to correct for non-normalised quaternions. Just in case.
         double unit = sqx + sqy + sqz + sqw;
+        double heading, attitude, bank;
 
         if (test > 0.499 * unit)
-            return GetVect(0, 2 * Math.Atan2(q.X, q.W), Math.PI * 0.5f);
-
-        if (test < -0.499 * unit)
-            return GetVect(0, -2 * Math.Atan2(q.X, q.W), -Math.PI * 0.5f);
-
-        // Angle applied first: Heading (X)
-        // Angle applied second: Attitude (Y)
-        // Angle applied third: Bank (Z)
-        double heading  = Math.Atan2(2.0f * q.Y * q.W - 2.0f * q.X * q.Z, 1.0f - 2.0f * (sqy + sqz)); // Y
-        double attitude = Math.Asin(2.0f * q.X * q.Y + 2.0f * q.Z * q.W);                             // X
-        double bank     = Math.Atan2(2.0f * q.X * q.W - 2.0f * q.Y * q.Z, 1.0f - 2.0f * (sqx + sqz)); // Z
+        {
+            heading = 2 * Math.Atan2(q.X, q.W);
+            attitude = Math.PI * 0.5f;
+            bank = 0;
+        }
+        else if (test < -0.499 * unit)
+        {
+            heading = -2 * Math.Atan2(q.X, q.W);
+            attitude = -Math.PI * 0.5f;
+            bank = 0;
+        }
+        else
+        {
+            // Angle applied first: Heading (X)
+            // Angle applied second: Attitude (Y)
+            // Angle applied third: Bank (Z)
+            heading = Math.Atan2(2.0f * q.Y * q.W - 2.0f * q.X * q.Z, 1.0f - 2.0f * (sqy + sqz));  // Y
+            attitude = Math.Asin(2.0f * q.X * q.Y + 2.0f * q.Z * q.W);                             // X
+            bank = Math.Atan2(2.0f * q.X * q.W - 2.0f * q.Y * q.Z, 1.0f - 2.0f * (sqx + sqz));     // Z
+        }
 
         return GetVect(bank, heading, attitude); // ZYX
 
