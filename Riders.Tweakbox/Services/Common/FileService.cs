@@ -18,6 +18,16 @@ public class FileService<T> : IFileService where T : FileDictionary, new()
     public List<T> Dictionaries { get; private set; } = new List<T>();
 
     /// <summary>
+    /// List of all available dictionaries by Mod ID.
+    /// </summary>
+    public Dictionary<string, T> ModIdToDictionary { get; private set; } = new Dictionary<string, T>();
+
+    /// <summary>
+    /// List of all available mod IDs by dictionary.
+    /// </summary>
+    public Dictionary<T, string> DictionaryToModId { get; private set; } = new Dictionary<T, string>();
+
+    /// <summary>
     /// Provides access to the mod loader API.
     /// </summary>
     public IModLoader ModLoader { get; private set; }
@@ -77,15 +87,21 @@ public class FileService<T> : IFileService where T : FileDictionary, new()
 
     private void Add(IModConfigV1 config)
     {
-        var items = new T();
-        items.Initialize(GetRedirectFolder(config.ModId));
-        Dictionaries.Add(items);
+        var dictionary = new T();
+        dictionary.Initialize(GetRedirectFolder(config.ModId));
+
+        Dictionaries.Add(dictionary);
+        ModIdToDictionary[config.ModId] = dictionary;
+        DictionaryToModId[dictionary] = config.ModId;
     }
 
     private void Remove(IModConfigV1 config)
     {
-        var redirectFolder = GetRedirectFolder(config.ModId);
-        Dictionaries = Dictionaries.Where(x => !x.Source.Equals(redirectFolder, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (ModIdToDictionary.Remove(config.ModId, out var dictionary))
+        {
+            DictionaryToModId.Remove(dictionary);
+            Dictionaries.Remove(dictionary);
+        }
     }
 
     private void OnModUnloading(IModV1 mod, IModConfigV1 config) => Remove(config);
