@@ -72,6 +72,41 @@ public class FileService<T> : IFileService where T : FileDictionary, new()
     }
 
     /// <summary>
+    /// Clears current list of enabled dictionaries.
+    /// They still can be accessed by Mod ID.
+    /// </summary>
+    public void DisableAll() => Dictionaries.Clear();
+
+    /// <summary>
+    /// Enables a list of dictionaries using Mod IDs.  
+    /// Disables all other dictionaries.  
+    /// </summary>
+    /// <param name="modIds">List of mod IDs to load dictionary from.</param>
+    public void SetEnabledFromModIds(IEnumerable<string> modIds)
+    {
+        DisableAll();
+        foreach (var modId in modIds)
+            if (ModIdToDictionary.TryGetValue(modId, out var dict))
+                Dictionaries.Add(dict);
+    }
+
+    /// <summary>
+    /// Gets a list of mod IDs for which dictionaries are enabled.
+    /// </summary>
+    /// <returns>List of mod IDs that are currently enabled.</returns>
+    public List<string> GetEnabledModIds()
+    {
+        var result = new List<string>();
+        foreach (var dict in Dictionaries)
+        {
+            if (DictionaryToModId.TryGetValue(dict, out var modId))
+                result.Add(modId);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Obtains all potential candidate files for a given file name.
     /// </summary>
     /// <param name="fileName">The name of the file the alternatives for.</param>
