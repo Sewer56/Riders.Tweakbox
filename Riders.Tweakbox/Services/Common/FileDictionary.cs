@@ -60,6 +60,11 @@ public class FileDictionary
         return Files.TryGetValue(fileName, out paths);
     }
 
+    /// <summary>
+    /// Returns true if has at least 1 element.
+    /// </summary>
+    public bool Any() => Files.Count > 0;
+
     private void SetupFileWatcher()
     {
         _watcher = FileSystemWatcherExtensions.Create(Source, new[] { $"*{Extension}" }, SetupRedirects);

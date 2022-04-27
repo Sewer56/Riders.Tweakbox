@@ -9,8 +9,10 @@ namespace Riders.Tweakbox.Services.ObjectLayout;
 /// <summary>
 /// Keeps track of all stage layouts provided by other mods.
 /// </summary>
-public class ObjectLayoutService : FileService<ObjectLayoutDictionary>, ISingletonService
+public class ObjectLayoutService : FileService<ObjectLayoutDictionary>, ISingletonService, INetplaySyncedFileService
 {
+    public int Id { get; } = 0x4F424A4C; // OBJL
+
     public ObjectLayoutService(IModLoader modLoader) : base(modLoader, @"/Tweakbox/ObjectLayouts") { }
 
     /// <summary>

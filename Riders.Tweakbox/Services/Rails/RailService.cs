@@ -9,8 +9,10 @@ namespace Riders.Tweakbox.Services.Rails;
 /// <summary>
 /// Keeps track of all stage layouts provided by other mods.
 /// </summary>
-public class RailService : FileService<RailDictionary>, ISingletonService
+public class RailService : FileService<RailDictionary>, ISingletonService, INetplaySyncedFileService
 {
+    public int Id { get; } = 0x5241494C; // RAIL
+
     public RailService(IModLoader modLoader) : base(modLoader, @"/Tweakbox/Rails") { }
 
     /// <summary>

@@ -22,7 +22,7 @@ public enum MessageType : byte
     SRand,              // Host -> Client: RNG Seed and Time to Resume Game synced with external NTP source
 
     // Integrity Synchronization
-    GameData,           // Host -> Client: Running, Gear Stats, Character Stats (Compressed)
+    GameData,           // Host -> Client: Running, Gear Stats, Character Stats, Tweakbox Configurations (Compressed)
     StartSync,          // Client -> Host && Host -> Client: Ready signal to tell other clients to skip cutscene OR to start the game.
 
     // Race Integrity Synchronization

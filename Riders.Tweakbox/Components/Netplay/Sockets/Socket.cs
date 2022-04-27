@@ -129,7 +129,8 @@ public abstract class Socket : IDisposable
 
         IoC.Kernel.Rebind<Socket>().ToConstant(this);
 
-        // Integrity
+        // Integrity & Impl Details
+        AddComponent(IoC.Get<Components.Misc.MessageImplementations>());
         AddComponent(IoC.Get<Components.Misc.TweakboxSettingChanger>());
 
         // Server

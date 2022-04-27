@@ -91,9 +91,7 @@ public class ConnectionManager : INetplayComponent
 
         unsafe
         {
-            _customGearController.GetCustomGearNames(out var loadedGears, out _);
-            var chars = _customCharacterController.GetAllCharacterBehaviours_Internal().Select(x => x.Select(x => x.CharacterName).ToList()).ToArray();
-            using var gameData = GameData.FromGame(loadedGears, chars);
+            using var gameData = GameData.FromGame();
             using var courseSelectSync = CourseSelectSync.FromGame(Event.CourseSelect);
             Socket.SendAndFlush(peer, ReliablePacket.Create(gameData), DeliveryMethod.ReliableUnordered, "[Host] Received user data, uploading game data.", LogCategory.Socket);
             Socket.SendAndFlush(peer, ReliablePacket.Create(courseSelectSync), DeliveryMethod.ReliableUnordered, "[Host] Sending course select data for initial sync.", LogCategory.Socket);
@@ -112,15 +110,12 @@ public class ConnectionManager : INetplayComponent
             return true;
         }
 
-        unsafe
+        var versionEx = GetCurrentVersionInformationEx();
+        _versionExMap.Remove(peer.Id, out VersionInformationEx infoEx);
+        if (!versionEx.Verify(infoEx, out string errors))
         {
-            var versionEx = GetCurrentVersionInformationEx();
-            _versionExMap.Remove(peer.Id, out VersionInformationEx infoEx);
-            if (!versionEx.Verify(infoEx, out string errors))
-            {
-                Socket.DisconnectWithMessage(peer, $"Client extended version information does not match host's.\n{errors}");
-                return true;
-            }
+            Socket.DisconnectWithMessage(peer, $"Client extended version information does not match host's.\n{errors}");
+            return true;
         }
 
         return false;
@@ -172,7 +167,7 @@ public class ConnectionManager : INetplayComponent
     /// <summary>
     /// Force disconnects the client/host with a given reason.
     /// </summary>
-    private void ForceDisconnect(string reason)
+    internal void ForceDisconnect(string reason)
     {
         Shell.AddDialog("Disconnected from Game", reason);
         Socket.Dispose();
@@ -258,33 +253,7 @@ public class ConnectionManager : INetplayComponent
         else if (packet.MessageType == MessageType.GameData)
         {
             var data = packet.GetMessage<GameData>();
-            data.ToGame(gearNames =>
-            {
-                if (_customGearController.HasAllGears(gearNames, out var missingGears))
-                {
-                    _customGearController.Reload(gearNames);
-                    return true;
-                }
-                else
-                {
-                    ForceDisconnect($"Client is missing custom gears being used by the host.\nGear List:\n\n{string.Join("\n", missingGears)}");
-                    return false;
-                }
-            }, 
-            characterLists =>
-            {
-                var allCharacters = characterLists.SelectMany(x => x);
-                if (_customCharacterController.HasAllCharacters(allCharacters, out var missingChars))
-                {
-                    _customCharacterController.Reload(allCharacters);
-                    return true;
-                }
-                else
-                {
-                    ForceDisconnect($"Client is missing modified characters being used by the host.\nCharacter List:\n\n{string.Join("\n", missingChars)}");
-                    return false;
-                }
-            });
+            data.ToGame();
         }
     }
 

@@ -15,6 +15,7 @@ using Sewer56.NumberUtilities.Helpers;
 using Functions = Sewer56.SonicRiders.Functions.Functions;
 using Riders.Tweakbox.Misc.Log;
 using Riders.Tweakbox.Services.Common;
+using Riders.Tweakbox.Services.Interfaces;
 using Riders.Tweakbox.Services.ObjectLayout;
 
 namespace Riders.Tweakbox.Components.Netplay.Components.Misc;

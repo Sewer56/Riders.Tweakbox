@@ -4,6 +4,8 @@ using System.Linq;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Mod.Interfaces.Internal;
 using Riders.Tweakbox.Misc.Log;
+using Riders.Tweakbox.Services.Interfaces;
+using StructLinq;
 
 namespace Riders.Tweakbox.Services.Common;
 
@@ -94,11 +96,15 @@ public class FileService<T> : IFileService where T : FileDictionary, new()
     /// Gets a list of mod IDs for which dictionaries are enabled.
     /// </summary>
     /// <returns>List of mod IDs that are currently enabled.</returns>
-    public List<string> GetEnabledModIds()
+    public List<string> GetEnabledModIds(bool nonEmptyOnly = true)
     {
         var result = new List<string>();
         foreach (var dict in Dictionaries)
         {
+            // Remove if no elements available.
+            if (nonEmptyOnly && !dict.Any())
+                continue;
+
             if (DictionaryToModId.TryGetValue(dict, out var modId))
                 result.Add(modId);
         }
@@ -143,50 +149,4 @@ public class FileService<T> : IFileService where T : FileDictionary, new()
     private void OnModLoading(IModV1 mod, IModConfigV1 config) => Add(config);
 
     private string GetRedirectFolder(string modId) => ModLoader.GetDirectoryForModId(modId) + RedirectFolderPath;
-}
-
-public interface IFileService
-{
-    /// <summary>
-    /// List of all active file services.
-    /// </summary>
-    public static List<IFileService> Services { get; private set; } = new List<IFileService>();
-
-    /// <summary>
-    /// Seeds all available services.
-    /// </summary>
-    public static void SeedAll(int seed)
-    {
-        foreach (var service in Services)
-            service.SeedRandom(seed);
-    }
-
-    /// <summary>
-    /// Provides access to the mod loader API.
-    /// </summary>
-    IModLoader ModLoader { get; }
-
-    /// <summary>
-    /// Path to the folder (relative to mod folder) storing files to be monitored.
-    /// </summary>
-    string RedirectFolderPath { get; }
-
-    /// <summary>
-    /// The seed with which the random component was last initialised.
-    /// </summary>
-    int Seed { get; }
-
-    /// <summary>
-    /// Seeds the random number generator tied to this service.
-    /// </summary>
-    void SeedRandom(int seed);
-
-    /// <summary>
-    /// Obtains all potential candidate files for a given file name.
-    /// </summary>
-    /// <param name="fileName">The name of the file the alternatives for.</param>
-    /// <param name="files">List of files to add the candidates to.</param>
-    void GetFilesForFileName(string fileName, List<string> files);
-
-
 }

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using DotNext.Buffers;
 using K4os.Compression.LZ4;
 using Reloaded.Memory;
 using Riders.Netplay.Messages.Misc.BitStream;
 using Riders.Netplay.Messages.Reliable.Structs.Gameplay.Struct;
-using Riders.Tweakbox.Interfaces;
 using Riders.Tweakbox.Interfaces.Internal;
 using Riders.Tweakbox.Interfaces.Structs;
 using Sewer56.BitStream;
@@ -27,7 +23,7 @@ public unsafe struct GameData : IReliableMessage
     /// <summary>
     /// Extreme gear information.
     /// </summary>
-    public GearData GearData;
+    public TweakboxData TweakboxData;
 
     /// <summary>
     /// Contains all of the properties regarding how turbulence is internally handled.
@@ -78,43 +74,36 @@ public unsafe struct GameData : IReliableMessage
                    + sizeof(DecelProperties) + sizeof(SpeedShoeProperties);
 
         // Children
-        size += GearData.GetDataSize();
+        size += TweakboxData.GetDataSize();
         return size + 1;
     }
 
     /// <summary>
     /// Writes the contents of this packet to the game memory.
     /// </summary>
-    /// <param name="applyCustomGears">A function which applies custom gears to the game. Returns true on success, else false.</param>
-    /// <param name="applyModifiedCharacters">A function which applies modified gears to the game. Returns true on success, else false.</param>
-    public unsafe void ToGame(Func<string[], bool> applyCustomGears, Func<List<string>[], bool> applyModifiedCharacters)
+    public void ToGame()
     {
-        // TODO: Custom Gear Support
-        if (GearData.ToGame(applyCustomGears, applyModifiedCharacters))
-        {
-            *Player.RunPhysics = RunningPhysics1;
-            *Player.RunPhysics2 = RunningPhysics2;
-            *State.CurrentRaceSettings = RaceSettings;
-            Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
-            Static.PanelProperties = PanelProperties;
-            Static.SpeedShoeProperties = SpeedShoeProperties;
-            Static.DecelProperties = DecelProperties;
-        }
+        TweakboxData.ToGame();
+        *Player.RunPhysics = RunningPhysics1;
+        *Player.RunPhysics2 = RunningPhysics2;
+        *State.CurrentRaceSettings = RaceSettings;
+        Player.TurbulenceProperties.CopyFrom(TurbulenceProperties, TurbulenceProperties.Length);
+        Static.PanelProperties = PanelProperties;
+        Static.SpeedShoeProperties = SpeedShoeProperties;
+        Static.DecelProperties = DecelProperties;
     }
 
     /// <summary>
     /// Retrieves gear information from the game.
     /// </summary>
-    /// <param name="customGears">List of custom gear names.</param>
-    /// <param name="modifiedCharacters">Modified character names for each character.</param>
-    public static unsafe GameData FromGame(string[] customGears, List<string>[] modifiedCharacters)
+    public static unsafe GameData FromGame()
     {
         var data = new GameData
         {
             RunningPhysics1 = *Player.RunPhysics,
             RunningPhysics2 = *Player.RunPhysics2,
             RaceSettings = *State.CurrentRaceSettings,
-            GearData = GearData.FromGame(customGears, modifiedCharacters),
+            TweakboxData = TweakboxData.FromGame(),
             TurbulenceProperties = Player.TurbulenceProperties.ToArray(),
             PanelProperties = Static.PanelProperties,
             SpeedShoeProperties = Static.SpeedShoeProperties,
@@ -182,7 +171,7 @@ public unsafe struct GameData : IReliableMessage
         var stream = new RentalByteStream(rental);
         var bitStream = new BitStream<RentalByteStream>(stream);
 
-        GearData.FromStream(ref bitStream);
+        TweakboxData.FromStream(ref bitStream);
         TurbulenceProperties = new TurbulenceProperties[NumTurbulenceProperties];
         RunningPhysics1 = bitStream.ReadGeneric<RunningPhysics>();
         RunningPhysics2 = bitStream.ReadGeneric<RunningPhysics2>();
@@ -201,7 +190,7 @@ public unsafe struct GameData : IReliableMessage
         var rental = new ArrayRental<byte>(GetDataSize());
         var bitStream = new BitStream<RentalByteStream>(new RentalByteStream(rental));
 
-        GearData.ToStream(ref bitStream);
+        TweakboxData.ToStream(ref bitStream);
         bitStream.WriteGeneric(RunningPhysics1);
         bitStream.WriteGeneric(RunningPhysics2);
         bitStream.WriteGeneric(RaceSettings);
