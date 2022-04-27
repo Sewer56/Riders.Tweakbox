@@ -66,6 +66,8 @@ public struct CustomGearData
         // Get custom gear data.
         if (hasCustomGear > 0)
             CustomGears = Utf8StringArray.Deserialize(ref bitStream, CustomGearsSizeBits);
+        else
+            CustomGears = Array.Empty<string>();
     }
 
     /// <summary>

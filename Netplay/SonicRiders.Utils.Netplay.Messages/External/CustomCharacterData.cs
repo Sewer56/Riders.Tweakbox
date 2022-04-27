@@ -53,6 +53,8 @@ public struct CustomCharacterData
         // Get custom character data
         if (hasCustomCharacter > 0)
             ModifiedCharacters = Utf8StringArray.Deserialize(ref bitStream, CustomCharacterModifiersSizeBits);
+        else
+            ModifiedCharacters = Array.Empty<string>();
     }
 
     /// <summary>
