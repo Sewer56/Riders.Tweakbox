@@ -27,6 +27,7 @@ public class SinglePlayerCharacterModelController : IController
             $"je story",
 
             // Not story mode, we can load SP models. Insert null terminator.
+            $"mov [esp+0x28], bl",
             $"mov [esp+0x29], bl",
             $"jmp complete",
             $"story:",
