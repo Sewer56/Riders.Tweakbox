@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using EnumsNET;
 
@@ -39,6 +40,7 @@ public static class DirectorySearcher
     /// <param name="files">Files contained inside the target directory.</param>
     /// <param name="directories">Directories contained inside the target directory.</param>
     /// <returns>True if the operation suceeded, else false.</returns>
+    [SkipLocalsInit]
     public static void GetDirectoryContentsRecursive(string path, out List<FileInformation> files, out List<DirectoryInformation> directories)
     {
         files = new List<FileInformation>();
@@ -46,6 +48,7 @@ public static class DirectorySearcher
         TryGetDirectoryContents_Internal_Recursive(path, ref files, ref directories);
     }
 
+    [SkipLocalsInit]
     private static void TryGetDirectoryContents_Internal_Recursive(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
     {
         var initialDirSuccess = TryGetDirectoryContents(path, out var newFiles, out var newDirectories);
@@ -54,42 +57,45 @@ public static class DirectorySearcher
 
         files.AddRange(newFiles);
         directories.AddRange(newDirectories);
+
+        newFiles = null;
         foreach (var directory in newDirectories)
             TryGetDirectoryContents_Internal_Recursive(directory.FullPath, ref files, ref directories);
     }
 
-    private static bool TryGetDirectoryContents_Internal(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
+    [SkipLocalsInit]
+    private static unsafe bool TryGetDirectoryContents_Internal(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
     {
         // Init
         path = Path.GetFullPath(path);
         files = new List<FileInformation>();
         directories = new List<DirectoryInformation>();
-        
+
         // Native Init
-        WIN32_FIND_DATAW findData;
-        var findHandle = PInvoke.FindFirstFile($@"{path}\*", out findData);
-        if (findHandle.DangerousGetHandle() == INVALID_HANDLE_VALUE)
+        Win32FindData findData;
+        var findHandle = FindFirstFileExW($@"{path}\*", FINDEX_INFO_LEVELS.FindExInfoBasic, &findData, FINDEX_SEARCH_OPS.FindExSearchNameMatch, IntPtr.Zero, 0);
+        if (findHandle == INVALID_HANDLE_VALUE)
             return false;
-        
+
         do
         {
             // Get each file name subsequently.
             var fileName = findData.GetFileName();
-            if (fileName == "." || fileName == "..") 
+            if (fileName == "." || fileName == "..")
                 continue;
 
             string fullPath = $@"{path}\{fileName}";
 
             // Check if this is a directory and not a symbolic link since symbolic links
             // could lead to repeated files and folders as well as infinite loops.
-            var attributes = (FileAttributes) findData.dwFileAttributes;
-            bool isDirectory = attributes.HasAllFlags(FileAttributes.Directory);
+            var attributes = (FileAttributes)findData.dwFileAttributes;
+            bool isDirectory = attributes.HasFlag(FileAttributes.Directory);
 
-            if (isDirectory && !attributes.HasAllFlags(FileAttributes.ReparsePoint))
+            if (isDirectory && !attributes.HasFlag(FileAttributes.ReparsePoint))
             {
                 directories.Add(new DirectoryInformation
                 {
-                    FullPath = fullPath, 
+                    FullPath = fullPath,
                     LastWriteTime = findData.ftLastWriteTime.ToDateTime()
                 });
             }
@@ -97,20 +103,19 @@ public static class DirectorySearcher
             {
                 files.Add(new FileInformation
                 {
-                    FullPath = fullPath, 
+                    FullPath = fullPath,
                     LastWriteTime = findData.ftLastWriteTime.ToDateTime()
                 });
             }
         }
-        while (FindNextFile(findHandle.DangerousGetHandle(), out findData));
+        while (FindNextFileW(findHandle, &findData));
 
-        if (findHandle.DangerousGetHandle() != INVALID_HANDLE_VALUE)
-            PInvoke.FindClose(new FindFileHandle(findHandle.DangerousGetHandle()));
-        
+        if (findHandle != INVALID_HANDLE_VALUE)
+            FindClose(findHandle);
+
         return true;
     }
 
-    
     public struct FileInformation
     {
         public string FullPath;
@@ -123,9 +128,68 @@ public static class DirectorySearcher
         public DateTime LastWriteTime;
     }
 
-    // The import from Microsoft.Windows.Sdk uses a class as paramter; don't want heap allocations.
+    #region P/Invoke Definitions
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    internal static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATAW lpFindFileData);
+    public static extern unsafe IntPtr FindFirstFileExW(string lpFileName, FINDEX_INFO_LEVELS levels, Win32FindData* lpFindFileData, FINDEX_SEARCH_OPS fSearchOp, IntPtr lpSearchFilter, int dwAdditionalFlags);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    public static extern unsafe bool FindNextFileW(IntPtr hFindFile, Win32FindData* lpFindFileData);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool FindClose(IntPtr hFindFile);
+
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto, Size = 65578)] // Up to 32767 chars
+    public struct Win32FindData
+    {
+        [FieldOffset(0)]
+        public FileAttributes dwFileAttributes;
+
+        [FieldOffset(4)]
+        public FileTime ftCreationTime;
+
+        [FieldOffset(12)]
+        public FileTime ftLastAccessTime;
+
+        [FieldOffset(20)]
+        public FileTime ftLastWriteTime;
+
+        [FieldOffset(28)]
+        public uint nFileSizeHigh;
+
+        [FieldOffset(32)]
+        public uint nFileSizeLow;
+
+        [FieldOffset(36)]
+        public uint dwReserved0;
+
+        [FieldOffset(40)]
+        public uint dwReserved1;
+
+        [FieldOffset(44)]
+        public IntPtr cFileName;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FileTime
+    {
+        public uint dwLowDateTime;
+        public uint dwHighDateTime;
+    };
+
+    public enum FINDEX_INFO_LEVELS
+    {
+        FindExInfoStandard,
+        FindExInfoBasic,
+        FindExInfoMaxInfoLevel
+    }
+
+    public enum FINDEX_SEARCH_OPS
+    {
+        FindExSearchNameMatch = 0,
+        FindExSearchLimitToDirectories = 1,
+        FindExSearchLimitToDevices = 2
+    }
+    #endregion
 }
 
 /// <summary>
@@ -133,7 +197,7 @@ public static class DirectorySearcher
 /// </summary>
 public static class FindDataExtensions
 {
-    internal static unsafe string GetFileName(this WIN32_FIND_DATAW value)
+    internal static unsafe string GetFileName(this DirectorySearcher.Win32FindData value)
     {
         return Marshal.PtrToStringUni((IntPtr)(&value.cFileName));
     }
@@ -144,10 +208,10 @@ public static class FindDataExtensions
 /// </summary>
 public static class FileTimeExtensions
 {
-    public static DateTime ToDateTime(this System.Runtime.InteropServices.ComTypes.FILETIME time)
+    public static DateTime ToDateTime(this DirectorySearcher.FileTime time)
     {
         ulong high = (ulong)time.dwHighDateTime;
-        ulong low  = (ulong)time.dwLowDateTime;
+        ulong low = (ulong)time.dwLowDateTime;
         long fileTime = (long)((high << 32) + low);
         return DateTime.FromFileTimeUtc(fileTime);
     }
