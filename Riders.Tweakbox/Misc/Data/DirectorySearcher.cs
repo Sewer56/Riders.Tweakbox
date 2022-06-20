@@ -63,7 +63,6 @@ public static class DirectorySearcher
             TryGetDirectoryContents_Internal_Recursive(directory.FullPath, ref files, ref directories);
     }
 
-    [SkipLocalsInit]
     private static unsafe bool TryGetDirectoryContents_Internal(string path, ref List<FileInformation> files, ref List<DirectoryInformation> directories)
     {
         // Init
@@ -80,7 +79,7 @@ public static class DirectorySearcher
         do
         {
             // Get each file name subsequently.
-            var fileName = findData.GetFileName();
+            var fileName = Marshal.PtrToStringUni((IntPtr)(&findData.cFileName));
             if (fileName == "." || fileName == "..")
                 continue;
 
@@ -190,17 +189,6 @@ public static class DirectorySearcher
         FindExSearchLimitToDevices = 2
     }
     #endregion
-}
-
-/// <summary>
-/// Extensions to the automatically Source Generator imported WinAPI classes.
-/// </summary>
-public static class FindDataExtensions
-{
-    internal static unsafe string GetFileName(this DirectorySearcher.Win32FindData value)
-    {
-        return Marshal.PtrToStringUni((IntPtr)(&value.cFileName));
-    }
 }
 
 /// <summary>
