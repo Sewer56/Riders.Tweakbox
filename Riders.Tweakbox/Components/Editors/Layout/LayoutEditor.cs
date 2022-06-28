@@ -42,6 +42,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     private NetplayController _netplayController = IoC.Get<NetplayController>();
     private int _currentAutosaveFrames = 0;
     private Autosaver _autoSaver;
+    private bool _importBigEndian;
 
     public LayoutEditor(MiscPatchController patchController, ObjectLayoutController layoutController, IO io)
     {
@@ -318,6 +319,8 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         }
 
         ImGui.SameLine(0, Constants.Spacing);
+        ImGui.Checkbox("Import Big Endian (GCN)", ref _importBigEndian);
+        ImGui.SameLine(0, Constants.Spacing);
         if (ImGui.Button("Import from File & Restart", Constants.Zero))
         {
             var saveFileDialog = new OpenFileDialog();
@@ -325,14 +328,13 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
             saveFileDialog.FileName = "00000.bin";
             var result = saveFileDialog.ShowDialog();
             if (result == true && !string.IsNullOrEmpty(saveFileDialog.FileName))
-                _layoutController.ImportAndRestart(File.ReadAllBytes(saveFileDialog.FileName));
+                _layoutController.ImportAndRestart(File.ReadAllBytes(saveFileDialog.FileName), _importBigEndian);
         }
 
         ImGui.SameLine(0, Constants.Spacing);
         if (ImGui.Button("Fast Restart", Constants.Zero))
             _layoutController.FastRestart();
 
-        ImGui.SameLine(0, Constants.Spacing);
         ImGui.Checkbox("Safe Mode", ref _safeMode);
         Tooltip.TextOnHover("Prevents from writing to object data when moving objects.\n" +
                             "Use this to avoid potential crashes, at expense of no real time render position update.");

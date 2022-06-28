@@ -23,7 +23,7 @@ public unsafe class LoadedLayoutFile : IDisposable
 
     public LoadedLayoutFile(InMemoryLayoutFile layoutFile, bool ownsMemory = false) { Init(layoutFile, ownsMemory); }
 
-    public LoadedLayoutFile(byte[] data)
+    public LoadedLayoutFile(byte[] data, bool bigEndian)
     {
         // Copy layout data.
         var alloc = Marshal.AllocHGlobal(data.Length);
@@ -31,7 +31,7 @@ public unsafe class LoadedLayoutFile : IDisposable
             Unsafe.CopyBlockUnaligned((void*)alloc, dataPtr, (uint)data.Length);
 
         // Open layout data
-        Init(new InMemoryLayoutFile((void*)alloc), true);
+        Init(new InMemoryLayoutFile((void*)alloc, bigEndian), true);
         LayoutFile.Header->Magic = 0; // Loaded.
     }
 

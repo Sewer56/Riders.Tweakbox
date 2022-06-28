@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="DearImguiSharp" Version="1.83.1" />
     <PackageReference Include="Enums.NET" Version="4.0.0" />
-    <PackageReference Include="Reloaded.Memory" Version="4.1.1" />
+    <PackageReference Include="Reloaded.Memory" Version="5.1.0" />
   </ItemGroup>
 
   <ItemGroup>

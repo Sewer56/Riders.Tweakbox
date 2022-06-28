@@ -26,7 +26,7 @@ public unsafe class ObjectLayoutInjectionController : IController
     {
         var layout = _layoutService.GetRandomLayoutForStage(stageid, true);
         if (!string.IsNullOrEmpty(layout))
-            return new LoadedLayoutFile(File.ReadAllBytes(layout));
+            return new LoadedLayoutFile(File.ReadAllBytes(layout), false);
 
         return _objectLayoutController.OriginalLayout;
     }
