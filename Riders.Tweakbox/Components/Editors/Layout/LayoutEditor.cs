@@ -98,7 +98,6 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
             }
 
             // Create Headers
-            // TODO: Re-add Type when they become relevant.
             ImGui.TableSetupColumn("Name", 0, 0, 0);
             ImGui.TableSetupScrollFreeze(1, 1);
 

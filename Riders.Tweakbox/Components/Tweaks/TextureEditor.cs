@@ -138,7 +138,6 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
         if (ImGui.__Internal.BeginTable("texture_table", 1, tableFlags, textureTableSize, 0))
         {
             // Create Headers
-            // TODO: Re-add Type when they become relevant.
             ImGui.TableSetupColumn("Texture", 0, 0, 0);
             ImGui.TableSetupScrollFreeze(1, 1);
 

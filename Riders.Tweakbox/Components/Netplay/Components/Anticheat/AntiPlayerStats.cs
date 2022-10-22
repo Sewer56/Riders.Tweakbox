@@ -10,20 +10,11 @@ public class AntiPlayerStats : INetplayComponent
     public Socket Socket { get; set; }
 
     /// <inheritdoc />
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
+    public void Dispose() => throw new NotImplementedException();
 
     /// <inheritdoc />
-    public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source)
-    {
-        throw new NotImplementedException();
-    }
+    public void HandleReliablePacket(ref ReliablePacket packet, NetPeer source) => throw new NotImplementedException();
 
     /// <inheritdoc />
-    public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source)
-    {
-        throw new NotImplementedException();
-    }
+    public void HandleUnreliablePacket(ref UnreliablePacket packet, NetPeer source) => throw new NotImplementedException();
 }

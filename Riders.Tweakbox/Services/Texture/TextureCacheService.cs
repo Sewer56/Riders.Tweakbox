@@ -47,8 +47,7 @@ public class TextureCacheService : ISingletonService
     /// <param name="data">The raw DDS texture data to cache.</param>
     public void Store(string filePath, Span<byte> data)
     {
-        // TODO: CollectionsMarshal.GetValueRefOrNullRef when .NET 6 releases.
-        _textureCache.TryGetValue(filePath, out var entry);
+        var entry = CollectionsMarshal.GetValueRefOrNullRef(_textureCache, filePath);
         entry.LastWriteTime = File.GetLastWriteTimeUtc(filePath);
         entry.LastAccessTime = DateTime.UtcNow;
         if (string.IsNullOrEmpty(entry.Target))

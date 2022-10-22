@@ -438,7 +438,6 @@ public abstract class Socket : IDisposable
     /// <param name="spinTime">The amount of time in milliseconds before event expired to start spinning.</param>
     public void WaitWithSpin(DateTime waitUntil, string eventName = "", LogCategory eventCategory = LogCategory.Socket, int spinTime = 100)
     {
-        // TODO: Negotiation between multiple clients on current time so WaitUntil matches.
         Log.WriteLine($"[Socket] Waiting for event ({eventName}).", eventCategory);
         Log.WriteLine($"[Socket] Time: {DateTime.UtcNow}", eventCategory);
         Log.WriteLine($"[Socket] Start Time: {waitUntil}:{waitUntil.TimeOfDay.Milliseconds:000}", eventCategory);
@@ -451,12 +450,12 @@ public abstract class Socket : IDisposable
             if (timeLeft.Milliseconds < 0)
                 return true;
 
-                // Check if should sleep.
-                if (timeLeft.Milliseconds > spinTime)
+            // Check if should sleep.
+            if (timeLeft.Milliseconds > spinTime)
                 return false;
 
-                // Spin for remaining time.
-                do { timeLeft = waitUntil - DateTime.UtcNow; }
+            // Spin for remaining time.
+            do { timeLeft = waitUntil - DateTime.UtcNow; }
             while (timeLeft.Ticks > 0);
 
             return true;
