@@ -324,9 +324,9 @@ public unsafe class ObjectLayoutController : IController
     /// Disposes of all layouts and imports a new layout from file.
     /// Then restarts the stage.
     /// </summary>
-    public void ImportAndRestart(byte[] data)
+    public void ImportAndRestart(byte[] data, bool bigEndian)
     {
-        var loadedLayout = new LoadedLayoutFile(data);
+        var loadedLayout = new LoadedLayoutFile(data, bigEndian);
 
         // Kill all existing layouts.
         DisposeAllLayouts();

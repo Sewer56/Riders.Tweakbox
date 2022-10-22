@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 namespace Riders.Tweakbox.Interfaces.Structs;
 
-// TODO: Remove this when removing legacy physics config support
+// TODO: Remove this (structlayout) when removing legacy physics config support
 [StructLayout(LayoutKind.Explicit, Size = 0x40)]
 public struct SpeedShoeProperties
 {

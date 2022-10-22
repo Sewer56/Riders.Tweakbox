@@ -177,7 +177,6 @@ public partial class NetplayController : IController
         // Get Password if Lobby Defines one is Needed.
         if (hasPassword)
         {
-            // TODO: Query for Password
             var inputData = new TextInputData(NetplayEditorConfig.TextLength);
             await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
             {

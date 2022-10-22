@@ -149,8 +149,6 @@ public unsafe class Random : INetplayComponent
         _itemPickupRandom = new System.Random((int)seed);
         IFileService.SeedAll((int)seed);
 
-        // TODO: Handle error when time component is not available.
-
         // Multiply the highest recently recorded Round Trip Time and multiply by 2 in case of spike.
         // Should be good enough as long as RecentLatencies is a list long enough.
         if (Socket.HostState.ClientInfo.Length > 0)
@@ -176,7 +174,6 @@ public unsafe class Random : INetplayComponent
             return;
         }
 
-        // TODO: Handle error when time component is not available.
         var srand = _currentSync.Value;
         _currentSync = null;
 

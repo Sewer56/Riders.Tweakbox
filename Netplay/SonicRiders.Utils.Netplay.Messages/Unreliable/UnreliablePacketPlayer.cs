@@ -309,14 +309,11 @@ public struct UnreliablePacketPlayer
         player.MaybeAttackLastState = PlayerState.None;
 
         // Game removes floor flag 
-        if (player.PlayerState == PlayerState.Running || player.PlayerState == PlayerState.RunningAfterStart || player.PlayerState == PlayerState.NormalOnBoard)
+        if (player.PlayerState is PlayerState.Running or PlayerState.RunningAfterStart or PlayerState.NormalOnBoard)
         {
             player.PlayerControlFlags |= PlayerControlFlags.IsFloored;
             player.FallingMode = FallingMode.Ground;
         }
-        
-        // TODO: The flag below can cause the game to crash for unexpected reasons; we're removing it for now.
-        // player.PlayerControlFlags &= ~PlayerControlFlags.TurbulenceHairpinTurnSymbol;
     }
 
     public bool IsDefault() => this.Equals(new UnreliablePacketPlayer());
