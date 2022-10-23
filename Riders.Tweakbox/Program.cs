@@ -71,8 +71,6 @@ public class Program : IMod, IExports
         // Tweak Process Priority
         var process = Process.GetCurrentProcess();
         process.PriorityClass = ProcessPriorityClass.High;
-
-        //IoC.GetSingleton<CustomGearController>().Reset(false, true);
     }
     
     /* Mod loader actions. */

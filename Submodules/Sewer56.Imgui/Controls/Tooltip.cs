@@ -3,6 +3,8 @@ namespace Sewer56.Imgui.Controls;
 
 public static class Tooltip
 {
+    // TODO: Optimise this with interpolated string handler. 
+    
     /// <summary>
     /// Displays a tooltip if the last item was hovered over.
     /// </summary>
