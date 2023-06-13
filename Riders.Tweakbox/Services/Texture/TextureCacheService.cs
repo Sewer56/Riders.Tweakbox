@@ -64,8 +64,18 @@ public class TextureCacheService : ISingletonService
     /// Adds texture data to the cache.
     /// </summary>
     /// <param name="filePath">The path of the file to cache.</param>
-    /// <param name="stream">The stream containing DDS texture data.</param>
-    public unsafe void Store(string filePath, DataStream stream) => Store(filePath, new Span<byte>((void*)stream.DataPointer, (int)stream.Length));
+    /// <param name="stream">The stream containing DDS texture data. This is disposed after use.</param>
+    public unsafe void Store(string filePath, DataStream stream)
+    {
+        try
+        {
+            Store(filePath, new Span<byte>((void*)stream.DataPointer, (int)stream.Length));
+        }
+        finally
+        {
+            stream.Dispose();
+        }
+    }
 
     /// <summary>
     /// Adds texture data to the cache.
