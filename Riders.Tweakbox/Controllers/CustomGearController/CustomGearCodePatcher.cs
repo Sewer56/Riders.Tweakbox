@@ -132,9 +132,9 @@ internal unsafe class CustomGearCodePatcher
 
     private void SetupNewPointers<T>(string pointerName, ref T[] output, ref RefFixedArrayPtr<T> apiEndpoint, int[] sourceAddresses) where T : unmanaged
     {
-        var fixedArrayPtr = new FixedArrayPtr<T>((ulong)apiEndpoint.Pointer, apiEndpoint.Count);
+        var fixedArrayPtr = new FixedArrayPtr<T>((nuint)apiEndpoint.Pointer, apiEndpoint.Count);
         SetupNewPointers(pointerName, ref output, ref fixedArrayPtr, sourceAddresses);
-        apiEndpoint = new RefFixedArrayPtr<T>((ulong)fixedArrayPtr.Pointer, fixedArrayPtr.Count);
+        apiEndpoint = new RefFixedArrayPtr<T>((nuint)fixedArrayPtr.Pointer, fixedArrayPtr.Count);
     }
 
     private void SetupNewPointers<T>(string pointerName, ref T[] output, ref FixedArrayPtr<T> apiEndpoint, int[] sourceAddresses) where T : unmanaged
@@ -148,7 +148,7 @@ internal unsafe class CustomGearCodePatcher
         fixed (T* ptr = output)
         {
             // Fix pointer in library.
-            apiEndpoint = new FixedArrayPtr<T>((ulong)ptr, MaxGearCount);
+            apiEndpoint = new FixedArrayPtr<T>((nuint)ptr, MaxGearCount);
 
             // Patch all pointers in game code.
             var originalAddress = (byte*)originalData.Pointer;
@@ -156,7 +156,7 @@ internal unsafe class CustomGearCodePatcher
 
             foreach (var codePointer in sourceAddresses)
             {
-                Memory.Instance.SafeRead((IntPtr)codePointer, out int address);
+                Memory.Instance.SafeRead((nuint)codePointer, out int address);
                 var offset = (byte*)(address) - originalAddress;
                 var target = newAddress + offset;
                 Memory.Instance.SafeWrite((IntPtr)codePointer, (int)target);

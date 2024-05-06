@@ -12,10 +12,10 @@ namespace Riders.Tweakbox.Controllers
         public StartupRestrictionKill()
         {
             // Ignore launcher check result.
-            Memory.CurrentProcess.SafeWriteRaw((IntPtr)0x005118CF, _jmpSkipLauncher);
+            Memory.CurrentProcess.SafeWriteRaw(0x005118CF, _jmpSkipLauncher);
 
             // Ignore only one instance check result.
-            Memory.CurrentProcess.SafeWriteRaw((IntPtr)0x0051190F, _jmpSkipOneInstance);
+            Memory.CurrentProcess.SafeWriteRaw(0x0051190F, _jmpSkipOneInstance);
         }
     }
 }

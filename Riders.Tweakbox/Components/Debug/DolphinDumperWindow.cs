@@ -53,14 +53,14 @@ public class DolphinDumperWindow : ComponentBase
             return;
 
         var memory = new ExternalMemory(process);
-        var pointer = new FixedArrayPtr<ExtremeGear>((ulong)dolphinAddress, Player.OriginalNumberOfGears, true, memory);
+        var pointer = new FixedArrayPtr<ExtremeGear>((nuint)dolphinAddress, Player.OriginalNumberOfGears, true, memory);
         var nativeGearPtr = (ExtremeGear*)Player.Gears.Pointer;
 
         for (var x = 0; x < pointer.Count; x++)
         {
             // Copy gear data.
             var copiedGearPtr = pointer.GetPointerToElement(x);
-            memory.ReadRaw((IntPtr)copiedGearPtr, out byte[] copiedGearBytes, pointer.ElementSize);
+            memory.ReadRaw((nuint)copiedGearPtr, out byte[] copiedGearBytes, pointer.ElementSize);
 
             // Swap endian of known data.
             Reflection.SwapStructEndianness(typeof(ExtremeGear), copiedGearBytes);

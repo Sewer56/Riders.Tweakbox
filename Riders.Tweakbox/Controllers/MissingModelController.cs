@@ -67,7 +67,7 @@ namespace Riders.Tweakbox.Controllers
             _loadPlayerModelMenuHook = hooks.CreateAsmHook(menuHookAsm, 0x00460C26, AsmHookBehaviour.ExecuteFirst).Activate();
 
             // Compare Super Sonic Gear Model instead of Gear Id
-            Memory.Instance.WriteRaw((IntPtr)0x460BCB, new byte[] { 0x83, 0xFB, 0x12, 0x90, 0x90, 0x90, 0x90 }); // cmp ebx, 0x12
+            Memory.Instance.WriteRaw(0x460BCB, new byte[] { 0x83, 0xFB, 0x12, 0x90, 0x90, 0x90, 0x90 }); // cmp ebx, 0x12
 
             string[] changeCharacterToSuperAsm = new[]
             {
