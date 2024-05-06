@@ -9,6 +9,7 @@
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <RobustILLink>true</RobustILLink>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <Import Project="../Robust.Trimming.targets" />
