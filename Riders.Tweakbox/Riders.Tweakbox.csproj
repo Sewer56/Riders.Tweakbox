@@ -12,6 +12,7 @@
     <LangVersion>preview</LangVersion>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <RobustILLink>false</RobustILLink>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <Import Project="../Robust.Trimming.targets" />
