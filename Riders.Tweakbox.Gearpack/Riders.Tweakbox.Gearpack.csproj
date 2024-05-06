@@ -57,6 +57,7 @@
 
   <ItemGroup>
     <PackageReference Include="Colourful" Version="3.1.0" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.4" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.1.0" />
   </ItemGroup>
 

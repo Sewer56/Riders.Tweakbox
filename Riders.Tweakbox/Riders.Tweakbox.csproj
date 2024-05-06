@@ -73,6 +73,7 @@
     <PackageReference Include="FastExpressionCompiler" Version="3.2.2" />
     <PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
     <PackageReference Include="Mapster" Version="7.3.0" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.4" />
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.2.10-beta">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
