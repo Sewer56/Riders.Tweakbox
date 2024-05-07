@@ -31,7 +31,7 @@ public struct Patch
     /// </summary>
     public unsafe Patch ChangePermission()
     {
-        Memory.CurrentProcess.ChangePermission((nuint)_address, _bytes.Length, Kernel32.MEM_PROTECTION.PAGE_EXECUTE_READWRITE);
+        Memory.CurrentProcess.ChangePermission(_address, _bytes.Length, Kernel32.MEM_PROTECTION.PAGE_EXECUTE_READWRITE);
         return this;
     }
 
