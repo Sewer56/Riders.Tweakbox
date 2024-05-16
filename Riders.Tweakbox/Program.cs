@@ -18,7 +18,7 @@ using IReloadedHooks = Reloaded.Hooks.ReloadedII.Interfaces.IReloadedHooks;
 namespace Riders.Tweakbox;
 public class Program : IMod, IExports
 {
-    public static string Version = "0.7.0";
+    public static string Version = "0.7.1";
     
     /// <summary>
     /// ID of the mod.
