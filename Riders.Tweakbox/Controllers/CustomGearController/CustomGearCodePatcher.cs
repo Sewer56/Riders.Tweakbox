@@ -1,5 +1,5 @@
 ﻿using Reloaded.Memory.Pointers;
-using Sewer56.SonicRiders.Structures.Gameplay;
+using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,6 +14,10 @@ using Sewer56.Hooks.Utilities;
 using Sewer56.SonicRiders;
 using Riders.Tweakbox.Interfaces.Structs.Gears;
 using CustomGearDataInternal = Riders.Tweakbox.Controllers.CustomGearController.Structs.Internal.CustomGearDataInternal;
+using Riders.Tweakbox.Configs;
+using Riders.Tweakbox.Misc;
+using Sewer56.SonicRiders.API;
+using Sewer56.SonicRiders.Structures.Enums;
 
 namespace Riders.Tweakbox.Controllers.CustomGearController;
 
@@ -46,7 +50,7 @@ internal unsafe class CustomGearCodePatcher
 
     // Private members
     private Logger _log = new Logger(LogCategory.CustomGear);
-    
+
     internal CustomGearCodePatcher()
     {
         MakeMaxGearAsmPatches();
@@ -69,6 +73,9 @@ internal unsafe class CustomGearCodePatcher
         UpdateGearCount(OriginalGearCount);
         PatchOpcodes();
         PatchBoundsChecks();
+
+        // Respect save data
+        EventController.OnEnterCharacterSelect += LoadUnlockedGearsFromSave;
     }
 
     /// <summary>
@@ -82,12 +89,36 @@ internal unsafe class CustomGearCodePatcher
         ref var gear = ref data.GearData;
         var gearType = gear.GearType;
         _newGears[GearCount] = gear;
-        _gearToModelMap[GearCount] = (byte)gear.GearModel;
+        _gearToModelMap[GearCount] = (byte)GetFreeGearModelIndex();
 
         var gearIndex = GearCount;
         UpdateGearCount(GearCount + 1);
         data.SetGearIndex(gearIndex);
         PatchMaxGearId(gearIndex);
+    }
+
+    /// <summary>
+    /// Gets the next unused index for an <see cref="ExtremeGearModel"/>.<br></br>
+    /// Intended for assigning arbitrary indices to Custom Extreme Gear for the <see cref="_gearToModelMap"/>, such that they can be unlocked independently of the Extreme Gear used for the physical model.
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal int GetFreeGearModelIndex()
+    {
+        bool[] reservedGearModelIndices = GC.AllocateArray<bool>(MaxGearCount);
+        for (int x = 0; x <= GearCount; x++)
+        {
+            int modelIndex = _gearToModelMap[x];
+            reservedGearModelIndices[modelIndex] = true;
+        }
+
+        for (int x = 0; x < reservedGearModelIndices.Length; x++)
+        {
+            if (!reservedGearModelIndices[x])
+                return x;
+        }
+
+        throw new InvalidOperationException("Failed to identify a free gear model index. All possible indices are reserved.");
     }
 
     /// <summary>
@@ -166,6 +197,37 @@ internal unsafe class CustomGearCodePatcher
             }
 
             _log.WriteLine($"[{pointerName}] New Pointer: {(long)apiEndpoint.Pointer:X} (from: {(long)originalData.Pointer:X})");
+        }
+    }
+
+    /// <summary>
+    /// Sets the "Unlocked" state of original game's gears to the currently loaded save file.
+    /// Any custom gears will be automatically unlocked.
+    /// </summary>
+    private void LoadUnlockedGearsFromSave()
+    {
+        // If "Boot to Menu" is enabled, then everything is unlocked anyway, so we don't need to check for saved data.
+        var tweakboxConf = IoC.GetSingleton<TweakboxConfig>();
+        if (tweakboxConf.Data.BootToMenu)
+            return;
+
+        // Reference to the vanilla location for storing gear unlock state
+        RefFixedArrayPtr<bool> vanillaUnlockedGearModels = new RefFixedArrayPtr<bool>((ulong)0x017BE4E8, (int)ExtremeGearModel.Cannonball + 1);
+        for (var x = 0; x < vanillaUnlockedGearModels.Count; x++)
+        {
+            bool isUnlocked = vanillaUnlockedGearModels[x];
+            State.UnlockedGearModels[x] = isUnlocked;
+        }
+
+        // Unlock any remaining custom gears
+        int firstFreeGearModelSlot = (int)ExtremeGearModel.Berserker + 1;
+        for (var x = firstFreeGearModelSlot; x < State.UnlockedGearModels.Count; x++)
+        {
+            // If it's defined in the Enum, it's a Vanilla gear, thus managed by the save.
+            if (Enum.IsDefined(typeof(ExtremeGearModel), (byte) x))
+                continue;
+
+            State.UnlockedGearModels[x] = true;
         }
     }
 
