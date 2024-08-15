@@ -66,7 +66,7 @@ internal unsafe class CustomGearCodePatcher
         fixed (int* ptr = &_gearCountMinusOneArr[0])
             _gearCountMinusOne = ptr;
 
-        fixed (Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear* ptr = &_newGears[0])
+        fixed (ExtremeGear* ptr = &_newGears[0])
             _newGearsPtr = ptr;
 
         // Patch Branches
