@@ -1,5 +1,5 @@
 ﻿using Reloaded.Memory.Pointers;
-using Sewer56.SonicRiders.Structures.Gameplay;
+using ExtremeGear = Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -38,8 +38,8 @@ internal unsafe class CustomGearCodePatcher
     public const int MaxGearCount = 254; // 256th is reserved for "unjoined"
 
     // New pointer targets.
-    private Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear* _newGearsPtr;
-    private Sewer56.SonicRiders.Structures.Gameplay.ExtremeGear[] _newGears;
+    private ExtremeGear* _newGearsPtr;
+    private ExtremeGear[] _newGears;
     private bool[] _unlockedGearModels;
     private byte[] _gearToModelMap;
 
