@@ -212,7 +212,7 @@ internal unsafe class CustomGearCodePatcher
             return;
 
         // Reference to the vanilla location for storing gear unlock state
-        RefFixedArrayPtr<bool> vanillaUnlockedGearModels = new RefFixedArrayPtr<bool>((ulong)0x017BE4E8, (int)Sewer56.SonicRiders.Structures.Enums.ExtremeGearModel.Cannonball + 1);
+        RefFixedArrayPtr<bool> vanillaUnlockedGearModels = new RefFixedArrayPtr<bool>((ulong)0x017BE4E8, (int)ExtremeGearModel.Cannonball + 1);
         for (var x = 0; x < vanillaUnlockedGearModels.Count; x++)
         {
             bool isUnlocked = vanillaUnlockedGearModels[x];
@@ -220,11 +220,11 @@ internal unsafe class CustomGearCodePatcher
         }
 
         // Unlock any remaining custom gears
-        int firstFreeGearModelSlot = (int)Sewer56.SonicRiders.Structures.Enums.ExtremeGearModel.Berserker + 1;
+        int firstFreeGearModelSlot = (int)ExtremeGearModel.Berserker + 1;
         for (var x = firstFreeGearModelSlot; x < State.UnlockedGearModels.Count; x++)
         {
             // If it's defined in the Enum, it's a Vanilla gear, thus managed by the save.
-            if (Enum.IsDefined(typeof(Sewer56.SonicRiders.Structures.Enums.ExtremeGearModel), (byte) x))
+            if (Enum.IsDefined(typeof(ExtremeGearModel), (byte) x))
                 continue;
 
             State.UnlockedGearModels[x] = true;
