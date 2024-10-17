@@ -16,13 +16,13 @@ public class AboutMenu : ComponentBase, IComponent
 {
     public override string Name { get; set; } = "About Tweakbox";
     private InformationWindow _informationWindow = new InformationWindow("About Menu", Pivots.Pivot.Center, Pivots.Pivot.Center, false);
-    private string _tweakboxVersion = typeof(Program).Assembly.GetName().Version.ToString(3);
+    private string _tweakboxVersion = typeof(Program).Assembly.GetName().Version!.ToString(3);
 
     private List<HorizontalCenterHelper> _centerHelpers = new List<HorizontalCenterHelper>();
 
     public AboutMenu()
     {
-        _informationWindow.WindowFlags &= ~ImGuiWindowFlagsNoInputs;
+        _informationWindow.WindowFlags &= ~NoInputs;
     }
 
     public override void Render()

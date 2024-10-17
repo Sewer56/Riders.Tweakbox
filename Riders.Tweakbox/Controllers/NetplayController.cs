@@ -180,7 +180,7 @@ public partial class NetplayController : IController
             var inputData = new TextInputData(NetplayEditorConfig.TextLength);
             await Shell.AddDialogAsync("Enter Password", (ref bool opened) =>
             {
-                inputData.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+                inputData.Render("Password", ImGuiInputTextFlags.Password);
                 if (ImGui.Button("Ok", Constants.Zero))
                     opened = false;
             });

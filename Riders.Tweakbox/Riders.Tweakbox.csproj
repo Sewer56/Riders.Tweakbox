@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
 	  <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -79,7 +79,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Ninject" Version="3.3.4" />
-    <PackageReference Include="Reloaded.Imgui.Hook" Version="3.0.0" />
+    <PackageReference Include="Reloaded.Imgui.Hook" Version="4.0.1" />
     <PackageReference Include="Reloaded.Imgui.Hook.Direct3D9" Version="1.0.2" />
     <PackageReference Include="Reloaded.Memory" Version="5.1.0" />
     <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.1.0" />

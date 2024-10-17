@@ -46,7 +46,7 @@ public class GameInputController : IController
             }
             case TweakboxConfig.GameInput.WhenNoWindowActive:
             {
-                _controllerHook.EnableInputs = !ImGui.IsWindowFocused((int)ImGuiFocusedFlagsAnyWindow);
+                _controllerHook.EnableInputs = !ImGui.IsWindowFocused((int)AnyWindow);
                 break;
             }
 

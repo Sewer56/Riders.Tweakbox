@@ -42,7 +42,7 @@ public class NetplayLobbyMenu : ComponentBase
         if (Controller.Socket == null)
             return;
 
-        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.AlwaysAutoResize))
             RenderConnectedWindow();
 
         ImGui.End();

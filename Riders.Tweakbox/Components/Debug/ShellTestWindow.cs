@@ -56,7 +56,7 @@ public class ShellTestWindow : ComponentBase
     {
         bool isOpened = true;
         ImGui.OpenPopupStr(TestDialogId, 0);
-        if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.BeginPopupModal(TestDialogId, ref isOpened, (int)ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGui.Text("Test Manual Dialog");
             ImGui.EndPopup();

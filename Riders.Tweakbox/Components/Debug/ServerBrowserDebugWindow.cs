@@ -37,7 +37,7 @@ public class ServerBrowserDebugWindow : ComponentBase
     public override void Render()
     {
         ImGui.PushItemWidth(ImGui.GetFontSize() * -12);
-        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.AlwaysAutoResize))
         {
             BrowserMenu.Render();
 

@@ -27,7 +27,7 @@ public unsafe class BonePreviewer : ComponentBase
         {
             fixed (int* addressPtr = &Address)
             {
-                ImGui.InputScalar("Address: ", (int)ImGuiDataType.ImGuiDataTypeU32, (IntPtr)(addressPtr), (IntPtr)(&step), IntPtr.Zero, "%08X", (int)(ImGuiInputTextFlags.ImGuiInputTextFlagsCharsHexadecimal));
+                ImGui.InputScalar("Address: ", (int)ImGuiDataType.U32, (IntPtr)(addressPtr), (IntPtr)(&step), IntPtr.Zero, "%08X", (int)(ImGuiInputTextFlags.CharsHexadecimal));
 
                 if (!IsBadReadPtr((IntPtr)Address))
                     RenderMenu();
@@ -171,7 +171,7 @@ public unsafe class BonePreviewer : ComponentBase
         Reflection.MakeControl(bonePtr->ChildIndices + 1, $"{nameof(Bone.ChildIndices)}[1]", 0.1f, -1, BoneCount);
 
         ImGui.Custom.DragFloat3(nameof(Bone.Position), &bonePtr->Position, 0.1f);
-        ImGui.Custom.DragInt3(nameof(Bone.Rotation), &bonePtr->Rotation.X, 10f, int.MinValue, int.MaxValue, null, (int)ImGuiSliderFlags.ImGuiSliderFlagsNone);
+        ImGui.Custom.DragInt3(nameof(Bone.Rotation), &bonePtr->Rotation.X, 10f, int.MinValue, int.MaxValue, null, (int)ImGuiSliderFlags.None);
         ImGui.Custom.DragFloat3(nameof(Bone.Scale), &bonePtr->Scale, 0.1f);
 
         ImGui.Custom.DragFloat4($"{nameof(Bone.Matrix)} [0]", &bonePtr->Matrix.M11, 0.1f);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using DearImguiSharp;
 using EnumsNET;
 using Riders.Tweakbox.API.Application.Commands.v1;
@@ -41,13 +42,13 @@ public class ServerBrowserMenu : ComponentBase
         Refresh = refresh;
     }
 
-    private ImGuiTableFlags _tableFlags = ImGuiTableFlagsRowBg | ImGuiTableFlagsBorders
-                                          | ImGuiTableFlagsNoBordersInBody | ImGuiTableFlagsScrollY
-                                          | ImGuiTableFlagsSortable | ImGuiTableFlagsContextMenuInBody
-                                          | ImGuiTableFlagsResizable;
+    private ImGuiTableFlags _tableFlags = RowBg | Borders
+                                          | NoBordersInBody | ScrollY
+                                          | Sortable | ContextMenuInBody
+                                          | Resizable;
 
     private ImVec2.__Internal _rowMinHeight = new ImVec2.__Internal() { x = 0, y = 0 };
-    private ImGuiSelectableFlags _flags = ImGuiSelectableFlags.ImGuiSelectableFlagsSpanAllColumns;
+    private ImGuiSelectableFlags _flags = ImGuiSelectableFlags.SpanAllColumns;
     private GetServerResultEx _currentSelection;
 
     private HorizontalCenterHelper _centerHelperButton = new HorizontalCenterHelper();
@@ -78,7 +79,9 @@ public class ServerBrowserMenu : ComponentBase
         if (ImGui.Begin(Name, ref IsEnabled(), 0))
         {
             // Get client area
-            var contentRegionWidth = ImGui.GetWindowContentRegionWidth();
+            var vec2 = new Vector2();
+            ImGui.__Internal.GetContentRegionAvail((nint)(&vec2));
+            var contentRegionWidth = vec2.X;
             var results = Results;
 
             // Server List
@@ -109,11 +112,11 @@ public class ServerBrowserMenu : ComponentBase
 
         // Table
         var playerTableSize = new ImVec2.__Internal() { x = availableWidth, y = heightOffsetPlayerTable };
-        if (ImGui.__Internal.BeginTable("player_table", 2, (int)(_tableFlags & ~ImGuiTableFlagsSortable), playerTableSize, 0))
+        if (ImGui.__Internal.BeginTable("player_table", 2, (int)(_tableFlags & ~Sortable), playerTableSize, 0))
         {
             // Create Headers
             ImGui.TableSetupColumn("Name", 0, 0, 0);
-            ImGui.TableSetupColumn("Ping", (int)ImGuiTableColumnFlagsWidthFixed, 0, 1);
+            ImGui.TableSetupColumn("Ping", (int)WidthFixed, 0, 1);
             ImGui.TableSetupScrollFreeze(1, 1);
 
             // Show Headers
@@ -179,11 +182,11 @@ public class ServerBrowserMenu : ComponentBase
             // Create Headers
             // TODO: Re-add Type when they become relevant.
             ImGui.TableSetupColumn("Name", 0, 0, (uint)TableColumn.Name);
-            // ImGui.TableSetupColumn("Type", (int) ImGuiTableColumnFlagsWidthFixed, 0, (uint) TableColumn.Type);
-            ImGui.TableSetupColumn("Game Mode", (int)ImGuiTableColumnFlagsWidthFixed, 0, (uint)TableColumn.GameMode);
-            ImGui.TableSetupColumn("Continent", (int)ImGuiTableColumnFlagsWidthFixed, 0, (uint)TableColumn.Region);
-            ImGui.TableSetupColumn("Mods", (int)ImGuiTableColumnFlagsWidthFixed, 0, (uint)TableColumn.Mods);
-            ImGui.TableSetupColumn("Ping", (int)ImGuiTableColumnFlagsWidthFixed, 0, (uint)TableColumn.Ping);
+            // ImGui.TableSetupColumn("Type", (int) WidthFixed, 0, (uint) TableColumn.Type);
+            ImGui.TableSetupColumn("Game Mode", (int)WidthFixed, 0, (uint)TableColumn.GameMode);
+            ImGui.TableSetupColumn("Continent", (int)WidthFixed, 0, (uint)TableColumn.Region);
+            ImGui.TableSetupColumn("Mods", (int)WidthFixed, 0, (uint)TableColumn.Mods);
+            ImGui.TableSetupColumn("Ping", (int)WidthFixed, 0, (uint)TableColumn.Ping);
             ImGui.TableSetupScrollFreeze(1, 1);
 
             // Sort our data if sort specs have changed.
@@ -212,7 +215,7 @@ public class ServerBrowserMenu : ComponentBase
 
                 // Password Color Set
                 if (item.HasPassword)
-                    ImGui.PushStyleColorVec4((int)ImGuiCol.ImGuiColText, _passwordColor);
+                    ImGui.PushStyleColorVec4((int)ImGuiCol.Text, _passwordColor);
 
                 // Name (Selectable)
                 ImGui.TableSetColumnIndex(columnIndex++);
@@ -258,7 +261,7 @@ public class ServerBrowserMenu : ComponentBase
         var specs = sortSpecs.Specs;
         var index = specs.ColumnUserID;
 
-        var compareModifier = specs.SortDirection == (int)ImGuiSortDirectionDescending ? -1 : 1;
+        var compareModifier = specs.SortDirection == (int)Descending ? -1 : 1;
         switch (index)
         {
             case (int)TableColumn.Name:

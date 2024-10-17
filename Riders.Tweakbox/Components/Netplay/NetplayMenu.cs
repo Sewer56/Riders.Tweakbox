@@ -49,7 +49,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
         if (Controller.Socket != null)
             return;
 
-        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.Begin(Name, ref IsEnabled(), (int)ImGuiWindowFlags.AlwaysAutoResize))
             RenderMainMenu();
 
         ImGui.End();
@@ -86,7 +86,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
         if (ImGui.TreeNodeStr("Login"))
         {
             serverSettings.Username.Render("Username");
-            serverSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+            serverSettings.Password.Render("Password", ImGuiInputTextFlags.Password);
 
             if (Controller.Api.IsAuthenticated)
             {
@@ -113,7 +113,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
         {
             serverSettings.Email.Render("Email");
             serverSettings.Username.Render("Username");
-            serverSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+            serverSettings.Password.Render("Password", ImGuiInputTextFlags.Password);
 
             if (_registerTask.IsCompleted)
             {
@@ -143,7 +143,7 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
         ref var hostData = ref data.HostSettings;
 
         hostData.Name.Render("Server Name");
-        hostData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+        hostData.SocketSettings.Password.Render("Password", ImGuiInputTextFlags.Password);
         ImGui.DragInt("Port", ref hostData.SocketSettings.Port, 0.1f, 0, ushort.MaxValue, null, 0);
 
         ImGui.Checkbox("Reduced Non-Essential Tick Rate", ref hostData.ReducedTickRate);
@@ -174,8 +174,8 @@ public class NetplayMenu : ComponentBase<NetplayEditorConfig>
 
         ref var clientData = ref data.ClientSettings;
         ImGui.TextWrapped("Alternatively, you can join by Direct IP:");
-        clientData.IP.Render("IP Address", ImGuiInputTextFlags.ImGuiInputTextFlagsCallbackCharFilter, clientData.IP.FilterIPAddress);
-        clientData.Password.Render("Password", ImGuiInputTextFlags.ImGuiInputTextFlagsPassword);
+        clientData.IP.Render("IP Address", ImGuiInputTextFlags.CallbackCharFilter, clientData.IP.FilterIPAddress);
+        clientData.Password.Render("Password", ImGuiInputTextFlags.Password);
         ImGui.DragInt("Port", ref clientData.Port, 0.1f, 0, ushort.MaxValue, null, 0);
 
         if (ImGui.Button("Connect", Constants.DefaultVector2))

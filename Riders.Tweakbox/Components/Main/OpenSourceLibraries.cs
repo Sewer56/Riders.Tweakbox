@@ -20,7 +20,7 @@ public class OpenSourceLibraries : ComponentBase
     public OpenSourceLibraries(IO io)
     {
         _io = io;
-        _informationWindow.WindowFlags &= ~ImGuiWindowFlagsNoInputs;
+        _informationWindow.WindowFlags &= ~NoInputs;
         _informationWindow.Size.X = 500;
     }
 

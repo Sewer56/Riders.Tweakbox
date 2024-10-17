@@ -57,7 +57,7 @@ public class MenuEditor : ComponentBase, IComponent
         Reflection.MakeControl(&menuMetadata.Header->ResolutionX, nameof(MetadataHeader.ResolutionX));
         Reflection.MakeControl(&menuMetadata.Header->ResolutionY, nameof(MetadataHeader.ResolutionY));
         Reflection.MakeControl(&menuMetadata.Header->MaybeFramerate, nameof(MetadataHeader.MaybeFramerate));
-        ImGui.DragScalar(nameof(MetadataHeader.AnimationType1Offset), (int)ImGuiDataType.ImGuiDataTypeU8, (IntPtr)(&menuMetadata.Header->AnimationType1Offset), 1.0F, IntPtr.Zero, IntPtr.Zero, null, (int)ImGuiSliderFlags.ImGuiSliderFlagsNoInput);
+        ImGui.DragScalar(nameof(MetadataHeader.AnimationType1Offset), (int)ImGuiDataType.U8, (IntPtr)(&menuMetadata.Header->AnimationType1Offset), 1.0F, IntPtr.Zero, IntPtr.Zero, null, (int)ImGuiSliderFlags.NoInput);
 
         ImGui.Text($"Entry Header Ptr: {((nint)menuMetadata.ObjectSectionHeader):X}");
         ImGui.SameLine(0, Constants.Spacing);
@@ -153,7 +153,7 @@ public class MenuEditor : ComponentBase, IComponent
 
         // TODO: Add/Remove keyframes on drag.
         Reflection.MakeControl(&layer->NumKeyframes, nameof(Layer.NumKeyframes), 0.1f, 0);
-        ImGui.InputScalar(nameof(Layer.NumBytes), (int)ImGuiDataType.ImGuiDataTypeS16, (IntPtr)(&layer->NumBytes), (IntPtr)(&step), IntPtr.Zero, "%04X", (int)(ImGuiInputTextFlags.ImGuiInputTextFlagsCharsHexadecimal | ImGuiInputTextFlags.ImGuiInputTextFlagsReadOnly));
+        ImGui.InputScalar(nameof(Layer.NumBytes), (int)ImGuiDataType.S16, (IntPtr)(&layer->NumBytes), (IntPtr)(&step), IntPtr.Zero, "%04X", (int)(ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.ReadOnly));
 
         Reflection.MakeControl((short*)&layer->KeyframeType, nameof(Layer.KeyframeType));
         Reflection.MakeControlEnum(&layer->KeyframeType, $"{nameof(Layer.KeyframeType)} (Known)");
@@ -163,7 +163,7 @@ public class MenuEditor : ComponentBase, IComponent
         Reflection.MakeControl(&layer->Unknown_1_1, nameof(Layer.Unknown_1_1));
         Reflection.MakeControl(&layer->TextureIndex, nameof(Layer.TextureIndex), 0.1f, 0, (short)header->TextureIndicesPtr->NumTextures);
         
-        ImGui.InputScalar(nameof(Layer.Flags), (int)ImGuiDataType.ImGuiDataTypeS16, (IntPtr)(&layer->Flags), (IntPtr)(&step), IntPtr.Zero, "%04X", (int)ImGuiInputTextFlags.ImGuiInputTextFlagsCharsHexadecimal);
+        ImGui.InputScalar(nameof(Layer.Flags), (int)ImGuiDataType.S16, (IntPtr)(&layer->Flags), (IntPtr)(&step), IntPtr.Zero, "%04X", (int)ImGuiInputTextFlags.CharsHexadecimal);
         Reflection.MakeControlEnum(&layer->Flags, nameof(Layer.Flags));
 
         Reflection.MakeControl(&layer->Width, nameof(Layer.Width), 0.1f, 0);
@@ -245,7 +245,7 @@ public class MenuEditor : ComponentBase, IComponent
             // 4 byte
             ImGuiExtensions.RenderLabel($"4 Bytes (0x{offset:X2})", spacing);
             ImGui.PushID_Int(id++);
-            ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU32, (IntPtr)(currentAddress), 0.1f, (IntPtr)(&min), (IntPtr)(&max), $"{*currentAddress:X8}", (int)1);
+            ImGui.DragScalar("", (int)ImGuiDataType.U32, (IntPtr)(currentAddress), 0.1f, (IntPtr)(&min), (IntPtr)(&max), $"{*currentAddress:X8}", (int)1);
             ImGui.PopID();
 
             ImGuiExtensions.RenderLabel($"2 Bytes (0x{offset:X2})", spacing);

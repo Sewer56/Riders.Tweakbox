@@ -59,7 +59,9 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
     {
         if (ImGui.Begin(Name, ref IsEnabled(), 0))
         {
-            var contentRegionWidth = ImGui.GetWindowContentRegionWidth();
+            var vec2 = new Vector2();
+            ImGui.__Internal.GetContentRegionAvail((nint)(&vec2));
+            var contentRegionWidth = vec2.X;
 
             if (_layoutController.LoadedLayouts.Count > 0)
             {
@@ -87,7 +89,7 @@ public unsafe class LayoutEditor : ComponentBase, IComponent
         float remainingWidth = (contentRegionWidth - tableWidth);
 
         var serverTableSize = new ImVec2.__Internal() { x = tableWidth, y = -40 };
-        const int tableFlags = (int)(ImGuiTableFlagsRowBg | ImGuiTableFlagsBorders | ImGuiTableFlagsNoBordersInBody | ImGuiTableFlagsScrollY | ImGuiTableFlagsContextMenuInBody);
+        const int tableFlags = (int)(RowBg | Borders | NoBordersInBody | ScrollY | ContextMenuInBody);
 
         if (ImGui.__Internal.BeginTable("item_table", 1, tableFlags, serverTableSize, 0))
         {

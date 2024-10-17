@@ -119,7 +119,9 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
 
     private unsafe void ShowTextureMenu()
     {
-        var contentRegionWidth = ImGui.GetWindowContentRegionWidth();
+        var vec2 = new Vector2();
+        ImGui.__Internal.GetContentRegionAvail((nint)(&vec2));
+        var contentRegionWidth = vec2.X;
         var textures = _textureService.GetAllD3dTextures();
 
         if (textures.Length <= 0)
@@ -132,7 +134,7 @@ public unsafe class TextureEditor : ComponentBase<TextureInjectionConfig>, IComp
         float remainingWidth = (contentRegionWidth - tableWidth);
         
         var textureTableSize = new ImVec2.__Internal() { x = tableWidth, y = -40 };
-        const int tableFlags = (int)(ImGuiTableFlagsRowBg | ImGuiTableFlagsBorders | ImGuiTableFlagsNoBordersInBody | ImGuiTableFlagsScrollY | ImGuiTableFlagsContextMenuInBody);
+        const int tableFlags = (int)(RowBg | Borders | NoBordersInBody | ScrollY | ContextMenuInBody);
 
         ImGui.BeginGroup();
         if (ImGui.__Internal.BeginTable("texture_table", 1, tableFlags, textureTableSize, 0))

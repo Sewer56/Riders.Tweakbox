@@ -23,7 +23,7 @@ public class WelcomeScreenRenderer : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _accentColor?.Dispose(true);
+        _accentColor?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -34,9 +34,9 @@ public class WelcomeScreenRenderer : IDisposable
     {
         bool isOpened = true;
 
-        ImGui.OpenPopupStr(Title, (int)ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
-        ImGui.__Internal.SetNextWindowSize(new ImVec2.__Internal() { x = 400, y = 0 }, (int)ImGuiCond.ImGuiCondAlways);
-        if (ImGui.BeginPopupModal(Title, ref isOpened, (int)(ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlagsNoSavedSettings)))
+        ImGui.OpenPopupStr(Title, (int)ImGuiPopupFlags.NoOpenOverExistingPopup);
+        ImGui.__Internal.SetNextWindowSize(new ImVec2.__Internal() { x = 400, y = 0 }, (int)ImGuiCond.Always);
+        if (ImGui.BeginPopupModal(Title, ref isOpened, (int)(AlwaysAutoResize | NoTitleBar | NoSavedSettings)))
         {
             // Title
             ImGui.TextColored(_accentColor, "Ohayou !");

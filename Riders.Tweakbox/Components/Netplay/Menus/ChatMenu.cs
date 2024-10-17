@@ -89,7 +89,7 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
             // Render Basic Text
             ImGui.SetNextItemWidth(-50);
             ImGui.BeginGroup();
-            bool send = _textBox.Render("", ImGuiInputTextFlagsEnterReturnsTrue);
+            bool send = _textBox.Render("", EnterReturnsTrue);
             if (send)
                 ImGui.ActivateItem(ImGui.GetItemID());
 
@@ -116,8 +116,8 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
         private void RenderMessageLog()
         {
             // Setup
-            ImGui.BeginChildStr("Frame", _chatlogDimensions, false, (int)(ImGuiWindowFlagsHorizontalScrollbar));
-            ImGui.PushStyleVarVec2((int)ImGuiStyleVarItemSpacing, Constants.Zero);
+            ImGui.BeginChildStr("Frame", _chatlogDimensions, false, (int)(HorizontalScrollbar));
+            ImGui.PushStyleVarVec2((int)ItemSpacing, Constants.Zero);
 
             // Log
             using var clipper = CreateClipper();
@@ -144,10 +144,8 @@ namespace Riders.Tweakbox.Components.Netplay.Menus
             DisplayEnd = 0,
             DisplayStart = 0,
             ItemsCount = 0,
-            ItemsFrozen = 0,
             ItemsHeight = 0,
             StartPosY = 0,
-            StepNo = 0
         };
     }
 }

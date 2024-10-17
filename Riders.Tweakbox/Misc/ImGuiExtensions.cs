@@ -13,25 +13,25 @@ public static class ImGuiExtensions
         ImGui.BeginGroup();
 
         ImGui.PushID_Int(id++);
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU8, (IntPtr)((byte*)address), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 0)):X2}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U8, (IntPtr)((byte*)address), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 0)):X2}", (int)1);
         ImGui.PopID();
 
         ImGui.SameLine(0, spacing);
 
         ImGui.PushID_Int(id++); 
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU8, (IntPtr)((byte*)address + 1), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 1)):X2}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U8, (IntPtr)((byte*)address + 1), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 1)):X2}", (int)1);
         ImGui.PopID();
 
         ImGui.SameLine(0, spacing);
 
         ImGui.PushID_Int(id++); 
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU8, (IntPtr)((byte*)address + 2), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 2)):X2}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U8, (IntPtr)((byte*)address + 2), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 2)):X2}", (int)1);
         ImGui.PopID();
 
         ImGui.SameLine(0, spacing);
 
         ImGui.PushID_Int(id++); 
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU8, (IntPtr)((byte*)address + 3), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 3)):X2}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U8, (IntPtr)((byte*)address + 3), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((byte*)address + 3)):X2}", (int)1);
         ImGui.PopID();
 
         ImGui.EndGroup();
@@ -43,13 +43,13 @@ public static class ImGuiExtensions
         ImGui.PushItemWidth(width);
         ImGui.BeginGroup();
         ImGui.PushID_Int(id++);
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU16, (IntPtr)(address), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((ushort*)address)):X4}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U16, (IntPtr)(address), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((ushort*)address)):X4}", (int)1);
         ImGui.PopID();
 
         ImGui.SameLine(0, spacing);
 
         ImGui.PushID_Int(id++);
-        ImGui.DragScalar("", (int)ImGuiDataType.ImGuiDataTypeU16, (IntPtr)((ushort*)address + 1), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((ushort*)address + 1)):X4}", (int)1);
+        ImGui.DragScalar("", (int)ImGuiDataType.U16, (IntPtr)((ushort*)address + 1), 0.1f, IntPtr.Zero, IntPtr.Zero, $"{(*((ushort*)address + 1)):X4}", (int)1);
         ImGui.PopID();
         ImGui.EndGroup();
         ImGui.PopItemWidth();
@@ -113,7 +113,7 @@ public static class ImGuiExtensions
     {
         ImGui.TextWrapped(label);
         ImGui.SameLine(0, spacing);
-        ImGui.SeparatorEx((int)ImGuiSeparatorFlags.ImGuiSeparatorFlagsVertical);
+        ImGui.SeparatorEx((int)ImGuiSeparatorFlags.Vertical);
         ImGui.SameLine(0, spacing);
     }
 }
