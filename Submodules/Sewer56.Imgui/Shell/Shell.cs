@@ -45,7 +45,7 @@ public static partial class Shell
     /// Adds a function that displays a dialog to the current shell.
     /// </summary>
     public static void AddDialog(string name, DialogFn dialogFunction, Action onClose = null,
-        ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
+        ImGuiWindowFlags flags = AlwaysAutoResize, bool showClose = true)
     {
         AddCustom(() => DialogHandler(name, dialogFunction, onClose, flags, showClose));
     }
@@ -54,7 +54,7 @@ public static partial class Shell
     /// Adds a function that displays a dialog to the current shell.
     /// </summary>
     public static async Task AddDialogAsync(string name, DialogFn dialogFunction, Action onClose = null,
-        ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
+        ImGuiWindowFlags flags = AlwaysAutoResize, bool showClose = true)
     {
         bool hasFinished = false;
 
@@ -72,7 +72,7 @@ public static partial class Shell
     /// Adds a function that displays a dialog to the current shell.
     /// </summary>
     public static void AddDialog(string name, string dialogText, Action onClose = null,
-        ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
+        ImGuiWindowFlags flags = AlwaysAutoResize, bool showClose = true)
     {
         AddCustom(() => DialogHandler(name, (ref bool opened) => ImGui.Text(dialogText), onClose, flags, showClose));
     }
@@ -81,7 +81,7 @@ public static partial class Shell
     /// Adds a function that displays a dialog to the current shell.
     /// </summary>
     public static async Task AddDialogAsync(string name, string dialogText, Action onClose = null,
-        ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
+        ImGuiWindowFlags flags = AlwaysAutoResize, bool showClose = true)
     {
         bool hasFinished = false;
 
@@ -162,7 +162,7 @@ public static partial class Shell
     private static unsafe bool DialogHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
     {
         bool isOpened = true;
-        ImGui.OpenPopupStr(name, (int)ImGuiPopupFlags.ImGuiPopupFlagsNoOpenOverExistingPopup);
+        ImGui.OpenPopupStr(name, (int)ImGuiPopupFlags.NoOpenOverExistingPopup);
 
         bool beginSuccess = showClose ?
             ImGui.BeginPopupModal(name, ref isOpened, (int)flags) :

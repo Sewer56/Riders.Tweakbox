@@ -10,7 +10,7 @@ public static class Tooltip
     /// </summary>
     /// <param name="text">The text to display.</param>
     /// <param name="flags">Item hover flags.</param>
-    public static void TextOnHover(string text, ImGuiHoveredFlags flags = ImGuiHoveredFlags.ImGuiHoveredFlagsNone)
+    public static void TextOnHover(string text, ImGuiHoveredFlags flags = ImGuiHoveredFlags.None)
     {
         if (!ImGui.IsItemHovered((int)flags))
             return;
