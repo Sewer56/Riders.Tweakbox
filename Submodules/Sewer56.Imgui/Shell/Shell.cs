@@ -159,7 +159,7 @@ public static partial class Shell
     /// <summary>
     /// Wraps a dialog.
     /// </summary>
-    private static unsafe bool DialogHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = ImGuiWindowFlagsAlwaysAutoResize, bool showClose = true)
+    private static unsafe bool DialogHandler(string name, DialogFn sup, Action onClose = null, ImGuiWindowFlags flags = AlwaysAutoResize, bool showClose = true)
     {
         bool isOpened = true;
         ImGui.OpenPopupStr(name, (int)ImGuiPopupFlags.NoOpenOverExistingPopup);

@@ -144,7 +144,7 @@ public unsafe class ProfileSelector
             Save();
 
         ImGui.SameLine(0, Constants.Spacing);
-        ImGui.SeparatorEx((int)ImGuiSeparatorFlags.ImGuiSeparatorFlagsVertical);
+        ImGui.SeparatorEx((int)ImGuiSeparatorFlags.Vertical);
         ImGui.SameLine(0, Constants.Spacing);
         if (ImGui.Button("Reset", Constants.DefaultVector2))
             _loadConfig(_newConfigBytes);
@@ -153,10 +153,10 @@ public unsafe class ProfileSelector
         if (ImGui.Button("Save as Default", Constants.DefaultVector2))
             Save(_getCurrentConfigBytes(), DefaultConfiguration);
 
-        if (ImGui.BeginPopupModal(NewDialogId, ref Constants.NullReference<bool>(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.BeginPopupModal(NewDialogId, ref Constants.NullReference<bool>(), (int)ImGuiWindowFlags.AlwaysAutoResize))
             RenderNewDialog();
 
-        if (ImGui.BeginPopupModal(DeleteDialogId, ref Constants.NullReference<bool>(), (int)ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize))
+        if (ImGui.BeginPopupModal(DeleteDialogId, ref Constants.NullReference<bool>(), (int)ImGuiWindowFlags.AlwaysAutoResize))
             RenderDeleteDialog();
     }
 
@@ -183,7 +183,7 @@ public unsafe class ProfileSelector
         ImGui.Text("Name Your Creation!\n");
         ImGui.Spacing();
 
-        ImGui.InputText("", _inputData.Pointer, (IntPtr)_inputData.SizeOfData, (int)ImGuiInputTextFlagsCallbackCharFilter, _inputData.FilterValidPathCharacters, IntPtr.Zero);
+        ImGui.InputText("", _inputData.Pointer, (IntPtr)_inputData.SizeOfData, (int)CallbackCharFilter, _inputData.FilterValidPathCharacters, IntPtr.Zero);
         ImGui.Spacing();
 
         if (ImGui.Button("Create", Constants.ButtonSizeThin))

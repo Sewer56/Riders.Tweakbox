@@ -13,10 +13,10 @@ public class InformationWindow : IDisposable
     /// <summary>
     /// The flags used for rendering this window.
     /// </summary>
-    public ImGuiWindowFlags WindowFlags = (ImGuiWindowFlags.ImGuiWindowFlagsNoTitleBar | ImGuiWindowFlags.ImGuiWindowFlagsNoInputs |
-                                           ImGuiWindowFlags.ImGuiWindowFlagsNoMove | ImGuiWindowFlags.ImGuiWindowFlagsNoSavedSettings |
-                                           ImGuiWindowFlags.ImGuiWindowFlagsNoScrollbar | ImGuiWindowFlags.ImGuiWindowFlagsNoNav |
-                                           ImGuiWindowFlags.ImGuiWindowFlagsAlwaysAutoResize | ImGuiWindowFlags.ImGuiWindowFlagsNoFocusOnAppearing);
+    public ImGuiWindowFlags WindowFlags = (ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs |
+                                           ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings |
+                                           ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNav |
+                                           ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoFocusOnAppearing);
 
     /// <summary>
     /// The name of the window.
@@ -104,7 +104,7 @@ public class InformationWindow : IDisposable
     public void Begin()
     {
         SetWindowPosition();
-        ImGui.SetNextWindowSize(Size, (int)ImGuiCond.ImGuiCondAlways);
+        ImGui.SetNextWindowSize(Size, (int)ImGuiCond.Always);
         ImGui.Begin(Name, ref _isOpen, (int)WindowFlags);
     }
 
@@ -167,7 +167,7 @@ public class InformationWindow : IDisposable
                 throw new ArgumentOutOfRangeException();
         }
 
-        ImGui.SetNextWindowPos(_nextWindowPos, (int)ImGuiCond.ImGuiCondAlways, WindowPivot);
+        ImGui.SetNextWindowPos(_nextWindowPos, (int)ImGuiCond.Always, WindowPivot);
     }
 
     ~InformationWindow() => Dispose();

@@ -13,13 +13,13 @@ public static class Hyperlink
     /// <param name="isWrapped">Whether to wrap the text or not.</param>
     public static void CreateText(string text, string url, bool isWrapped = true, uint colour = 0x42a5f5ff)
     {
-        ImGui.__Internal.PushStyleColorVec4((int)ImGuiCol.ImGuiColText, Utilities.Utilities.HexToFloatInternal(colour));
+        ImGui.__Internal.PushStyleColorVec4((int)ImGuiCol.Text, Utilities.Utilities.HexToFloatInternal(colour));
         if (isWrapped)
             ImGui.TextWrapped(text);
         else
             ImGui.Text(text);
         
-        if (ImGui.IsItemClicked((int)ImGuiMouseButton.ImGuiMouseButtonLeft))
+        if (ImGui.IsItemClicked((int)ImGuiMouseButton.Left))
             Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
 
         ImGui.PopStyleColor(1);

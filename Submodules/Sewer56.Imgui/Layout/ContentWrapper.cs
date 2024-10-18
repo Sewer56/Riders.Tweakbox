@@ -19,9 +19,13 @@ public class ContentWrapper
     /// </summary>
     public unsafe ContentWrapper(int itemWidth, float availableWidth = -1, float itemItemOffset = 20)
     {
+        var vec2 = new Vector2();
+        ImGui.__Internal.GetContentRegionAvail((nint)(&vec2));
+        var contentRegionWidth = vec2.X;
+
         WidthAvailable = availableWidth != -1
             ? availableWidth
-            : ImGui.GetWindowContentRegionWidth();
+            : contentRegionWidth;
 
         ItemOffset = itemItemOffset;
         ItemWidth = itemWidth;

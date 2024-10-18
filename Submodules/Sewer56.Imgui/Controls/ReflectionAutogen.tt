@@ -7,7 +7,7 @@
 
 <# 
     string[] types = { "Byte", "SByte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Single", "Double" };
-    string[] imguiTypes = { "ImGuiDataType.ImGuiDataTypeU8", "ImGuiDataType.ImGuiDataTypeS8", "ImGuiDataType.ImGuiDataTypeS16", "ImGuiDataType.ImGuiDataTypeU16", "ImGuiDataType.ImGuiDataTypeS32", "ImGuiDataType.ImGuiDataTypeU32", "ImGuiDataType.ImGuiDataTypeS64", "ImGuiDataType.ImGuiDataTypeU64", "ImGuiDataType.ImGuiDataTypeFloat", "ImGuiDataType.ImGuiDataTypeDouble" };
+    string[] imguiTypes = { "ImGuiDataType.U8", "ImGuiDataType.S8", "ImGuiDataType.S16", "ImGuiDataType.U16", "ImGuiDataType.S32", "ImGuiDataType.U32", "ImGuiDataType.S64", "ImGuiDataType.U64", "ImGuiDataType.Float", "ImGuiDataType.Double" };
 #>
 
 using System;

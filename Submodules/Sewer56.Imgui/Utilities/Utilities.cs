@@ -12,8 +12,8 @@ public static class Utilities
     /// </summary>
     public static void PushDisabled()
     {
-        ImGui.PushItemFlag((int)ImGuiItemFlagsDisabled, true);
-        ImGui.PushStyleVarFloat((int)ImGuiStyleVarAlpha, Shell.Shell.Style.Alpha * 0.5f);
+        ImGui.PushItemFlag((int)Disabled, true);
+        ImGui.PushStyleVarFloat((int)Alpha, Shell.Shell.Style.Alpha * 0.5f);
     }
 
     /// <summary>
