@@ -123,5 +123,5 @@ jobs:
         Foreach ($item in $items)
         {
             Write-Host "Pushing $item"
-            dotnet nuget push "$item" -k "$env:NUGET_KEY" -s "http://packages.sewer56.moe:5000/v3/index.json" --skip-duplicate
+            dotnet nuget push "$item" -k "$env:NUGET_KEY" -s "https://packages.sewer56.moe/v3/index.json" --skip-duplicate
         }
