@@ -14,7 +14,7 @@
     <PackageReference Include="Enums.NET" Version="3.0.3" />
     <PackageReference Include="Equals.Fody" Version="4.0.1" />
     <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.1.11" />
-    <PackageReference Include="MessagePack" Version="2.3.85" />
+    <PackageReference Include="MessagePack" Version="2.5.187" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.3.85" />
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Reloaded.Memory" Version="5.1.0" />
