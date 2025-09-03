@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <OutputPath>$(RELOADEDIIMODS)/riders.utils.tweakbox/</OutputPath>
-	  <Version>0.7.0</Version>
+	  <Version>0.7.2</Version>
     <LangVersion>10.0</LangVersion>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <RobustILLink>false</RobustILLink>
