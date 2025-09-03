@@ -204,10 +204,7 @@ public partial class NetplayController : IController
     /// </summary>
     private void OnEndScene()
     {
-        if (Socket != null)
-        {
-            Socket.Update();
-            Socket.OnFrame();
-        }
+        Socket?.Update();
+        Socket?.OnFrame();
     }
 }
